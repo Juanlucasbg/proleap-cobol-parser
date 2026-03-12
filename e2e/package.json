@@ -1,0 +1,13 @@
+{
+  "name": "saleads-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Environment-agnostic SaleADS E2E validations",
+  "scripts": {
+    "test:mi-negocio": "playwright test tests/saleads-mi-negocio.spec.js",
+    "test:mi-negocio:headed": "playwright test tests/saleads-mi-negocio.spec.js --headed"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
+  }
+}
