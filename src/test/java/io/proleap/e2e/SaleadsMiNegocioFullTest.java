@@ -80,6 +80,8 @@ public class SaleadsMiNegocioFullTest {
 
 	@Before
 	public void setUp() throws IOException {
+		initStepResults();
+
 		final boolean runE2E = Boolean.parseBoolean(config("SALEADS_RUN_E2E", "saleads.runE2E", "false"));
 		Assume.assumeTrue(
 				"Skipping SaleADS E2E. Set SALEADS_RUN_E2E=true (or -Dsaleads.runE2E=true) to execute this test.",
@@ -94,7 +96,6 @@ public class SaleadsMiNegocioFullTest {
 		timeoutSeconds = Integer.parseInt(config("SALEADS_TIMEOUT_SECONDS", "saleads.timeoutSeconds", "30"));
 		final boolean headless = Boolean.parseBoolean(config("SALEADS_HEADLESS", "saleads.headless", "true"));
 
-		initStepResults();
 		screenshotDir = createScreenshotDirectory();
 		driver = buildWebDriver(headless);
 		wait = new WebDriverWait(driver, Duration.ofSeconds(timeoutSeconds));
