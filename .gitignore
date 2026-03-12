@@ -41,3 +41,9 @@ target/
 
 ## Additional for IntelliJ
 out/
+
+# Node-based UI automation tooling
+node_modules/
+
+# Local automation outputs
+artifacts/
