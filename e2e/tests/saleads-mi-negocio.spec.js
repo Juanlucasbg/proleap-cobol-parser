@@ -100,7 +100,7 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
     const popupPromise = context.waitForEvent("page", { timeout: 7000 }).catch(() => null);
     await clickVisibleByText(page, [
       /sign in with google/i,
-      /iniciar sesion con google/i,
+      /iniciar sesi[oó]n con google/i,
       /continuar con google/i,
       /google/i
     ]);
@@ -181,10 +181,10 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
     }
 
     await clickVisibleByText(appPage, [/administrar negocios/i]);
-    await assertVisibleByText(appPage, "Informacion General");
+    await assertVisibleByText(appPage, /informaci[oó]n general/i);
     await assertVisibleByText(appPage, "Detalles de la Cuenta");
     await assertVisibleByText(appPage, "Tus Negocios");
-    await assertVisibleByText(appPage, "Seccion Legal");
+    await assertVisibleByText(appPage, /secci[oó]n legal/i);
     await capture("04-administrar-negocios-view", appPage, true);
     accountViewUrl = appPage.url();
     return { screenshot: "04-administrar-negocios-view.png" };
@@ -208,15 +208,15 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
     await assertVisibleByText(appPage, "Tienes 2 de 3 negocios");
   });
 
-  const validateLegalPage = async (sectionName, linkText, headingText, screenshotName) => {
+  const validateLegalPage = async (sectionName, linkMatcher, headingMatcher, screenshotName) => {
     await runSection(sectionName, async () => {
       const popupPromise = context.waitForEvent("page", { timeout: 6000 }).catch(() => null);
-      await clickVisibleByText(appPage, [new RegExp(linkText, "i")]);
+      await clickVisibleByText(appPage, [linkMatcher]);
       const popup = await popupPromise;
       const legalPage = popup || appPage;
 
       await waitForUi(legalPage);
-      await assertVisibleByText(legalPage, headingText);
+      await assertVisibleByText(legalPage, headingMatcher);
       const legalContent = legalPage.locator("main p, article p, .content p, p");
       const legalParagraphCount = await legalContent.count();
       if (legalParagraphCount < 1) {
@@ -240,15 +240,15 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
 
   await validateLegalPage(
     "Terminos y Condiciones",
-    "Terminos y Condiciones",
-    "Terminos y Condiciones",
+    /t[eé]rminos y condiciones/i,
+    /t[eé]rminos y condiciones/i,
     "05-terminos-y-condiciones"
   );
 
   await validateLegalPage(
     "Politica de Privacidad",
-    "Politica de Privacidad",
-    "Politica de Privacidad",
+    /pol[ií]tica de privacidad/i,
+    /pol[ií]tica de privacidad/i,
     "06-politica-de-privacidad"
   );
 
