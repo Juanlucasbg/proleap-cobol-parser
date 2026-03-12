@@ -304,10 +304,10 @@ public class SaleadsMiNegocioFullTest {
 
 	private static Page clickAndCaptureNewPage(final BrowserContext context, final Page page, final Locator locator) {
 		try {
-			return context.waitForPage(() -> {
+			return context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(SHORT_TIMEOUT_MS), () -> {
 				locator.click(new Locator.ClickOptions().setTimeout(DEFAULT_TIMEOUT_MS));
 				waitForUi(page);
-			}, new BrowserContext.WaitForPageOptions().setTimeout(SHORT_TIMEOUT_MS));
+			});
 		} catch (final PlaywrightException ignored) {
 			return null;
 		}
