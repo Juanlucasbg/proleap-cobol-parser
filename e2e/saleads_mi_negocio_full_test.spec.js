@@ -172,12 +172,12 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
   const failures = [];
   const finalUrls = {};
 
-  await ensureOnLoginPage(page);
-
   await runStep(
     report,
     "Login",
     async () => {
+      await ensureOnLoginPage(page);
+
       const sidebarBeforeLogin = await findSidebar(page);
 
       if (!sidebarBeforeLogin) {
