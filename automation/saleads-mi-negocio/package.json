@@ -1,0 +1,12 @@
+{
+  "name": "saleads-mi-negocio-automation",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Playwright workflow validation for SaleADS Mi Negocio module",
+  "scripts": {
+    "test:mi-negocio": "node run-mi-negocio-workflow.js"
+  },
+  "dependencies": {
+    "playwright": "^1.53.1"
+  }
+}
