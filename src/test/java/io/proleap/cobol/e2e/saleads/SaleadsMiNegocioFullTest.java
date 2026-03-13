@@ -119,28 +119,54 @@ public class SaleadsMiNegocioFullTest {
 			return;
 		}
 
-		if (!isAnyVisible(byVisibleTextContains("Sign in with Google"), byVisibleTextContains("Iniciar sesión con Google"),
-				byVisibleTextContains("Continuar con Google"), byVisibleTextContains("Google"))
-				&& isAnyVisible(byVisibleTextContains("Login"), byVisibleTextContains("Iniciar sesión"))) {
-			clickByVisibleText("Login", "Iniciar sesión");
-		}
-
-		final Set<String> handlesBeforeLogin = driver.getWindowHandles();
-		clickByVisibleText("Sign in with Google", "Iniciar sesión con Google", "Continuar con Google", "Google");
-
-		final String googlePopupHandle = waitForNewWindowHandle(handlesBeforeLogin, 12);
-		if (googlePopupHandle != null) {
-			driver.switchTo().window(googlePopupHandle);
+		if (clickIfVisible("Login", "Iniciar sesión")) {
 			waitForUiLoad();
-			selectGoogleAccountIfVisible();
-			switchToApplicationWindow();
 		}
+
+		attemptGoogleLoginFlow();
 
 		waitForMainInterface();
 		assertAnyVisible(By.xpath("//aside//*[contains(normalize-space(.), 'Mi Negocio')]"),
 				By.xpath("//aside//*[contains(normalize-space(.), 'Negocio')]"),
 				By.xpath("//nav//*[contains(normalize-space(.), 'Mi Negocio')]"));
 		checkpointScreenshot("01-dashboard-loaded");
+	}
+
+	private void attemptGoogleLoginFlow() {
+		final long deadline = System.currentTimeMillis() + Duration.ofSeconds(timeoutSeconds).toMillis();
+
+		while (System.currentTimeMillis() < deadline && !isMainInterfaceVisible()) {
+			boolean actionTaken = false;
+			final Set<String> handlesBeforeClick = driver.getWindowHandles();
+
+			if (clickIfVisible("Sign in with Google", "Iniciar sesión con Google", "Continuar con Google", "GOOGLE", "Google")) {
+				actionTaken = true;
+			}
+
+			final String newWindowHandle = waitForNewWindowHandle(handlesBeforeClick, 4);
+			if (newWindowHandle != null) {
+				driver.switchTo().window(newWindowHandle);
+				waitForUiLoad();
+				actionTaken = true;
+			}
+
+			if (selectGoogleAccountIfVisible()) {
+				actionTaken = true;
+			}
+
+			if (driver.getWindowHandles().contains(applicationWindowHandle)) {
+				switchToApplicationWindow();
+			}
+
+			if (!actionTaken) {
+				try {
+					Thread.sleep(800L);
+				} catch (final InterruptedException ex) {
+					Thread.currentThread().interrupt();
+					break;
+				}
+			}
+		}
 	}
 
 	private void stepOpenMiNegocioMenu() throws IOException {
@@ -265,12 +291,14 @@ public class SaleadsMiNegocioFullTest {
 		}
 	}
 
-	private void selectGoogleAccountIfVisible() {
+	private boolean selectGoogleAccountIfVisible() {
 		final List<WebElement> accountOptions = driver.findElements(byVisibleTextContains(GOOGLE_ACCOUNT_EMAIL));
 		if (!accountOptions.isEmpty() && accountOptions.get(0).isDisplayed()) {
 			accountOptions.get(0).click();
 			waitForUiLoad();
+			return true;
 		}
+		return false;
 	}
 
 	private void waitForMainInterface() {
@@ -326,6 +354,34 @@ public class SaleadsMiNegocioFullTest {
 		final WebElement element = waitForAnyVisible(locators.toArray(new By[0]));
 		wait.until(ExpectedConditions.elementToBeClickable(element)).click();
 		waitForUiLoad();
+	}
+
+	private boolean clickIfVisible(final String... texts) {
+		final List<By> locators = new ArrayList<>();
+		for (final String text : texts) {
+			final String literal = toXpathLiteral(text);
+			locators.add(By.xpath(
+					"//*[self::button or self::a or @role='button' or contains(@class,'btn')][contains(normalize-space(.), "
+							+ literal + ")]"));
+			locators.add(By.xpath("//*[contains(normalize-space(.), " + literal + ")]"));
+		}
+
+		for (final By locator : locators) {
+			final List<WebElement> elements = driver.findElements(locator);
+			for (final WebElement element : elements) {
+				try {
+					if (element.isDisplayed() && element.isEnabled()) {
+						element.click();
+						waitForUiLoad();
+						return true;
+					}
+				} catch (final Exception ignored) {
+					// continue trying remaining candidates
+				}
+			}
+		}
+
+		return false;
 	}
 
 	private WebElement waitForAnyVisible(final By... locators) {
