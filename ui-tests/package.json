@@ -1,0 +1,16 @@
+{
+  "name": "saleads-ui-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Environment-agnostic SaleADS Playwright E2E tests",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:list": "playwright test --list"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.53.0",
+    "@types/node": "^24.0.0"
+  }
+}
