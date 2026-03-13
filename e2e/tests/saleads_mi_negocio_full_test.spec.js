@@ -44,6 +44,7 @@ async function clickAndSettle(locator, pageLike) {
 }
 
 test('saleads_mi_negocio_full_test', async ({ page, context }, testInfo) => {
+  test.setTimeout(8 * 60 * 1000);
   const outDir = path.resolve(process.cwd(), 'test-results', 'saleads_mi_negocio_full_test');
   fs.mkdirSync(outDir, { recursive: true });
 
@@ -66,6 +67,18 @@ test('saleads_mi_negocio_full_test', async ({ page, context }, testInfo) => {
       results[name] = { status: 'FAIL', details: error.message };
       await saveScreenshot(`${name.toLowerCase().replace(/\s+/g, '_')}_failure`).catch(() => {});
     }
+  };
+
+  const runBlockedStep = async (name, fn) => {
+    if (results.Login.status === 'FAIL') {
+      results[name] = {
+        status: 'FAIL',
+        details: 'Blocked: Login step failed, downstream workflow could not be executed.',
+      };
+      return;
+    }
+
+    await runStep(name, fn);
   };
 
   const getLegalLink = async (labelRegex) =>
@@ -189,7 +202,7 @@ test('saleads_mi_negocio_full_test', async ({ page, context }, testInfo) => {
     evidence.dashboard = await saveScreenshot('01_dashboard_loaded');
   });
 
-  await runStep('Mi Negocio menu', async () => {
+  await runBlockedStep('Mi Negocio menu', async () => {
     const negocioSection = await pickVisible(
       [
         page.getByRole('button', { name: /^Negocio$/i }),
@@ -237,7 +250,7 @@ test('saleads_mi_negocio_full_test', async ({ page, context }, testInfo) => {
     evidence.miNegocioMenu = await saveScreenshot('02_mi_negocio_menu_expanded');
   });
 
-  await runStep('Agregar Negocio modal', async () => {
+  await runBlockedStep('Agregar Negocio modal', async () => {
     const agregarNegocio = await pickVisible(
       [
         page.getByRole('button', { name: /agregar negocio/i }),
@@ -284,7 +297,7 @@ test('saleads_mi_negocio_full_test', async ({ page, context }, testInfo) => {
     await clickAndSettle(cancelarButton, page);
   });
 
-  await runStep('Administrar Negocios view', async () => {
+  await runBlockedStep('Administrar Negocios view', async () => {
     let administrarNegocios = await pickVisible(
       [
         page.getByRole('button', { name: /administrar negocios/i }),
@@ -332,7 +345,7 @@ test('saleads_mi_negocio_full_test', async ({ page, context }, testInfo) => {
     evidence.administrarNegocios = await saveScreenshot('04_administrar_negocios', page, true);
   });
 
-  await runStep('Información General', async () => {
+  await runBlockedStep('Información General', async () => {
     const userName = await pickVisible(
       [page.getByText(/juan|lucas|barbier|garzon/i), page.locator('h1, h2, h3, strong, span')],
       10_000,
@@ -347,7 +360,7 @@ test('saleads_mi_negocio_full_test', async ({ page, context }, testInfo) => {
     expect(cambiarPlan, 'Button "Cambiar Plan" is not visible').not.toBeNull();
   });
 
-  await runStep('Detalles de la Cuenta', async () => {
+  await runBlockedStep('Detalles de la Cuenta', async () => {
     const cuentaCreada = await pickVisible([page.getByText(/cuenta creada/i)], 10_000);
     const estadoActivo = await pickVisible([page.getByText(/estado activo/i)], 10_000);
     const idiomaSeleccionado = await pickVisible([page.getByText(/idioma seleccionado/i)], 10_000);
@@ -357,7 +370,7 @@ test('saleads_mi_negocio_full_test', async ({ page, context }, testInfo) => {
     expect(idiomaSeleccionado, '"Idioma seleccionado" is not visible').not.toBeNull();
   });
 
-  await runStep('Tus Negocios', async () => {
+  await runBlockedStep('Tus Negocios', async () => {
     const listContainer = await pickVisible(
       [page.getByText(/tus negocios/i), page.locator('[class*="business"], [id*="business"], ul, table')],
       10_000,
@@ -373,7 +386,7 @@ test('saleads_mi_negocio_full_test', async ({ page, context }, testInfo) => {
     expect(quotaText, 'Text "Tienes 2 de 3 negocios" is missing in Tus Negocios').not.toBeNull();
   });
 
-  await runStep('Términos y Condiciones', async () => {
+  await runBlockedStep('Términos y Condiciones', async () => {
     await openAndValidateLegalPage({
       linkLabel: /t[ée]rminos y condiciones/i,
       headingRegex: /t[ée]rminos y condiciones/i,
@@ -382,7 +395,7 @@ test('saleads_mi_negocio_full_test', async ({ page, context }, testInfo) => {
     });
   });
 
-  await runStep('Política de Privacidad', async () => {
+  await runBlockedStep('Política de Privacidad', async () => {
     await openAndValidateLegalPage({
       linkLabel: /pol[ií]tica de privacidad/i,
       headingRegex: /pol[ií]tica de privacidad/i,
