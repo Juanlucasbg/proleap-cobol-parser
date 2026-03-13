@@ -237,6 +237,13 @@ public class SaleadsMiNegocioFullTest {
 		if (!loginUrl.isBlank()) {
 			driver.get(loginUrl);
 			waitForUiToLoad();
+			return;
+		}
+
+		final String currentUrl = driver.getCurrentUrl();
+		if (currentUrl == null || currentUrl.isBlank() || "about:blank".equals(currentUrl) || currentUrl.startsWith("data:")) {
+			throw new IllegalStateException(
+					"No login page is open. Provide SALEADS_LOGIN_URL (env or JVM property) for the current environment.");
 		}
 	}
 
