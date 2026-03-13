@@ -1,0 +1,18 @@
+{
+  "name": "saleads-mi-negocio-workflow",
+  "version": "1.0.0",
+  "description": "Cross-environment Playwright workflow for SaleADS Mi Negocio module.",
+  "main": "saleads_mi_negocio_full_test.js",
+  "scripts": {
+    "test:mi-negocio": "node saleads_mi_negocio_full_test.js"
+  },
+  "keywords": [
+    "saleads",
+    "playwright",
+    "e2e"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "playwright": "^1.58.2"
+  }
+}

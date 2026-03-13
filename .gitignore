@@ -41,3 +41,6 @@ target/
 
 ## Additional for IntelliJ
 out/
+automation/saleads/node_modules/
+automation/saleads/artifacts/
+automation/saleads/.pw-user-data/
