@@ -122,6 +122,7 @@ async function ensureOnLoginPage(page: Page): Promise<void> {
 
 async function runStep(
   report: TestReport,
+  page: Page,
   field: (typeof REPORT_FIELDS)[number],
   stepFn: () => Promise<void>,
 ): Promise<void> {
@@ -132,6 +133,11 @@ async function runStep(
   } catch (error) {
     report.statuses[field] = "FAIL";
     report.details[field] = error instanceof Error ? error.message : String(error);
+    try {
+      await capture(page, `failed-${field}`, report.evidence.screenshots, true);
+    } catch {
+      // Keep step failure detail even if screenshot capture fails.
+    }
   }
 }
 
@@ -150,7 +156,7 @@ test(TEST_NAME, async ({ context, page }) => {
     },
   };
 
-  await runStep(report, "Login", async () => {
+  await runStep(report, page, "Login", async () => {
     await ensureOnLoginPage(page);
     report.environment = page.url() === "about:blank" ? "unknown" : new URL(page.url()).origin;
 
@@ -189,7 +195,7 @@ test(TEST_NAME, async ({ context, page }) => {
     await capture(page, "dashboard-loaded", report.evidence.screenshots, true);
   });
 
-  await runStep(report, "Mi Negocio menu", async () => {
+  await runStep(report, page, "Mi Negocio menu", async () => {
     const negocioSection = await firstVisible(
       [
         page.getByRole("button", { name: /^negocio$/i }),
@@ -221,7 +227,7 @@ test(TEST_NAME, async ({ context, page }) => {
     await capture(page, "mi-negocio-expanded-menu", report.evidence.screenshots, true);
   });
 
-  await runStep(report, "Agregar Negocio modal", async () => {
+  await runStep(report, page, "Agregar Negocio modal", async () => {
     const addBusinessMenuItem = await firstVisible(
       [
         page.getByRole("button", { name: /^agregar negocio$/i }),
@@ -257,7 +263,7 @@ test(TEST_NAME, async ({ context, page }) => {
     await clickAndWait(cancelButton, page);
   });
 
-  await runStep(report, "Administrar Negocios view", async () => {
+  await runStep(report, page, "Administrar Negocios view", async () => {
     const miNegocioToggle = await firstVisible(
       [page.getByRole("button", { name: /^mi negocio$/i }), page.getByText(/^mi negocio$/i)],
       8_000,
@@ -287,7 +293,7 @@ test(TEST_NAME, async ({ context, page }) => {
     await capture(page, "administrar-negocios-account-page", report.evidence.screenshots, true);
   });
 
-  await runStep(report, "Información General", async () => {
+  await runStep(report, page, "Información General", async () => {
     await expect(page.getByText(/business plan/i)).toBeVisible();
     await expect(page.getByRole("button", { name: /cambiar plan/i })).toBeVisible();
     await expect(page.getByText(/@/)).toBeVisible();
@@ -304,19 +310,19 @@ test(TEST_NAME, async ({ context, page }) => {
     }
   });
 
-  await runStep(report, "Detalles de la Cuenta", async () => {
+  await runStep(report, page, "Detalles de la Cuenta", async () => {
     await expect(page.getByText(/cuenta creada/i)).toBeVisible();
     await expect(page.getByText(/estado activo/i)).toBeVisible();
     await expect(page.getByText(/idioma seleccionado/i)).toBeVisible();
   });
 
-  await runStep(report, "Tus Negocios", async () => {
+  await runStep(report, page, "Tus Negocios", async () => {
     await expect(page.getByText(/tus negocios/i)).toBeVisible();
     await expect(page.getByRole("button", { name: /agregar negocio/i }).first()).toBeVisible();
     await expect(page.getByText(/tienes 2 de 3 negocios/i)).toBeVisible();
   });
 
-  await runStep(report, "Términos y Condiciones", async () => {
+  await runStep(report, page, "Términos y Condiciones", async () => {
     const termsLink = await firstVisible(
       [
         page.getByRole("link", { name: /t[eé]rminos y condiciones/i }),
@@ -349,7 +355,7 @@ test(TEST_NAME, async ({ context, page }) => {
     }
   });
 
-  await runStep(report, "Política de Privacidad", async () => {
+  await runStep(report, page, "Política de Privacidad", async () => {
     const privacyLink = await firstVisible(
       [
         page.getByRole("link", { name: /pol[ií]tica de privacidad/i }),
