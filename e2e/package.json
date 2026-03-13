@@ -10,6 +10,6 @@
     "test:saleads-mi-negocio:headed": "playwright test tests/saleads-mi-negocio.spec.mjs --project=chromium --headed"
   },
   "devDependencies": {
-    "@playwright/test": "^1.52.0"
+    "@playwright/test": "^1.58.2"
   }
 }
