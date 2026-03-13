@@ -119,6 +119,12 @@ public class SaleadsMiNegocioFullTest {
 			return;
 		}
 
+		if (!isAnyVisible(byVisibleTextContains("Sign in with Google"), byVisibleTextContains("Iniciar sesión con Google"),
+				byVisibleTextContains("Continuar con Google"), byVisibleTextContains("Google"))
+				&& isAnyVisible(byVisibleTextContains("Login"), byVisibleTextContains("Iniciar sesión"))) {
+			clickByVisibleText("Login", "Iniciar sesión");
+		}
+
 		final Set<String> handlesBeforeLogin = driver.getWindowHandles();
 		clickByVisibleText("Sign in with Google", "Iniciar sesión con Google", "Continuar con Google", "Google");
 
@@ -131,8 +137,9 @@ public class SaleadsMiNegocioFullTest {
 		}
 
 		waitForMainInterface();
-		assertVisibleText("Negocio");
-		assertAnyVisible(By.xpath("//aside"), By.xpath("//nav"));
+		assertAnyVisible(By.xpath("//aside//*[contains(normalize-space(.), 'Mi Negocio')]"),
+				By.xpath("//aside//*[contains(normalize-space(.), 'Negocio')]"),
+				By.xpath("//nav//*[contains(normalize-space(.), 'Mi Negocio')]"));
 		checkpointScreenshot("01-dashboard-loaded");
 	}
 
@@ -267,8 +274,10 @@ public class SaleadsMiNegocioFullTest {
 	}
 
 	private void waitForMainInterface() {
-		if (!waitForAnyVisibleWithin((int) timeoutSeconds, By.xpath("//aside"), By.xpath("//nav"),
-				byVisibleTextContains("Mi Negocio"), byVisibleTextContains("Negocio"))) {
+		if (!waitForAnyVisibleWithin((int) timeoutSeconds,
+				By.xpath("//aside//*[contains(normalize-space(.), 'Mi Negocio')]"),
+				By.xpath("//aside//*[contains(normalize-space(.), 'Negocio')]"),
+				By.xpath("//nav//*[contains(normalize-space(.), 'Mi Negocio')]"))) {
 			fail("Main application interface did not load after login. Current URL: " + driver.getCurrentUrl());
 		}
 	}
@@ -553,8 +562,18 @@ public class SaleadsMiNegocioFullTest {
 	}
 
 	private boolean isMainInterfaceVisible() {
-		return isVisible(By.xpath("//aside")) || isVisible(By.xpath("//nav")) || isVisible(byVisibleTextContains("Mi Negocio"))
-				|| isVisible(byVisibleTextContains("Negocio"));
+		return isAnyVisible(By.xpath("//aside//*[contains(normalize-space(.), 'Mi Negocio')]"),
+				By.xpath("//aside//*[contains(normalize-space(.), 'Negocio')]"),
+				By.xpath("//nav//*[contains(normalize-space(.), 'Mi Negocio')]"));
+	}
+
+	private boolean isAnyVisible(final By... locators) {
+		for (final By locator : locators) {
+			if (isVisible(locator)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private String sanitizeFileName(final String value) {
