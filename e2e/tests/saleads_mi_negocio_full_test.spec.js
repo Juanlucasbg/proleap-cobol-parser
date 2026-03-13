@@ -114,11 +114,9 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   if (baseUrl) {
     await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
     await waitForUi(page);
-  } else if (page.url() === "about:blank") {
-    throw new Error(
-      "No SALEADS_BASE_URL or BASE_URL provided and browser is at about:blank. " +
-        "Set SALEADS_BASE_URL or start from the SaleADS login page."
-    );
+  } else {
+    // Keep environment-agnostic behavior: caller can pre-open any SaleADS login page.
+    await waitForUi(page);
   }
 
   await runStep("Login", async () => {
