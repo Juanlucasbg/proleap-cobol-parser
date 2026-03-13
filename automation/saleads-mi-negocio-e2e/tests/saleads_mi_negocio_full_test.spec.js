@@ -45,7 +45,9 @@ async function firstVisible(candidates, timeoutMs = 12_000) {
 
 async function expectAnyVisible(page, candidates, timeoutMs = 20_000) {
   const candidate = await firstVisible(candidates, timeoutMs);
-  expect(candidate, "Expected at least one candidate to be visible").not.toBeNull();
+  if (!candidate) {
+    throw new Error("None of the expected visible-text elements were found.");
+  }
   return candidate;
 }
 
@@ -138,6 +140,8 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
   const report = createInitialReport();
   const failures = [];
   const legalUrls = {};
+  let loginCompleted = false;
+  let accountViewLoaded = false;
 
   const runValidation = async (reportKey, fn) => {
     try {
@@ -199,9 +203,14 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     await expectAnyVisible(page, [page.locator("aside"), page.getByText(/mi negocio|negocio/i)], 60_000);
     await expect(page.locator("aside")).toBeVisible();
     await checkpoint(page, testInfo, "01_dashboard_loaded", true);
+    loginCompleted = true;
   });
 
   await runValidation("Mi Negocio menu", async () => {
+    if (!loginCompleted) {
+      throw new Error("Blocked because Login failed.");
+    }
+
     const negocioSection = await firstVisible(
       [
         page.getByRole("button", { name: /^Negocio$/i }),
@@ -227,6 +236,10 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
   });
 
   await runValidation("Agregar Negocio modal", async () => {
+    if (!loginCompleted) {
+      throw new Error("Blocked because Login failed.");
+    }
+
     const addBusiness = await expectAnyVisible(page, [
       page.getByRole("button", { name: /agregar negocio/i }),
       page.getByRole("link", { name: /agregar negocio/i }),
@@ -250,6 +263,10 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
   });
 
   await runValidation("Administrar Negocios view", async () => {
+    if (!loginCompleted) {
+      throw new Error("Blocked because Login failed.");
+    }
+
     const administrarOptionVisible = await firstVisible([page.getByText(/Administrar Negocios/i)], 2_500);
     if (!administrarOptionVisible) {
       const miNegocioOption = await expectAnyVisible(page, [
@@ -272,9 +289,14 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     await expect(page.getByText(/Tus Negocios/i)).toBeVisible();
     await expect(page.getByText(/Sección Legal/i)).toBeVisible();
     await checkpoint(page, testInfo, "04_administrar_negocios_view", true);
+    accountViewLoaded = true;
   });
 
   await runValidation("Información General", async () => {
+    if (!accountViewLoaded) {
+      throw new Error("Blocked because Administrar Negocios view failed.");
+    }
+
     await expect(page.getByText(/BUSINESS PLAN/i)).toBeVisible();
     await expect(page.getByRole("button", { name: /Cambiar Plan/i })).toBeVisible();
     await expect(page.getByText(/@/i)).toBeVisible();
@@ -282,18 +304,30 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
   });
 
   await runValidation("Detalles de la Cuenta", async () => {
+    if (!accountViewLoaded) {
+      throw new Error("Blocked because Administrar Negocios view failed.");
+    }
+
     await expect(page.getByText(/Cuenta creada/i)).toBeVisible();
     await expect(page.getByText(/Estado activo/i)).toBeVisible();
     await expect(page.getByText(/Idioma seleccionado/i)).toBeVisible();
   });
 
   await runValidation("Tus Negocios", async () => {
+    if (!accountViewLoaded) {
+      throw new Error("Blocked because Administrar Negocios view failed.");
+    }
+
     await expect(page.getByText(/Tus Negocios/i)).toBeVisible();
     await expect(page.getByRole("button", { name: /Agregar Negocio/i })).toBeVisible();
     await expect(page.getByText(/Tienes\s*2\s*de\s*3\s*negocios/i)).toBeVisible();
   });
 
   await runValidation("Términos y Condiciones", async () => {
+    if (!accountViewLoaded) {
+      throw new Error("Blocked because Administrar Negocios view failed.");
+    }
+
     legalUrls["Términos y Condiciones"] = await openAndValidateLegalLink({
       appPage: page,
       linkRegex: /T[ée]rminos y Condiciones/i,
@@ -304,6 +338,10 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
   });
 
   await runValidation("Política de Privacidad", async () => {
+    if (!accountViewLoaded) {
+      throw new Error("Blocked because Administrar Negocios view failed.");
+    }
+
     legalUrls["Política de Privacidad"] = await openAndValidateLegalLink({
       appPage: page,
       linkRegex: /Pol[ií]tica de Privacidad/i,
