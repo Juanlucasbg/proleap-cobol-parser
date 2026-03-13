@@ -102,9 +102,16 @@ async function sectionText(page, sectionTitleRegex) {
 
 async function validateLegalLink({ page, context, linkRegex, headingRegex, screenshotName, reportKey }) {
   const appPage = page;
+  const legalSectionHeading = await firstVisibleByText(page, [/secci[oó]n legal/i], 4000);
+  const searchRoot =
+    legalSectionHeading
+      ? legalSectionHeading
+          .locator("xpath=ancestor::*[self::section or self::article or self::div][1]")
+          .first()
+      : page;
   const link =
-    (await firstVisibleByRole(page, "link", [linkRegex])) ||
-    (await firstVisibleByText(page, [linkRegex]));
+    (await firstVisibleByRole(searchRoot, "link", [linkRegex])) ||
+    (await firstVisibleByText(searchRoot, [linkRegex]));
 
   if (!link) {
     throw new Error(`Could not find legal link for ${reportKey}`);
@@ -174,7 +181,7 @@ async function main() {
     await waitForUi(page);
 
     await runStep("Login", async () => {
-      const loginButton =
+      let loginButton =
         (await firstVisibleByRole(page, "button", [
           /sign in with google/i,
           /iniciar sesi[oó]n con google/i,
@@ -186,6 +193,45 @@ async function main() {
           /iniciar sesi[oó]n con google/i,
           /continuar con google/i,
         ]));
+
+      // Fallback for homepages that require entering a dedicated login view first.
+      if (!loginButton) {
+        const openLogin =
+          (await firstVisibleByRole(page, "button", [
+            /iniciar sesi[oó]n/i,
+            /sign in/i,
+            /login/i,
+            /entrar/i,
+          ], 8000)) ||
+          (await firstVisibleByRole(page, "link", [
+            /iniciar sesi[oó]n/i,
+            /sign in/i,
+            /login/i,
+            /entrar/i,
+          ], 8000)) ||
+          (await firstVisibleByText(page, [
+            /iniciar sesi[oó]n/i,
+            /sign in/i,
+            /login/i,
+            /entrar/i,
+          ], 8000));
+
+        if (openLogin) {
+          await clickAndWait(openLogin, page);
+          loginButton =
+            (await firstVisibleByRole(page, "button", [
+              /sign in with google/i,
+              /iniciar sesi[oó]n con google/i,
+              /continuar con google/i,
+              /google/i,
+            ], 10000)) ||
+            (await firstVisibleByText(page, [
+              /sign in with google/i,
+              /iniciar sesi[oó]n con google/i,
+              /continuar con google/i,
+            ], 10000));
+        }
+      }
 
       if (!loginButton) {
         throw new Error("Could not locate Google login button.");
@@ -313,6 +359,9 @@ async function main() {
     });
 
     await runStep("Información General", async () => {
+      if (results["Administrar Negocios view"] !== "PASS") {
+        throw new Error("Prerequisite failed: Administrar Negocios view.");
+      }
       const text = await sectionText(page, /informaci[oó]n general/i);
       const hasEmail = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i.test(text);
       const lines = text
@@ -343,6 +392,9 @@ async function main() {
     });
 
     await runStep("Detalles de la Cuenta", async () => {
+      if (results["Administrar Negocios view"] !== "PASS") {
+        throw new Error("Prerequisite failed: Administrar Negocios view.");
+      }
       const text = await sectionText(page, /detalles de la cuenta/i);
       const checks = [/cuenta creada/i, /estado activo/i, /idioma seleccionado/i];
       for (const check of checks) {
@@ -353,6 +405,9 @@ async function main() {
     });
 
     await runStep("Tus Negocios", async () => {
+      if (results["Administrar Negocios view"] !== "PASS") {
+        throw new Error("Prerequisite failed: Administrar Negocios view.");
+      }
       const text = await sectionText(page, /tus negocios/i);
       const hasAdd = /agregar negocio/i.test(text);
       const hasLimit = /tienes\s+2\s+de\s+3\s+negocios/i.test(text);
@@ -370,6 +425,9 @@ async function main() {
     });
 
     await runStep("Términos y Condiciones", async () => {
+      if (results["Administrar Negocios view"] !== "PASS") {
+        throw new Error("Prerequisite failed: Administrar Negocios view.");
+      }
       await validateLegalLink({
         page,
         context,
@@ -381,6 +439,9 @@ async function main() {
     });
 
     await runStep("Política de Privacidad", async () => {
+      if (results["Administrar Negocios view"] !== "PASS") {
+        throw new Error("Prerequisite failed: Administrar Negocios view.");
+      }
       await validateLegalLink({
         page,
         context,
