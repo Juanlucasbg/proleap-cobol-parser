@@ -102,11 +102,11 @@ public class SaleadsMiNegocioFullTest {
         executeStep("Mi Negocio menu", this::stepOpenMiNegocioMenu);
         executeStep("Agregar Negocio modal", this::stepValidateAgregarNegocioModal);
         executeStep("Administrar Negocios view", this::stepOpenAdministrarNegocios);
-        executeStep("Informacion General", this::stepValidateInformacionGeneral);
+        executeStep("Información General", this::stepValidateInformacionGeneral);
         executeStep("Detalles de la Cuenta", this::stepValidateDetallesCuenta);
         executeStep("Tus Negocios", this::stepValidateTusNegocios);
-        executeStep("Terminos y Condiciones", this::stepValidateTerminosYCondiciones);
-        executeStep("Politica de Privacidad", this::stepValidatePoliticaPrivacidad);
+        executeStep("Términos y Condiciones", this::stepValidateTerminosYCondiciones);
+        executeStep("Política de Privacidad", this::stepValidatePoliticaPrivacidad);
 
         writeFinalReport();
         if (!failures.isEmpty()) {
@@ -432,11 +432,11 @@ public class SaleadsMiNegocioFullTest {
         report.put("Mi Negocio menu", "NOT_RUN");
         report.put("Agregar Negocio modal", "NOT_RUN");
         report.put("Administrar Negocios view", "NOT_RUN");
-        report.put("Informacion General", "NOT_RUN");
+        report.put("Información General", "NOT_RUN");
         report.put("Detalles de la Cuenta", "NOT_RUN");
         report.put("Tus Negocios", "NOT_RUN");
-        report.put("Terminos y Condiciones", "NOT_RUN");
-        report.put("Politica de Privacidad", "NOT_RUN");
+        report.put("Términos y Condiciones", "NOT_RUN");
+        report.put("Política de Privacidad", "NOT_RUN");
     }
 
     private void takeScreenshot(final String checkpointName) {
