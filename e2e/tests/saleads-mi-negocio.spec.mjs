@@ -11,11 +11,11 @@ const REPORT_FIELDS = [
   "Mi Negocio menu",
   "Agregar Negocio modal",
   "Administrar Negocios view",
-  "Informacion General",
+  "Informaci\u00f3n General",
   "Detalles de la Cuenta",
   "Tus Negocios",
-  "Terminos y Condiciones",
-  "Politica de Privacidad"
+  "T\u00e9rminos y Condiciones",
+  "Pol\u00edtica de Privacidad"
 ];
 
 const report = Object.fromEntries(
@@ -131,7 +131,7 @@ async function runStep(field, callback) {
   }
 }
 
-async function openLegalDocumentAndReturn(page, context, linkOptions, expectedHeading, screenshotName) {
+async function openLegalDocumentAndReturn(page, context, linkOptions, expectedHeadingOptions, screenshotName) {
   const previousUrl = page.url();
   const popupPromise = context.waitForEvent("page", { timeout: 12000 }).catch(() => null);
 
@@ -142,15 +142,11 @@ async function openLegalDocumentAndReturn(page, context, linkOptions, expectedHe
   await targetPage.waitForLoadState("domcontentloaded", { timeout: 30000 });
   await waitForUiToSettle(targetPage);
 
-  await expect(
-    targetPage.getByRole("heading", {
-      name: new RegExp(escapeRegex(expectedHeading), "i")
-    })
-  ).toBeVisible({ timeout: 30000 });
+  await assertAnyTextVisible(targetPage, expectedHeadingOptions, 30000);
 
   const textContent = await targetPage.locator("body").innerText();
   if (textContent.trim().length < 120) {
-    throw new Error(`Legal page text appears too short for: ${expectedHeading}`);
+    throw new Error(`Legal page text appears too short for: ${expectedHeadingOptions.join(" / ")}`);
   }
 
   await takeCheckpoint(targetPage, screenshotName, true);
@@ -191,7 +187,7 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
     const popupPromise = context.waitForEvent("page", { timeout: 12000 }).catch(() => null);
     await clickByVisibleText(page, [
       "Sign in with Google",
-      "Iniciar sesion con Google",
+      "Iniciar sesi\u00f3n con Google",
       "Login with Google",
       "Acceder con Google"
     ]);
@@ -258,19 +254,34 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
     }
 
     await clickByVisibleText(page, ["Administrar Negocios"]);
-    await assertAnyTextVisible(page, ["Informacion General", "Informacion general"]);
+    await assertAnyTextVisible(page, [
+      "Informaci\u00f3n General",
+      "Informacion General",
+      "Informaci\u00f3n general",
+      "Informacion general"
+    ]);
     await assertAnyTextVisible(page, ["Detalles de la Cuenta", "Detalles de la cuenta"]);
     await assertAnyTextVisible(page, ["Tus Negocios", "Tus negocios"]);
-    await assertAnyTextVisible(page, ["Seccion Legal", "Seccion legal"]);
+    await assertAnyTextVisible(page, [
+      "Secci\u00f3n Legal",
+      "Seccion Legal",
+      "Secci\u00f3n legal",
+      "Seccion legal"
+    ]);
     await takeCheckpoint(page, "step-04-administrar-negocios-view.png", true);
   });
 
-  await runStep("Informacion General", async () => {
-    const section = await getSectionByHeading(page, ["Informacion General", "Informacion general"]);
+  await runStep("Informaci\u00f3n General", async () => {
+    const section = await getSectionByHeading(page, [
+      "Informaci\u00f3n General",
+      "Informacion General",
+      "Informaci\u00f3n general",
+      "Informacion general"
+    ]);
     const sectionText = await section.innerText();
 
     if (!sectionText.includes("@")) {
-      throw new Error("User email is not visible in Informacion General.");
+      throw new Error("User email is not visible in Informaci\u00f3n General.");
     }
 
     const lines = sectionText
@@ -286,7 +297,7 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
       );
     });
     if (!userNameLine) {
-      throw new Error("Could not identify a user name value in Informacion General.");
+      throw new Error("Could not identify a user name value in Informaci\u00f3n General.");
     }
 
     await expect(section.getByText(/BUSINESS PLAN/i)).toBeVisible();
@@ -317,22 +328,22 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
     }
   });
 
-  await runStep("Terminos y Condiciones", async () => {
+  await runStep("T\u00e9rminos y Condiciones", async () => {
     evidence.terminosYCondicionesUrl = await openLegalDocumentAndReturn(
       page,
       context,
       ["Terminos y Condiciones", "Términos y Condiciones"],
-      "Terminos y Condiciones",
+      ["Terminos y Condiciones", "T\u00e9rminos y Condiciones"],
       "step-08-terminos-y-condiciones.png"
     );
   });
 
-  await runStep("Politica de Privacidad", async () => {
+  await runStep("Pol\u00edtica de Privacidad", async () => {
     evidence.politicaDePrivacidadUrl = await openLegalDocumentAndReturn(
       page,
       context,
       ["Politica de Privacidad", "Política de Privacidad"],
-      "Politica de Privacidad",
+      ["Politica de Privacidad", "Pol\u00edtica de Privacidad"],
       "step-09-politica-de-privacidad.png"
     );
   });
