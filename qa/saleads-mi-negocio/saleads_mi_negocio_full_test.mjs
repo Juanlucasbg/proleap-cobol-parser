@@ -88,6 +88,15 @@ async function screenshot(page, name, fullPage = false) {
   return outputPath;
 }
 
+function safeFileName(value) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .toLowerCase();
+}
+
 async function clickAndWait(locator, page) {
   await locator.click();
   await waitForUi(page);
@@ -152,7 +161,7 @@ async function validateLegalLink({ page, context, linkRegex, headingRegex, scree
   await waitForUi(appPage);
 }
 
-async function runStep(reportKey, fn) {
+async function runStep(reportKey, page, fn) {
   process.stdout.write(sectionHeader(`STEP: ${reportKey}`));
   try {
     await fn();
@@ -160,6 +169,7 @@ async function runStep(reportKey, fn) {
     console.log(`[PASS] ${reportKey}`);
   } catch (error) {
     results[reportKey] = "FAIL";
+    await screenshot(page, `fail_${safeFileName(reportKey)}.png`, true).catch(() => undefined);
     failures.push({ step: reportKey, error: error instanceof Error ? error.message : String(error) });
     console.error(`[FAIL] ${reportKey}: ${error instanceof Error ? error.message : String(error)}`);
   }
@@ -179,8 +189,9 @@ async function main() {
     console.log(`Navigating to ${BASE_URL}`);
     await page.goto(BASE_URL, { waitUntil: "domcontentloaded" });
     await waitForUi(page);
+    await screenshot(page, "00_initial_page.png", true).catch(() => undefined);
 
-    await runStep("Login", async () => {
+    await runStep("Login", page, async () => {
       let loginButton =
         (await firstVisibleByRole(page, "button", [
           /sign in with google/i,
@@ -256,7 +267,7 @@ async function main() {
       await screenshot(page, "01_dashboard_loaded.png", true);
     });
 
-    await runStep("Mi Negocio menu", async () => {
+    await runStep("Mi Negocio menu", page, async () => {
       const sidebar = page.locator("aside, nav").first();
       await ensureVisible(sidebar, "Sidebar not visible.");
 
@@ -281,7 +292,7 @@ async function main() {
       await screenshot(page, "02_mi_negocio_menu_expanded.png", true);
     });
 
-    await runStep("Agregar Negocio modal", async () => {
+    await runStep("Agregar Negocio modal", page, async () => {
       const addBusinessLink =
         (await firstVisibleByRole(page, "button", [/agregar negocio/i], 8000)) ||
         (await firstVisibleByRole(page, "link", [/agregar negocio/i], 8000)) ||
@@ -322,7 +333,7 @@ async function main() {
       await clickAndWait(cancelButton, page);
     });
 
-    await runStep("Administrar Negocios view", async () => {
+    await runStep("Administrar Negocios view", page, async () => {
       const sidebar = page.locator("aside, nav").first();
       await ensureVisible(sidebar, "Sidebar not visible for Administrar Negocios step.");
 
@@ -358,7 +369,7 @@ async function main() {
       await screenshot(page, "04_administrar_negocios_page_full.png", true);
     });
 
-    await runStep("Información General", async () => {
+    await runStep("Información General", page, async () => {
       if (results["Administrar Negocios view"] !== "PASS") {
         throw new Error("Prerequisite failed: Administrar Negocios view.");
       }
@@ -391,7 +402,7 @@ async function main() {
       }
     });
 
-    await runStep("Detalles de la Cuenta", async () => {
+    await runStep("Detalles de la Cuenta", page, async () => {
       if (results["Administrar Negocios view"] !== "PASS") {
         throw new Error("Prerequisite failed: Administrar Negocios view.");
       }
@@ -404,7 +415,7 @@ async function main() {
       }
     });
 
-    await runStep("Tus Negocios", async () => {
+    await runStep("Tus Negocios", page, async () => {
       if (results["Administrar Negocios view"] !== "PASS") {
         throw new Error("Prerequisite failed: Administrar Negocios view.");
       }
@@ -424,7 +435,7 @@ async function main() {
       }
     });
 
-    await runStep("Términos y Condiciones", async () => {
+    await runStep("Términos y Condiciones", page, async () => {
       if (results["Administrar Negocios view"] !== "PASS") {
         throw new Error("Prerequisite failed: Administrar Negocios view.");
       }
@@ -438,7 +449,7 @@ async function main() {
       });
     });
 
-    await runStep("Política de Privacidad", async () => {
+    await runStep("Política de Privacidad", page, async () => {
       if (results["Administrar Negocios view"] !== "PASS") {
         throw new Error("Prerequisite failed: Administrar Negocios view.");
       }
