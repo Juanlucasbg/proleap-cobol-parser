@@ -41,3 +41,8 @@ target/
 
 ## Additional for IntelliJ
 out/
+
+# Node-based E2E suite artifacts
+e2e/node_modules/
+e2e/playwright-report/
+e2e/test-results/
