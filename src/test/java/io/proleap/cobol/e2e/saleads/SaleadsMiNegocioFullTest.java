@@ -21,7 +21,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.openqa.selenium.By;
-import org.openqa.selenium.Dimension;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.OutputType;
@@ -58,11 +57,12 @@ public class SaleadsMiNegocioFullTest {
 	private final Map<String, String> capturedUrls = new LinkedHashMap<>();
 	private final List<String> screenshots = new ArrayList<>();
 	private String applicationWindowHandle;
+	private long timeoutSeconds;
 
 	@Before
 	public void setUp() throws IOException {
 		final boolean headless = Boolean.parseBoolean(System.getenv().getOrDefault("SALEADS_HEADLESS", "true"));
-		final long timeoutSeconds = Long.parseLong(System.getenv().getOrDefault("SALEADS_TIMEOUT_SECONDS", "30"));
+		timeoutSeconds = Long.parseLong(System.getenv().getOrDefault("SALEADS_TIMEOUT_SECONDS", "30"));
 		final String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
 		final String configuredEvidencePath = System.getenv("SALEADS_EVIDENCE_DIR");
 		evidenceDirectory = configuredEvidencePath == null || configuredEvidencePath.isBlank()
@@ -86,6 +86,7 @@ public class SaleadsMiNegocioFullTest {
 		driver.get(loginUrl);
 		waitForUiLoad();
 		applicationWindowHandle = driver.getWindowHandle();
+		checkpointScreenshot("00-initial-login-page");
 	}
 
 	@After
@@ -113,6 +114,11 @@ public class SaleadsMiNegocioFullTest {
 	}
 
 	private void stepLoginWithGoogle() throws IOException {
+		if (isMainInterfaceVisible()) {
+			checkpointScreenshot("01-dashboard-loaded");
+			return;
+		}
+
 		final Set<String> handlesBeforeLogin = driver.getWindowHandles();
 		clickByVisibleText("Sign in with Google", "Iniciar sesión con Google", "Continuar con Google", "Google");
 
@@ -261,16 +267,20 @@ public class SaleadsMiNegocioFullTest {
 	}
 
 	private void waitForMainInterface() {
-		wait.until(driver -> isVisible(By.xpath("//aside")) || isVisible(By.xpath("//nav"))
-				|| isVisible(byVisibleTextContains("Mi Negocio")) || isVisible(byVisibleTextContains("Negocio")));
+		if (!waitForAnyVisibleWithin((int) timeoutSeconds, By.xpath("//aside"), By.xpath("//nav"),
+				byVisibleTextContains("Mi Negocio"), byVisibleTextContains("Negocio"))) {
+			fail("Main application interface did not load after login. Current URL: " + driver.getCurrentUrl());
+		}
 	}
 
 	private void expandMiNegocioIfCollapsed() {
 		if (!isVisible(byVisibleTextContains("Administrar Negocios"))) {
 			clickByVisibleText("Mi Negocio", "Negocio");
 		}
-		wait.until(driver -> isVisible(byVisibleTextContains("Agregar Negocio"))
-				|| isVisible(byVisibleTextContains("Administrar Negocios")));
+		if (!waitForAnyVisibleWithin((int) timeoutSeconds, byVisibleTextContains("Agregar Negocio"),
+				byVisibleTextContains("Administrar Negocios"))) {
+			fail("Mi Negocio submenu did not expand. Current URL: " + driver.getCurrentUrl());
+		}
 	}
 
 	private WebElement sectionByHeading(final String headingText) {
@@ -340,6 +350,22 @@ public class SaleadsMiNegocioFullTest {
 			waitForAnyVisible(locators);
 		} catch (final TimeoutException ex) {
 			fail("None of the expected elements are visible.");
+		}
+	}
+
+	private boolean waitForAnyVisibleWithin(final int seconds, final By... locators) {
+		try {
+			final WebDriverWait shortWait = new WebDriverWait(driver, Duration.ofSeconds(seconds));
+			return shortWait.until(driver -> {
+				for (final By locator : locators) {
+					if (isVisible(locator)) {
+						return true;
+					}
+				}
+				return false;
+			});
+		} catch (final TimeoutException ex) {
+			return false;
 		}
 	}
 
@@ -420,7 +446,17 @@ public class SaleadsMiNegocioFullTest {
 		} catch (final Throwable throwable) {
 			reportStatus.put(reportField, Boolean.FALSE);
 			final String message = throwable.getMessage() == null ? throwable.toString() : throwable.getMessage();
-			reportFailures.put(reportField, message);
+			String failureScreenshot = "";
+			try {
+				final String screenshotName = "failure-" + sanitizeFileName(reportField);
+				checkpointScreenshot(screenshotName);
+				failureScreenshot = evidenceDirectory.resolve(screenshotName + ".png").toString();
+			} catch (final Exception ignored) {
+				// keep original failure if screenshot capture is not possible
+			}
+			reportFailures.put(reportField,
+					message + "\nCurrent URL: " + safeCurrentUrl()
+							+ (failureScreenshot.isBlank() ? "" : "\nFailure screenshot: " + failureScreenshot));
 		}
 	}
 
@@ -514,6 +550,23 @@ public class SaleadsMiNegocioFullTest {
 
 	private String escapeJson(final String value) {
 		return value.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n");
+	}
+
+	private boolean isMainInterfaceVisible() {
+		return isVisible(By.xpath("//aside")) || isVisible(By.xpath("//nav")) || isVisible(byVisibleTextContains("Mi Negocio"))
+				|| isVisible(byVisibleTextContains("Negocio"));
+	}
+
+	private String sanitizeFileName(final String value) {
+		return value.toLowerCase().replaceAll("[^a-z0-9]+", "-").replaceAll("(^-|-$)", "");
+	}
+
+	private String safeCurrentUrl() {
+		try {
+			return driver.getCurrentUrl();
+		} catch (final Exception ignored) {
+			return "unavailable";
+		}
 	}
 
 	@FunctionalInterface
