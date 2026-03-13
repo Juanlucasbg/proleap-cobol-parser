@@ -227,6 +227,7 @@ async function main() {
 
   let appPage = context.pages()[0] || (await context.newPage());
 
+  let runError = null;
   try {
     if (loginUrl) {
       await appPage.goto(loginUrl, { waitUntil: "domcontentloaded" });
@@ -239,19 +240,7 @@ async function main() {
         );
       }
     }
-  } catch (setupError) {
-    setReport(
-      report,
-      "Login",
-      "FAIL",
-      setupError && setupError.message
-        ? setupError.message
-        : String(setupError),
-    );
-    throw setupError;
-  }
 
-  try {
     await withStep(report, "Login", async () => {
       const popupPromise = context
         .waitForEvent("page", { timeout: 12000 })
@@ -514,6 +503,16 @@ async function main() {
       artifacts.legalUrls.politica = legalResult.finalUrl;
       return `Legal page validated. URL: ${legalResult.finalUrl}`;
     });
+  } catch (error) {
+    if (report.Login.details === "Not executed.") {
+      setReport(
+        report,
+        "Login",
+        "FAIL",
+        error && error.message ? error.message : String(error),
+      );
+    }
+    runError = error;
   } finally {
     const finalPayload = {
       name: TEST_NAME,
@@ -533,6 +532,10 @@ async function main() {
 
     console.log(JSON.stringify(finalPayload, null, 2));
     console.log(`Report written to: ${REPORT_PATH}`);
+  }
+
+  if (runError) {
+    throw runError;
   }
 }
 
