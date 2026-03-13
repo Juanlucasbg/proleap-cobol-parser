@@ -1,0 +1,20 @@
+{
+  "name": "saleads-mi-negocio",
+  "version": "1.0.0",
+  "description": "E2E workflow validation for SaleADS Mi Negocio module",
+  "type": "module",
+  "scripts": {
+    "test": "node saleads_mi_negocio_full_test.mjs",
+    "test:headed": "HEADLESS=false node saleads_mi_negocio_full_test.mjs"
+  },
+  "keywords": [
+    "playwright",
+    "e2e",
+    "saleads"
+  ],
+  "author": "Cursor Automation",
+  "license": "ISC",
+  "devDependencies": {
+    "playwright": "^1.58.2"
+  }
+}
