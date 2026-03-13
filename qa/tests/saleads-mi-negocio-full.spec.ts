@@ -106,7 +106,10 @@ async function ensureOnLoginPage(page: Page): Promise<void> {
     return;
   }
 
-  const configuredLoginUrl = test.info().config.use.baseURL || process.env.SALEADS_LOGIN_URL || process.env.SALEADS_URL;
+  const configBaseUrl =
+    (test.info().project.use as { baseURL?: string } | undefined)?.baseURL ??
+    (test.info().config.projects?.[0]?.use as { baseURL?: string } | undefined)?.baseURL;
+  const configuredLoginUrl = configBaseUrl || process.env.SALEADS_LOGIN_URL || process.env.SALEADS_URL || process.env.BASE_URL;
   if (!configuredLoginUrl) {
     throw new Error(
       "No login page URL available. Open the login page before running, or set SALEADS_LOGIN_URL/SALEADS_URL/BASE_URL.",
