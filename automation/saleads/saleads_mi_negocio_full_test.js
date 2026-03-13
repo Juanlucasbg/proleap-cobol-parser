@@ -239,7 +239,19 @@ async function main() {
         );
       }
     }
+  } catch (setupError) {
+    setReport(
+      report,
+      "Login",
+      "FAIL",
+      setupError && setupError.message
+        ? setupError.message
+        : String(setupError),
+    );
+    throw setupError;
+  }
 
+  try {
     await withStep(report, "Login", async () => {
       const popupPromise = context
         .waitForEvent("page", { timeout: 12000 })

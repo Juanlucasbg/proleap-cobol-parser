@@ -31,6 +31,7 @@ No domain is hardcoded. Use environment variables so the same script works in de
 
 ```bash
 npm install
+npx playwright install chromium
 ```
 
 ## Run

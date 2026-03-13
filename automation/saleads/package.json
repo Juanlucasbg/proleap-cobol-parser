@@ -4,6 +4,7 @@
   "description": "Cross-environment Playwright workflow for SaleADS Mi Negocio module.",
   "main": "saleads_mi_negocio_full_test.js",
   "scripts": {
+    "install:browsers": "playwright install chromium",
     "test:mi-negocio": "node saleads_mi_negocio_full_test.js"
   },
   "keywords": [
