@@ -236,8 +236,8 @@ public class SaleadsMiNegocioFullTest {
 		boolean openedNewTab = false;
 
 		try {
-			target = appPage.waitForPopup(() -> clickAnyVisibleTextNoWait(appPage, Arrays.asList(linkText)),
-					new Page.WaitForPopupOptions().setTimeout(7000));
+			target = appPage.waitForPopup(new Page.WaitForPopupOptions().setTimeout(7000),
+					() -> clickAnyVisibleTextNoWait(appPage, Arrays.asList(linkText)));
 			openedNewTab = true;
 		} catch (final PlaywrightException ignored) {
 			clickAnyVisibleTextNoWait(appPage, Arrays.asList(linkText));
