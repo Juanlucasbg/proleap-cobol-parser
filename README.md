@@ -195,6 +195,31 @@ $ mvn clean test
 ```
 
 
+SaleADS Mi Negocio end-to-end workflow test
+-------------------------------------------
+
+The repository now includes a Playwright-based JUnit test for the full **SaleADS Mi Negocio**
+workflow requested in automation:
+
+* Test class: `io.proleap.e2e.saleads.SaleadsMiNegocioFullTest`
+* Screenshot output: `target/screenshots/saleads_mi_negocio_full_test`
+
+Required environment variable:
+
+* `SALEADS_LOGIN_URL` - login page URL of the current environment (dev/staging/prod)
+
+Optional environment variables:
+
+* `SALEADS_EXPECTED_USER_NAME` - exact user name to validate in "Información General"
+* `HEADLESS` - `true` (default) or `false`
+
+Example run command:
+
+```
+$ SALEADS_LOGIN_URL="https://your-env.example.com/login" mvn -Dtest=SaleadsMiNegocioFullTest test
+```
+
+
 Release process
 ---------------
 
