@@ -295,7 +295,7 @@ public class SaleAdsMiNegocioFullTest {
 	}
 
 	private void clickByVisibleText(final String text) {
-		clickAndWait(firstVisibleByText(text));
+		clickAndWait(firstClickableByText(text));
 	}
 
 	private void clickAndWait(final WebElement element) {
@@ -363,6 +363,21 @@ public class SaleAdsMiNegocioFullTest {
 		});
 	}
 
+	private WebElement firstClickableByText(final String... texts) {
+		final List<String> expectedTexts = Arrays.asList(texts);
+		return wait.until(d -> {
+			for (final String text : expectedTexts) {
+				for (final WebElement candidate : d.findElements(textLocator(text))) {
+					final WebElement clickable = toClickableElement(candidate);
+					if (clickable != null && clickable.isDisplayed() && clickable.isEnabled()) {
+						return clickable;
+					}
+				}
+			}
+			return null;
+		});
+	}
+
 	private Optional<WebElement> tryVisibleByText(final Duration timeout, final String text) {
 		try {
 			final WebDriverWait shortWait = new WebDriverWait(driver, timeout);
@@ -395,6 +410,39 @@ public class SaleAdsMiNegocioFullTest {
 		}
 
 		throw new NoSuchElementException("Could not find input field 'Nombre del Negocio'.");
+	}
+
+	private WebElement toClickableElement(final WebElement candidate) {
+		if (candidate == null || !candidate.isDisplayed()) {
+			return null;
+		}
+
+		if (isClickableTag(candidate)) {
+			return candidate;
+		}
+
+		final List<WebElement> clickableAncestors = candidate.findElements(By.xpath(
+				"./ancestor-or-self::button | ./ancestor-or-self::a | ./ancestor-or-self::*[@role='button']"));
+
+		// The last matching node on this axis is the nearest clickable ancestor.
+		for (int i = clickableAncestors.size() - 1; i >= 0; i--) {
+			final WebElement ancestor = clickableAncestors.get(i);
+			if (ancestor.isDisplayed() && ancestor.isEnabled()) {
+				return ancestor;
+			}
+		}
+
+		return null;
+	}
+
+	private boolean isClickableTag(final WebElement element) {
+		final String tagName = element.getTagName();
+		if ("button".equalsIgnoreCase(tagName) || "a".equalsIgnoreCase(tagName)) {
+			return true;
+		}
+
+		final String role = element.getAttribute("role");
+		return role != null && "button".equalsIgnoreCase(role);
 	}
 
 	private WebElement sectionByHeading(final String headingText) {
