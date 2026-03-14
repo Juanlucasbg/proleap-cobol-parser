@@ -1,0 +1,17 @@
+{
+  "name": "saleads-mi-negocio",
+  "version": "1.0.0",
+  "description": "SaleADS Mi Negocio end-to-end validation suite",
+  "scripts": {
+    "test": "playwright test",
+    "test:list": "playwright test --list",
+    "test:headed": "playwright test --headed",
+    "test:report": "playwright show-report"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
+  }
+}
