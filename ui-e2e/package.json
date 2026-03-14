@@ -1,0 +1,17 @@
+{
+  "name": "ui-e2e",
+  "version": "1.0.0",
+  "description": "Playwright E2E automation for SaleADS",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:mi-negocio": "playwright test tests/saleads-mi-negocio-full.spec.js",
+    "install:browsers": "playwright install --with-deps chromium"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
+  }
+}
