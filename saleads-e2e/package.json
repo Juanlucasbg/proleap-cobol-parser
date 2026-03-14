@@ -1,0 +1,16 @@
+{
+  "name": "saleads-e2e",
+  "version": "1.0.0",
+  "description": "Playwright end-to-end suite for SaleADS workflows.",
+  "scripts": {
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "install:browsers": "playwright install --with-deps chromium"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
+  }
+}
