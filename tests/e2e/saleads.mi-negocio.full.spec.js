@@ -271,11 +271,21 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
     recorder.fail("Login", "Google login button was not found.");
   }
 
-  const appMainVisible = await validateVisible(
-    "Login",
-    "Main application interface appears.",
-    (await findVisibleLocator(page, [page.locator("main"), page.locator("#root")], 20_000)) || page.locator("body"),
+  const appMainLocator = await findVisibleLocator(
+    page,
+    [page.locator("main"), page.locator("#root"), page.locator("[data-testid='app-shell']")],
+    20_000,
   );
+  let appMainVisible = false;
+  if (appMainLocator) {
+    appMainVisible = await validateVisible(
+      "Login",
+      "Main application interface appears.",
+      appMainLocator,
+    );
+  } else {
+    recorder.fail("Login", "Main application interface appears.");
+  }
 
   const sidebar = await findVisibleLocator(page, [
     page.locator("aside"),
