@@ -71,6 +71,11 @@ public class SaleadsMiNegocioFullTest {
 	private Path evidenceDir;
 	@Before
 	public void setUp() throws IOException {
+		final String baseUrl = firstNonBlank(System.getProperty("saleads.baseUrl"), System.getenv("SALEADS_BASE_URL"));
+		Assume.assumeTrue(
+				"Set saleads.baseUrl or SALEADS_BASE_URL with the SaleADS login page URL of the current environment.",
+				baseUrl != null);
+
 		final String evidenceFolder = "target/saleads-evidence/" + TS_FORMATTER.format(Instant.now());
 		evidenceDir = Path.of(evidenceFolder);
 		Files.createDirectories(evidenceDir);
@@ -79,11 +84,6 @@ public class SaleadsMiNegocioFullTest {
 		options.addArguments("--window-size=1920,1080");
 		driver = new ChromeDriver(options);
 		wait = new WebDriverWait(driver, DEFAULT_TIMEOUT);
-
-		final String baseUrl = firstNonBlank(System.getProperty("saleads.baseUrl"), System.getenv("SALEADS_BASE_URL"));
-		Assume.assumeTrue(
-				"Set saleads.baseUrl or SALEADS_BASE_URL with the SaleADS login page URL of the current environment.",
-				baseUrl != null);
 
 		driver.get(baseUrl);
 		waitForUiToSettle();
@@ -127,8 +127,10 @@ public class SaleadsMiNegocioFullTest {
 	}
 
 	private void stepOpenMiNegocioMenu() throws IOException {
-		clickByVisibleText("Negocio");
-		clickByVisibleText("Mi Negocio");
+		clickByAnyVisibleText("Mi Negocio", "Negocio");
+		if (!isTextVisible("Agregar Negocio") || !isTextVisible("Administrar Negocios")) {
+			clickByVisibleText("Mi Negocio");
+		}
 
 		assertVisibleText("Agregar Negocio");
 		assertVisibleText("Administrar Negocios");
