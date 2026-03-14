@@ -175,6 +175,7 @@ public class SaleadsMiNegocioFullWorkflowTest {
 		ok &= limitVisible;
 		ok &= cancelVisible;
 		ok &= crearVisible;
+		takeScreenshot("03-agregar-negocio-modal");
 
 		final WebElement nameInput = findNombreNegocioInput();
 		if (nameInput != null) {
@@ -185,8 +186,6 @@ public class SaleadsMiNegocioFullWorkflowTest {
 		}
 		clickAnyText("Cancelar");
 		waitForUiToLoad();
-
-		takeScreenshot("03-agregar-negocio-modal");
 		notes.add("Modal title visible: " + modalTitleVisible);
 		notes.add("Nombre del Negocio input visible: " + inputVisible);
 		notes.add("Limit text visible: " + limitVisible);
