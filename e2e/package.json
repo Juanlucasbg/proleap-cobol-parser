@@ -1,0 +1,13 @@
+{
+  "name": "saleads-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SaleADS end-to-end automation tests",
+  "scripts": {
+    "test": "playwright test",
+    "test:saleads-mi-negocio": "playwright test tests/saleads_mi_negocio_full_test.spec.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.52.0"
+  }
+}
