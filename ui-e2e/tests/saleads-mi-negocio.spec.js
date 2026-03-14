@@ -17,6 +17,17 @@ test.describe("saleads_mi_negocio_full_test", () => {
       "Política de Privacidad": { status: "FAIL" }
     };
     const failedSteps = [];
+    const orderedSteps = [
+      "Login",
+      "Mi Negocio menu",
+      "Agregar Negocio modal",
+      "Administrar Negocios view",
+      "Información General",
+      "Detalles de la Cuenta",
+      "Tus Negocios",
+      "Términos y Condiciones",
+      "Política de Privacidad"
+    ];
 
     const uiPause = async (ms = 1200) => {
       await page.waitForLoadState("domcontentloaded").catch(() => {});
@@ -30,7 +41,9 @@ test.describe("saleads_mi_negocio_full_test", () => {
     const markFail = (key, error) => {
       const reason = error instanceof Error ? error.message : String(error);
       report[key] = { status: "FAIL", reason };
-      failedSteps.push(key);
+      if (!failedSteps.includes(key)) {
+        failedSteps.push(key);
+      }
     };
 
     const evidenceShot = async (name, fullPage = false, targetPage = page) => {
@@ -39,7 +52,7 @@ test.describe("saleads_mi_negocio_full_test", () => {
       await testInfo.attach(name, { path: shotPath, contentType: "image/png" });
     };
 
-    const firstVisible = async (locators, timeoutMs = 20000) => {
+    const firstVisible = async (locators, timeoutMs = 12000) => {
       const stopAt = Date.now() + timeoutMs;
       while (Date.now() < stopAt) {
         for (const locator of locators) {
@@ -66,6 +79,16 @@ test.describe("saleads_mi_negocio_full_test", () => {
         await fn();
       } catch (error) {
         markFail(stepName, error);
+      }
+    };
+
+    const blockFollowingSteps = (fromStep, reason) => {
+      const fromIndex = orderedSteps.indexOf(fromStep);
+      for (let i = fromIndex + 1; i < orderedSteps.length; i += 1) {
+        const step = orderedSteps[i];
+        if (report[step].status !== "PASS" && !report[step].reason) {
+          markFail(step, reason);
+        }
       }
     };
 
@@ -123,7 +146,10 @@ test.describe("saleads_mi_negocio_full_test", () => {
       markPass("Login");
     });
 
-    await runStep("Mi Negocio menu", async () => {
+    if (report.Login.status !== "PASS") {
+      blockFollowingSteps("Login", "Blocked because login did not reach the main application.");
+    } else {
+      await runStep("Mi Negocio menu", async () => {
       const negocioSection = page.getByText(/^Negocio$/i).first();
       if (await negocioSection.isVisible().catch(() => false)) {
         await negocioSection.click();
@@ -148,7 +174,7 @@ test.describe("saleads_mi_negocio_full_test", () => {
       markPass("Mi Negocio menu");
     });
 
-    await runStep("Agregar Negocio modal", async () => {
+      await runStep("Agregar Negocio modal", async () => {
       const agregarNegocioTrigger = await firstVisible([
         page.getByText(/^Agregar Negocio$/i),
         page.getByRole("button", { name: /agregar negocio/i }),
@@ -183,7 +209,7 @@ test.describe("saleads_mi_negocio_full_test", () => {
       markPass("Agregar Negocio modal");
     });
 
-    await runStep("Administrar Negocios view", async () => {
+      await runStep("Administrar Negocios view", async () => {
       const administrarNegocios = page.getByText(/^Administrar Negocios$/i).first();
       if (!(await administrarNegocios.isVisible().catch(() => false))) {
         const miNegocio = await firstVisible([
@@ -207,7 +233,7 @@ test.describe("saleads_mi_negocio_full_test", () => {
       markPass("Administrar Negocios view");
     });
 
-    await runStep("Información General", async () => {
+      await runStep("Información General", async () => {
       const infoGeneralSection = getSectionByTitle(/Información General/i);
       await expect(infoGeneralSection).toBeVisible();
 
@@ -237,7 +263,7 @@ test.describe("saleads_mi_negocio_full_test", () => {
       markPass("Información General");
     });
 
-    await runStep("Detalles de la Cuenta", async () => {
+      await runStep("Detalles de la Cuenta", async () => {
       const detailsSection = getSectionByTitle(/Detalles de la Cuenta/i);
       await expect(detailsSection).toBeVisible();
       await expect(detailsSection.getByText(/Cuenta creada/i)).toBeVisible();
@@ -247,7 +273,7 @@ test.describe("saleads_mi_negocio_full_test", () => {
       markPass("Detalles de la Cuenta");
     });
 
-    await runStep("Tus Negocios", async () => {
+      await runStep("Tus Negocios", async () => {
       const businessesSection = getSectionByTitle(/Tus Negocios/i);
       await expect(businessesSection).toBeVisible();
       await expect(businessesSection.getByText(/Agregar Negocio/i)).toBeVisible();
@@ -309,7 +335,7 @@ test.describe("saleads_mi_negocio_full_test", () => {
       markPass(reportKey, { finalUrl });
     };
 
-    await runStep("Términos y Condiciones", async () => {
+      await runStep("Términos y Condiciones", async () => {
       await validateLegalLink(
         "Términos y Condiciones",
         /Términos y Condiciones/i,
@@ -318,7 +344,7 @@ test.describe("saleads_mi_negocio_full_test", () => {
       );
     });
 
-    await runStep("Política de Privacidad", async () => {
+      await runStep("Política de Privacidad", async () => {
       await validateLegalLink(
         "Política de Privacidad",
         /Política de Privacidad/i,
@@ -326,6 +352,7 @@ test.describe("saleads_mi_negocio_full_test", () => {
         "06-politica-de-privacidad.png"
       );
     });
+    }
 
     const reportPath = testInfo.outputPath("saleads-mi-negocio-report.json");
     await fs.writeFile(reportPath, JSON.stringify(report, null, 2), "utf-8");
