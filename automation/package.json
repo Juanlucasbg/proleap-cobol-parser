@@ -1,0 +1,12 @@
+{
+  "name": "saleads-automation",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Standalone SaleADS UI workflow automation",
+  "scripts": {
+    "saleads:mi-negocio": "node saleads_mi_negocio_full_test.js"
+  },
+  "dependencies": {
+    "playwright": "^1.53.0"
+  }
+}
