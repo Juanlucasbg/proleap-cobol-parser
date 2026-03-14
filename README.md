@@ -194,6 +194,18 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+* To run the SaleADS Mi Negocio E2E workflow test (opt-in, browser automation):
+
+```
+$ export SALEADS_RUN_E2E=true
+$ export SALEADS_LOGIN_URL="https://<current-saleads-environment-login-page>"
+$ export SALEADS_HEADLESS=true
+$ mvn -Dtest=SaleAdsMiNegocioFullTest test
+```
+
+The E2E test is implemented in `src/test/java/io/proleap/cobol/e2e/SaleAdsMiNegocioFullTest.java`.
+It does not hardcode any SaleADS domain and captures screenshots into `target/saleads-screenshots`.
+
 
 Release process
 ---------------
