@@ -7,15 +7,22 @@ function escapeRegex(value) {
 }
 
 async function waitForUiLoad(page) {
+  if (page.isClosed()) {
+    return;
+  }
   await page.waitForLoadState("domcontentloaded").catch(() => {});
   await page.waitForLoadState("networkidle", { timeout: 10_000 }).catch(() => {});
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(500).catch(() => {});
 }
 
 async function findVisibleLocator(page, candidates, timeoutMs = 15_000) {
   const deadline = Date.now() + timeoutMs;
 
   while (Date.now() < deadline) {
+    if (page.isClosed()) {
+      return null;
+    }
+
     for (const candidate of candidates) {
       try {
         if (await candidate.first().isVisible()) {
@@ -26,7 +33,7 @@ async function findVisibleLocator(page, candidates, timeoutMs = 15_000) {
       }
     }
 
-    await page.waitForTimeout(250);
+    await page.waitForTimeout(250).catch(() => {});
   }
 
   return null;
@@ -76,6 +83,10 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   await fs.mkdir(artifactsDir, { recursive: true });
 
   async function takeCheckpoint(name, targetPage = page, fullPage = false) {
+    if (targetPage.isClosed()) {
+      return;
+    }
+
     const filename = `${name.replace(/\s+/g, "_").toLowerCase()}.png`;
     const destination = path.join(artifactsDir, filename);
     await targetPage.screenshot({ path: destination, fullPage });
@@ -175,6 +186,35 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
     }
   }
 
+  async function finalizeAndAssert() {
+    const finalReport = {
+      name: "saleads_mi_negocio_full_test",
+      goal: "Login to SaleADS.ai using Google and validate the Mi Negocio module workflow.",
+      generatedAt: new Date().toISOString(),
+      report: Object.fromEntries(
+        recorder.fields.map((field) => [field, recorder.results[field].status]),
+      ),
+      details: recorder.results,
+      evidence,
+    };
+
+    const reportPath = path.join(artifactsDir, "final-report.json");
+    await fs.writeFile(reportPath, JSON.stringify(finalReport, null, 2), "utf8");
+
+    await testInfo.attach("final-report", {
+      path: reportPath,
+      contentType: "application/json",
+    });
+
+    const failedSections = recorder.fields.filter(
+      (field) => recorder.results[field].status === "FAIL",
+    );
+    expect(
+      failedSections,
+      `The following sections failed: ${failedSections.join(", ")}`,
+    ).toEqual([]);
+  }
+
   // STEP 1: Login with Google
   const startUrl =
     process.env.SALEADS_LOGIN_URL ||
@@ -251,6 +291,21 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
 
   if (appMainVisible || sidebar) {
     await takeCheckpoint("dashboard_loaded", page, true);
+  }
+
+  // Fast-fail remaining checks when login does not reach app shell.
+  if (!sidebar) {
+    for (const field of recorder.fields) {
+      if (field !== "Login" && recorder.results[field].checks.length === 0) {
+        recorder.fail(
+          field,
+          "Skipped because login did not complete and sidebar was not visible.",
+        );
+      }
+    }
+
+    await finalizeAndAssert();
+    return;
   }
 
   // STEP 2: Open Mi Negocio menu
@@ -464,31 +519,5 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   );
 
   // STEP 10: Final Report
-  const finalReport = {
-    name: "saleads_mi_negocio_full_test",
-    goal: "Login to SaleADS.ai using Google and validate the Mi Negocio module workflow.",
-    generatedAt: new Date().toISOString(),
-    report: Object.fromEntries(
-      recorder.fields.map((field) => [field, recorder.results[field].status]),
-    ),
-    details: recorder.results,
-    evidence,
-  };
-
-  const reportPath = path.join(artifactsDir, "final-report.json");
-  await fs.writeFile(reportPath, JSON.stringify(finalReport, null, 2), "utf8");
-
-  // Attach report to Playwright output and fail test if any section failed.
-  await testInfo.attach("final-report", {
-    path: reportPath,
-    contentType: "application/json",
-  });
-
-  const failedSections = recorder.fields.filter(
-    (field) => recorder.results[field].status === "FAIL",
-  );
-  expect(
-    failedSections,
-    `The following sections failed: ${failedSections.join(", ")}`,
-  ).toEqual([]);
+  await finalizeAndAssert();
 });
