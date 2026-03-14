@@ -101,8 +101,8 @@ public class SaleadsMiNegocioFullTest {
 
 		Page googlePage = null;
 		try {
-			googlePage = context.waitForPage(() -> clickAndWait(appPage, googleButton),
-					new BrowserContext.WaitForPageOptions().setTimeout(8_000));
+			googlePage = context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(8_000),
+					() -> clickAndWait(appPage, googleButton));
 			waitForUi(googlePage);
 		} catch (final TimeoutError timeout) {
 			// Some environments keep auth in the same tab.
@@ -254,8 +254,8 @@ public class SaleadsMiNegocioFullTest {
 
 		Page legalPage;
 		try {
-			legalPage = context.waitForPage(() -> clickAndWait(appPage, legalLink),
-					new BrowserContext.WaitForPageOptions().setTimeout(8_000));
+			legalPage = context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(8_000),
+					() -> clickAndWait(appPage, legalLink));
 			waitForUi(legalPage);
 		} catch (final TimeoutError timeout) {
 			clickAndWait(appPage, legalLink);
