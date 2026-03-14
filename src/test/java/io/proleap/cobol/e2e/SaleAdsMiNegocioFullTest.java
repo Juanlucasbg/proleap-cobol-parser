@@ -5,6 +5,7 @@ import static org.junit.Assume.assumeTrue;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -20,6 +21,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.Base64;
+import java.util.HashMap;
 import java.util.regex.Pattern;
 
 import org.junit.After;
@@ -178,7 +181,7 @@ public class SaleAdsMiNegocioFullTest {
 		assertAnyTextVisible("Detalles de la Cuenta");
 		assertAnyTextVisible("Tus Negocios");
 		assertAnyTextVisible("Sección Legal");
-		captureScreenshot("04-administrar-negocios");
+		captureFullPageScreenshot("04-administrar-negocios-full");
 	}
 
 	private void executeInformacionGeneralStep() {
@@ -475,6 +478,46 @@ public class SaleAdsMiNegocioFullTest {
 		final File screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
 		Files.copy(screenshot.toPath(), destination, StandardCopyOption.REPLACE_EXISTING);
 		System.out.println("Screenshot saved: " + destination.toAbsolutePath());
+	}
+
+	private void captureFullPageScreenshot(final String checkpointName) throws IOException {
+		try {
+			if (driver instanceof ChromeDriver) {
+				final ChromeDriver chromeDriver = (ChromeDriver) driver;
+				final Map<String, Object> metrics = chromeDriver.executeCdpCommand("Page.getLayoutMetrics", new HashMap<>());
+				@SuppressWarnings("unchecked")
+				final Map<String, Object> contentSize = (Map<String, Object>) metrics.get("contentSize");
+
+				final Map<String, Object> clip = new HashMap<>();
+				clip.put("x", 0);
+				clip.put("y", 0);
+				clip.put("width", contentSize.get("width"));
+				clip.put("height", contentSize.get("height"));
+				clip.put("scale", 1);
+
+				final Map<String, Object> params = new HashMap<>();
+				params.put("format", "png");
+				params.put("captureBeyondViewport", true);
+				params.put("fromSurface", true);
+				params.put("clip", clip);
+
+				final Map<String, Object> screenshot = chromeDriver.executeCdpCommand("Page.captureScreenshot", params);
+				final String data = String.valueOf(screenshot.get("data"));
+				final byte[] bytes = Base64.getDecoder().decode(data);
+
+				final String timestamp = LocalDateTime.now().format(TS_FORMAT);
+				final Path destination = screenshotsDir.resolve(checkpointName + "-" + timestamp + ".png");
+				Files.write(destination, bytes);
+				System.out.println("Full-page screenshot saved: " + destination.toAbsolutePath());
+				return;
+			}
+		} catch (final ClassCastException | FileAlreadyExistsException ignored) {
+			// Fallback to viewport screenshot below.
+		} catch (final Throwable ignored) {
+			// Fallback to viewport screenshot below.
+		}
+
+		captureScreenshot(checkpointName);
 	}
 
 	private By textLocator(final String text) {
