@@ -41,3 +41,10 @@ target/
 
 ## Additional for IntelliJ
 out/
+
+# Node / Playwright artifacts
+node_modules/
+ui-e2e/node_modules/
+ui-e2e/playwright-report/
+ui-e2e/test-results/
+ui-e2e/.cache/
