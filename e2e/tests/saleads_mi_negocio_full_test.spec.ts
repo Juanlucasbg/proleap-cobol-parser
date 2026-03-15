@@ -7,11 +7,11 @@ const REPORT_FIELDS = [
   'Mi Negocio menu',
   'Agregar Negocio modal',
   'Administrar Negocios view',
-  'Informacion General',
+  'Información General',
   'Detalles de la Cuenta',
   'Tus Negocios',
-  'Terminos y Condiciones',
-  'Politica de Privacidad',
+  'Términos y Condiciones',
+  'Política de Privacidad',
 ] as const;
 
 type ReportField = (typeof REPORT_FIELDS)[number];
@@ -302,7 +302,7 @@ test('saleads_mi_negocio_full_test', async ({ page }, testInfo) => {
     return { screenshot: accountPageShot };
   });
 
-  await runStep('Informacion General', async () => {
+  await runStep('Información General', async () => {
     await expect(page.getByText(/business plan/i)).toBeVisible({ timeout: 20_000 });
     await expect(page.getByRole('button', { name: /cambiar plan/i })).toBeVisible({ timeout: 20_000 });
 
@@ -330,7 +330,7 @@ test('saleads_mi_negocio_full_test', async ({ page }, testInfo) => {
     await expect(page.getByText(/tienes\s*2\s*de\s*3\s*negocios/i)).toBeVisible({ timeout: 20_000 });
   });
 
-  await runStep('Terminos y Condiciones', async () => {
+  await runStep('Términos y Condiciones', async () => {
     const details = await openLegalPageAndValidate(
       page,
       /t[eé]rminos\s*y\s*condiciones|terminos\s*y\s*condiciones/i,
@@ -341,7 +341,7 @@ test('saleads_mi_negocio_full_test', async ({ page }, testInfo) => {
     return { screenshot: details.screenshotPath, url: details.finalUrl };
   });
 
-  await runStep('Politica de Privacidad', async () => {
+  await runStep('Política de Privacidad', async () => {
     const details = await openLegalPageAndValidate(
       page,
       /pol[ií]tica\s+de\s+privacidad|politica\s+de\s+privacidad/i,
