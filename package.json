@@ -1,0 +1,25 @@
+{
+  "name": "saleads-mi-negocio-e2e",
+  "version": "1.0.0",
+  "description": "ProLeap ANTLR4-based parser for COBOL =====================================",
+  "scripts": {
+    "test": "npm run test:mi-negocio",
+    "test:mi-negocio": "playwright test tests/e2e/saleads-mi-negocio-full.spec.js",
+    "test:mi-negocio:headed": "playwright test tests/e2e/saleads-mi-negocio-full.spec.js --headed",
+    "playwright:install": "playwright install --with-deps chromium"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Juanlucasbg/proleap-cobol-parser.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Juanlucasbg/proleap-cobol-parser/issues"
+  },
+  "homepage": "https://github.com/Juanlucasbg/proleap-cobol-parser#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
+  }
+}
