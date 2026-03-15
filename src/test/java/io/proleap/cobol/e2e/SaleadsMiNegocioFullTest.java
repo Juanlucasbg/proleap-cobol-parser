@@ -68,10 +68,10 @@ public class SaleadsMiNegocioFullTest {
 		Files.createDirectories(evidenceDir);
 
 		final String baseUrl = firstNonBlankEnv("SALEADS_BASE_URL", "SALEADS_URL", "BASE_URL");
-		if (baseUrl != null) {
-			driver.get(baseUrl);
-			waitForUiToLoad();
-		}
+		Assume.assumeTrue("Provide SALEADS_BASE_URL (or SALEADS_URL / BASE_URL) with the SaleADS login page URL.",
+				baseUrl != null);
+		driver.get(baseUrl);
+		waitForUiToLoad();
 	}
 
 	@After
