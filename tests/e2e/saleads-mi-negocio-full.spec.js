@@ -85,6 +85,17 @@ test.describe(TEST_NAME, () => {
       }
     };
 
+    const emitFinalReport = async () => {
+      const finalReport = { ...report, ...evidence };
+      const reportPath = path.join(reportsDir, `${TEST_NAME}-${timestamp}.json`);
+      fs.writeFileSync(reportPath, JSON.stringify(finalReport, null, 2), "utf8");
+      await testInfo.attach("final-report", { path: reportPath, contentType: "application/json" });
+
+      // Important for automation logs.
+      console.log("SALEADS_MI_NEGOCIO_FINAL_REPORT");
+      console.log(JSON.stringify(finalReport, null, 2));
+    };
+
     const getSectionContainer = async (headingPattern) => {
       const heading = await firstVisibleLocator(
         [
@@ -219,6 +230,26 @@ test.describe(TEST_NAME, () => {
 
       await screenshot("01-dashboard-loaded", page, true);
     });
+
+    if (report.Login !== "PASS") {
+      for (const field of [
+        "Mi Negocio menu",
+        "Agregar Negocio modal",
+        "Administrar Negocios view",
+        "Información General",
+        "Detalles de la Cuenta",
+        "Tus Negocios",
+        "Términos y Condiciones",
+        "Política de Privacidad",
+      ]) {
+        if (report[field].includes("Not executed")) {
+          markStep(field, false, "Skipped because login was not completed.");
+        }
+      }
+
+      await emitFinalReport();
+      throw new Error(`Workflow validations failed:\n- ${failures.join("\n- ")}`);
+    }
 
     // Step 2 - Open Mi Negocio menu
     await step("Mi Negocio menu", async () => {
@@ -392,14 +423,7 @@ test.describe(TEST_NAME, () => {
     }
 
     // Step 10 - Final report
-    const finalReport = { ...report, ...evidence };
-    const reportPath = path.join(reportsDir, `${TEST_NAME}-${timestamp}.json`);
-    fs.writeFileSync(reportPath, JSON.stringify(finalReport, null, 2), "utf8");
-    await testInfo.attach("final-report", { path: reportPath, contentType: "application/json" });
-
-    // Important for automation logs.
-    console.log("SALEADS_MI_NEGOCIO_FINAL_REPORT");
-    console.log(JSON.stringify(finalReport, null, 2));
+    await emitFinalReport();
 
     if (failures.length > 0) {
       throw new Error(`Workflow validations failed:\n- ${failures.join("\n- ")}`);
