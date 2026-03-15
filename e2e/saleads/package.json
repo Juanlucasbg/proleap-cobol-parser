@@ -1,0 +1,21 @@
+{
+  "name": "saleads",
+  "version": "1.0.0",
+  "description": "SaleADS end-to-end tests",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "test:mi-negocio": "playwright test tests/saleads-mi-negocio-full.spec.js --project=chromium",
+    "test:headed": "playwright test tests/saleads-mi-negocio-full.spec.js --project=chromium --headed"
+  },
+  "keywords": [
+    "playwright",
+    "e2e",
+    "saleads"
+  ],
+  "author": "automation",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
+  }
+}
