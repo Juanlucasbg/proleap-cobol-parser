@@ -400,8 +400,7 @@ public class SaleadsMiNegocioFullTest {
 		assertAnyTextVisible(text);
 	}
 
-	@SafeVarargs
-	private final void assertAnyElementVisible(final By... locators) {
+	private void assertAnyElementVisible(final By... locators) {
 		for (By locator : locators) {
 			if (isElementVisible(locator)) {
 				return;
