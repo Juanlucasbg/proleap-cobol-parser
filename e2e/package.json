@@ -1,0 +1,21 @@
+{
+  "name": "e2e",
+  "version": "1.0.0",
+  "description": "SaleADS E2E automation tests",
+  "scripts": {
+    "test": "playwright test",
+    "test:saleads-mi-negocio": "playwright test tests/saleads-mi-negocio-full.spec.js --project=chromium",
+    "test:saleads-mi-negocio:headed": "HEADLESS=false playwright test tests/saleads-mi-negocio-full.spec.js --project=chromium",
+    "pw:install": "playwright install chromium"
+  },
+  "keywords": [
+    "playwright",
+    "saleads",
+    "e2e"
+  ],
+  "author": "automation",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
+  }
+}
