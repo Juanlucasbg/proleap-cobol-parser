@@ -281,7 +281,8 @@ async function openAgregarNegocioModal(page) {
 
   await nombreInput.fill("Negocio Prueba Automatización");
   await waitForUi(page);
-  await clickAndWait(page, cancelar);
+
+  return { cancelar };
 }
 
 async function openAdministrarNegocios(page) {
@@ -494,7 +495,7 @@ async function run() {
       details: `Mi Negocio expanded with submenu options. Screenshot: ${menuScreenshot}`
     };
 
-    await openAgregarNegocioModal(page);
+    const { cancelar } = await openAgregarNegocioModal(page);
     const modalScreenshot = await saveScreenshot(
       page,
       runFolder,
@@ -505,6 +506,7 @@ async function run() {
       status: "PASS",
       details: `Crear Nuevo Negocio modal validated. Screenshot: ${modalScreenshot}`
     };
+    await clickAndWait(page, cancelar);
 
     await openAdministrarNegocios(page);
     const adminScreenshot = await saveScreenshot(
