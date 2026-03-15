@@ -128,6 +128,9 @@ public class SaleadsMiNegocioFullTest {
 	}
 
 	private void stepLoginWithGoogle() {
+		final String initialHandle = driver.getWindowHandle();
+		final Set<String> handlesBeforeLoginClick = driver.getWindowHandles();
+
 		clickByVisibleText(Arrays.asList(
 				"Sign in with Google",
 				"Iniciar sesión con Google",
@@ -135,7 +138,7 @@ public class SaleadsMiNegocioFullTest {
 				"Continuar con Google",
 				"Google"));
 
-		selectGoogleAccountIfVisible();
+		selectGoogleAccountIfVisible(initialHandle, handlesBeforeLoginClick);
 		waitForUiLoad();
 
 		assertAnyVisibleText(Arrays.asList("Negocio", "Mi Negocio", "Dashboard", "Inicio", "Home"),
@@ -290,10 +293,8 @@ public class SaleadsMiNegocioFullTest {
 		throw new AssertionError("No se pudo hacer click sobre ninguno de los textos: " + texts, lastError);
 	}
 
-	private void selectGoogleAccountIfVisible() {
-		final String currentHandle = driver.getWindowHandle();
-		final Set<String> handlesBefore = driver.getWindowHandles();
-		final String newWindow = waitForNewWindow(handlesBefore, Duration.ofSeconds(6));
+	private void selectGoogleAccountIfVisible(final String appHandle, final Set<String> handlesBeforeLoginClick) {
+		final String newWindow = waitForNewWindow(handlesBeforeLoginClick, Duration.ofSeconds(12));
 		if (newWindow != null) {
 			driver.switchTo().window(newWindow);
 			waitForUiLoad();
@@ -304,8 +305,8 @@ public class SaleadsMiNegocioFullTest {
 		}
 
 		waitForUiLoad();
-		if (!driver.getWindowHandle().equals(currentHandle) && driver.getWindowHandles().contains(currentHandle)) {
-			driver.switchTo().window(currentHandle);
+		if (driver.getWindowHandles().contains(appHandle)) {
+			driver.switchTo().window(appHandle);
 			waitForUiLoad();
 		}
 	}
