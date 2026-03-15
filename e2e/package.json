@@ -1,0 +1,17 @@
+{
+  "name": "e2e",
+  "version": "1.0.0",
+  "description": "Standalone Playwright E2E tests for SaleADS workflows",
+  "scripts": {
+    "test": "playwright test",
+    "test:saleads-mi-negocio": "playwright test tests/saleads_mi_negocio_full_test.spec.ts",
+    "test:headed": "playwright test --headed",
+    "report": "playwright show-report"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
+  }
+}
