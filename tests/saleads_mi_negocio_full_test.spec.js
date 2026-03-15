@@ -187,6 +187,15 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     }
   }
 
+  function markFailedDueToDependency(fields, reason) {
+    for (const field of fields) {
+      report[field] = "FAIL";
+      if (!errors[field]) {
+        errors[field] = reason;
+      }
+    }
+  }
+
   await runValidation("Login", async () => {
     const startUrl =
       process.env.SALEADS_START_URL ||
@@ -277,146 +286,173 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     );
   });
 
-  await runValidation("Mi Negocio menu", async () => {
-    await openMiNegocioMenu(page);
-
-    await expect(page.getByText(/agregar negocio/i)).toBeVisible();
-    await expect(page.getByText(/administrar negocios/i)).toBeVisible();
-
-    evidence.miNegocioMenuScreenshot = await screenshot(
-      page,
-      evidenceFolder,
-      "02_mi_negocio_menu_expanded",
-      true
+  if (report["Login"] === "FAIL") {
+    markFailedDueToDependency(
+      REPORT_FIELDS.filter((field) => field !== "Login"),
+      "No ejecutado por dependencia: falló el paso de Login."
     );
-  });
+  } else {
+    await runValidation("Mi Negocio menu", async () => {
+      await openMiNegocioMenu(page);
 
-  await runValidation("Agregar Negocio modal", async () => {
-    const agregarNegocioOption = await findByText(page, "Agregar Negocio");
-    if (!agregarNegocioOption) {
-      throw new Error("No se encontró la opción 'Agregar Negocio'.");
-    }
-    await agregarNegocioOption.click();
-    await waitForUi(page);
+      await expect(page.getByText(/agregar negocio/i)).toBeVisible();
+      await expect(page.getByText(/administrar negocios/i)).toBeVisible();
 
-    await expect(page.getByText(/crear nuevo negocio/i)).toBeVisible();
-    const nombreInput = await firstVisible([
-      page.getByLabel(/nombre del negocio/i),
-      page.getByPlaceholder(/nombre del negocio/i),
-      page.locator("input[name*='nombre' i], input[id*='nombre' i]")
-    ]);
-    if (!nombreInput) {
-      throw new Error("No se encontró el campo 'Nombre del Negocio'.");
-    }
-    await expect(page.getByText(/tienes\s*2\s*de\s*3\s*negocios/i)).toBeVisible();
-    await expect(page.getByRole("button", { name: /cancelar/i })).toBeVisible();
-    await expect(page.getByRole("button", { name: /crear negocio/i })).toBeVisible();
-
-    evidence.agregarModalScreenshot = await screenshot(
-      page,
-      evidenceFolder,
-      "03_agregar_negocio_modal",
-      true
-    );
-
-    await nombreInput.click();
-    await nombreInput.fill("Negocio Prueba Automatización");
-    await page.getByRole("button", { name: /cancelar/i }).click();
-    await waitForUi(page);
-  });
-
-  await runValidation("Administrar Negocios view", async () => {
-    await openMiNegocioMenu(page);
-
-    const administrarNegocios = await findByText(page, "Administrar Negocios");
-    if (!administrarNegocios) {
-      throw new Error("No se encontró la opción 'Administrar Negocios'.");
-    }
-    await administrarNegocios.click();
-    await waitForUi(page);
-
-    await expect(page.getByText(/informaci[oó]n general/i)).toBeVisible();
-    await expect(page.getByText(/detalles de la cuenta/i)).toBeVisible();
-    await expect(page.getByText(/tus negocios/i)).toBeVisible();
-    await expect(page.getByText(/secci[oó]n legal/i)).toBeVisible();
-
-    evidence.accountPageScreenshot = await screenshot(
-      page,
-      evidenceFolder,
-      "04_administrar_negocios_view",
-      true
-    );
-  });
-
-  await runValidation("Información General", async () => {
-    const { section } = await findSectionByHeading(page, /informaci[oó]n general/i);
-    const sectionText = flattenWhitespace(await section.innerText());
-
-    const hasEmail = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i.test(sectionText);
-    if (!hasEmail) {
-      throw new Error("No se encontró email de usuario en 'Información General'.");
-    }
-
-    const lines = (await section.innerText())
-      .split("\n")
-      .map((line) => line.trim())
-      .filter(Boolean);
-    const hasProbableUserName = lines.some((line) => {
-      return (
-        /^[A-Za-zÀ-ÿ' -]{3,}$/.test(line) &&
-        !/informaci[oó]n|business plan|cambiar plan|correo|email|cuenta/i.test(line)
+      evidence.miNegocioMenuScreenshot = await screenshot(
+        page,
+        evidenceFolder,
+        "02_mi_negocio_menu_expanded",
+        true
       );
     });
-    if (!hasProbableUserName) {
-      throw new Error("No se detectó un nombre de usuario visible en 'Información General'.");
+
+    if (report["Mi Negocio menu"] === "FAIL") {
+      markFailedDueToDependency(
+        REPORT_FIELDS.filter((field) => !["Login", "Mi Negocio menu"].includes(field)),
+        "No ejecutado por dependencia: falló la expansión del menú Mi Negocio."
+      );
+    } else {
+      await runValidation("Agregar Negocio modal", async () => {
+        const agregarNegocioOption = await findByText(page, "Agregar Negocio");
+        if (!agregarNegocioOption) {
+          throw new Error("No se encontró la opción 'Agregar Negocio'.");
+        }
+        await agregarNegocioOption.click();
+        await waitForUi(page);
+
+        await expect(page.getByText(/crear nuevo negocio/i)).toBeVisible();
+        const nombreInput = await firstVisible([
+          page.getByLabel(/nombre del negocio/i),
+          page.getByPlaceholder(/nombre del negocio/i),
+          page.locator("input[name*='nombre' i], input[id*='nombre' i]")
+        ]);
+        if (!nombreInput) {
+          throw new Error("No se encontró el campo 'Nombre del Negocio'.");
+        }
+        await expect(page.getByText(/tienes\s*2\s*de\s*3\s*negocios/i)).toBeVisible();
+        await expect(page.getByRole("button", { name: /cancelar/i })).toBeVisible();
+        await expect(page.getByRole("button", { name: /crear negocio/i })).toBeVisible();
+
+        evidence.agregarModalScreenshot = await screenshot(
+          page,
+          evidenceFolder,
+          "03_agregar_negocio_modal",
+          true
+        );
+
+        await nombreInput.click();
+        await nombreInput.fill("Negocio Prueba Automatización");
+        await page.getByRole("button", { name: /cancelar/i }).click();
+        await waitForUi(page);
+      });
+
+      await runValidation("Administrar Negocios view", async () => {
+        await openMiNegocioMenu(page);
+
+        const administrarNegocios = await findByText(page, "Administrar Negocios");
+        if (!administrarNegocios) {
+          throw new Error("No se encontró la opción 'Administrar Negocios'.");
+        }
+        await administrarNegocios.click();
+        await waitForUi(page);
+
+        await expect(page.getByText(/informaci[oó]n general/i)).toBeVisible();
+        await expect(page.getByText(/detalles de la cuenta/i)).toBeVisible();
+        await expect(page.getByText(/tus negocios/i)).toBeVisible();
+        await expect(page.getByText(/secci[oó]n legal/i)).toBeVisible();
+
+        evidence.accountPageScreenshot = await screenshot(
+          page,
+          evidenceFolder,
+          "04_administrar_negocios_view",
+          true
+        );
+      });
+
+      if (report["Administrar Negocios view"] === "FAIL") {
+        markFailedDueToDependency(
+          [
+            "Información General",
+            "Detalles de la Cuenta",
+            "Tus Negocios",
+            "Términos y Condiciones",
+            "Política de Privacidad"
+          ],
+          "No ejecutado por dependencia: falló la vista de Administrar Negocios."
+        );
+      } else {
+        await runValidation("Información General", async () => {
+          const { section } = await findSectionByHeading(page, /informaci[oó]n general/i);
+          const sectionText = flattenWhitespace(await section.innerText());
+
+          const hasEmail = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i.test(sectionText);
+          if (!hasEmail) {
+            throw new Error("No se encontró email de usuario en 'Información General'.");
+          }
+
+          const lines = (await section.innerText())
+            .split("\n")
+            .map((line) => line.trim())
+            .filter(Boolean);
+          const hasProbableUserName = lines.some((line) => {
+            return (
+              /^[A-Za-zÀ-ÿ' -]{3,}$/.test(line) &&
+              !/informaci[oó]n|business plan|cambiar plan|correo|email|cuenta/i.test(line)
+            );
+          });
+          if (!hasProbableUserName) {
+            throw new Error("No se detectó un nombre de usuario visible en 'Información General'.");
+          }
+
+          await expect(section.getByText(/business plan/i)).toBeVisible();
+          await expect(section.getByRole("button", { name: /cambiar plan/i })).toBeVisible();
+        });
+
+        await runValidation("Detalles de la Cuenta", async () => {
+          const { section } = await findSectionByHeading(page, /detalles de la cuenta/i);
+          await expect(section.getByText(/cuenta creada/i)).toBeVisible();
+          await expect(section.getByText(/estado activo/i)).toBeVisible();
+          await expect(section.getByText(/idioma seleccionado/i)).toBeVisible();
+        });
+
+        await runValidation("Tus Negocios", async () => {
+          const { section } = await findSectionByHeading(page, /tus negocios/i);
+          await expect(section.getByRole("button", { name: /agregar negocio/i })).toBeVisible();
+          await expect(section.getByText(/tienes\s*2\s*de\s*3\s*negocios/i)).toBeVisible();
+
+          const listItems = await section.locator("li, tr, article, [role='listitem']").count();
+          const sectionText = flattenWhitespace(await section.innerText());
+          if (listItems < 1 && !/negocio/i.test(sectionText)) {
+            throw new Error("No se detectó una lista de negocios visible.");
+          }
+        });
+
+        await runValidation("Términos y Condiciones", async () => {
+          const result = await validateLegalLink({
+            page,
+            linkRegex: /t[eé]rminos y condiciones|terminos y condiciones/i,
+            headingRegex: /t[eé]rminos y condiciones|terminos y condiciones/i,
+            evidenceFolder,
+            screenshotName: "05_terminos_y_condiciones"
+          });
+          evidence.terminosScreenshot = result.screenshotPath;
+          evidence.terminosFinalUrl = result.finalUrl;
+        });
+
+        await runValidation("Política de Privacidad", async () => {
+          const result = await validateLegalLink({
+            page,
+            linkRegex: /pol[ií]tica de privacidad|politica de privacidad/i,
+            headingRegex: /pol[ií]tica de privacidad|politica de privacidad/i,
+            evidenceFolder,
+            screenshotName: "06_politica_de_privacidad"
+          });
+          evidence.politicaScreenshot = result.screenshotPath;
+          evidence.politicaFinalUrl = result.finalUrl;
+        });
+      }
     }
-
-    await expect(section.getByText(/business plan/i)).toBeVisible();
-    await expect(section.getByRole("button", { name: /cambiar plan/i })).toBeVisible();
-  });
-
-  await runValidation("Detalles de la Cuenta", async () => {
-    const { section } = await findSectionByHeading(page, /detalles de la cuenta/i);
-    await expect(section.getByText(/cuenta creada/i)).toBeVisible();
-    await expect(section.getByText(/estado activo/i)).toBeVisible();
-    await expect(section.getByText(/idioma seleccionado/i)).toBeVisible();
-  });
-
-  await runValidation("Tus Negocios", async () => {
-    const { section } = await findSectionByHeading(page, /tus negocios/i);
-    await expect(section.getByRole("button", { name: /agregar negocio/i })).toBeVisible();
-    await expect(section.getByText(/tienes\s*2\s*de\s*3\s*negocios/i)).toBeVisible();
-
-    const listItems = await section.locator("li, tr, article, [role='listitem']").count();
-    const sectionText = flattenWhitespace(await section.innerText());
-    if (listItems < 1 && !/negocio/i.test(sectionText)) {
-      throw new Error("No se detectó una lista de negocios visible.");
-    }
-  });
-
-  await runValidation("Términos y Condiciones", async () => {
-    const result = await validateLegalLink({
-      page,
-      linkRegex: /t[eé]rminos y condiciones|terminos y condiciones/i,
-      headingRegex: /t[eé]rminos y condiciones|terminos y condiciones/i,
-      evidenceFolder,
-      screenshotName: "05_terminos_y_condiciones"
-    });
-    evidence.terminosScreenshot = result.screenshotPath;
-    evidence.terminosFinalUrl = result.finalUrl;
-  });
-
-  await runValidation("Política de Privacidad", async () => {
-    const result = await validateLegalLink({
-      page,
-      linkRegex: /pol[ií]tica de privacidad|politica de privacidad/i,
-      headingRegex: /pol[ií]tica de privacidad|politica de privacidad/i,
-      evidenceFolder,
-      screenshotName: "06_politica_de_privacidad"
-    });
-    evidence.politicaScreenshot = result.screenshotPath;
-    evidence.politicaFinalUrl = result.finalUrl;
-  });
+  }
 
   const reportPayload = {
     testName: "saleads_mi_negocio_full_test",
