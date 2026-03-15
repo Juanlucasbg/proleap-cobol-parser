@@ -1,0 +1,16 @@
+{
+  "name": "saleads-e2e",
+  "version": "1.0.0",
+  "description": "SaleADS Mi Negocio end-to-end browser automation",
+  "type": "module",
+  "scripts": {
+    "test:saleads-mi-negocio": "node scripts/saleads_mi_negocio_full_test.mjs",
+    "install:browsers": "playwright install chromium"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "playwright": "^1.58.2"
+  }
+}
