@@ -124,6 +124,14 @@ function writeReport(report) {
   fs.writeFileSync(REPORT_PATH, JSON.stringify(report, null, 2));
 }
 
+function markPendingAsFail(report, reason) {
+  for (const field of REPORT_FIELDS) {
+    if (report.steps[field].status === "PENDING") {
+      fail(report, field, reason);
+    }
+  }
+}
+
 async function getAppPage(context) {
   const existingPages = context.pages();
   if (existingPages.length > 0) {
@@ -193,6 +201,12 @@ async function run() {
   let context;
 
   try {
+    if (!process.env.PW_CDP_URL && !process.env.SALEADS_LOGIN_URL) {
+      throw new Error(
+        "Provide PW_CDP_URL (existing browser) or SALEADS_LOGIN_URL (navigate directly).",
+      );
+    }
+
     if (process.env.PW_CDP_URL) {
       browser = await chromium.connectOverCDP(process.env.PW_CDP_URL);
       context = browser.contexts()[0] || (await browser.newContext());
@@ -440,6 +454,7 @@ async function run() {
       fail(report, "Política de Privacidad", error.message);
     }
   } catch (fatalError) {
+    markPendingAsFail(report, `Not executed: ${fatalError.message}`);
     addNote(report, `Fatal error: ${fatalError.message}`);
   } finally {
     writeReport(report);
