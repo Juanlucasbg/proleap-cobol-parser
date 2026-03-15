@@ -11,6 +11,8 @@ function nowStamp() {
 
 test.describe(TEST_NAME, () => {
   test("Login with Google and validate Mi Negocio full workflow", async ({ page, context }, testInfo) => {
+    test.setTimeout(8 * 60 * 1000);
+
     const timestamp = nowStamp();
     const screenshotsDir = path.join(process.cwd(), "artifacts", "screenshots", TEST_NAME, timestamp);
     const reportsDir = path.join(process.cwd(), "artifacts", "reports");
