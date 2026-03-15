@@ -32,6 +32,7 @@ public class SaleadsMiNegocioFullTest {
 	private static final String HEADLESS_ENV = "SALEADS_HEADLESS";
 	private static final String SCREENSHOT_DIR_ENV = "SALEADS_E2E_SCREENSHOT_DIR";
 	private static final String DEFAULT_SCREENSHOT_DIR = "target/saleads-evidence";
+	private static final double DEFAULT_TIMEOUT_MS = 20000;
 	private static final DateTimeFormatter TS_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
 
 	@Test
@@ -61,7 +62,7 @@ public class SaleadsMiNegocioFullTest {
 					.launch(new BrowserType.LaunchOptions().setHeadless(headless));
 			final BrowserContext context = browser.newContext();
 			final Page appPage = context.newPage();
-			appPage.setDefaultTimeout(20000);
+			appPage.setDefaultTimeout(DEFAULT_TIMEOUT_MS);
 
 			appPage.navigate(loginUrl);
 			waitForUi(appPage);
@@ -220,9 +221,12 @@ public class SaleadsMiNegocioFullTest {
 		Page openedTab = null;
 
 		try {
-			openedTab = context.waitForPage(
-					new BrowserContext.WaitForPageOptions().setTimeout(8000),
-					() -> clickFirstVisible(appPage, linkText));
+			appPage.setDefaultTimeout(8000);
+			try {
+				openedTab = context.waitForPage(() -> clickFirstVisible(appPage, linkText));
+			} finally {
+				appPage.setDefaultTimeout(DEFAULT_TIMEOUT_MS);
+			}
 			clicked = true;
 			targetPage = openedTab;
 		} catch (TimeoutError ignored) {
