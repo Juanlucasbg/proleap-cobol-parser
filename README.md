@@ -205,3 +205,36 @@ License
 -------
 
 Licensed under the MIT License. See LICENSE for details.
+
+
+SaleADS E2E workflow test (Mi Negocio)
+--------------------------------------
+
+An opt-in Selenium/JUnit test was added at:
+
+`src/test/java/io/proleap/cobol/e2e/SaleadsMiNegocioFullTest.java`
+
+This test validates the full Mi Negocio workflow after Google login, including:
+
+- Sidebar and Mi Negocio menu checks
+- Agregar Negocio modal validation
+- Administrar Negocios sections validation
+- Informacion General / Detalles de la Cuenta / Tus Negocios checks
+- Legal links (Terminos y Condiciones, Politica de Privacidad), including new-tab handling
+- Checkpoint screenshots and final PASS/FAIL report
+
+How to run (requires JDK + Maven + Chrome):
+
+```bash
+mvn -Dtest=io.proleap.cobol.e2e.SaleadsMiNegocioFullTest \
+    -Dsaleads.e2e.enabled=true \
+    -Dsaleads.baseUrl="<login-page-url-for-your-env>" \
+    -Dsaleads.headless=false \
+    test
+```
+
+Notes:
+
+- No SaleADS domain is hardcoded. Pass the current environment login page via `saleads.baseUrl`.
+- If `saleads.e2e.enabled` is not set to `true`, the test is skipped.
+- Screenshots are saved under `target/saleads-artifacts/screenshots/<timestamp>/`.
