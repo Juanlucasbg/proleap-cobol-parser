@@ -157,6 +157,14 @@ async function screenshot(report, stepKey, page, name, options = {}) {
   report.statusByStep[stepKey].screenshots.push(fullPath);
 }
 
+async function failStep(report, stepKey, page, error) {
+  const reason = error instanceof Error ? error.message : String(error);
+  markFail(report, stepKey, reason);
+  if (page && !page.isClosed()) {
+    await screenshot(report, stepKey, page, "failure").catch(() => {});
+  }
+}
+
 async function findAppPage(context, currentPage) {
   const pages = context.pages();
   const preferred = [currentPage, ...pages.filter((p) => p !== currentPage)];
@@ -190,8 +198,15 @@ async function run() {
   let browser = null;
   let context = null;
   let page = null;
+  const loginUrl = process.env.SALEADS_LOGIN_URL;
 
   try {
+    if (!loginUrl) {
+      throw new Error(
+        "SALEADS_LOGIN_URL is required for this automation run. It is intentionally not hardcoded to keep the test environment-agnostic."
+      );
+    }
+
     browser = await chromium.launch({
       headless: process.env.HEADLESS !== "false",
     });
@@ -201,13 +216,6 @@ async function run() {
     });
     page = await context.newPage();
 
-    const loginUrl = process.env.SALEADS_LOGIN_URL;
-    if (!loginUrl) {
-      throw new Error(
-        "SALEADS_LOGIN_URL is required for this automation run. It is intentionally not hardcoded to keep the test environment-agnostic."
-      );
-    }
-
     await page.goto(loginUrl, { waitUntil: "domcontentloaded", timeout: 60000 });
     await waitUiAfterAction(page);
 
@@ -215,6 +223,10 @@ async function run() {
     try {
       const popupPromise = context.waitForEvent("page", { timeout: 12000 }).catch(() => null);
       const clickedLabel = await clickByVisibleText(page, [
+        "Iniciar sesión",
+        "Iniciar sesion",
+        "Login",
+        "Sign in",
         "Sign in with Google",
         "Iniciar sesión con Google",
         "Iniciar sesion con Google",
@@ -222,6 +234,19 @@ async function run() {
         "Login with Google",
       ]);
       addDetail(report, "Login", `Clicked login entrypoint: ${clickedLabel}`);
+
+      // Some environments expose Google only after opening auth/login page.
+      const googleButtonVisible = await isVisibleByText(page, "Google", 4000);
+      if (googleButtonVisible && !/google/i.test(clickedLabel)) {
+        await clickByVisibleText(page, [
+          "Sign in with Google",
+          "Iniciar sesión con Google",
+          "Iniciar sesion con Google",
+          "Continuar con Google",
+          "Google",
+        ]);
+      }
+
       let authPage = (await popupPromise) || page;
 
       await chooseGoogleAccountIfShown(report, authPage).catch(() => false);
@@ -245,7 +270,7 @@ async function run() {
       await screenshot(report, "Login", page, "dashboard_loaded");
       markPass(report, "Login");
     } catch (error) {
-      markFail(report, "Login", error.message);
+      await failStep(report, "Login", page, error);
       throw error;
     }
 
@@ -273,7 +298,7 @@ async function run() {
       await screenshot(report, "Mi Negocio menu", page, "expanded_menu");
       markPass(report, "Mi Negocio menu");
     } catch (error) {
-      markFail(report, "Mi Negocio menu", error.message);
+      await failStep(report, "Mi Negocio menu", page, error);
       throw error;
     }
 
@@ -306,7 +331,7 @@ async function run() {
       await clickByVisibleText(page, ["Cancelar"]);
       markPass(report, "Agregar Negocio modal");
     } catch (error) {
-      markFail(report, "Agregar Negocio modal", error.message);
+      await failStep(report, "Agregar Negocio modal", page, error);
       throw error;
     }
 
@@ -329,7 +354,7 @@ async function run() {
       await screenshot(report, "Administrar Negocios view", page, "account_page", { fullPage: true });
       markPass(report, "Administrar Negocios view");
     } catch (error) {
-      markFail(report, "Administrar Negocios view", error.message);
+      await failStep(report, "Administrar Negocios view", page, error);
       throw error;
     }
 
@@ -347,7 +372,7 @@ async function run() {
       }
       markPass(report, "Información General");
     } catch (error) {
-      markFail(report, "Información General", error.message);
+      await failStep(report, "Información General", page, error);
       throw error;
     }
 
@@ -361,7 +386,7 @@ async function run() {
       }
       markPass(report, "Detalles de la Cuenta");
     } catch (error) {
-      markFail(report, "Detalles de la Cuenta", error.message);
+      await failStep(report, "Detalles de la Cuenta", page, error);
       throw error;
     }
 
@@ -377,7 +402,7 @@ async function run() {
       }
       markPass(report, "Tus Negocios");
     } catch (error) {
-      markFail(report, "Tus Negocios", error.message);
+      await failStep(report, "Tus Negocios", page, error);
       throw error;
     }
 
@@ -426,7 +451,7 @@ async function run() {
       await waitUiAfterAction(page);
       markPass(report, "Términos y Condiciones");
     } catch (error) {
-      markFail(report, "Términos y Condiciones", error.message);
+      await failStep(report, "Términos y Condiciones", page, error);
       throw error;
     }
 
@@ -475,13 +500,22 @@ async function run() {
       await waitUiAfterAction(page);
       markPass(report, "Política de Privacidad");
     } catch (error) {
-      markFail(report, "Política de Privacidad", error.message);
+      await failStep(report, "Política de Privacidad", page, error);
       throw error;
     }
   } catch (fatalError) {
-    const firstUnmarked = STEP_KEYS.find((key) => report.statusByStep[key].status !== "PASS");
-    if (firstUnmarked && report.statusByStep[firstUnmarked].details.length === 0) {
-      addDetail(report, firstUnmarked, `Execution stopped: ${fatalError.message}`);
+    let fatalAssigned = false;
+    for (const key of STEP_KEYS) {
+      if (report.statusByStep[key].status === "PASS") {
+        continue;
+      }
+
+      if (!fatalAssigned && report.statusByStep[key].details.length === 0) {
+        addDetail(report, key, `Execution stopped: ${fatalError.message}`);
+        fatalAssigned = true;
+      } else if (report.statusByStep[key].details.length === 0) {
+        addDetail(report, key, "Not executed due to an earlier failure.");
+      }
     }
   } finally {
     if (browser) {
