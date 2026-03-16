@@ -110,14 +110,18 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
     process.env.BASE_URL ||
     process.env.APP_URL;
 
-  if (!loginUrl) {
+  const currentUrl = page.url();
+
+  if (loginUrl) {
+    await page.goto(loginUrl, { waitUntil: "domcontentloaded" });
+    await waitForUi(page);
+  } else if (currentUrl && currentUrl !== "about:blank") {
+    await waitForUi(page);
+  } else {
     throw new Error(
-      "No login URL provided. Set SALEADS_LOGIN_URL (or SALEADS_URL / BASE_URL / APP_URL) for the current environment."
+      "No login URL provided and no preloaded page detected. Set SALEADS_LOGIN_URL (or SALEADS_URL / BASE_URL / APP_URL), or run this test with the SaleADS login page already opened."
     );
   }
-
-  await page.goto(loginUrl, { waitUntil: "domcontentloaded" });
-  await waitForUi(page);
 
   // Step 1: Login with Google
   try {
@@ -375,7 +379,7 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
   const finalReport = {
     testName: "saleads_mi_negocio_full_test",
     generatedAt: new Date().toISOString(),
-    loginUrl,
+    loginUrl: loginUrl || currentUrl,
     googleAccountEmail: GOOGLE_ACCOUNT_EMAIL,
     results: report,
     legalUrls,
