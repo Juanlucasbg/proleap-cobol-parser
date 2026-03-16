@@ -9,11 +9,11 @@ const REPORT_FIELDS = [
   "Mi Negocio menu",
   "Agregar Negocio modal",
   "Administrar Negocios view",
-  "Informacion General",
+  "Informaci\u00f3n General",
   "Detalles de la Cuenta",
   "Tus Negocios",
-  "Terminos y Condiciones",
-  "Politica de Privacidad"
+  "T\u00e9rminos y Condiciones",
+  "Pol\u00edtica de Privacidad"
 ];
 
 function runStamp() {
@@ -339,10 +339,11 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
       const cancelVisible = await hasVisibleText(page, "Cancelar", 10000);
       const createVisible = await hasVisibleText(page, "Crear Negocio", 10000);
 
-      const nameInput = page
-        .getByLabel("Nombre del Negocio", { exact: false })
-        .or(page.getByPlaceholder("Nombre del Negocio", { exact: false }))
+      const labeledInput = page.getByLabel("Nombre del Negocio", { exact: false }).first();
+      const placeholderInput = page
+        .getByPlaceholder("Nombre del Negocio", { exact: false })
         .first();
+      const nameInput = (await locatorIsVisible(labeledInput)) ? labeledInput : placeholderInput;
 
       const inputVisible = await locatorIsVisible(nameInput);
       if (inputVisible) {
@@ -391,7 +392,7 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
       return ok;
     });
 
-    await runStep("Informacion General", report, async () => {
+    await runStep("Informaci\u00f3n General", report, async () => {
       const sectionTexts = await readSectionTextsByTitle(page, "Informacion General");
       const sectionTextsAccent = await readSectionTextsByTitle(page, "Informaci\u00f3n General");
       const merged = [...sectionTexts, ...sectionTextsAccent];
@@ -458,7 +459,7 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
       return sectionVisible && businessListVisible && addBusinessVisible && usageVisible;
     });
 
-    await runStep("Terminos y Condiciones", report, async () => {
+    await runStep("T\u00e9rminos y Condiciones", report, async () => {
       return openLegalLinkAndValidate(
         page,
         context,
@@ -470,7 +471,7 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
       );
     });
 
-    await runStep("Politica de Privacidad", report, async () => {
+    await runStep("Pol\u00edtica de Privacidad", report, async () => {
       return openLegalLinkAndValidate(
         page,
         context,
