@@ -553,7 +553,7 @@ public class SaleadsMiNegocioFullWorkflowTest {
 
 	private String slug(final String text) {
 		return normalizeAscii(text).toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]+", "_").replaceAll("_+", "_")
-				replaceAll("^_|_$", "");
+				.replaceAll("^_|_$", "");
 	}
 
 	@FunctionalInterface
