@@ -5,7 +5,6 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -17,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.junit.After;
@@ -84,7 +82,7 @@ public class SaleadsMiNegocioWorkflowE2ETest {
 		}
 
 		driver = new ChromeDriver(options);
-		driver.manage().timeouts().implicitlyWait(0, TimeUnit.SECONDS);
+		driver.manage().timeouts().implicitlyWait(Duration.ZERO);
 
 		final long waitSeconds = Long.parseLong(System.getProperty("saleads.e2e.waitSeconds", "25"));
 		wait = new WebDriverWait(driver, Duration.ofSeconds(waitSeconds));
@@ -137,7 +135,7 @@ public class SaleadsMiNegocioWorkflowE2ETest {
 			step.execute();
 			detailBySection.put(section, "PASS");
 			return true;
-		} catch (final Exception ex) {
+		} catch (final Throwable ex) {
 			detailBySection.put(section, "FAIL: " + ex.getMessage());
 			try {
 				takeScreenshot("fail-" + sanitize(section));
