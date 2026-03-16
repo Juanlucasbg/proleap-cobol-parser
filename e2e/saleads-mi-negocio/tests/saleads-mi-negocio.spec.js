@@ -111,268 +111,285 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
     process.env.APP_URL;
 
   const currentUrl = page.url();
+  let startupFailureMessage = "";
 
-  if (loginUrl) {
-    await page.goto(loginUrl, { waitUntil: "domcontentloaded" });
-    await waitForUi(page);
-  } else if (currentUrl && currentUrl !== "about:blank") {
-    await waitForUi(page);
-  } else {
-    throw new Error(
-      "No login URL provided and no preloaded page detected. Set SALEADS_LOGIN_URL (or SALEADS_URL / BASE_URL / APP_URL), or run this test with the SaleADS login page already opened."
-    );
-  }
-
-  // Step 1: Login with Google
   try {
-    const sidebarVisibleBeforeLogin = await textVisible(page, ["Mi Negocio", "Negocio"], 4_000);
-    if (!sidebarVisibleBeforeLogin) {
-      const popupPromise = page.context().waitForEvent("page", { timeout: 10_000 }).catch(() => null);
-      await clickByVisibleText(page, [
-        "Sign in with Google",
-        "Iniciar sesión con Google",
-        "Continuar con Google",
-        "Login with Google",
-        "Google",
-      ]);
-      const googlePage = await popupPromise;
-      const authPage = googlePage || page;
-      await waitForUi(authPage);
-
-      const accountOption = await getVisibleByText(authPage, [GOOGLE_ACCOUNT_EMAIL], 8_000);
-      if (accountOption) {
-        await accountOption.click();
-        await waitForUi(authPage);
-      }
-
-      if (googlePage) {
-        await googlePage.waitForEvent("close", { timeout: 20_000 }).catch(() => {});
-      }
-    }
-
-    await waitForUi(page);
-    const appVisible = await textVisible(page, ["Mi Negocio", "Negocio", "Dashboard"], 20_000);
-    const sidebarVisible = await isVisible(page.locator("aside, nav"), 15_000);
-    const dashboardScreenshot = await takeScreenshot(page, "dashboard_loaded");
-    setStep("Login", appVisible && sidebarVisible, [
-      `Main interface visible: ${appVisible}`,
-      `Left sidebar visible: ${sidebarVisible}`,
-      `Screenshot: ${dashboardScreenshot}`,
-    ]);
-  } catch (error) {
-    const failureShot = await takeScreenshot(page, "login_failure").catch(() => null);
-    setStep("Login", false, [`Error: ${error.message}`, failureShot ? `Screenshot: ${failureShot}` : ""]);
-  }
-
-  // Step 2: Open Mi Negocio menu
-  try {
-    await clickByVisibleText(page, ["Negocio", "Mi Negocio"]);
-    if (!(await textVisible(page, ["Mi Negocio"], 6_000))) {
-      await clickByVisibleText(page, ["Mi Negocio"]);
-    }
-
-    const addBusinessVisible = await textVisible(page, ["Agregar Negocio"], 10_000);
-    const manageBusinessVisible = await textVisible(page, ["Administrar Negocios"], 10_000);
-    const menuScreenshot = await takeScreenshot(page, "mi_negocio_menu_expanded");
-    setStep("Mi Negocio menu", addBusinessVisible && manageBusinessVisible, [
-      `Submenu expanded: ${addBusinessVisible || manageBusinessVisible}`,
-      `"Agregar Negocio" visible: ${addBusinessVisible}`,
-      `"Administrar Negocios" visible: ${manageBusinessVisible}`,
-      `Screenshot: ${menuScreenshot}`,
-    ]);
-  } catch (error) {
-    const failureShot = await takeScreenshot(page, "mi_negocio_menu_failure").catch(() => null);
-    setStep("Mi Negocio menu", false, [
-      `Error: ${error.message}`,
-      failureShot ? `Screenshot: ${failureShot}` : "",
-    ]);
-  }
-
-  // Step 3: Validate Agregar Negocio modal
-  try {
-    await clickByVisibleText(page, ["Agregar Negocio"]);
-    const titleVisible = await textVisible(page, ["Crear Nuevo Negocio"], 10_000);
-    const nameInputVisible = await isVisible(page.getByPlaceholder("Nombre del Negocio"), 5_000);
-    const nameLabelVisible = await textVisible(page, ["Nombre del Negocio"], 4_000);
-    const quotaTextVisible = await textVisible(page, ["Tienes 2 de 3 negocios"], 5_000);
-    const cancelVisible = await textVisible(page, ["Cancelar"], 5_000);
-    const createVisible = await textVisible(page, ["Crear Negocio"], 5_000);
-    const modalScreenshot = await takeScreenshot(page, "agregar_negocio_modal");
-
-    const input = page.getByPlaceholder("Nombre del Negocio");
-    if (await isVisible(input, 4_000)) {
-      await input.click();
-      await input.fill("Negocio Prueba Automatización");
+    if (loginUrl) {
+      await page.goto(loginUrl, { waitUntil: "domcontentloaded" });
       await waitForUi(page);
-    }
-
-    await clickByVisibleText(page, ["Cancelar"]);
-    setStep(
-      "Agregar Negocio modal",
-      titleVisible && (nameInputVisible || nameLabelVisible) && quotaTextVisible && cancelVisible && createVisible,
-      [
-        `"Crear Nuevo Negocio" visible: ${titleVisible}`,
-        `"Nombre del Negocio" input/label visible: ${nameInputVisible || nameLabelVisible}`,
-        `"Tienes 2 de 3 negocios" visible: ${quotaTextVisible}`,
-        `"Cancelar" button visible: ${cancelVisible}`,
-        `"Crear Negocio" button visible: ${createVisible}`,
-        `Screenshot: ${modalScreenshot}`,
-      ]
-    );
-  } catch (error) {
-    const failureShot = await takeScreenshot(page, "agregar_negocio_modal_failure").catch(() => null);
-    setStep("Agregar Negocio modal", false, [
-      `Error: ${error.message}`,
-      failureShot ? `Screenshot: ${failureShot}` : "",
-    ]);
-  }
-
-  // Step 4: Open Administrar Negocios
-  try {
-    const manageVisible = await textVisible(page, ["Administrar Negocios"], 4_000);
-    if (!manageVisible) {
-      await clickByVisibleText(page, ["Mi Negocio", "Negocio"]);
-    }
-    await clickByVisibleText(page, ["Administrar Negocios"]);
-
-    const infoGeneral = await textVisible(page, ["Información General"], 20_000);
-    const accountDetails = await textVisible(page, ["Detalles de la Cuenta"], 20_000);
-    const businesses = await textVisible(page, ["Tus Negocios"], 20_000);
-    const legalSection = await textVisible(page, ["Sección Legal"], 20_000);
-    const accountScreenshot = await takeScreenshot(page, "administrar_negocios_account_page", true);
-    setStep("Administrar Negocios view", infoGeneral && accountDetails && businesses && legalSection, [
-      `"Información General" visible: ${infoGeneral}`,
-      `"Detalles de la Cuenta" visible: ${accountDetails}`,
-      `"Tus Negocios" visible: ${businesses}`,
-      `"Sección Legal" visible: ${legalSection}`,
-      `Screenshot: ${accountScreenshot}`,
-    ]);
-  } catch (error) {
-    const failureShot = await takeScreenshot(page, "administrar_negocios_failure").catch(() => null);
-    setStep("Administrar Negocios view", false, [
-      `Error: ${error.message}`,
-      failureShot ? `Screenshot: ${failureShot}` : "",
-    ]);
-  }
-
-  // Step 5: Validate Información General
-  try {
-    const userNameVisible =
-      (await isVisible(page.locator('[data-testid*="name"], [class*="name"], [id*="name"]'), 3_000)) ||
-      (await textVisible(page, ["Nombre", "User"], 4_000));
-    const emailVisible = await isVisible(
-      page.locator(`text=/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}/`),
-      8_000
-    );
-    const planVisible = await textVisible(page, ["BUSINESS PLAN"], 8_000);
-    const changePlanVisible = await textVisible(page, ["Cambiar Plan"], 8_000);
-
-    setStep("Información General", userNameVisible && emailVisible && planVisible && changePlanVisible, [
-      `User name visible: ${userNameVisible}`,
-      `User email visible: ${emailVisible}`,
-      `"BUSINESS PLAN" visible: ${planVisible}`,
-      `"Cambiar Plan" visible: ${changePlanVisible}`,
-    ]);
-  } catch (error) {
-    setStep("Información General", false, [`Error: ${error.message}`]);
-  }
-
-  // Step 6: Validate Detalles de la Cuenta
-  try {
-    const createdVisible = await textVisible(page, ["Cuenta creada"], 8_000);
-    const activeVisible = await textVisible(page, ["Estado activo"], 8_000);
-    const languageVisible = await textVisible(page, ["Idioma seleccionado"], 8_000);
-    setStep("Detalles de la Cuenta", createdVisible && activeVisible && languageVisible, [
-      `"Cuenta creada" visible: ${createdVisible}`,
-      `"Estado activo" visible: ${activeVisible}`,
-      `"Idioma seleccionado" visible: ${languageVisible}`,
-    ]);
-  } catch (error) {
-    setStep("Detalles de la Cuenta", false, [`Error: ${error.message}`]);
-  }
-
-  // Step 7: Validate Tus Negocios
-  try {
-    const listVisible =
-      (await isVisible(page.locator("table, [role='table'], ul, [data-testid*='business']"), 8_000)) ||
-      (await textVisible(page, ["Tus Negocios"], 5_000));
-    const addBusinessButtonVisible = await textVisible(page, ["Agregar Negocio"], 8_000);
-    const quotaVisible = await textVisible(page, ["Tienes 2 de 3 negocios"], 8_000);
-    setStep("Tus Negocios", listVisible && addBusinessButtonVisible && quotaVisible, [
-      `Business list visible: ${listVisible}`,
-      `"Agregar Negocio" button visible: ${addBusinessButtonVisible}`,
-      `"Tienes 2 de 3 negocios" visible: ${quotaVisible}`,
-    ]);
-  } catch (error) {
-    setStep("Tus Negocios", false, [`Error: ${error.message}`]);
-  }
-
-  const openLegalPage = async (triggerText, headingText, reportField, legalUrlField) => {
-    const popupPromise = page.context().waitForEvent("page", { timeout: 10_000 }).catch(() => null);
-    await clickByVisibleText(page, [triggerText]);
-
-    const popupPage = await popupPromise;
-    const legalPage = popupPage || page;
-    await waitForUi(legalPage);
-
-    const headingVisible =
-      (await isVisible(
-        legalPage.getByRole("heading", { name: new RegExp(escapeRegex(headingText), "i") }),
-        10_000
-      )) || (await textVisible(legalPage, [headingText], 10_000));
-    const bodyText = (await legalPage.locator("body").innerText().catch(() => "")).trim();
-    const contentVisible = bodyText.length > 200;
-    const legalScreenshot = await takeScreenshot(legalPage, reportField.replace(/\s+/g, "_"));
-    const finalUrl = legalPage.url();
-    legalUrls[legalUrlField] = finalUrl;
-
-    setStep(reportField, headingVisible && contentVisible, [
-      `"${headingText}" heading visible: ${headingVisible}`,
-      `Legal content visible: ${contentVisible}`,
-      `Final URL: ${finalUrl}`,
-      `Screenshot: ${legalScreenshot}`,
-    ]);
-
-    if (popupPage) {
-      await popupPage.close().catch(() => {});
-      await page.bringToFront();
+    } else if (currentUrl && currentUrl !== "about:blank") {
       await waitForUi(page);
     } else {
-      await page.goBack({ waitUntil: "domcontentloaded" }).catch(() => {});
-      await waitForUi(page);
+      startupFailureMessage =
+        "No login URL provided and no preloaded page detected. Set SALEADS_LOGIN_URL (or SALEADS_URL / BASE_URL / APP_URL), or run this test with the SaleADS login page already opened.";
     }
-  };
-
-  // Step 8: Validate Términos y Condiciones
-  try {
-    await openLegalPage(
-      "Términos y Condiciones",
-      "Términos y Condiciones",
-      "Términos y Condiciones",
-      "terminosYCondiciones"
-    );
   } catch (error) {
-    const failureShot = await takeScreenshot(page, "terminos_failure").catch(() => null);
-    setStep("Términos y Condiciones", false, [
-      `Error: ${error.message}`,
-      failureShot ? `Screenshot: ${failureShot}` : "",
-    ]);
+    startupFailureMessage = `Failed to open SaleADS login page: ${error.message}`;
   }
 
-  // Step 9: Validate Política de Privacidad
-  try {
-    await openLegalPage(
-      "Política de Privacidad",
-      "Política de Privacidad",
-      "Política de Privacidad",
-      "politicaDePrivacidad"
-    );
-  } catch (error) {
-    const failureShot = await takeScreenshot(page, "politica_failure").catch(() => null);
-    setStep("Política de Privacidad", false, [
-      `Error: ${error.message}`,
-      failureShot ? `Screenshot: ${failureShot}` : "",
-    ]);
+  if (!startupFailureMessage) {
+    // Step 1: Login with Google
+    try {
+      const sidebarVisibleBeforeLogin = await textVisible(page, ["Mi Negocio", "Negocio"], 4_000);
+      if (!sidebarVisibleBeforeLogin) {
+        const popupPromise = page.context().waitForEvent("page", { timeout: 10_000 }).catch(() => null);
+        await clickByVisibleText(page, [
+          "Sign in with Google",
+          "Iniciar sesión con Google",
+          "Continuar con Google",
+          "Login with Google",
+          "Google",
+        ]);
+        const googlePage = await popupPromise;
+        const authPage = googlePage || page;
+        await waitForUi(authPage);
+
+        const accountOption = await getVisibleByText(authPage, [GOOGLE_ACCOUNT_EMAIL], 8_000);
+        if (accountOption) {
+          await accountOption.click();
+          await waitForUi(authPage);
+        }
+
+        if (googlePage) {
+          await googlePage.waitForEvent("close", { timeout: 20_000 }).catch(() => {});
+        }
+      }
+
+      await waitForUi(page);
+      const appVisible = await textVisible(page, ["Mi Negocio", "Negocio", "Dashboard"], 20_000);
+      const sidebarVisible = await isVisible(page.locator("aside, nav"), 15_000);
+      const dashboardScreenshot = await takeScreenshot(page, "dashboard_loaded");
+      setStep("Login", appVisible && sidebarVisible, [
+        `Main interface visible: ${appVisible}`,
+        `Left sidebar visible: ${sidebarVisible}`,
+        `Screenshot: ${dashboardScreenshot}`,
+      ]);
+    } catch (error) {
+      const failureShot = await takeScreenshot(page, "login_failure").catch(() => null);
+      setStep("Login", false, [`Error: ${error.message}`, failureShot ? `Screenshot: ${failureShot}` : ""]);
+    }
+
+    // Step 2: Open Mi Negocio menu
+    try {
+      await clickByVisibleText(page, ["Negocio", "Mi Negocio"]);
+      if (!(await textVisible(page, ["Mi Negocio"], 6_000))) {
+        await clickByVisibleText(page, ["Mi Negocio"]);
+      }
+
+      const addBusinessVisible = await textVisible(page, ["Agregar Negocio"], 10_000);
+      const manageBusinessVisible = await textVisible(page, ["Administrar Negocios"], 10_000);
+      const menuScreenshot = await takeScreenshot(page, "mi_negocio_menu_expanded");
+      setStep("Mi Negocio menu", addBusinessVisible && manageBusinessVisible, [
+        `Submenu expanded: ${addBusinessVisible || manageBusinessVisible}`,
+        `"Agregar Negocio" visible: ${addBusinessVisible}`,
+        `"Administrar Negocios" visible: ${manageBusinessVisible}`,
+        `Screenshot: ${menuScreenshot}`,
+      ]);
+    } catch (error) {
+      const failureShot = await takeScreenshot(page, "mi_negocio_menu_failure").catch(() => null);
+      setStep("Mi Negocio menu", false, [
+        `Error: ${error.message}`,
+        failureShot ? `Screenshot: ${failureShot}` : "",
+      ]);
+    }
+
+    // Step 3: Validate Agregar Negocio modal
+    try {
+      await clickByVisibleText(page, ["Agregar Negocio"]);
+      const titleVisible = await textVisible(page, ["Crear Nuevo Negocio"], 10_000);
+      const nameInputVisible = await isVisible(page.getByPlaceholder("Nombre del Negocio"), 5_000);
+      const nameLabelVisible = await textVisible(page, ["Nombre del Negocio"], 4_000);
+      const quotaTextVisible = await textVisible(page, ["Tienes 2 de 3 negocios"], 5_000);
+      const cancelVisible = await textVisible(page, ["Cancelar"], 5_000);
+      const createVisible = await textVisible(page, ["Crear Negocio"], 5_000);
+      const modalScreenshot = await takeScreenshot(page, "agregar_negocio_modal");
+
+      const input = page.getByPlaceholder("Nombre del Negocio");
+      if (await isVisible(input, 4_000)) {
+        await input.click();
+        await input.fill("Negocio Prueba Automatización");
+        await waitForUi(page);
+      }
+
+      await clickByVisibleText(page, ["Cancelar"]);
+      setStep(
+        "Agregar Negocio modal",
+        titleVisible && (nameInputVisible || nameLabelVisible) && quotaTextVisible && cancelVisible && createVisible,
+        [
+          `"Crear Nuevo Negocio" visible: ${titleVisible}`,
+          `"Nombre del Negocio" input/label visible: ${nameInputVisible || nameLabelVisible}`,
+          `"Tienes 2 de 3 negocios" visible: ${quotaTextVisible}`,
+          `"Cancelar" button visible: ${cancelVisible}`,
+          `"Crear Negocio" button visible: ${createVisible}`,
+          `Screenshot: ${modalScreenshot}`,
+        ]
+      );
+    } catch (error) {
+      const failureShot = await takeScreenshot(page, "agregar_negocio_modal_failure").catch(() => null);
+      setStep("Agregar Negocio modal", false, [
+        `Error: ${error.message}`,
+        failureShot ? `Screenshot: ${failureShot}` : "",
+      ]);
+    }
+
+    // Step 4: Open Administrar Negocios
+    try {
+      const manageVisible = await textVisible(page, ["Administrar Negocios"], 4_000);
+      if (!manageVisible) {
+        await clickByVisibleText(page, ["Mi Negocio", "Negocio"]);
+      }
+      await clickByVisibleText(page, ["Administrar Negocios"]);
+
+      const infoGeneral = await textVisible(page, ["Información General"], 20_000);
+      const accountDetails = await textVisible(page, ["Detalles de la Cuenta"], 20_000);
+      const businesses = await textVisible(page, ["Tus Negocios"], 20_000);
+      const legalSection = await textVisible(page, ["Sección Legal"], 20_000);
+      const accountScreenshot = await takeScreenshot(page, "administrar_negocios_account_page", true);
+      setStep("Administrar Negocios view", infoGeneral && accountDetails && businesses && legalSection, [
+        `"Información General" visible: ${infoGeneral}`,
+        `"Detalles de la Cuenta" visible: ${accountDetails}`,
+        `"Tus Negocios" visible: ${businesses}`,
+        `"Sección Legal" visible: ${legalSection}`,
+        `Screenshot: ${accountScreenshot}`,
+      ]);
+    } catch (error) {
+      const failureShot = await takeScreenshot(page, "administrar_negocios_failure").catch(() => null);
+      setStep("Administrar Negocios view", false, [
+        `Error: ${error.message}`,
+        failureShot ? `Screenshot: ${failureShot}` : "",
+      ]);
+    }
+
+    // Step 5: Validate Información General
+    try {
+      const userNameVisible =
+        (await isVisible(page.locator('[data-testid*="name"], [class*="name"], [id*="name"]'), 3_000)) ||
+        (await textVisible(page, ["Nombre", "User"], 4_000));
+      const emailVisible = await isVisible(
+        page.locator(`text=/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}/`),
+        8_000
+      );
+      const planVisible = await textVisible(page, ["BUSINESS PLAN"], 8_000);
+      const changePlanVisible = await textVisible(page, ["Cambiar Plan"], 8_000);
+
+      setStep("Información General", userNameVisible && emailVisible && planVisible && changePlanVisible, [
+        `User name visible: ${userNameVisible}`,
+        `User email visible: ${emailVisible}`,
+        `"BUSINESS PLAN" visible: ${planVisible}`,
+        `"Cambiar Plan" visible: ${changePlanVisible}`,
+      ]);
+    } catch (error) {
+      setStep("Información General", false, [`Error: ${error.message}`]);
+    }
+
+    // Step 6: Validate Detalles de la Cuenta
+    try {
+      const createdVisible = await textVisible(page, ["Cuenta creada"], 8_000);
+      const activeVisible = await textVisible(page, ["Estado activo"], 8_000);
+      const languageVisible = await textVisible(page, ["Idioma seleccionado"], 8_000);
+      setStep("Detalles de la Cuenta", createdVisible && activeVisible && languageVisible, [
+        `"Cuenta creada" visible: ${createdVisible}`,
+        `"Estado activo" visible: ${activeVisible}`,
+        `"Idioma seleccionado" visible: ${languageVisible}`,
+      ]);
+    } catch (error) {
+      setStep("Detalles de la Cuenta", false, [`Error: ${error.message}`]);
+    }
+
+    // Step 7: Validate Tus Negocios
+    try {
+      const listVisible =
+        (await isVisible(page.locator("table, [role='table'], ul, [data-testid*='business']"), 8_000)) ||
+        (await textVisible(page, ["Tus Negocios"], 5_000));
+      const addBusinessButtonVisible = await textVisible(page, ["Agregar Negocio"], 8_000);
+      const quotaVisible = await textVisible(page, ["Tienes 2 de 3 negocios"], 8_000);
+      setStep("Tus Negocios", listVisible && addBusinessButtonVisible && quotaVisible, [
+        `Business list visible: ${listVisible}`,
+        `"Agregar Negocio" button visible: ${addBusinessButtonVisible}`,
+        `"Tienes 2 de 3 negocios" visible: ${quotaVisible}`,
+      ]);
+    } catch (error) {
+      setStep("Tus Negocios", false, [`Error: ${error.message}`]);
+    }
+
+    const openLegalPage = async (triggerText, headingText, reportField, legalUrlField) => {
+      const popupPromise = page.context().waitForEvent("page", { timeout: 10_000 }).catch(() => null);
+      await clickByVisibleText(page, [triggerText]);
+
+      const popupPage = await popupPromise;
+      const legalPage = popupPage || page;
+      await waitForUi(legalPage);
+
+      const headingVisible =
+        (await isVisible(
+          legalPage.getByRole("heading", { name: new RegExp(escapeRegex(headingText), "i") }),
+          10_000
+        )) || (await textVisible(legalPage, [headingText], 10_000));
+      const bodyText = (await legalPage.locator("body").innerText().catch(() => "")).trim();
+      const contentVisible = bodyText.length > 200;
+      const legalScreenshot = await takeScreenshot(legalPage, reportField.replace(/\s+/g, "_"));
+      const finalUrl = legalPage.url();
+      legalUrls[legalUrlField] = finalUrl;
+
+      setStep(reportField, headingVisible && contentVisible, [
+        `"${headingText}" heading visible: ${headingVisible}`,
+        `Legal content visible: ${contentVisible}`,
+        `Final URL: ${finalUrl}`,
+        `Screenshot: ${legalScreenshot}`,
+      ]);
+
+      if (popupPage) {
+        await popupPage.close().catch(() => {});
+        await page.bringToFront();
+        await waitForUi(page);
+      } else {
+        await page.goBack({ waitUntil: "domcontentloaded" }).catch(() => {});
+        await waitForUi(page);
+      }
+    };
+
+    // Step 8: Validate Términos y Condiciones
+    try {
+      await openLegalPage(
+        "Términos y Condiciones",
+        "Términos y Condiciones",
+        "Términos y Condiciones",
+        "terminosYCondiciones"
+      );
+    } catch (error) {
+      const failureShot = await takeScreenshot(page, "terminos_failure").catch(() => null);
+      setStep("Términos y Condiciones", false, [
+        `Error: ${error.message}`,
+        failureShot ? `Screenshot: ${failureShot}` : "",
+      ]);
+    }
+
+    // Step 9: Validate Política de Privacidad
+    try {
+      await openLegalPage(
+        "Política de Privacidad",
+        "Política de Privacidad",
+        "Política de Privacidad",
+        "politicaDePrivacidad"
+      );
+    } catch (error) {
+      const failureShot = await takeScreenshot(page, "politica_failure").catch(() => null);
+      setStep("Política de Privacidad", false, [
+        `Error: ${error.message}`,
+        failureShot ? `Screenshot: ${failureShot}` : "",
+      ]);
+    }
+  } else {
+    setStep("Login", false, [startupFailureMessage]);
+    const skippedMessage = `Skipped because startup failed: ${startupFailureMessage}`;
+    setStep("Mi Negocio menu", false, [skippedMessage]);
+    setStep("Agregar Negocio modal", false, [skippedMessage]);
+    setStep("Administrar Negocios view", false, [skippedMessage]);
+    setStep("Información General", false, [skippedMessage]);
+    setStep("Detalles de la Cuenta", false, [skippedMessage]);
+    setStep("Tus Negocios", false, [skippedMessage]);
+    setStep("Términos y Condiciones", false, [skippedMessage]);
+    setStep("Política de Privacidad", false, [skippedMessage]);
   }
 
   // Step 10: Final report
@@ -399,4 +416,9 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
   console.log(`Final report: ${reportPath}`);
   // eslint-disable-next-line no-console
   console.log(`Screenshots directory: ${screenshotsDir}`);
+
+  const failedSteps = summaryRows.filter((row) => row.status !== "PASS").map((row) => row.step);
+  if (failedSteps.length > 0) {
+    throw new Error(`Workflow completed with failures in: ${failedSteps.join(", ")}. See ${reportPath}`);
+  }
 });
