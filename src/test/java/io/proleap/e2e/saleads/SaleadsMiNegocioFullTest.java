@@ -82,6 +82,10 @@ public class SaleadsMiNegocioFullTest {
 		selectedGoogleEmail = env("SALEADS_GOOGLE_EMAIL", "juanlucasbarbiergarzon@gmail.com");
 
 		final String startUrl = System.getenv("SALEADS_START_URL");
+		final String debuggerAddress = System.getenv("SALEADS_REMOTE_DEBUGGER_ADDRESS");
+		Assume.assumeTrue(
+				"Provide SALEADS_START_URL or attach to an already-open login page with SALEADS_REMOTE_DEBUGGER_ADDRESS.",
+				!isBlank(startUrl) || !isBlank(debuggerAddress));
 		if (!isBlank(startUrl)) {
 			driver.get(startUrl);
 		}
@@ -524,6 +528,10 @@ public class SaleadsMiNegocioFullTest {
 		case "chrome":
 		default:
 			final ChromeOptions chrome = new ChromeOptions();
+			final String debuggerAddress = System.getenv("SALEADS_REMOTE_DEBUGGER_ADDRESS");
+			if (!isBlank(debuggerAddress)) {
+				chrome.setExperimentalOption("debuggerAddress", debuggerAddress);
+			}
 			if (headless) {
 				chrome.addArguments("--headless=new");
 			}
