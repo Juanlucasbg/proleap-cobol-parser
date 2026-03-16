@@ -34,6 +34,8 @@ SALEADS_GOOGLE_ACCOUNT="juanlucasbarbiergarzon@gmail.com" \
 npm run test:saleads-mi-negocio
 ```
 
+If your automation runner already opens the SaleADS login page before executing this script, `SALEADS_LOGIN_URL` can be omitted.
+
 ### Optional env vars
 
 - `HEADLESS=false` to run with visible browser UI

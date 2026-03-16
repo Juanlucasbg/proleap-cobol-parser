@@ -194,13 +194,12 @@ async function main() {
     const loginUrl = process.env.SALEADS_LOGIN_URL;
     if (loginUrl) {
       await page.goto(loginUrl, { waitUntil: "domcontentloaded", timeout: 60000 });
-    } else {
-      await page.goto("about:blank");
-      throw new Error(
-        "SALEADS_LOGIN_URL is required for unattended execution. Set it to the SaleADS login page URL of your environment."
-      );
     }
     await waitForUi(page);
+    if (!loginUrl && page.url() === "about:blank") {
+      report.errors.Setup =
+        "No SALEADS_LOGIN_URL was provided and no preloaded login page is available in this browser context.";
+    }
 
     await runStep(report, "Login", async () => {
       const googleLoginCandidates = [
