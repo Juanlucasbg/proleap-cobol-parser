@@ -84,12 +84,13 @@ public class SaleadsMiNegocioFullWorkflowTest {
 		wait = new WebDriverWait(driver, WAIT_TIMEOUT);
 		wait.pollingEvery(Duration.ofMillis(250));
 
-		final String loginUrl = System.getProperty("saleads.login.url", "").trim();
-		Assert.assertFalse(
-				"Provide -Dsaleads.login.url for current environment login page.",
-				loginUrl.isEmpty());
-		driver.get(loginUrl);
-		waitForUiToLoad();
+		final String loginUrl = System.getProperty(
+				"saleads.login.url",
+				System.getenv().getOrDefault("SALEADS_LOGIN_URL", "")).trim();
+		if (!loginUrl.isEmpty()) {
+			driver.get(loginUrl);
+			waitForUiToLoad();
+		}
 	}
 
 	@After
