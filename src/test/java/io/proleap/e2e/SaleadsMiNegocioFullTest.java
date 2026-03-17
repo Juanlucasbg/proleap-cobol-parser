@@ -93,7 +93,7 @@ public class SaleadsMiNegocioFullTest {
       final boolean agregarModalOk = runStep(report, AGREGAR_NEGOCIO_MODAL, () -> {
         clickText(page, "Agregar Negocio");
         assertVisibleText(page, "Crear Nuevo Negocio");
-        final Locator businessNameInput = firstMatching(page,
+        final Locator businessNameInput = firstMatching(
             page.getByLabel("Nombre del Negocio"),
             page.getByPlaceholder("Nombre del Negocio"));
         assertVisible(businessNameInput, "Input 'Nombre del Negocio' was not visible.");
@@ -165,7 +165,7 @@ public class SaleadsMiNegocioFullTest {
     final Locator byRole = page.getByRole(AriaRole.BUTTON,
         new Page.GetByRoleOptions().setName(Pattern.compile("(?i).*google.*")));
     final Locator byText = page.getByText(Pattern.compile("(?i).*google.*"));
-    click(firstMatching(page, byRole, byText), page, "Google login button");
+    click(firstMatching(byRole, byText), page, "Google login button");
   }
 
   private static void maybeChooseGoogleAccount(final Page page, final String email) {
@@ -179,7 +179,7 @@ public class SaleadsMiNegocioFullTest {
     final Locator byRoleButton = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(text));
     final Locator byRoleLink = page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName(text));
     final Locator byText = page.getByText(text, new Page.GetByTextOptions().setExact(true));
-    click(firstMatching(page, byRoleButton, byRoleLink, byText), page, "text click: " + text);
+    click(firstMatching(byRoleButton, byRoleLink, byText), page, "text click: " + text);
   }
 
   private static void click(final Locator locator, final Page page, final String description) {
@@ -188,7 +188,7 @@ public class SaleadsMiNegocioFullTest {
     waitForUiLoad(page);
   }
 
-  private static Locator firstMatching(final Page page, final Locator... candidates) {
+  private static Locator firstMatching(final Locator... candidates) {
     for (final Locator candidate : candidates) {
       if (candidate.count() > 0 && isVisible(candidate.first())) {
         return candidate.first();
@@ -257,7 +257,7 @@ public class SaleadsMiNegocioFullTest {
   }
 
   private static LegalPageResult openLegalPage(final BrowserContext context, final Page appPage, final String linkText) {
-    final Locator legalLink = firstMatching(appPage,
+    final Locator legalLink = firstMatching(
         appPage.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName(linkText)),
         appPage.getByText(linkText, new Page.GetByTextOptions().setExact(true)));
 
@@ -265,10 +265,10 @@ public class SaleadsMiNegocioFullTest {
       final Page newTab = context.waitForPage(() -> legalLink.first().click(),
           new BrowserContext.WaitForPageOptions().setTimeout(5000));
       waitForUiLoad(newTab);
-      return new LegalPageResult(newTab, true);
+      return new LegalPageResult(newTab);
     } catch (PlaywrightException noNewTab) {
       waitForUiLoad(appPage);
-      return new LegalPageResult(appPage, false);
+      return new LegalPageResult(appPage);
     }
   }
 
@@ -333,11 +333,9 @@ public class SaleadsMiNegocioFullTest {
 
   private static class LegalPageResult {
     final Page page;
-    final boolean openedNewTab;
 
-    private LegalPageResult(final Page page, final boolean openedNewTab) {
+    private LegalPageResult(final Page page) {
       this.page = page;
-      this.openedNewTab = openedNewTab;
     }
   }
 
@@ -349,6 +347,12 @@ public class SaleadsMiNegocioFullTest {
     }
 
     void pass(final String step) {
+      final StepStatus current = statuses.get(step);
+      if (current != null && isNotBlank(current.detail) && !"NOT_RUN".equals(current.detail)) {
+        final String detail = "PASS".equals(current.detail) ? "PASS" : "PASS | " + current.detail;
+        statuses.put(step, new StepStatus(true, detail));
+        return;
+      }
       statuses.put(step, new StepStatus(true, "PASS"));
     }
 
@@ -363,7 +367,7 @@ public class SaleadsMiNegocioFullTest {
         statuses.put(step, new StepStatus(false, detail));
         return;
       }
-      final String merged = current.detail + " | " + detail;
+      final String merged = "NOT_RUN".equals(current.detail) ? detail : current.detail + " | " + detail;
       statuses.put(step, new StepStatus(current.passed, merged));
     }
 
