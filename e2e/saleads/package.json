@@ -1,0 +1,22 @@
+{
+  "name": "saleads",
+  "version": "1.0.0",
+  "description": "SaleADS Mi Negocio workflow E2E",
+  "private": true,
+  "scripts": {
+    "pw:install": "playwright install --with-deps chromium",
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:list": "playwright test --list"
+  },
+  "keywords": [
+    "playwright",
+    "e2e",
+    "saleads"
+  ],
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
+  }
+}
