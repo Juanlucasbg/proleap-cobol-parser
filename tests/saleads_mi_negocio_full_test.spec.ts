@@ -68,6 +68,11 @@ test("saleads_mi_negocio_full_test", async ({ context, page }, testInfo) => {
     }
   };
 
+  const markBlocked = (field: ReportField, reason: string) => {
+    report[field] = "FAIL";
+    notes.push(`${field}: ${reason}`);
+  };
+
   await mark("Login", async () => {
     if (page.url() === "about:blank") {
       const loginUrl = process.env.SALEADS_LOGIN_URL;
@@ -133,136 +138,171 @@ test("saleads_mi_negocio_full_test", async ({ context, page }, testInfo) => {
     });
   });
 
-  await mark("Mi Negocio menu", async () => {
-    const negocio = clickableByText(page, "Negocio");
-    const miNegocio = clickableByText(page, "Mi Negocio");
+  if (report.Login === "PASS") {
+    await mark("Mi Negocio menu", async () => {
+      const negocio = clickableByText(page, "Negocio");
+      const miNegocio = clickableByText(page, "Mi Negocio");
 
-    await clickAndWait(page, negocio);
-    await clickAndWait(page, miNegocio);
+      await clickAndWait(page, negocio);
+      await clickAndWait(page, miNegocio);
 
-    await expect(page.getByText(/Agregar Negocio/i).first()).toBeVisible();
-    await expect(page.getByText(/Administrar Negocios/i).first()).toBeVisible();
+      await expect(page.getByText(/Agregar Negocio/i).first()).toBeVisible();
+      await expect(page.getByText(/Administrar Negocios/i).first()).toBeVisible();
 
-    await page.screenshot({
-      path: testInfo.outputPath("02-mi-negocio-expanded-menu.png"),
-      fullPage: true,
-    });
-  });
-
-  await mark("Agregar Negocio modal", async () => {
-    await clickAndWait(page, clickableByText(page, "Agregar Negocio"));
-
-    await expect(page.getByText(/Crear Nuevo Negocio/i).first()).toBeVisible();
-
-    const nombreNegocioInput = page
-      .getByLabel(/Nombre del Negocio/i)
-      .or(page.getByPlaceholder(/Nombre del Negocio/i))
-      .or(page.locator("input[name*=nombre i], input[id*=nombre i]"))
-      .first();
-
-    await expect(nombreNegocioInput).toBeVisible();
-    await expect(page.getByText(/Tienes\s*2\s*de\s*3\s*negocios/i).first()).toBeVisible();
-    await expect(clickableByText(page, "Cancelar")).toBeVisible();
-    await expect(clickableByText(page, "Crear Negocio")).toBeVisible();
-
-    await page.screenshot({
-      path: testInfo.outputPath("03-crear-nuevo-negocio-modal.png"),
-      fullPage: true,
+      await page.screenshot({
+        path: testInfo.outputPath("02-mi-negocio-expanded-menu.png"),
+        fullPage: true,
+      });
     });
 
-    await nombreNegocioInput.click();
-    await nombreNegocioInput.fill("Negocio Prueba Automatización");
-    await clickAndWait(page, clickableByText(page, "Cancelar"));
-    await expect(page.getByText(/Crear Nuevo Negocio/i).first()).not.toBeVisible();
-  });
+    await mark("Agregar Negocio modal", async () => {
+      await clickAndWait(page, clickableByText(page, "Agregar Negocio"));
 
-  await mark("Administrar Negocios view", async () => {
-    const administrarNegocios = page.getByText(/Administrar Negocios/i).first();
+      await expect(page.getByText(/Crear Nuevo Negocio/i).first()).toBeVisible();
 
-    if (!(await administrarNegocios.isVisible().catch(() => false))) {
-      await clickAndWait(page, clickableByText(page, "Mi Negocio"));
-    }
+      const nombreNegocioInput = page
+        .getByLabel(/Nombre del Negocio/i)
+        .or(page.getByPlaceholder(/Nombre del Negocio/i))
+        .or(page.locator("input[name*=nombre i], input[id*=nombre i]"))
+        .first();
 
-    await clickAndWait(page, page.getByText(/Administrar Negocios/i).first());
+      await expect(nombreNegocioInput).toBeVisible();
+      await expect(page.getByText(/Tienes\s*2\s*de\s*3\s*negocios/i).first()).toBeVisible();
+      await expect(clickableByText(page, "Cancelar")).toBeVisible();
+      await expect(clickableByText(page, "Crear Negocio")).toBeVisible();
 
-    await expect(page.getByText(/Información General/i).first()).toBeVisible();
-    await expect(page.getByText(/Detalles de la Cuenta/i).first()).toBeVisible();
-    await expect(page.getByText(/Tus Negocios/i).first()).toBeVisible();
-    await expect(page.getByText(/Sección Legal/i).first()).toBeVisible();
-
-    await page.screenshot({
-      path: testInfo.outputPath("04-administrar-negocios-cuenta.png"),
-      fullPage: true,
-    });
-  });
-
-  await mark("Información General", async () => {
-    await expect(page.getByText(/información general/i).first()).toBeVisible();
-    await expect(page.getByText(/@/).first()).toBeVisible();
-    await expect(page.getByText(/BUSINESS PLAN/i).first()).toBeVisible();
-    await expect(clickableByText(page, "Cambiar Plan")).toBeVisible();
-  });
-
-  await mark("Detalles de la Cuenta", async () => {
-    await expect(page.getByText(/Cuenta creada/i).first()).toBeVisible();
-    await expect(page.getByText(/Estado activo/i).first()).toBeVisible();
-    await expect(page.getByText(/Idioma seleccionado/i).first()).toBeVisible();
-  });
-
-  await mark("Tus Negocios", async () => {
-    await expect(page.getByText(/Tus Negocios/i).first()).toBeVisible();
-    await expect(page.getByText(/Tienes\s*2\s*de\s*3\s*negocios/i).first()).toBeVisible();
-    await expect(page.getByRole("button", { name: /Agregar Negocio/i }).first()).toBeVisible();
-  });
-
-  const validateLegalPage = async (
-    field: "Términos y Condiciones" | "Política de Privacidad",
-    heading: RegExp,
-    screenshotName: string,
-  ) => {
-    await mark(field, async () => {
-      const appPage = page;
-      const popupPromise = context
-        .waitForEvent("page", { timeout: 8000 })
-        .catch(() => null);
-
-      await clickAndWait(appPage, clickableByText(appPage, field));
-      const popup = await popupPromise;
-      const targetPage = popup ?? appPage;
-
-      await targetPage.waitForLoadState("domcontentloaded");
-      await expect(targetPage.getByRole("heading", { name: heading }).first()).toBeVisible();
-      await expect(targetPage.locator("body")).toContainText(/\w{20,}/);
-
-      legalUrls[field] = targetPage.url();
-
-      await targetPage.screenshot({
-        path: testInfo.outputPath(screenshotName),
+      await page.screenshot({
+        path: testInfo.outputPath("03-crear-nuevo-negocio-modal.png"),
         fullPage: true,
       });
 
-      if (popup) {
-        await popup.close();
-        await appPage.bringToFront();
-      } else {
-        await appPage.goBack({ waitUntil: "domcontentloaded" });
+      await nombreNegocioInput.click();
+      await nombreNegocioInput.fill("Negocio Prueba Automatización");
+      await clickAndWait(page, clickableByText(page, "Cancelar"));
+      await expect(page.getByText(/Crear Nuevo Negocio/i).first()).not.toBeVisible();
+    });
+
+    await mark("Administrar Negocios view", async () => {
+      const administrarNegocios = page.getByText(/Administrar Negocios/i).first();
+
+      if (!(await administrarNegocios.isVisible().catch(() => false))) {
+        await clickAndWait(page, clickableByText(page, "Mi Negocio"));
       }
 
-      await waitForUi(appPage);
+      await clickAndWait(page, page.getByText(/Administrar Negocios/i).first());
+
+      await expect(page.getByText(/Información General/i).first()).toBeVisible();
+      await expect(page.getByText(/Detalles de la Cuenta/i).first()).toBeVisible();
+      await expect(page.getByText(/Tus Negocios/i).first()).toBeVisible();
+      await expect(page.getByText(/Sección Legal/i).first()).toBeVisible();
+
+      await page.screenshot({
+        path: testInfo.outputPath("04-administrar-negocios-cuenta.png"),
+        fullPage: true,
+      });
     });
-  };
 
-  await validateLegalPage(
-    "Términos y Condiciones",
-    /Términos y Condiciones/i,
-    "05-terminos-y-condiciones.png",
-  );
+    await mark("Información General", async () => {
+      await expect(page.getByText(/información general/i).first()).toBeVisible();
+      await expect(page.getByText(/@/).first()).toBeVisible();
+      await expect(page.getByText(/BUSINESS PLAN/i).first()).toBeVisible();
+      await expect(clickableByText(page, "Cambiar Plan")).toBeVisible();
+    });
 
-  await validateLegalPage(
-    "Política de Privacidad",
-    /Política de Privacidad/i,
-    "06-politica-de-privacidad.png",
-  );
+    await mark("Detalles de la Cuenta", async () => {
+      await expect(page.getByText(/Cuenta creada/i).first()).toBeVisible();
+      await expect(page.getByText(/Estado activo/i).first()).toBeVisible();
+      await expect(page.getByText(/Idioma seleccionado/i).first()).toBeVisible();
+    });
+
+    await mark("Tus Negocios", async () => {
+      await expect(page.getByText(/Tus Negocios/i).first()).toBeVisible();
+      await expect(page.getByText(/Tienes\s*2\s*de\s*3\s*negocios/i).first()).toBeVisible();
+      await expect(page.getByRole("button", { name: /Agregar Negocio/i }).first()).toBeVisible();
+    });
+
+    const validateLegalPage = async (
+      field: "Términos y Condiciones" | "Política de Privacidad",
+      heading: RegExp,
+      screenshotName: string,
+    ) => {
+      await mark(field, async () => {
+        const appPage = page;
+        const popupPromise = context
+          .waitForEvent("page", { timeout: 8000 })
+          .catch(() => null);
+
+        await clickAndWait(appPage, clickableByText(appPage, field));
+        const popup = await popupPromise;
+        const targetPage = popup ?? appPage;
+
+        await targetPage.waitForLoadState("domcontentloaded");
+        await expect(targetPage.getByRole("heading", { name: heading }).first()).toBeVisible();
+        await expect(targetPage.locator("body")).toContainText(/\w{20,}/);
+
+        legalUrls[field] = targetPage.url();
+
+        await targetPage.screenshot({
+          path: testInfo.outputPath(screenshotName),
+          fullPage: true,
+        });
+
+        if (popup) {
+          await popup.close();
+          await appPage.bringToFront();
+        } else {
+          await appPage.goBack({ waitUntil: "domcontentloaded" });
+        }
+
+        await waitForUi(appPage);
+      });
+    };
+
+    await validateLegalPage(
+      "Términos y Condiciones",
+      /Términos y Condiciones/i,
+      "05-terminos-y-condiciones.png",
+    );
+
+    await validateLegalPage(
+      "Política de Privacidad",
+      /Política de Privacidad/i,
+      "06-politica-de-privacidad.png",
+    );
+  } else {
+    markBlocked(
+      "Mi Negocio menu",
+      "Blocked because login did not reach the authenticated application UI.",
+    );
+    markBlocked(
+      "Agregar Negocio modal",
+      "Blocked because login did not reach the authenticated application UI.",
+    );
+    markBlocked(
+      "Administrar Negocios view",
+      "Blocked because login did not reach the authenticated application UI.",
+    );
+    markBlocked(
+      "Información General",
+      "Blocked because login did not reach the authenticated application UI.",
+    );
+    markBlocked(
+      "Detalles de la Cuenta",
+      "Blocked because login did not reach the authenticated application UI.",
+    );
+    markBlocked(
+      "Tus Negocios",
+      "Blocked because login did not reach the authenticated application UI.",
+    );
+    markBlocked(
+      "Términos y Condiciones",
+      "Blocked because login did not reach the authenticated application UI.",
+    );
+    markBlocked(
+      "Política de Privacidad",
+      "Blocked because login did not reach the authenticated application UI.",
+    );
+  }
 
   const finalReport = {
     name: "saleads_mi_negocio_full_test",
