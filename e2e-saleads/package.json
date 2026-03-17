@@ -1,0 +1,17 @@
+{
+  "name": "e2e-saleads",
+  "version": "1.0.0",
+  "description": "Playwright E2E checks for SaleADS workflows.",
+  "scripts": {
+    "test": "playwright test",
+    "test:saleads": "playwright test tests/saleads_mi_negocio_full_test.spec.js",
+    "test:saleads:headed": "playwright test tests/saleads_mi_negocio_full_test.spec.js --headed",
+    "report:show": "playwright show-report"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
+  }
+}
