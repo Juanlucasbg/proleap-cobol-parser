@@ -94,11 +94,11 @@ public class SaleadsMiNegocioWorkflowTest {
 		runStep(report, "Mi Negocio menu", this::stepOpenMiNegocioMenu);
 		runStep(report, "Agregar Negocio modal", this::stepValidateAgregarNegocioModal);
 		runStep(report, "Administrar Negocios view", this::stepOpenAdministrarNegocios);
-		runStep(report, "Informacion General", this::stepValidateInformacionGeneral);
+		runStep(report, "Informaci\u00f3n General", this::stepValidateInformacionGeneral);
 		runStep(report, "Detalles de la Cuenta", this::stepValidateDetallesCuenta);
 		runStep(report, "Tus Negocios", this::stepValidateTusNegocios);
-		runStep(report, "Terminos y Condiciones", this::stepValidateTerminosYCondiciones);
-		runStep(report, "Politica de Privacidad", this::stepValidatePoliticaPrivacidad);
+		runStep(report, "T\u00e9rminos y Condiciones", this::stepValidateTerminosYCondiciones);
+		runStep(report, "Pol\u00edtica de Privacidad", this::stepValidatePoliticaPrivacidad);
 
 		final String formattedReport = formatReport(report);
 		System.out.println(formattedReport);
@@ -252,11 +252,16 @@ public class SaleadsMiNegocioWorkflowTest {
 
 	private void selectGoogleAccountIfShown() {
 		final String appWindow = driver.getWindowHandle();
-		final Set<String> handlesBefore = driver.getWindowHandles();
+		String googleWindow = null;
+		for (final String handle : driver.getWindowHandles()) {
+			if (!handle.equals(appWindow)) {
+				googleWindow = handle;
+				break;
+			}
+		}
 
-		final String newWindow = waitForNewWindow(handlesBefore);
-		if (newWindow != null) {
-			driver.switchTo().window(newWindow);
+		if (googleWindow != null) {
+			driver.switchTo().window(googleWindow);
 			waitForPageSettled();
 		}
 
