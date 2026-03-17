@@ -18,6 +18,7 @@ import java.util.function.BooleanSupplier;
 
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.openqa.selenium.By;
@@ -56,10 +57,11 @@ public class SaleadsMiNegocioWorkflowTest {
 		Files.createDirectories(evidenceDir);
 
 		String loginUrl = System.getenv("SALEADS_LOGIN_URL");
-		if (loginUrl != null && !loginUrl.isBlank()) {
-			driver.get(loginUrl.trim());
-			waitForUiSettled();
-		}
+		Assume.assumeTrue(
+				"Set SALEADS_LOGIN_URL to the current environment login page in order to run this end-to-end test.",
+				loginUrl != null && !loginUrl.isBlank());
+		driver.get(loginUrl.trim());
+		waitForUiSettled();
 	}
 
 	@After
@@ -72,15 +74,16 @@ public class SaleadsMiNegocioWorkflowTest {
 
 	@Test
 	public void saleadsMiNegocioFullWorkflow() {
-		boolean canContinue = runStep("Login", this::stepLoginWithGoogle);
-		canContinue = canContinue && runStep("Mi Negocio menu", this::stepOpenMiNegocioMenu);
-		canContinue = canContinue && runStep("Agregar Negocio modal", this::stepValidateAgregarNegocioModal);
-		canContinue = canContinue && runStep("Administrar Negocios view", this::stepOpenAdministrarNegocios);
-		canContinue = canContinue && runStep("Informacion General", this::stepValidateInformacionGeneral);
-		canContinue = canContinue && runStep("Detalles de la Cuenta", this::stepValidateDetallesCuenta);
-		canContinue = canContinue && runStep("Tus Negocios", this::stepValidateTusNegocios);
-		canContinue = canContinue && runStep("Terminos y Condiciones", this::stepValidateTerminosYCondiciones);
-		canContinue = canContinue && runStep("Politica de Privacidad", this::stepValidatePoliticaDePrivacidad);
+		boolean canContinue = true;
+		canContinue = runStepOrBlocked("Login", canContinue, this::stepLoginWithGoogle);
+		canContinue = runStepOrBlocked("Mi Negocio menu", canContinue, this::stepOpenMiNegocioMenu);
+		canContinue = runStepOrBlocked("Agregar Negocio modal", canContinue, this::stepValidateAgregarNegocioModal);
+		canContinue = runStepOrBlocked("Administrar Negocios view", canContinue, this::stepOpenAdministrarNegocios);
+		canContinue = runStepOrBlocked("Informacion General", canContinue, this::stepValidateInformacionGeneral);
+		canContinue = runStepOrBlocked("Detalles de la Cuenta", canContinue, this::stepValidateDetallesCuenta);
+		canContinue = runStepOrBlocked("Tus Negocios", canContinue, this::stepValidateTusNegocios);
+		canContinue = runStepOrBlocked("Terminos y Condiciones", canContinue, this::stepValidateTerminosYCondiciones);
+		canContinue = runStepOrBlocked("Politica de Privacidad", canContinue, this::stepValidatePoliticaDePrivacidad);
 
 		if (!canContinue) {
 			Assert.fail("One or more workflow steps failed. Check target/saleads-evidence report and screenshots.");
@@ -110,11 +113,6 @@ public class SaleadsMiNegocioWorkflowTest {
 	}
 
 	private String stepLoginWithGoogle() {
-		if ("about:blank".equalsIgnoreCase(driver.getCurrentUrl())) {
-			Assert.fail(
-					"The browser opened on about:blank. Set SALEADS_LOGIN_URL for the current SaleADS environment login page.");
-		}
-
 		Set<String> handlesBeforeClick = driver.getWindowHandles();
 		clickByAnyText("Sign in with Google", "Iniciar sesion con Google", "Iniciar sesión con Google",
 				"Continuar con Google", "Google");
@@ -317,6 +315,19 @@ public class SaleadsMiNegocioWorkflowTest {
 		}
 		results.put(stepName, result);
 		return result.passed;
+	}
+
+	private boolean runStepOrBlocked(String stepName, boolean canRun, CheckedStep step) {
+		if (canRun) {
+			return runStep(stepName, step);
+		}
+
+		StepResult blocked = new StepResult();
+		blocked.name = stepName;
+		blocked.passed = false;
+		blocked.details = "Blocked due to a previous step failure.";
+		results.put(stepName, blocked);
+		return false;
 	}
 
 	private void writeFinalReport() throws IOException {
