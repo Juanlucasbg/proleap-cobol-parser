@@ -24,6 +24,7 @@
 		<exclude.tests>nothing.to.exclude</exclude.tests>
 		<antlr.version>4.7.2</antlr.version>
 		<slf4j.version>2.0.9</slf4j.version>
+		<selenium.version>4.41.0</selenium.version>
 	</properties>
 	<profiles>
 		<profile>
@@ -54,6 +55,12 @@
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>4.13.1</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.seleniumhq.selenium</groupId>
+			<artifactId>selenium-java</artifactId>
+			<version>${selenium.version}</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
