@@ -1,0 +1,17 @@
+{
+  "name": "saleads-mi-negocio",
+  "version": "1.0.0",
+  "description": "Playwright E2E workflow for SaleADS Mi Negocio module",
+  "scripts": {
+    "test": "playwright test",
+    "test:mi-negocio": "playwright test tests/saleads-mi-negocio-full.spec.js",
+    "test:headed": "playwright test --headed",
+    "pw:install": "playwright install chromium"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
+  }
+}
