@@ -41,3 +41,5 @@ target/
 
 ## Additional for IntelliJ
 out/
+node_modules/
+automation/**/artifacts/
