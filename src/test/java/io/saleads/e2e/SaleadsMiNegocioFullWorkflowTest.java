@@ -93,7 +93,9 @@ public class SaleadsMiNegocioFullWorkflowTest {
 	@After
 	public void teardown() {
 		try {
-			printFinalReport();
+			if (evidenceDir != null) {
+				printFinalReport();
+			}
 		} finally {
 			if (driver != null) {
 				driver.quit();
