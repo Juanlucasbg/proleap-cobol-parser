@@ -364,7 +364,7 @@ public class SaleadsMiNegocioWorkflowTest {
 
 	private boolean isVisible(final By locator) {
 		try {
-			return !driver.findElements(locator).isEmpty() && driver.findElement(locator).isDisplayed();
+			return driver.findElements(locator).stream().anyMatch(WebElement::isDisplayed);
 		} catch (final Exception ignored) {
 			return false;
 		}
