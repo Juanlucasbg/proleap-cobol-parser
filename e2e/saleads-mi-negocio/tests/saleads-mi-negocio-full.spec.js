@@ -10,11 +10,11 @@ const REPORT_FIELDS = [
   "Mi Negocio menu",
   "Agregar Negocio modal",
   "Administrar Negocios view",
-  "Informacion General",
+  "Información General",
   "Detalles de la Cuenta",
   "Tus Negocios",
-  "Terminos y Condiciones",
-  "Politica de Privacidad",
+  "Términos y Condiciones",
+  "Política de Privacidad",
 ];
 
 function escapeRegExp(value) {
@@ -277,7 +277,7 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
     setResult("Administrar Negocios view", "PASS", { screenshot: screenshotPath });
   });
 
-  await executeStep("Informacion General", async () => {
+  await executeStep("Información General", async () => {
     await expect(page.getByText(/BUSINESS\s+PLAN/i).first()).toBeVisible();
     await expect(page.getByRole("button", { name: /Cambiar\s+Plan/i }).first()).toBeVisible();
 
@@ -298,7 +298,7 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
     await expect(page.getByText(/Tienes\s+2\s+de\s+3\s+negocios/i).first()).toBeVisible();
   });
 
-  await executeStep("Terminos y Condiciones", async () => {
+  await executeStep("Términos y Condiciones", async () => {
     const data = await validateLegalLink({
       page,
       context,
@@ -307,10 +307,10 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
       headingPattern: /T[eé]rminos\s+y\s+Condiciones/i,
       screenshotName: "08-terminos-y-condiciones",
     });
-    setResult("Terminos y Condiciones", "PASS", data);
+    setResult("Términos y Condiciones", "PASS", data);
   });
 
-  await executeStep("Politica de Privacidad", async () => {
+  await executeStep("Política de Privacidad", async () => {
     const data = await validateLegalLink({
       page,
       context,
@@ -319,7 +319,7 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
       headingPattern: /Pol[ií]tica\s+de\s+Privacidad/i,
       screenshotName: "09-politica-de-privacidad",
     });
-    setResult("Politica de Privacidad", "PASS", data);
+    setResult("Política de Privacidad", "PASS", data);
   });
 
   const finalReport = {};
