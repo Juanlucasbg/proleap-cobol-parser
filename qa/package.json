@@ -1,0 +1,18 @@
+{
+  "name": "qa",
+  "version": "1.0.0",
+  "description": "SaleADS Mi Negocio module workflow E2E tests",
+  "scripts": {
+    "test": "playwright test saleads_mi_negocio_full_test.spec.js",
+    "test:list": "playwright test saleads_mi_negocio_full_test.spec.js --list"
+  },
+  "keywords": [
+    "playwright",
+    "e2e",
+    "saleads"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
+  }
+}
