@@ -227,17 +227,27 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
       page.locator("section,div").filter({ hasText: /Informaci[oó]n General/i }),
       page.locator("main").filter({ hasText: /Informaci[oó]n General/i }),
     ]);
-    const text = (await infoSection.innerText()).replace(/\s+/g, " ").trim();
+    const rawSectionText = await infoSection.innerText();
+    const text = rawSectionText.replace(/\s+/g, " ").trim();
 
     const emailMatch = text.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
     expect(emailMatch, "User email should be visible").toBeTruthy();
     expect(text).toMatch(/BUSINESS PLAN/i);
     expect(text).toMatch(/Cambiar Plan/i);
 
-    const probableNameLine = text
-      .split(" ")
-      .join(" ")
-      .match(/[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ' -]{2,}/);
+    const ignoredNamePatterns =
+      /informaci[oó]n general|business plan|cambiar plan|correo|email|plan|cuenta|estado|idioma|negocios/i;
+    const probableNameLine = rawSectionText
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .find(
+        (line) =>
+          !ignoredNamePatterns.test(line) &&
+          !line.includes("@") &&
+          /[A-Za-zÀ-ÿ]/.test(line) &&
+          line.replace(/[^A-Za-zÀ-ÿ]/g, "").length >= 4,
+      );
     expect(probableNameLine, "A non-empty user name should be visible").toBeTruthy();
   });
 
