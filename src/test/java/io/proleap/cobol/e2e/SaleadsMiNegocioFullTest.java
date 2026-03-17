@@ -36,11 +36,11 @@ public class SaleadsMiNegocioFullTest {
 	private static final String STEP_MI_NEGOCIO_MENU = "Mi Negocio menu";
 	private static final String STEP_AGREGAR_MODAL = "Agregar Negocio modal";
 	private static final String STEP_ADMIN_VIEW = "Administrar Negocios view";
-	private static final String STEP_INFO_GENERAL = "Informacion General";
+	private static final String STEP_INFO_GENERAL = "Informaci\u00f3n General";
 	private static final String STEP_DETALLES = "Detalles de la Cuenta";
 	private static final String STEP_TUS_NEGOCIOS = "Tus Negocios";
-	private static final String STEP_TERMINOS = "Terminos y Condiciones";
-	private static final String STEP_PRIVACIDAD = "Politica de Privacidad";
+	private static final String STEP_TERMINOS = "T\u00e9rminos y Condiciones";
+	private static final String STEP_PRIVACIDAD = "Pol\u00edtica de Privacidad";
 
 	private final Map<String, String> report = new LinkedHashMap<>();
 	private WebDriver driver;
@@ -105,6 +105,7 @@ public class SaleadsMiNegocioFullTest {
 
 	private void stepLoginWithGoogle() {
 		if (isVisible(byAnyText("Negocio", "Mi Negocio"), 5)) {
+			Assert.assertTrue("Left sidebar navigation is not visible.", isVisible(sidebarLocator(), 10));
 			captureScreenshot("01_dashboard_loaded");
 			return;
 		}
@@ -134,10 +135,10 @@ public class SaleadsMiNegocioFullTest {
 	}
 
 	private void stepOpenMiNegocioMenu() {
-		final WebElement negocioSection = waitForVisible(byAnyText("Negocio"), 20);
+		final WebElement negocioSection = waitForVisible(byClickableText("Negocio"), 20);
 		clickAndWait(negocioSection);
 
-		final WebElement miNegocio = waitForVisible(byAnyText("Mi Negocio"), 20);
+		final WebElement miNegocio = waitForVisible(byClickableText("Mi Negocio"), 20);
 		clickAndWait(miNegocio);
 
 		Assert.assertTrue("Agregar Negocio is not visible.", isVisible(byAnyText("Agregar Negocio"), 20));
@@ -146,7 +147,7 @@ public class SaleadsMiNegocioFullTest {
 	}
 
 	private void stepValidateAgregarNegocioModal() {
-		final WebElement agregarNegocioOption = waitForVisible(byAnyText("Agregar Negocio"), 20);
+		final WebElement agregarNegocioOption = waitForVisible(byClickableText("Agregar Negocio"), 20);
 		clickAndWait(agregarNegocioOption);
 
 		Assert.assertTrue("Modal title Crear Nuevo Negocio not visible.", isVisible(byAnyText("Crear Nuevo Negocio"), 20));
@@ -168,18 +169,18 @@ public class SaleadsMiNegocioFullTest {
 			nameInput.sendKeys("Negocio Prueba Automatizacion");
 		}
 
-		final WebElement cancelarButton = waitForVisible(byAnyText("Cancelar"), 10);
+		final WebElement cancelarButton = waitForVisible(byClickableText("Cancelar"), 10);
 		clickAndWait(cancelarButton);
 		wait.until(ExpectedConditions.invisibilityOfElementLocated(byAnyText("Crear Nuevo Negocio")));
 	}
 
 	private void stepOpenAdministrarNegocios() {
 		if (!isVisible(byAnyText("Administrar Negocios"), 3)) {
-			final WebElement miNegocio = waitForVisible(byAnyText("Mi Negocio"), 10);
+			final WebElement miNegocio = waitForVisible(byClickableText("Mi Negocio"), 10);
 			clickAndWait(miNegocio);
 		}
 
-		final WebElement administrarNegocios = waitForVisible(byAnyText("Administrar Negocios"), 15);
+		final WebElement administrarNegocios = waitForVisible(byClickableText("Administrar Negocios"), 15);
 		clickAndWait(administrarNegocios);
 
 		Assert.assertTrue("Informacion General section is missing.", isVisible(byAnyText("Informacion General", "Informaci\u00f3n General"), 20));
@@ -226,7 +227,7 @@ public class SaleadsMiNegocioFullTest {
 	private String openLegalLinkAndValidate(final String primaryText, final String fallbackText, final String screenshotName) {
 		final String originalHandle = driver.getWindowHandle();
 		final Set<String> handlesBeforeClick = driver.getWindowHandles();
-		final WebElement legalLink = waitForVisible(byAnyText(primaryText, fallbackText), 15);
+		final WebElement legalLink = waitForVisible(byClickableText(primaryText, fallbackText), 15);
 		clickAndWait(legalLink);
 
 		final String newTabHandle = switchToAnyNewWindow(handlesBeforeClick, 8);
@@ -356,6 +357,19 @@ public class SaleadsMiNegocioFullTest {
 		return By.xpath(xpath.toString());
 	}
 
+	private By byClickableText(final String... texts) {
+		final StringBuilder xpath = new StringBuilder("//*[self::a or self::button or @role='button' or self::span or self::div][");
+		for (int i = 0; i < texts.length; i++) {
+			final String escapedText = escapeXpathText(texts[i]);
+			xpath.append("contains(normalize-space(.),").append(escapedText).append(")");
+			if (i < texts.length - 1) {
+				xpath.append(" or ");
+			}
+		}
+		xpath.append("]");
+		return By.xpath(xpath.toString());
+	}
+
 	private WebElement nearestSectionContainer(final WebElement element) {
 		try {
 			return element.findElement(By.xpath("./ancestor::*[self::section or self::div][1]"));
@@ -403,7 +417,7 @@ public class SaleadsMiNegocioFullTest {
 		try {
 			runnable.run();
 			report.put(stepName, "PASS");
-		} catch (final Exception ex) {
+		} catch (final Throwable ex) {
 			report.put(stepName, "FAIL: " + ex.getMessage());
 		}
 	}
