@@ -54,11 +54,11 @@ public class SaleAdsMiNegocioWorkflowE2ETest {
 	private static final String MI_NEGOCIO_MENU = "Mi Negocio menu";
 	private static final String AGREGAR_NEGOCIO_MODAL = "Agregar Negocio modal";
 	private static final String ADMINISTRAR_NEGOCIOS_VIEW = "Administrar Negocios view";
-	private static final String INFORMACION_GENERAL = "Informacion General";
+	private static final String INFORMACION_GENERAL = "Información General";
 	private static final String DETALLES_CUENTA = "Detalles de la Cuenta";
 	private static final String TUS_NEGOCIOS = "Tus Negocios";
-	private static final String TERMINOS = "Terminos y Condiciones";
-	private static final String PRIVACIDAD = "Politica de Privacidad";
+	private static final String TERMINOS = "Términos y Condiciones";
+	private static final String PRIVACIDAD = "Política de Privacidad";
 
 	private WebDriver driver;
 	private WebDriverWait wait;
@@ -323,7 +323,7 @@ public class SaleAdsMiNegocioWorkflowE2ETest {
 		assertAnyVisibleText(linkTitleWithoutAccent, toAccented(linkTitleWithoutAccent));
 		assertAnyLegalContentVisible();
 		captureScreenshot("legal-" + slug(linkTitleWithoutAccent));
-		legalUrls.put(linkTitleWithoutAccent, driver.getCurrentUrl());
+		legalUrls.put(toAccented(linkTitleWithoutAccent), driver.getCurrentUrl());
 
 		if (openedNewTab) {
 			driver.close();
