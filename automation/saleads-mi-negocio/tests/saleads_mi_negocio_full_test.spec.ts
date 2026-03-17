@@ -51,6 +51,9 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     politicaDePrivacidad: "",
   };
   const failures: string[] = [];
+  let loginCompleted = false;
+  let miNegocioExpanded = false;
+  let administrarNegociosOpened = false;
 
   const markPass = (key: ReportKey) => {
     finalReport[key] = { status: "PASS" };
@@ -200,21 +203,23 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
         await page.goto(configuredLoginUrl, { waitUntil: "domcontentloaded" });
       }
 
-      if (!/^https?:\/\//i.test(page.url())) {
+      let loginButton: Locator;
+      try {
+        loginButton = await pickVisible(
+          page,
+          [
+            page.getByRole("button", { name: /Sign in with Google|Iniciar sesion con Google|Continuar con Google/i }),
+            page.getByRole("link", { name: /Sign in with Google|Iniciar sesion con Google|Continuar con Google/i }),
+            page.getByText(/Sign in with Google|Iniciar sesion con Google|Continuar con Google/i),
+          ],
+          "Google login button",
+          12_000,
+        );
+      } catch {
         throw new Error(
-          "Set SALEADS_LOGIN_URL (or SALEADS_BASE_URL). No hardcoded URL is used by this test.",
+          "Login page not detected. Start on SaleADS login page or set SALEADS_LOGIN_URL/SALEADS_BASE_URL.",
         );
       }
-
-      const loginButton = await pickVisible(
-        page,
-        [
-          page.getByRole("button", { name: /Sign in with Google|Iniciar sesion con Google|Continuar con Google/i }),
-          page.getByRole("link", { name: /Sign in with Google|Iniciar sesion con Google|Continuar con Google/i }),
-          page.getByText(/Sign in with Google|Iniciar sesion con Google|Continuar con Google/i),
-        ],
-        "Google login button",
-      );
 
       const popupPromise = page.waitForEvent("popup", { timeout: 10_000 }).catch(() => null);
       await clickAndWait(loginButton);
@@ -231,9 +236,13 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
 
       await ensureSidebarVisible();
       await captureCheckpoint(page, "dashboard_loaded");
+      loginCompleted = true;
     });
 
     await executeStep("Mi Negocio menu", async () => {
+      if (!loginCompleted) {
+        throw new Error("Skipped because Login validation failed.");
+      }
       const sidebar = await pickVisible(
         page,
         [page.locator("aside"), page.getByRole("navigation"), page.locator('[class*="sidebar"]')],
@@ -269,9 +278,13 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
       await pickVisible(page, [page.getByText(/Agregar Negocio/i)], "Agregar Negocio submenu");
       await pickVisible(page, [page.getByText(/Administrar Negocios/i)], "Administrar Negocios submenu");
       await captureCheckpoint(page, "mi_negocio_expanded_menu");
+      miNegocioExpanded = true;
     });
 
     await executeStep("Agregar Negocio modal", async () => {
+      if (!miNegocioExpanded) {
+        throw new Error("Skipped because Mi Negocio menu validation failed.");
+      }
       const agregarNegocioOption = await pickVisible(
         page,
         [
@@ -317,6 +330,9 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     });
 
     await executeStep("Administrar Negocios view", async () => {
+      if (!miNegocioExpanded) {
+        throw new Error("Skipped because Mi Negocio menu validation failed.");
+      }
       const administrarNegocios = page.getByText(/Administrar Negocios/i).first();
       if (!(await administrarNegocios.isVisible().catch(() => false))) {
         const miNegocioToggle = await pickVisible(
@@ -339,9 +355,13 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
       await pickVisible(page, [page.getByText(/Tus Negocios/i)], "Tus Negocios section");
       await pickVisible(page, [page.getByText(/Secci[oó]n Legal/i)], "Seccion Legal section");
       await captureCheckpoint(page, "administrar_negocios_account_page", true);
+      administrarNegociosOpened = true;
     });
 
     await executeStep("Información General", async () => {
+      if (!administrarNegociosOpened) {
+        throw new Error("Skipped because Administrar Negocios view validation failed.");
+      }
       await pickVisible(page, [page.getByText(/Informaci[oó]n General/i)], "Informacion General title");
       await pickVisible(page, [page.getByText(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i)], "User email");
       await pickVisible(
@@ -354,6 +374,9 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     });
 
     await executeStep("Detalles de la Cuenta", async () => {
+      if (!administrarNegociosOpened) {
+        throw new Error("Skipped because Administrar Negocios view validation failed.");
+      }
       await pickVisible(page, [page.getByText(/Detalles de la Cuenta/i)], "Detalles de la Cuenta title");
       await pickVisible(page, [page.getByText(/Cuenta creada/i)], "Cuenta creada text");
       await pickVisible(page, [page.getByText(/Estado activo/i)], "Estado activo text");
@@ -361,6 +384,9 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     });
 
     await executeStep("Tus Negocios", async () => {
+      if (!administrarNegociosOpened) {
+        throw new Error("Skipped because Administrar Negocios view validation failed.");
+      }
       await pickVisible(page, [page.getByText(/Tus Negocios/i)], "Tus Negocios title");
       await pickVisible(page, [page.getByRole("button", { name: /Agregar Negocio/i }), page.getByText(/Agregar Negocio/i)], "Agregar Negocio button in list");
       await pickVisible(page, [page.getByText(/Tienes\s+2\s+de\s+3\s+negocios/i)], "Business quota text in list");
@@ -373,6 +399,9 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     });
 
     await executeStep("Términos y Condiciones", async () => {
+      if (!administrarNegociosOpened) {
+        throw new Error("Skipped because Administrar Negocios view validation failed.");
+      }
       const termsUrl = await openLegalPageAndReturn(
         /T[eé]rminos y Condiciones/i,
         /T[eé]rminos y Condiciones/i,
@@ -382,6 +411,9 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     });
 
     await executeStep("Política de Privacidad", async () => {
+      if (!administrarNegociosOpened) {
+        throw new Error("Skipped because Administrar Negocios view validation failed.");
+      }
       const privacyUrl = await openLegalPageAndReturn(
         /Pol[ií]tica de Privacidad/i,
         /Pol[ií]tica de Privacidad/i,
