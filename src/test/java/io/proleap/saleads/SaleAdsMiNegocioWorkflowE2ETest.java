@@ -8,17 +8,16 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.format.DateTimeFormatter;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Supplier;
 
 import org.junit.After;
 import org.junit.Before;
@@ -208,7 +207,12 @@ public class SaleAdsMiNegocioWorkflowE2ETest {
 		driver.get(loginUrl);
 		waitForUiLoad();
 
-		clickByTextAny("Sign in with Google", "Iniciar sesion con Google", "Continuar con Google", "Google");
+		clickByTextAny(
+				"Sign in with Google",
+				"Iniciar sesion con Google",
+				"Iniciar sesión con Google",
+				"Continuar con Google",
+				"Google");
 		waitForUiLoad();
 
 		selectGoogleAccountIfVisible("juanlucasbarbiergarzon@gmail.com");
@@ -261,15 +265,15 @@ public class SaleAdsMiNegocioWorkflowE2ETest {
 		clickByTextAny("Administrar Negocios");
 		waitForUiLoad();
 
-		assertAnyVisibleText("Informacion General", "Informacion general");
+		assertAnyVisibleText("Informacion General", "Informacion general", "Información General", "Información general");
 		assertAnyVisibleText("Detalles de la Cuenta", "Detalles de la cuenta");
 		assertAnyVisibleText("Tus Negocios", "Tus negocios");
-		assertAnyVisibleText("Seccion Legal", "Seccion legal");
+		assertAnyVisibleText("Sección Legal", "Sección legal", "Seccion Legal", "Seccion legal");
 		captureScreenshot("04-administrar-negocios-page");
 	}
 
 	private void stepValidateInformacionGeneral() throws Exception {
-		assertAnyVisibleText("Informacion General", "Informacion general");
+		assertAnyVisibleText("Informacion General", "Informacion general", "Información General", "Información general");
 		assertAnyVisibleText("BUSINESS PLAN");
 		assertAnyVisibleText("Cambiar Plan", "Cambiar plan");
 
@@ -339,8 +343,8 @@ public class SaleAdsMiNegocioWorkflowE2ETest {
 				}
 
 				final List<By> locators = List.of(
-						By.xpath("//*[normalize-space()='" + escapeXpath(candidate) + "']"),
-						By.xpath("//*[contains(normalize-space(),'" + escapeXpath(candidate) + "')]"));
+						By.xpath("//*[normalize-space()=" + toXpathLiteral(candidate) + "]"),
+						By.xpath("//*[contains(normalize-space()," + toXpathLiteral(candidate) + ")]"));
 
 				for (final By locator : locators) {
 					for (final WebElement found : driver.findElements(locator)) {
@@ -370,8 +374,8 @@ public class SaleAdsMiNegocioWorkflowE2ETest {
 			}
 
 			final List<By> locators = List.of(
-					By.xpath("//*[normalize-space()='" + escapeXpath(candidate) + "']"),
-					By.xpath("//*[contains(normalize-space(),'" + escapeXpath(candidate) + "')]"));
+					By.xpath("//*[normalize-space()=" + toXpathLiteral(candidate) + "]"),
+					By.xpath("//*[contains(normalize-space()," + toXpathLiteral(candidate) + ")]"));
 
 			for (final By locator : locators) {
 				for (final WebElement element : driver.findElements(locator)) {
@@ -386,9 +390,9 @@ public class SaleAdsMiNegocioWorkflowE2ETest {
 
 	private void fillInputByLabel(final String labelText, final String value) {
 		final List<By> locators = List.of(
-				By.xpath("//label[contains(normalize-space(),'" + escapeXpath(labelText) + "')]/following::input[1]"),
-				By.xpath("//input[@placeholder='" + escapeXpath(labelText) + "']"),
-				By.xpath("//input[contains(@aria-label,'" + escapeXpath(labelText) + "')]"));
+				By.xpath("//label[contains(normalize-space()," + toXpathLiteral(labelText) + ")]/following::input[1]"),
+				By.xpath("//input[@placeholder=" + toXpathLiteral(labelText) + "]"),
+				By.xpath("//input[contains(@aria-label," + toXpathLiteral(labelText) + ")]"));
 
 		WebElement targetInput = null;
 		for (final By locator : locators) {
@@ -419,7 +423,7 @@ public class SaleAdsMiNegocioWorkflowE2ETest {
 			final WebDriverWait shortWait = new WebDriverWait(driver, Duration.ofSeconds(6));
 			final WebElement account = shortWait.until(driverInstance -> {
 				final List<WebElement> matches = driver.findElements(
-						By.xpath("//*[contains(normalize-space(),'" + escapeXpath(accountEmail) + "')]"));
+						By.xpath("//*[contains(normalize-space()," + toXpathLiteral(accountEmail) + ")]"));
 				for (final WebElement match : matches) {
 					if (match.isDisplayed()) {
 						return match;
@@ -464,7 +468,7 @@ public class SaleAdsMiNegocioWorkflowE2ETest {
 
 	private void assertSectionHasDynamicContent(final String sectionTitle) {
 		final List<WebElement> sectionHeaders = driver.findElements(
-				By.xpath("//*[contains(normalize-space(),'" + escapeXpath(sectionTitle) + "')]"));
+				By.xpath("//*[contains(normalize-space()," + toXpathLiteral(sectionTitle) + ")]"));
 
 		for (final WebElement header : sectionHeaders) {
 			if (!header.isDisplayed()) {
@@ -483,8 +487,8 @@ public class SaleAdsMiNegocioWorkflowE2ETest {
 
 	private void captureScreenshot(final String checkpointName) throws IOException {
 		final Path destination = screenshotDir.resolve(
-				DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss").format(Instant.now()) + "-" + slug(checkpointName)
-						+ ".png");
+				ZonedDateTime.now(ZoneOffset.UTC).format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"))
+						+ "-" + slug(checkpointName) + ".png");
 		final byte[] imageBytes = ((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES);
 		Files.write(destination, imageBytes);
 	}
@@ -549,11 +553,21 @@ public class SaleAdsMiNegocioWorkflowE2ETest {
 				.replace("\"", "\\\"");
 	}
 
-	private String escapeXpath(final String value) {
+	private String toXpathLiteral(final String value) {
 		if (!value.contains("'")) {
-			return value;
+			return "'" + value + "'";
 		}
-		return value.replace("'", "\\'");
+
+		final String[] parts = value.split("'");
+		final StringBuilder builder = new StringBuilder("concat(");
+		for (int i = 0; i < parts.length; i++) {
+			if (i > 0) {
+				builder.append(", \"'\", ");
+			}
+			builder.append("'").append(parts[i]).append("'");
+		}
+		builder.append(")");
+		return builder.toString();
 	}
 
 	private String slug(final String input) {
