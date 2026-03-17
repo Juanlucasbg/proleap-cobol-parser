@@ -63,7 +63,7 @@ public class SaleadsMiNegocioFullTest {
 	private String googleAccountEmail;
 
 	@Before
-	public void setUp() throws IOException {
+	public void setUp() throws Exception {
 		final String runId = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
 		screenshotDirectory = Path.of("target", "saleads-evidence", runId);
 		Files.createDirectories(screenshotDirectory);
