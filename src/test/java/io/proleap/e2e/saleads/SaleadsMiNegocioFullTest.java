@@ -12,7 +12,6 @@ import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -147,13 +146,28 @@ public class SaleadsMiNegocioFullTest {
 		final List<String> googleButtons = Arrays.asList("Sign in with Google", "Iniciar sesión con Google",
 				"Inicia sesión con Google", "Continuar con Google", "Acceder con Google", "Login with Google");
 		final List<String> genericLoginButtons = Arrays.asList("Iniciar sesión", "Ingresar", "Login", "Sign in");
+		final String appWindow = driver.getWindowHandle();
+		final Set<String> windowsBeforeGoogleClick = new LinkedHashSet<>(driver.getWindowHandles());
 
 		if (!clickFirstClickableText(googleButtons, Duration.ofSeconds(8))) {
 			clickFirstClickableTextOrFail(genericLoginButtons, Duration.ofSeconds(8));
 			clickFirstClickableTextOrFail(googleButtons, Duration.ofSeconds(8));
 		}
 
+		if (driver.getWindowHandles().size() > windowsBeforeGoogleClick.size()) {
+			driver.switchTo().window(findNewWindowHandle(windowsBeforeGoogleClick));
+		}
+
 		clickIfVisibleText("juanlucasbarbiergarzon@gmail.com", Duration.ofSeconds(8));
+
+		if (hasVisibleText("juanlucasbarbiergarzon@gmail.com") && driver.getWindowHandles().size() > 1
+				&& !driver.getWindowHandle().equals(appWindow)) {
+			waitUntilGoogleWindowClosesOrRedirects(appWindow);
+		}
+
+		if (driver.getWindowHandles().contains(appWindow)) {
+			driver.switchTo().window(appWindow);
+		}
 
 		waitForAnyVisibleText(Duration.ofSeconds(90), "Negocio", "Mi Negocio");
 		assertTrue("Left sidebar navigation should be visible after login", hasVisibleElement(By.xpath(
@@ -232,7 +246,8 @@ public class SaleadsMiNegocioFullTest {
 		assertTrue("Business list should be visible in 'Tus Negocios'", hasVisibleElementInside(businessesSection,
 				By.xpath(".//table//tr | .//ul/li | .//*[contains(@class, 'business')] | .//div[contains(@class, 'card')]")));
 		assertTrue("Button 'Agregar Negocio' should exist in 'Tus Negocios'",
-				hasVisibleElementInside(businessesSection, clickableTextLocator("Agregar Negocio")));
+				hasVisibleElementInside(businessesSection, By.xpath(
+						".//button[normalize-space(.)='Agregar Negocio'] | .//a[normalize-space(.)='Agregar Negocio'] | .//*[@role='button' and normalize-space(.)='Agregar Negocio']")));
 		waitForAnyVisibleText(DEFAULT_TIMEOUT, "Tienes 2 de 3 negocios");
 	}
 
@@ -418,6 +433,29 @@ public class SaleadsMiNegocioFullTest {
 		waitForUiToSettle();
 	}
 
+	private void waitUntilGoogleWindowClosesOrRedirects(final String appWindow) {
+		try {
+			new WebDriverWait(driver, Duration.ofSeconds(40)).until(d -> {
+				try {
+					final Set<String> handles = d.getWindowHandles();
+					if (handles.size() == 1 && handles.contains(appWindow)) {
+						return true;
+					}
+					final String currentHandle = d.getWindowHandle();
+					if (!handles.contains(currentHandle)) {
+						return true;
+					}
+					final String url = d.getCurrentUrl();
+					return url != null && !url.contains("accounts.google.");
+				} catch (final Exception ignored) {
+					return true;
+				}
+			});
+		} catch (final TimeoutException timeoutException) {
+			// Continue with best-effort window recovery.
+		}
+	}
+
 	private String findNewWindowHandle(final Set<String> previousHandles) {
 		for (final String handle : driver.getWindowHandles()) {
 			if (!previousHandles.contains(handle)) {
@@ -463,7 +501,9 @@ public class SaleadsMiNegocioFullTest {
 		final String textLiteral = xpathLiteral(text);
 		return By.xpath("//button[normalize-space(.)=" + textLiteral + "] | //a[normalize-space(.)=" + textLiteral
 				+ "] | //*[@role='button' and normalize-space(.)=" + textLiteral
-				+ "] | //*[normalize-space(text())=" + textLiteral
+				+ "] | //button[contains(normalize-space(.), " + textLiteral + ")] | //a[contains(normalize-space(.), "
+				+ textLiteral + ")] | //*[@role='button' and contains(normalize-space(.), " + textLiteral
+				+ ")] | //*[normalize-space(text())=" + textLiteral
 				+ "]/ancestor::*[self::button or self::a or @role='button'][1]");
 	}
 
@@ -473,7 +513,20 @@ public class SaleadsMiNegocioFullTest {
 	}
 
 	private String xpathLiteral(final String value) {
-		return "'" + value.replace("'", "\\'") + "'";
+		if (!value.contains("'")) {
+			return "'" + value + "'";
+		}
+
+		final String[] parts = value.split("'", -1);
+		final StringBuilder builder = new StringBuilder("concat(");
+		for (int i = 0; i < parts.length; i++) {
+			if (i > 0) {
+				builder.append(", \"'\", ");
+			}
+			builder.append("'").append(parts[i]).append("'");
+		}
+		builder.append(")");
+		return builder.toString();
 	}
 
 	private String toSafeFilename(final String input) {
