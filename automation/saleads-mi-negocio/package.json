@@ -1,0 +1,20 @@
+{
+  "name": "saleads-mi-negocio",
+  "version": "1.0.0",
+  "description": "Environment-agnostic SaleADS Mi Negocio E2E workflow validation",
+  "scripts": {
+    "test": "playwright test --config=playwright.config.js",
+    "test:headed": "playwright test --headed --config=playwright.config.js",
+    "test:list": "playwright test --list --config=playwright.config.js"
+  },
+  "keywords": [
+    "saleads",
+    "playwright",
+    "e2e"
+  ],
+  "author": "cursor automation",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
+  }
+}
