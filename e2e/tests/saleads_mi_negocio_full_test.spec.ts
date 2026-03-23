@@ -15,6 +15,7 @@ type Report = {
 };
 
 const GOOGLE_ACCOUNT_EMAIL = "juanlucasbarbiergarzon@gmail.com";
+const SCREENSHOT_DIR = "screenshots";
 
 function textRegex(text: string): RegExp {
   return new RegExp(text, "i");
@@ -94,7 +95,7 @@ async function clickLegalLinkAndValidate(opts: {
     10000,
   );
 
-  await legalPage.screenshot({ path: `e2e/screenshots/${screenshotName}.png`, fullPage: true });
+  await legalPage.screenshot({ path: `${SCREENSHOT_DIR}/${screenshotName}.png`, fullPage: true });
   const finalUrl = legalPage.url();
 
   if (popup) {
@@ -133,6 +134,7 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
 
   // Step 1: Login with Google
   try {
+    const googlePopupPromise = context.waitForEvent("page", { timeout: 7000 }).catch(() => null);
     const loginClicked = await clickFirstVisible(page, [
       textRegex("Sign in with Google"),
       textRegex("Iniciar sesi[oó]n con Google"),
@@ -143,7 +145,7 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
     expect.soft(loginClicked).toBeTruthy();
 
     // Some environments show Google account selection in a popup or in the same page.
-    const googlePopup = await context.waitForEvent("page", { timeout: 5000 }).catch(() => null);
+    const googlePopup = await googlePopupPromise;
     const googlePage = googlePopup ?? page;
 
     const googleAccountSelector = googlePage.getByText(GOOGLE_ACCOUNT_EMAIL).first();
@@ -171,7 +173,7 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
     expect.soft(leftSidebarVisible).toBeTruthy();
 
     if (mainInterfaceVisible && leftSidebarVisible) {
-      await page.screenshot({ path: "e2e/screenshots/step1-dashboard-loaded.png", fullPage: true });
+      await page.screenshot({ path: `${SCREENSHOT_DIR}/step1-dashboard-loaded.png`, fullPage: true });
       report.Login = "PASS";
     }
   } catch (error) {
@@ -190,7 +192,7 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
     ]);
 
     if (submenuExpanded) {
-      await page.screenshot({ path: "e2e/screenshots/step2-mi-negocio-expanded.png", fullPage: true });
+      await page.screenshot({ path: `${SCREENSHOT_DIR}/step2-mi-negocio-expanded.png`, fullPage: true });
       report["Mi Negocio menu"] = "PASS";
     }
   } catch (error) {
@@ -217,7 +219,7 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
     ]);
 
     if (modalChecks) {
-      await page.screenshot({ path: "e2e/screenshots/step3-crear-nuevo-negocio-modal.png", fullPage: true });
+      await page.screenshot({ path: `${SCREENSHOT_DIR}/step3-crear-nuevo-negocio-modal.png`, fullPage: true });
 
       // Optional actions requested in the workflow.
       await businessNameInput.click();
@@ -250,7 +252,7 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
 
     if (accountSectionsVisible) {
       accountPageUrl = page.url();
-      await page.screenshot({ path: "e2e/screenshots/step4-administrar-negocios-view.png", fullPage: true });
+      await page.screenshot({ path: `${SCREENSHOT_DIR}/step4-administrar-negocios-view.png`, fullPage: true });
       report["Administrar Negocios view"] = "PASS";
     }
   } catch (error) {
