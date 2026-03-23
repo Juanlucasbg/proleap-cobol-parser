@@ -5,11 +5,11 @@ type ReportKey =
   | "Mi Negocio menu"
   | "Agregar Negocio modal"
   | "Administrar Negocios view"
-  | "Informacion General"
+  | "Informaci\u00f3n General"
   | "Detalles de la Cuenta"
   | "Tus Negocios"
-  | "Terminos y Condiciones"
-  | "Politica de Privacidad";
+  | "T\u00e9rminos y Condiciones"
+  | "Pol\u00edtica de Privacidad";
 
 type StepReport = Record<ReportKey, "PASS" | "FAIL">;
 
@@ -19,11 +19,11 @@ const REQUIRED_KEYS: ReportKey[] = [
   "Mi Negocio menu",
   "Agregar Negocio modal",
   "Administrar Negocios view",
-  "Informacion General",
+  "Informaci\u00f3n General",
   "Detalles de la Cuenta",
   "Tus Negocios",
-  "Terminos y Condiciones",
-  "Politica de Privacidad"
+  "T\u00e9rminos y Condiciones",
+  "Pol\u00edtica de Privacidad"
 ];
 
 function createInitialReport(): StepReport {
@@ -303,7 +303,7 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
     evidence.push(await captureCheckpoint(page, testInfo, "04-administrar-negocios-account-page-full.png"));
   });
 
-  await executeStep(report, failures, "Informacion General", async () => {
+  await executeStep(report, failures, "Informaci\u00f3n General", async () => {
     const infoSection = sectionByHeading(page, /informaci.n general/i);
     await expect(infoSection).toBeVisible({ timeout: 20_000 });
 
@@ -360,8 +360,8 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
     }
   });
 
-  await executeStep(report, failures, "Terminos y Condiciones", async () => {
-    finalUrls["Terminos y Condiciones"] = await openLegalPageAndValidate(
+  await executeStep(report, failures, "T\u00e9rminos y Condiciones", async () => {
+    finalUrls["T\u00e9rminos y Condiciones"] = await openLegalPageAndValidate(
       page,
       context,
       testInfo,
@@ -371,8 +371,8 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
     );
   });
 
-  await executeStep(report, failures, "Politica de Privacidad", async () => {
-    finalUrls["Politica de Privacidad"] = await openLegalPageAndValidate(
+  await executeStep(report, failures, "Pol\u00edtica de Privacidad", async () => {
+    finalUrls["Pol\u00edtica de Privacidad"] = await openLegalPageAndValidate(
       page,
       context,
       testInfo,
