@@ -1,0 +1,14 @@
+{
+  "name": "saleads-mi-negocio-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Environment-agnostic Playwright test for SaleADS Mi Negocio workflow",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0"
+  }
+}
