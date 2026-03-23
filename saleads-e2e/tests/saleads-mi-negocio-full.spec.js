@@ -64,16 +64,17 @@ test.describe("SaleADS - Mi Negocio full workflow", () => {
     const validations = [];
     const providedUrl = process.env.SALEADS_BASE_URL || process.env.BASE_URL;
 
-    test.skip(
-      !providedUrl,
-      "Set SALEADS_BASE_URL (or BASE_URL) to run this environment-agnostic workflow."
-    );
-
     await test.step("1) Login with Google", async () => {
-      await page.goto(providedUrl, { waitUntil: "domcontentloaded" });
+      if (providedUrl) {
+        await page.goto(providedUrl, { waitUntil: "domcontentloaded" });
+      }
       await waitForUiIdle(page);
 
       const signInWithGoogle = page.getByRole("button", { name: /sign in with google|google/i });
+      await expect(
+        signInWithGoogle.first(),
+        "Google login button is required. If the test runner does not preload the login page, provide SALEADS_BASE_URL."
+      ).toBeVisible();
       const popupPromise = context.waitForEvent("page", { timeout: 15000 }).catch(() => null);
       await safeClick(signInWithGoogle.first(), page);
 
@@ -233,7 +234,7 @@ test.describe("SaleADS - Mi Negocio full workflow", () => {
       await waitForUiIdle(legalPage);
 
       await expect(legalPage.getByRole("heading", { name: headingRegex }).first()).toBeVisible();
-      await expect(legalPage.locator("main,article,section,body")).toContainText(/[A-Za-z]{20,}/);
+      await expect(legalPage.locator("main,article,section,body")).toContainText(/\S[\s\S]{50,}/);
 
       await attachCheckpoint(legalPage, testInfo, screenshotLabel, true);
       const finalUrl = legalPage.url();

@@ -37,7 +37,8 @@ npx playwright install --with-deps chromium
 
 ## Run
 
-Set the target environment URL at runtime to keep it environment-agnostic:
+If the runner already opens the SaleADS login page, just run the test directly.
+If not, pass the current environment login URL at runtime (still environment-agnostic):
 
 ```bash
 cd saleads-e2e
