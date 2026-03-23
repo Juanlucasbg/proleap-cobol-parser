@@ -1,0 +1,20 @@
+{
+  "name": "saleads-mi-negocio",
+  "version": "1.0.0",
+  "description": "Environment-agnostic SaleADS Mi Negocio full workflow test",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:list": "playwright test --list"
+  },
+  "keywords": [
+    "saleads",
+    "playwright",
+    "e2e"
+  ],
+  "author": "automation",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
+  }
+}
