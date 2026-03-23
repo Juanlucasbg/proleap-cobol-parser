@@ -194,6 +194,43 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+### SaleADS "Mi Negocio" end-to-end test (opt-in)
+
+This repository includes an opt-in browser E2E test for validating the full
+SaleADS "Mi Negocio" workflow:
+
+- test class: `io.proleap.cobol.e2e.SaleadsMiNegocioFullTest`
+- test name: `saleads_mi_negocio_full_test`
+- behavior:
+  - logs in with Google
+  - opens `Negocio` -> `Mi Negocio`
+  - validates `Agregar Negocio` modal
+  - validates `Administrar Negocios` sections
+  - validates `Terminos y Condiciones` and `Politica de Privacidad`
+  - captures screenshots at key checkpoints
+  - writes a final PASS/FAIL report for each requested validation step
+
+Run it explicitly (it is skipped by default):
+
+```
+$ mvn -Dtest=io.proleap.cobol.e2e.SaleadsMiNegocioFullTest test \
+    -DrunSaleadsE2E=true \
+    -Dsaleads.login.url="<saleads-login-url>" \
+    -Dsaleads.google.account="juanlucasbarbiergarzon@gmail.com"
+```
+
+Optional flags:
+
+- `-Dsaleads.headless=true` to run headless.
+- `-Dsaleads.wait.seconds=40` to increase explicit waits.
+- `-Dsaleads.expected.user.name="<expected-visible-name>"` for strict name validation.
+- `-Dsaleads.expected.user.email="<expected-visible-email>"` for strict email validation.
+
+Outputs:
+
+- screenshots: `target/saleads-screenshots/saleads_mi_negocio_full_test/`
+- final report: `target/saleads-reports/saleads_mi_negocio_full_test_report.txt`
+
 
 Release process
 ---------------
