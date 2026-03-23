@@ -1,0 +1,19 @@
+{
+  "name": "ui-tests",
+  "version": "1.0.0",
+  "description": "Environment-agnostic SaleADS UI end-to-end tests",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:saleads-mi-negocio": "playwright test tests/saleads_mi_negocio_full_test.spec.js",
+    "report": "playwright show-report"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
+  }
+}
