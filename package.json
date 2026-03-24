@@ -1,0 +1,14 @@
+{
+  "name": "saleads-mi-negocio-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cross-environment E2E workflow test for SaleADS Mi Negocio module",
+  "scripts": {
+    "test:e2e": "playwright test -c e2e/playwright.config.js",
+    "test:e2e:headed": "playwright test -c e2e/playwright.config.js --headed",
+    "test:e2e:report": "playwright show-report e2e/playwright-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.1"
+  }
+}

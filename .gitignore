@@ -41,3 +41,9 @@ target/
 
 ## Additional for IntelliJ
 out/
+node_modules/
+e2e/playwright-report/
+e2e/test-results/
+e2e/artifacts/**/*.png
+e2e/artifacts/**/*.json
+e2e/artifacts/**/*.zip
