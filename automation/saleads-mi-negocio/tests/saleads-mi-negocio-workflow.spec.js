@@ -234,56 +234,58 @@ test.describe("SaleADS Mi Negocio full workflow", () => {
     let menuReady = false;
     let adminViewReady = false;
 
+    // STEP 1: Login with Google
     const loginUrl = getConfiguredLoginUrl();
     if (!loginUrl) {
-      throw new Error(
+      failStep(
+        state,
+        STEP_KEYS.LOGIN,
         "Missing environment-agnostic login URL. Set SALEADS_LOGIN_URL or saleads.login.url before running this test."
       );
-    }
+    } else {
+      try {
+        await page.goto(loginUrl, { waitUntil: "domcontentloaded" });
+        await page.waitForTimeout(1500);
+        state.environment.initialPageUrl = page.url();
 
-    await page.goto(loginUrl, { waitUntil: "domcontentloaded" });
-    await page.waitForTimeout(1500);
-    state.environment.initialPageUrl = page.url();
+        const navResult = await capturePopupOrSameTab(page, async () => {
+          const clicked = await clickRoleButtonOrText(page, [
+            "Sign in with Google",
+            "Iniciar sesión con Google",
+            "Login with Google",
+            "Entrar con Google"
+          ]);
+          if (!clicked) {
+            throw new Error("Could not find a Google login button by visible text.");
+          }
+        });
 
-    // STEP 1: Login with Google
-    try {
-      const navResult = await capturePopupOrSameTab(page, async () => {
-        const clicked = await clickRoleButtonOrText(page, [
-          "Sign in with Google",
-          "Iniciar sesión con Google",
-          "Login with Google",
-          "Entrar con Google"
-        ]);
-        if (!clicked) {
-          throw new Error("Could not find a Google login button by visible text.");
+        if (navResult.kind === "popup") {
+          await maybeSelectGoogleAccount(navResult.page);
+          await Promise.race([
+            navResult.page.waitForEvent("close", { timeout: 15000 }).catch(() => {}),
+            page.waitForLoadState("domcontentloaded", { timeout: 15000 }).catch(() => {})
+          ]);
+        } else {
+          await maybeSelectGoogleAccount(page);
         }
-      });
 
-      if (navResult.kind === "popup") {
-        await maybeSelectGoogleAccount(navResult.page);
-        await Promise.race([
-          navResult.page.waitForEvent("close", { timeout: 15000 }).catch(() => {}),
-          page.waitForLoadState("domcontentloaded", { timeout: 15000 }).catch(() => {})
-        ]);
-      } else {
-        await maybeSelectGoogleAccount(page);
+        await page.waitForLoadState("domcontentloaded", { timeout: 15000 }).catch(() => {});
+        await page.waitForTimeout(2000);
+
+        await assertAnyVisible(page, ["Negocio", "Mi Negocio", "Dashboard", "Panel"]);
+        const sidebarByRole = await page.getByRole("navigation").first().isVisible().catch(() => false);
+        const sidebarByText =
+          (await page.getByText(/Negocio/i).first().isVisible().catch(() => false)) ||
+          (await page.getByText(/Mi Negocio/i).first().isVisible().catch(() => false));
+        expect(sidebarByRole || sidebarByText).toBeTruthy();
+        dashboardReady = true;
+        passStep(state, STEP_KEYS.LOGIN, "Main interface and sidebar are visible after login.");
+        const shot = await saveStepScreenshot(page, "01-dashboard-after-login.png");
+        attachEvidence(state, STEP_KEYS.LOGIN, shot);
+      } catch (error) {
+        failStep(state, STEP_KEYS.LOGIN, error.message);
       }
-
-      await page.waitForLoadState("domcontentloaded", { timeout: 15000 }).catch(() => {});
-      await page.waitForTimeout(2000);
-
-      await assertAnyVisible(page, ["Negocio", "Mi Negocio", "Dashboard", "Panel"]);
-      const sidebarByRole = await page.getByRole("navigation").first().isVisible().catch(() => false);
-      const sidebarByText =
-        (await page.getByText(/Negocio/i).first().isVisible().catch(() => false)) ||
-        (await page.getByText(/Mi Negocio/i).first().isVisible().catch(() => false));
-      expect(sidebarByRole || sidebarByText).toBeTruthy();
-      dashboardReady = true;
-      passStep(state, STEP_KEYS.LOGIN, "Main interface and sidebar are visible after login.");
-      const shot = await saveStepScreenshot(page, "01-dashboard-after-login.png");
-      attachEvidence(state, STEP_KEYS.LOGIN, shot);
-    } catch (error) {
-      failStep(state, STEP_KEYS.LOGIN, error.message);
     }
 
     // STEP 2: Open Mi Negocio menu
