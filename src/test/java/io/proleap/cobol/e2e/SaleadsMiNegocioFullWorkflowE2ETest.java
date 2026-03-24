@@ -391,13 +391,29 @@ public class SaleadsMiNegocioFullWorkflowE2ETest {
 
 	private WebElement waitForClickableByVisibleText(final String... texts) {
 		return wait.until(driverRef -> {
+			WebElement bestFallback = null;
+			int bestFallbackTextLength = Integer.MAX_VALUE;
+
 			for (final String text : texts) {
-				for (final By locator : textLocators(text)) {
+				for (final By locator : clickableTextLocators(text)) {
 					final List<WebElement> candidates = driverRef.findElements(locator).stream().filter(WebElement::isDisplayed).toList();
 					for (final WebElement candidate : candidates) {
 						try {
 							if (candidate.isEnabled()) {
-								return candidate;
+								if (isLikelyClickable(candidate)) {
+									return candidate;
+								}
+
+								final String tagName = Optional.ofNullable(candidate.getTagName()).orElse("").toLowerCase(Locale.ROOT);
+								if ("html".equals(tagName) || "body".equals(tagName)) {
+									continue;
+								}
+
+								final int textLength = normalizeWhitespace(candidate.getText()).length();
+								if (textLength < bestFallbackTextLength) {
+									bestFallback = candidate;
+									bestFallbackTextLength = textLength;
+								}
 							}
 						} catch (final Exception ignored) {
 							// Continue with the next candidate.
@@ -405,7 +421,7 @@ public class SaleadsMiNegocioFullWorkflowE2ETest {
 					}
 				}
 			}
-			return null;
+			return bestFallback;
 		});
 	}
 
@@ -448,6 +464,49 @@ public class SaleadsMiNegocioFullWorkflowE2ETest {
 		final String exact = "//*[normalize-space(.)=" + xpathLiteral(rawText) + "]";
 		final String contains = "//*[contains(normalize-space(.), " + xpathLiteral(rawText) + ")]";
 		return Arrays.asList(By.xpath(exact), By.xpath(contains));
+	}
+
+	private List<By> clickableTextLocators(final String rawText) {
+		final String literal = xpathLiteral(rawText);
+		final String matchText = "(normalize-space(.)=" + literal + " or contains(normalize-space(.), " + literal + "))";
+		final String matchValue = "(@value=" + literal + " or contains(@value, " + literal + "))";
+
+		return Arrays.asList(
+				By.xpath("//button[" + matchText + "]"),
+				By.xpath("//a[" + matchText + "]"),
+				By.xpath("//input[(@type='button' or @type='submit' or @type='reset') and " + matchValue + "]"),
+				By.xpath("//*[@role='button' or @role='menuitem' or @role='link' or @role='tab'][" + matchText + "]"),
+				By.xpath("//*[self::span or self::div or self::p][" + matchText
+						+ "]/ancestor-or-self::*[self::button or self::a or @role='button' or @role='menuitem' or @role='link' or @onclick][1]"),
+				By.xpath("//*[" + matchText + "]"));
+	}
+
+	private boolean isLikelyClickable(final WebElement element) {
+		final String tagName = Optional.ofNullable(element.getTagName()).orElse("").toLowerCase(Locale.ROOT);
+		if ("button".equals(tagName) || "a".equals(tagName)) {
+			return true;
+		}
+
+		if ("input".equals(tagName)) {
+			final String type = Optional.ofNullable(element.getAttribute("type")).orElse("").toLowerCase(Locale.ROOT);
+			if ("button".equals(type) || "submit".equals(type) || "reset".equals(type) || "checkbox".equals(type)
+					|| "radio".equals(type)) {
+				return true;
+			}
+		}
+
+		final String role = Optional.ofNullable(element.getAttribute("role")).orElse("").toLowerCase(Locale.ROOT);
+		if ("button".equals(role) || "menuitem".equals(role) || "link".equals(role) || "tab".equals(role)) {
+			return true;
+		}
+
+		final String onClick = Optional.ofNullable(element.getAttribute("onclick")).orElse("");
+		if (!onClick.isBlank()) {
+			return true;
+		}
+
+		final String classes = Optional.ofNullable(element.getAttribute("class")).orElse("").toLowerCase(Locale.ROOT);
+		return classes.contains("btn") || classes.contains("button");
 	}
 
 	private String xpathLiteral(final String value) {
