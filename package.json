@@ -1,0 +1,24 @@
+{
+  "name": "workspace",
+  "version": "1.0.0",
+  "description": "ProLeap ANTLR4-based parser for COBOL =====================================",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "saleads:mi-negocio:test": "node e2e/saleads_mi_negocio_full_test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Juanlucasbg/proleap-cobol-parser.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Juanlucasbg/proleap-cobol-parser/issues"
+  },
+  "homepage": "https://github.com/Juanlucasbg/proleap-cobol-parser#readme",
+  "devDependencies": {
+    "playwright": "^1.58.2"
+  }
+}
