@@ -34,9 +34,19 @@ Headless:
 npm test
 ```
 
+## Start URL / Session
+
+The test does not hardcode any SaleADS domain. It can start from whatever environment URL you pass:
+
+```bash
+SALEADS_START_URL="https://<your-current-saleads-environment>/login" npm test
+```
+
+If `SALEADS_START_URL` is not set, the test expects the browser context to already be on the login page.
+
 ## Credentials / Session
 
-For Google login, use Playwright project `chromium-auth` and provide a storage state file:
+For Google login, you can provide a Playwright storage state file:
 
 ```bash
 PLAYWRIGHT_AUTH_FILE=/absolute/path/to/storageState.json npm test
@@ -54,4 +64,4 @@ When Google account selection appears, it selects:
 
 ## Artifacts
 
-- Screenshots and report are written under: `artifacts/saleads_mi_negocio_full_test/`
+- Screenshots and final report are written under: `test-results/saleads_mi_negocio_full_test/`

@@ -86,6 +86,11 @@ test.describe("SaleADS Mi Negocio full workflow", () => {
     context,
   }) => {
     test.setTimeout(240_000);
+    const startUrl = process.env.SALEADS_START_URL;
+    if (startUrl) {
+      await page.goto(startUrl, { waitUntil: "domcontentloaded" });
+    }
+
     const stepResults: Record<string, StepResult> = {};
 
     for (const field of REPORT_FIELDS) {

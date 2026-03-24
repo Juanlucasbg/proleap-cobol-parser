@@ -1,6 +1,7 @@
 import { defineConfig } from "@playwright/test";
 
 const headless = process.env.PW_HEADLESS !== "false";
+const storageState = process.env.PLAYWRIGHT_AUTH_FILE;
 
 export default defineConfig({
   testDir: "./tests",
@@ -10,6 +11,7 @@ export default defineConfig({
   },
   use: {
     headless,
+    ...(storageState ? { storageState } : {}),
     screenshot: "off",
     trace: "retain-on-failure",
     video: "retain-on-failure",
