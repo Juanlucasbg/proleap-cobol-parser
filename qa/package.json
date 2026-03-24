@@ -1,0 +1,14 @@
+{
+  "name": "saleads-qa",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Environment-agnostic SaleADS Mi Negocio E2E workflow tests",
+  "scripts": {
+    "test": "playwright test",
+    "test:mi-negocio": "playwright test tests/saleads_mi_negocio_full_test.spec.js",
+    "test:list": "playwright test --list"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.54.2"
+  }
+}
