@@ -1,4 +1,4 @@
-import { expect, Page, test } from "@playwright/test";
+import { expect, Locator, Page, test } from "@playwright/test";
 import fs from "fs";
 import path from "path";
 
@@ -40,6 +40,41 @@ async function waitUi(page: Page): Promise<void> {
 async function waitUiForPage(p: Page): Promise<void> {
   await p.waitForLoadState("domcontentloaded");
   await p.waitForTimeout(WAIT_UI_MS);
+}
+
+async function completeGooglePopupAndReturn(appPage: Page, popup: Page): Promise<void> {
+  await waitUiForPage(popup);
+  const popupAccount = popup.getByText(GOOGLE_ACCOUNT, { exact: false }).first();
+  if (await popupAccount.isVisible().catch(() => false)) {
+    await popupAccount.click();
+    await waitUiForPage(popup);
+  }
+
+  // OAuth flows often close this window automatically after account selection.
+  if (!popup.isClosed()) {
+    await popup.waitForEvent("close", { timeout: 15000 }).catch(() => undefined);
+  }
+  if (!popup.isClosed()) {
+    await popup.close().catch(() => undefined);
+  }
+  await appPage.bringToFront();
+  await waitUi(appPage);
+}
+
+async function getVisibleBusinessNameInput(page: Page): Promise<Locator> {
+  const candidates: Locator[] = [
+    page.getByLabel("Nombre del Negocio").first(),
+    page.getByPlaceholder("Nombre del Negocio").first(),
+    page.locator('input[name*="negocio"]').first(),
+    page.locator('input[id*="negocio"]').first(),
+  ];
+
+  for (const candidate of candidates) {
+    if (await candidate.isVisible().catch(() => false)) {
+      return candidate;
+    }
+  }
+  throw new Error("Input 'Nombre del Negocio' was not visible in modal.");
 }
 
 function textVariants(value: string): string[] {
@@ -229,9 +264,14 @@ test.describe(TEST_NAME, () => {
       ];
 
       let signInClicked = false;
+      let googlePopup: Page | null = null;
       for (const candidate of signInCandidates) {
         if (await candidate.isVisible().catch(() => false)) {
-          await candidate.click();
+          const [popup] = await Promise.all([
+            page.waitForEvent("popup", { timeout: 7000 }).catch(() => null),
+            candidate.click(),
+          ]);
+          googlePopup = popup;
           signInClicked = true;
           break;
         }
@@ -247,17 +287,9 @@ test.describe(TEST_NAME, () => {
         await accountOption.click();
         await waitUi(page);
       } else {
-        const popup = await page.waitForEvent("popup", { timeout: 7000 }).catch(() => null);
+        const popup = googlePopup ?? (await page.waitForEvent("popup", { timeout: 7000 }).catch(() => null));
         if (popup) {
-          await waitUiForPage(popup);
-          const popupAccount = popup.getByText(GOOGLE_ACCOUNT, { exact: false }).first();
-          if (await popupAccount.isVisible().catch(() => false)) {
-            await popupAccount.click();
-            await waitUiForPage(popup);
-          }
-          await popup.close().catch(() => undefined);
-          await page.bringToFront();
-          await waitUi(page);
+          await completeGooglePopupAndReturn(page, popup);
         }
       }
 
@@ -294,7 +326,7 @@ test.describe(TEST_NAME, () => {
       await expect(page.getByText("Crear Nuevo Negocio", { exact: false }).first()).toBeVisible({
         timeout: NAVIGATION_TIMEOUT_MS,
       });
-      const businessNameField = page.getByLabel("Nombre del Negocio").first();
+      const businessNameField = await getVisibleBusinessNameInput(page);
       await expect(businessNameField).toBeVisible({
         timeout: NAVIGATION_TIMEOUT_MS,
       });
