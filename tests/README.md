@@ -20,6 +20,8 @@ npm run test:e2e:saleads-mi-negocio
 ## Environment variables
 
 - `GOOGLE_ACCOUNT_EMAIL` (optional): defaults to `juanlucasbarbiergarzon@gmail.com`.
+- `SALEADS_START_URL` (optional but recommended): SaleADS login URL for your current environment.
+  The test does not hardcode any domain and can run against dev/staging/prod by changing only this value.
 
 ## Outputs
 
