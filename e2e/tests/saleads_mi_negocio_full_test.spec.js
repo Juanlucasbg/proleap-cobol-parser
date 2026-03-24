@@ -123,11 +123,11 @@ test('saleads_mi_negocio_full_test', async ({ page }, testInfo) => {
     'Mi Negocio menu': null,
     'Agregar Negocio modal': null,
     'Administrar Negocios view': null,
-    'Informacion General': null,
+    'Información General': null,
     'Detalles de la Cuenta': null,
     'Tus Negocios': null,
-    'Terminos y Condiciones': null,
-    'Politica de Privacidad': null,
+    'Términos y Condiciones': null,
+    'Política de Privacidad': null,
   };
 
   let appUrl = page.url();
@@ -190,9 +190,13 @@ test('saleads_mi_negocio_full_test', async ({ page }, testInfo) => {
     await requireVisibleByAnyText(page, ['Cancelar'], '"Cancelar" button is missing in modal.');
     await requireVisibleByAnyText(page, ['Crear Negocio'], '"Crear Negocio" button is missing in modal.');
 
-    const businessNameField = await findVisibleByText(page, 'Nombre del Negocio');
-    if (businessNameField) {
-      await businessNameField.click();
+    const businessNameInput = await firstVisible([
+      page.getByLabel(/Nombre del Negocio/i),
+      page.getByPlaceholder(/Nombre del Negocio/i),
+      page.locator('input[name*="negocio" i]'),
+    ], 1200);
+    if (businessNameInput) {
+      await businessNameInput.click();
       await waitForUi(page);
       await page.keyboard.type('Negocio Prueba Automatizacion');
       await waitForUi(page);
@@ -216,7 +220,7 @@ test('saleads_mi_negocio_full_test', async ({ page }, testInfo) => {
     await takeCheckpoint(page, testInfo, 'step-4-administrar-negocios', true);
   });
 
-  await markStep(report, 'Informacion General', async () => {
+  await markStep(report, 'Información General', async () => {
     await requireVisibleByAnyText(page, ['Informacion General', 'Información General'], 'Missing "Informacion General" section.');
     await requireVisibleByAnyText(page, [ACCOUNT_EMAIL], 'User email is not visible in "Informacion General".');
     await requireVisibleByAnyText(page, ['BUSINESS PLAN'], 'Text "BUSINESS PLAN" is not visible.');
@@ -287,20 +291,20 @@ test('saleads_mi_negocio_full_test', async ({ page }, testInfo) => {
     }
   }
 
-  await markStep(report, 'Terminos y Condiciones', async () => {
+  await markStep(report, 'Términos y Condiciones', async () => {
     await validateLegalLink(
       ['Terminos y Condiciones', 'Términos y Condiciones'],
       ['Terminos y Condiciones', 'Términos y Condiciones'],
-      'Terminos y Condiciones',
+      'Términos y Condiciones',
       'step-8-terminos-y-condiciones',
     );
   });
 
-  await markStep(report, 'Politica de Privacidad', async () => {
+  await markStep(report, 'Política de Privacidad', async () => {
     await validateLegalLink(
       ['Politica de Privacidad', 'Política de Privacidad'],
       ['Politica de Privacidad', 'Política de Privacidad'],
-      'Politica de Privacidad',
+      'Política de Privacidad',
       'step-9-politica-de-privacidad',
     );
   });
