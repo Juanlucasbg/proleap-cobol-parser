@@ -23,6 +23,7 @@ This folder contains an environment-agnostic Playwright automation for:
 ```bash
 cd qa/saleads-mi-negocio
 npm install
+npx playwright install chromium
 ```
 
 ## Run options

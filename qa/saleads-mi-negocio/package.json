@@ -4,6 +4,7 @@
   "private": true,
   "description": "Environment-agnostic SaleADS Mi Negocio workflow validation",
   "scripts": {
+    "install:browsers": "npx playwright install chromium",
     "test": "node saleads_mi_negocio_full_test.mjs",
     "test:headed": "HEADLESS=false node saleads_mi_negocio_full_test.mjs"
   },
