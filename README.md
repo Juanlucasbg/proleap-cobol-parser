@@ -205,3 +205,32 @@ License
 -------
 
 Licensed under the MIT License. See LICENSE for details.
+
+UI E2E Automation (Playwright)
+------------------------------
+
+This repository includes a Playwright end-to-end test for the SaleADS "Mi Negocio" workflow:
+
+- `tests/e2e/saleads-mi-negocio.spec.ts`
+
+The test is environment-agnostic and avoids hardcoding a specific domain. Configure runtime values through environment variables:
+
+- `SALEADS_BASE_URL` (optional): base URL for the SaleADS environment (dev/staging/prod). If omitted, the test assumes the login page is already open.
+- `SALEADS_GOOGLE_ACCOUNT_EMAIL` (optional): Google account to select in the account chooser. Defaults to `juanlucasbarbiergarzon@gmail.com`.
+
+Useful commands:
+
+```bash
+npm run playwright:install
+npm run test:e2e:list
+npm run test:e2e
+```
+
+Notes:
+
+- The workflow continues after login and validates:
+  - sidebar and "Mi Negocio" menu
+  - "Agregar Negocio" modal
+  - "Administrar Negocios" sections
+  - legal links ("Términos y Condiciones", "Política de Privacidad")
+- Screenshots are captured at key checkpoints under `test-results/`.
