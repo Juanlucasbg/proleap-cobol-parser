@@ -1,0 +1,13 @@
+{
+  "name": "saleads-browser-automation",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Environment-agnostic browser automation scripts for SaleADS workflows.",
+  "scripts": {
+    "saleads:install-browsers": "playwright install chromium",
+    "saleads:mi-negocio:test": "node scripts/saleads_mi_negocio_full_test.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.58.2"
+  }
+}
