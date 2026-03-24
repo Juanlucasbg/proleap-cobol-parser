@@ -12,6 +12,13 @@ const REPORT_PATH = path.join(RUN_DIR, "report.json");
 const RESULT_PATH = path.join(RUN_DIR, "result.json");
 const LOGIN_EMAIL = process.env.GOOGLE_ACCOUNT_EMAIL || "juanlucasbarbiergarzon@gmail.com";
 const START_URL = process.env.SALEADS_START_URL || process.env.START_URL || "";
+const LOGIN_BUTTON_LABELS = [
+  "Sign in with Google",
+  "Login with Google",
+  "Iniciar sesión con Google",
+  "Acceder con Google",
+  "Continuar con Google",
+];
 
 const report = {
   testName: TEST_NAME,
@@ -172,9 +179,22 @@ async function clickGoogleLoginAndResolveAuthPage(page) {
   const context = page.context();
   const popupPromise = context.waitForEvent("page", { timeout: 5000 }).catch(() => null);
 
-  await clickByText(page, "Sign in with Google").catch(async () => {
-    await clickByText(page, "Login with Google");
-  });
+  let clicked = false;
+  for (const label of LOGIN_BUTTON_LABELS) {
+    try {
+      await clickByText(page, label);
+      clicked = true;
+      break;
+    } catch {
+      // Keep trying with the next common label.
+    }
+  }
+
+  if (!clicked) {
+    throw new Error(
+      `Could not find a Google login button. Tried labels: ${LOGIN_BUTTON_LABELS.join(", ")}`
+    );
+  }
 
   const popupPage = await popupPromise;
   if (popupPage) {
@@ -262,24 +282,30 @@ async function run() {
   });
 
   let context;
+  let activePage = null;
   try {
     context = await browser.newContext({
       viewport: { width: 1440, height: 900 },
     });
     const page = await context.newPage();
+    activePage = page;
     page.setDefaultTimeout(DEFAULT_TIMEOUT_MS);
 
     if (START_URL) {
       await page.goto(START_URL, { waitUntil: "domcontentloaded" });
       await waitForStableUi(page);
     } else {
-      await waitForStableUi(page);
+      throw new Error(
+        "SALEADS_START_URL (or START_URL) is required for this standalone script. " +
+          "The script launches a new browser context and cannot reuse an already-open external login page."
+      );
     }
 
     // Step 1: Login with Google
     const step1 = "Login";
     const originalPage = page;
     const authPage = await clickGoogleLoginAndResolveAuthPage(originalPage);
+    activePage = authPage;
     registerCheck(step1, "Login button clicked", true);
 
     const accountExplicitlySelected = await maybeSelectGoogleAccount(authPage, LOGIN_EMAIL);
@@ -300,6 +326,7 @@ async function run() {
       await originalPage.bringToFront();
       await waitForStableUi(originalPage);
     }
+    activePage = originalPage;
 
     await ensureSidebarVisible(originalPage);
     registerCheck(step1, "Main interface visible", true);
@@ -413,6 +440,7 @@ async function run() {
     // Step 8: Validate Términos y Condiciones
     const step8 = "Términos y Condiciones";
     const termsResolution = await clickLegalAndResolveTarget(originalPage, "Términos y Condiciones");
+    activePage = termsResolution.targetPage;
     await validateLegalPage(
       termsResolution.targetPage,
       "Términos y Condiciones",
@@ -427,10 +455,12 @@ async function run() {
     } else {
       await returnToAccountPage(originalPage, report.evidence.urls.accountPage);
     }
+    activePage = originalPage;
 
     // Step 9: Validate Política de Privacidad
     const step9 = "Política de Privacidad";
     const privacyResolution = await clickLegalAndResolveTarget(originalPage, "Política de Privacidad");
+    activePage = privacyResolution.targetPage;
     await validateLegalPage(
       privacyResolution.targetPage,
       "Política de Privacidad",
@@ -445,6 +475,7 @@ async function run() {
     } else {
       await returnToAccountPage(originalPage, report.evidence.urls.accountPage);
     }
+    activePage = originalPage;
 
     // Step 10: Final Report
     const finalSummary = {
@@ -482,6 +513,10 @@ async function run() {
       message: error?.message || String(error),
       stack: error?.stack || "",
     };
+
+    if (activePage) {
+      await captureScreenshot(activePage, "failure-state", true).catch(() => undefined);
+    }
 
     report.finishedAt = new Date().toISOString();
     report.overallStatus = "FAIL";

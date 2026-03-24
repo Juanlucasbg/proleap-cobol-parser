@@ -24,10 +24,12 @@ npx playwright install chromium
 npm run saleads:mi-negocio:test
 ```
 
+Required environment variable:
+
+- `SALEADS_START_URL`: Login page URL for the current environment.
+
 Optional environment variables:
 
-- `SALEADS_START_URL`: Login page URL for the current environment.  
-  If omitted, the script assumes the page is already open/managed externally.
 - `GOOGLE_ACCOUNT_EMAIL`: Google account to select (default: `juanlucasbarbiergarzon@gmail.com`).
 - `HEADLESS`: Set to `false` to run headed.
 - `PW_DEFAULT_TIMEOUT_MS`: Override default Playwright timeout (default: `20000`).
