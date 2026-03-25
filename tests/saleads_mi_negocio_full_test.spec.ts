@@ -1,3 +1,4 @@
+import { mkdirSync } from "node:fs";
 import { expect, test, type BrowserContext, type Locator, type Page } from "@playwright/test";
 
 type StepStatus = "PASS" | "FAIL";
@@ -23,6 +24,7 @@ function nowStamp(): string {
 }
 
 async function screenshot(page: Page, suffix: string, fullPage = false): Promise<string> {
+  mkdirSync(SCREENSHOT_DIR, { recursive: true });
   const file = `${SCREENSHOT_DIR}/${nowStamp()}-${suffix}.png`;
   await page.screenshot({ path: file, fullPage });
   return file;
@@ -43,6 +45,15 @@ async function firstVisible(page: Page, candidates: string[]): Promise<Locator |
 }
 
 async function clickByVisibleText(page: Page, texts: string[]): Promise<void> {
+  for (const t of texts) {
+    const roleLink = page.getByRole("link", { name: new RegExp(t, "i") }).first();
+    if (await roleLink.isVisible().catch(() => false)) {
+      await roleLink.click();
+      await waitForUiIdle(page);
+      return;
+    }
+  }
+
   const textLocator = await firstVisible(page, texts);
   if (textLocator) {
     await textLocator.click();
@@ -60,6 +71,16 @@ async function clickByVisibleText(page: Page, texts: string[]): Promise<void> {
   }
 
   throw new Error(`No clickable element found for texts: ${texts.join(", ")}`);
+}
+
+async function selectGoogleAccountIfVisible(targetPage: Page): Promise<boolean> {
+  const accountOption = targetPage.getByText("juanlucasbarbiergarzon@gmail.com", { exact: false }).first();
+  if (await accountOption.isVisible().catch(() => false)) {
+    await accountOption.click();
+    await waitForUiIdle(targetPage);
+    return true;
+  }
+  return false;
 }
 
 async function assertVisible(page: Page, text: string): Promise<void> {
@@ -102,12 +123,15 @@ test.describe("saleads_mi_negocio_full_test", () => {
     // Step 1: Login with Google
     try {
       await waitForUiIdle(page);
+      const oauthPopupPromise = context.waitForEvent("page", { timeout: 8000 }).catch(() => null);
       await clickByVisibleText(page, ["Sign in with Google", "Iniciar sesión con Google", "Login con Google", "Login"]);
 
-      const accountOption = page.getByText("juanlucasbarbiergarzon@gmail.com", { exact: false }).first();
-      if (await accountOption.isVisible().catch(() => false)) {
-        await accountOption.click();
-        await waitForUiIdle(page);
+      const oauthPopup = await oauthPopupPromise;
+      if (oauthPopup) {
+        await oauthPopup.waitForLoadState("domcontentloaded");
+        await selectGoogleAccountIfVisible(oauthPopup);
+      } else {
+        await selectGoogleAccountIfVisible(page);
       }
 
       const sidebar = page.locator("aside, nav").first();
