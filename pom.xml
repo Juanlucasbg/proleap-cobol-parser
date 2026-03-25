@@ -24,6 +24,7 @@
 		<exclude.tests>nothing.to.exclude</exclude.tests>
 		<antlr.version>4.7.2</antlr.version>
 		<slf4j.version>2.0.9</slf4j.version>
+		<playwright.version>1.58.0</playwright.version>
 	</properties>
 	<profiles>
 		<profile>
@@ -60,6 +61,12 @@
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-classic</artifactId>
 			<version>1.4.14</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.microsoft.playwright</groupId>
+			<artifactId>playwright</artifactId>
+			<version>${playwright.version}</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
