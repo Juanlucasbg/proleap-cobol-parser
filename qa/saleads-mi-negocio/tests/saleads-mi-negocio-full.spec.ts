@@ -14,17 +14,19 @@ type ValidationReport = {
   "Politica de Privacidad": StepStatus;
 };
 
-const report: ValidationReport = {
-  Login: "FAIL",
-  "Mi Negocio menu": "FAIL",
-  "Agregar Negocio modal": "FAIL",
-  "Administrar Negocios view": "FAIL",
-  "Informacion General": "FAIL",
-  "Detalles de la Cuenta": "FAIL",
-  "Tus Negocios": "FAIL",
-  "Terminos y Condiciones": "FAIL",
-  "Politica de Privacidad": "FAIL",
-};
+function initialReport(): ValidationReport {
+  return {
+    Login: "FAIL",
+    "Mi Negocio menu": "FAIL",
+    "Agregar Negocio modal": "FAIL",
+    "Administrar Negocios view": "FAIL",
+    "Informacion General": "FAIL",
+    "Detalles de la Cuenta": "FAIL",
+    "Tus Negocios": "FAIL",
+    "Terminos y Condiciones": "FAIL",
+    "Politica de Privacidad": "FAIL",
+  };
+}
 
 async function waitUi(page: Page): Promise<void> {
   await page.waitForLoadState("domcontentloaded");
@@ -146,128 +148,138 @@ test.describe("saleads_mi_negocio_full_test", () => {
   test("Login to SaleADS with Google and validate Mi Negocio workflow", async ({ page }) => {
     test.setTimeout(180_000);
 
-    await page.context().grantPermissions([], { origin: page.url() || undefined }).catch(() => undefined);
+    const report = initialReport();
+    let terminosUrl = "N/A";
+    let privacidadUrl = "N/A";
+    let flowError: unknown;
 
-    // Step 1: Login with Google (starting from pre-opened login page if available).
-    // If baseURL exists we navigate; otherwise we use the already open application page.
-    if (test.info().project.use.baseURL) {
-      await page.goto("/", { waitUntil: "domcontentloaded" });
-      await waitUi(page);
-    }
-
-    const loginCandidate = page
-      .locator("button, a, [role='button']")
-      .filter({ hasText: /google|iniciar sesi[oó]n|sign in/i })
-      .first();
-
-    if (await loginCandidate.isVisible().catch(() => false)) {
-      await loginCandidate.click();
-      await waitUi(page);
-    }
-
-    const juanAccount = page.getByText("juanlucasbarbiergarzon@gmail.com", { exact: false }).first();
-    if (await juanAccount.isVisible().catch(() => false)) {
-      await juanAccount.click();
-      await waitUi(page);
-    }
-
-    await ensureMainAppVisible(page);
-    report.Login = "PASS";
-    await page.screenshot({ path: "artifacts/screenshots/01-dashboard-loaded.png", fullPage: true });
-
-    // Step 2: Open Mi Negocio menu and validate options.
-    await openMiNegocioMenu(page);
-    await expect(page.getByText("Agregar Negocio", { exact: false }).first()).toBeVisible();
-    await expect(page.getByText("Administrar Negocios", { exact: false }).first()).toBeVisible();
-    report["Mi Negocio menu"] = "PASS";
-    await page.screenshot({ path: "artifacts/screenshots/02-mi-negocio-expanded.png", fullPage: true });
-
-    // Step 3: Validate Agregar Negocio modal.
-    await clickByVisibleText(page, "Agregar Negocio");
-    await expect(page.getByText(/Crear Nuevo Negocio/i).first()).toBeVisible();
-    await expect(page.getByLabel("Nombre del Negocio", { exact: false })).toBeVisible();
-    await expect(page.getByText(/Tienes\s*2\s*de\s*3\s*negocios/i).first()).toBeVisible();
-    await expect(page.getByRole("button", { name: /Cancelar/i })).toBeVisible();
-    await expect(page.getByRole("button", { name: /Crear Negocio/i })).toBeVisible();
-    report["Agregar Negocio modal"] = "PASS";
-    await page.screenshot({ path: "artifacts/screenshots/03-agregar-negocio-modal.png", fullPage: true });
-
-    const negocioInput = page.getByLabel("Nombre del Negocio", { exact: false });
-    if (await negocioInput.isVisible().catch(() => false)) {
-      await negocioInput.fill("Negocio Prueba Automatización");
-    }
-    await clickByVisibleText(page, "Cancelar");
-
-    // Step 4: Open Administrar Negocios and validate sections.
-    await ensureMiNegocioExpanded(page);
-    await clickByVisibleText(page, "Administrar Negocios");
-    await expect(page.getByText(/Informaci[oó]n General/i).first()).toBeVisible();
-    await expect(page.getByText(/Detalles de la Cuenta/i).first()).toBeVisible();
-    await expect(page.getByText(/Tus Negocios/i).first()).toBeVisible();
-    await expect(page.getByText(/Secci[oó]n Legal/i).first()).toBeVisible();
-    report["Administrar Negocios view"] = "PASS";
-    await page.screenshot({ path: "artifacts/screenshots/04-administrar-negocios-page.png", fullPage: true });
-
-    // Step 5: Validate Información General.
-    await expect(page.locator("body")).toContainText(/@/);
-    await expect(page.locator("body")).toContainText(/business plan/i);
-    await expect(page.getByRole("button", { name: /Cambiar Plan/i })).toBeVisible();
-    report["Informacion General"] = "PASS";
-
-    // Step 6: Validate Detalles de la Cuenta.
-    await expect(page.getByText(/Cuenta creada/i).first()).toBeVisible();
-    await expect(page.getByText(/Estado activo/i).first()).toBeVisible();
-    await expect(page.getByText(/Idioma seleccionado/i).first()).toBeVisible();
-    report["Detalles de la Cuenta"] = "PASS";
-
-    // Step 7: Validate Tus Negocios.
-    await expect(page.getByText(/Tus Negocios/i).first()).toBeVisible();
-    await expect(page.getByRole("button", { name: /Agregar Negocio/i }).first()).toBeVisible();
-    await expect(page.getByText(/Tienes\s*2\s*de\s*3\s*negocios/i).first()).toBeVisible();
-    report["Tus Negocios"] = "PASS";
-
-    // Step 8: Validate Términos y Condiciones.
-    const terminosUrl = await validateLegalLink(
-      page,
-      "Términos y Condiciones",
-      /T[ée]rminos y Condiciones/i,
-      "05-terminos-y-condiciones.png"
-    );
-    report["Terminos y Condiciones"] = "PASS";
-
-    // Step 9: Validate Política de Privacidad.
-    const privacidadUrl = await validateLegalLink(
-      page,
-      "Política de Privacidad",
-      /Pol[íi]tica de Privacidad/i,
-      "06-politica-de-privacidad.png"
-    );
-    report["Politica de Privacidad"] = "PASS";
-
-    const finalReport = {
-      Login: report.Login,
-      "Mi Negocio menu": report["Mi Negocio menu"],
-      "Agregar Negocio modal": report["Agregar Negocio modal"],
-      "Administrar Negocios view": report["Administrar Negocios view"],
-      "Información General": report["Informacion General"],
-      "Detalles de la Cuenta": report["Detalles de la Cuenta"],
-      "Tus Negocios": report["Tus Negocios"],
-      "Términos y Condiciones": report["Terminos y Condiciones"],
-      "Política de Privacidad": report["Politica de Privacidad"],
-      "Términos URL final": terminosUrl,
-      "Política URL final": privacidadUrl,
-    };
-
-    await test.info().attach("final-report.json", {
-      contentType: "application/json",
-      body: Buffer.from(JSON.stringify(finalReport, null, 2), "utf-8"),
-    });
-
-    // Ensure all validations are PASS in this single-run workflow.
-    for (const [step, status] of Object.entries(finalReport)) {
-      if (!normalize(step).includes("url")) {
-        expect(status, `Expected ${step} to PASS`).toBe("PASS");
+    try {
+      // Step 1: Login with Google.
+      // Use env URL when available; otherwise rely on the pre-opened browser state.
+      const configuredUrl = process.env.SALEADS_BASE_URL ?? process.env.BASE_URL ?? process.env.SALEADS_URL;
+      if (configuredUrl) {
+        await page.goto(configuredUrl, { waitUntil: "domcontentloaded" });
+        await waitUi(page);
+      } else if (normalize(page.url()) === "about:blank") {
+        throw new Error(
+          "No SaleADS URL available. Set SALEADS_BASE_URL (or BASE_URL/SALEADS_URL) or start from a pre-opened login page."
+        );
       }
+
+      const loginCandidate = page
+        .locator("button, a, [role='button']")
+        .filter({ hasText: /google|iniciar sesi[oó]n|sign in/i })
+        .first();
+
+      if (await loginCandidate.isVisible().catch(() => false)) {
+        await loginCandidate.click();
+        await waitUi(page);
+      }
+
+      const juanAccount = page.getByText("juanlucasbarbiergarzon@gmail.com", { exact: false }).first();
+      if (await juanAccount.isVisible().catch(() => false)) {
+        await juanAccount.click();
+        await waitUi(page);
+      }
+
+      await ensureMainAppVisible(page);
+      report.Login = "PASS";
+      await page.screenshot({ path: "artifacts/screenshots/01-dashboard-loaded.png", fullPage: true });
+
+      // Step 2: Open Mi Negocio menu and validate options.
+      await openMiNegocioMenu(page);
+      await expect(page.getByText("Agregar Negocio", { exact: false }).first()).toBeVisible();
+      await expect(page.getByText("Administrar Negocios", { exact: false }).first()).toBeVisible();
+      report["Mi Negocio menu"] = "PASS";
+      await page.screenshot({ path: "artifacts/screenshots/02-mi-negocio-expanded.png", fullPage: true });
+
+      // Step 3: Validate Agregar Negocio modal.
+      await clickByVisibleText(page, "Agregar Negocio");
+      await expect(page.getByText(/Crear Nuevo Negocio/i).first()).toBeVisible();
+      const negocioInput = page
+        .getByLabel("Nombre del Negocio", { exact: false })
+        .or(page.getByPlaceholder(/Nombre del Negocio/i))
+        .first();
+      await expect(negocioInput).toBeVisible();
+      await expect(page.getByText(/Tienes\s*2\s*de\s*3\s*negocios/i).first()).toBeVisible();
+      await expect(page.getByRole("button", { name: /Cancelar/i })).toBeVisible();
+      await expect(page.getByRole("button", { name: /Crear Negocio/i })).toBeVisible();
+      report["Agregar Negocio modal"] = "PASS";
+      await page.screenshot({ path: "artifacts/screenshots/03-agregar-negocio-modal.png", fullPage: true });
+
+      await negocioInput.fill("Negocio Prueba Automatización");
+      await clickByVisibleText(page, "Cancelar");
+
+      // Step 4: Open Administrar Negocios and validate sections.
+      await ensureMiNegocioExpanded(page);
+      await clickByVisibleText(page, "Administrar Negocios");
+      await expect(page.getByText(/Informaci[oó]n General/i).first()).toBeVisible();
+      await expect(page.getByText(/Detalles de la Cuenta/i).first()).toBeVisible();
+      await expect(page.getByText(/Tus Negocios/i).first()).toBeVisible();
+      await expect(page.getByText(/Secci[oó]n Legal/i).first()).toBeVisible();
+      report["Administrar Negocios view"] = "PASS";
+      await page.screenshot({ path: "artifacts/screenshots/04-administrar-negocios-page.png", fullPage: true });
+
+      // Step 5: Validate Información General.
+      await expect(page.locator("body")).toContainText(/@/);
+      await expect(page.locator("body")).toContainText(/business plan/i);
+      await expect(page.getByRole("button", { name: /Cambiar Plan/i })).toBeVisible();
+      report["Informacion General"] = "PASS";
+
+      // Step 6: Validate Detalles de la Cuenta.
+      await expect(page.getByText(/Cuenta creada/i).first()).toBeVisible();
+      await expect(page.getByText(/Estado activo/i).first()).toBeVisible();
+      await expect(page.getByText(/Idioma seleccionado/i).first()).toBeVisible();
+      report["Detalles de la Cuenta"] = "PASS";
+
+      // Step 7: Validate Tus Negocios.
+      await expect(page.getByText(/Tus Negocios/i).first()).toBeVisible();
+      await expect(page.getByRole("button", { name: /Agregar Negocio/i }).first()).toBeVisible();
+      await expect(page.getByText(/Tienes\s*2\s*de\s*3\s*negocios/i).first()).toBeVisible();
+      report["Tus Negocios"] = "PASS";
+
+      // Step 8: Validate Términos y Condiciones.
+      terminosUrl = await validateLegalLink(
+        page,
+        "Términos y Condiciones",
+        /T[ée]rminos y Condiciones/i,
+        "05-terminos-y-condiciones.png"
+      );
+      report["Terminos y Condiciones"] = "PASS";
+
+      // Step 9: Validate Política de Privacidad.
+      privacidadUrl = await validateLegalLink(
+        page,
+        "Política de Privacidad",
+        /Pol[íi]tica de Privacidad/i,
+        "06-politica-de-privacidad.png"
+      );
+      report["Politica de Privacidad"] = "PASS";
+    } catch (error) {
+      flowError = error;
+    } finally {
+      const finalReport = {
+        Login: report.Login,
+        "Mi Negocio menu": report["Mi Negocio menu"],
+        "Agregar Negocio modal": report["Agregar Negocio modal"],
+        "Administrar Negocios view": report["Administrar Negocios view"],
+        "Información General": report["Informacion General"],
+        "Detalles de la Cuenta": report["Detalles de la Cuenta"],
+        "Tus Negocios": report["Tus Negocios"],
+        "Términos y Condiciones": report["Terminos y Condiciones"],
+        "Política de Privacidad": report["Politica de Privacidad"],
+        "Términos URL final": terminosUrl,
+        "Política URL final": privacidadUrl,
+      };
+
+      await test.info().attach("final-report.json", {
+        contentType: "application/json",
+        body: Buffer.from(JSON.stringify(finalReport, null, 2), "utf-8"),
+      });
+    }
+
+    if (flowError) {
+      throw flowError;
     }
   });
 });
