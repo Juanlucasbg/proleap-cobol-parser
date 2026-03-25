@@ -1,4 +1,4 @@
-import { expect, test, type Page, type Locator } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -29,6 +29,10 @@ function sanitizeFileName(name: string): string {
 async function waitForUi(page: Page): Promise<void> {
   await page.waitForLoadState('domcontentloaded');
   await page.waitForTimeout(800);
+}
+
+function asError(value: unknown): Error {
+  return value instanceof Error ? value : new Error(String(value));
 }
 
 function containsAny(locator: Locator, values: string[]): Promise<boolean> {
@@ -84,9 +88,30 @@ test.describe('SaleADS Mi Negocio full workflow', () => {
       return absolute;
     };
 
+    const runStep = async (
+      reportKey: keyof typeof results,
+      stepLabel: string,
+      action: () => Promise<void>,
+    ): Promise<void> => {
+      await test.step(stepLabel, async () => {
+        try {
+          await action();
+        } catch (error) {
+          const message = asError(error).message;
+          results[reportKey].status = 'FAIL';
+          results[reportKey].details.push(`Validation failed: ${message}`);
+        }
+      });
+    };
+
+    const launchUrl = process.env.SALEADS_START_URL?.trim();
+    if (launchUrl) {
+      await page.goto(launchUrl, { waitUntil: 'domcontentloaded' });
+      await waitForUi(page);
+    }
+
     // Step 1: Login with Google
-    {
-      await test.step('Step 1: Login with Google', async () => {
+    await runStep('Login', 'Step 1: Login with Google', async () => {
         await waitForUi(page);
 
         const loginButton = page
@@ -109,12 +134,10 @@ test.describe('SaleADS Mi Negocio full workflow', () => {
         const evidence = await screenshot('01-dashboard-loaded');
         results.Login.evidence.push(evidence);
         results.Login.status = 'PASS';
-      });
-    }
+    });
 
     // Step 2: Open Mi Negocio menu
-    {
-      await test.step('Step 2: Open Mi Negocio menu', async () => {
+    await runStep('Mi Negocio menu', 'Step 2: Open Mi Negocio menu', async () => {
         const negocioMenu = page
           .getByRole('button', { name: /mi negocio|negocio/i })
           .or(page.getByRole('link', { name: /mi negocio|negocio/i }))
@@ -134,12 +157,10 @@ test.describe('SaleADS Mi Negocio full workflow', () => {
         const evidence = await screenshot('02-mi-negocio-menu-expanded');
         results['Mi Negocio menu'].evidence.push(evidence);
         results['Mi Negocio menu'].status = 'PASS';
-      });
-    }
+    });
 
     // Step 3: Validate Agregar Negocio modal
-    {
-      await test.step('Step 3: Validate Agregar Negocio modal', async () => {
+    await runStep('Agregar Negocio modal', 'Step 3: Validate Agregar Negocio modal', async () => {
         await page.getByText(/agregar negocio/i).first().click();
         await waitForUi(page);
 
@@ -165,12 +186,10 @@ test.describe('SaleADS Mi Negocio full workflow', () => {
         await modal.getByRole('button', { name: /cancelar/i }).click();
         await expect(modal).toBeHidden({ timeout: 15_000 });
         results['Agregar Negocio modal'].status = 'PASS';
-      });
-    }
+    });
 
     // Step 4: Open Administrar Negocios
-    {
-      await test.step('Step 4: Open Administrar Negocios', async () => {
+    await runStep('Administrar Negocios view', 'Step 4: Open Administrar Negocios', async () => {
         const administrarNegociosOption = page.getByText(/administrar negocios/i).first();
         if (!(await administrarNegociosOption.isVisible().catch(() => false))) {
           const negocioMenu = page
@@ -195,12 +214,10 @@ test.describe('SaleADS Mi Negocio full workflow', () => {
           'Account page loaded with Información General, Detalles de la Cuenta, Tus Negocios, and Sección Legal.',
         );
         results['Administrar Negocios view'].status = 'PASS';
-      });
-    }
+    });
 
     // Step 5: Validate Información General
-    {
-      await test.step('Step 5: Validate Información General', async () => {
+    await runStep('Información General', 'Step 5: Validate Información General', async () => {
         const section = page.locator('section,div').filter({ hasText: /informaci[oó]n general/i }).first();
         await expect(section).toBeVisible({ timeout: 30_000 });
         await expect(section.getByText(/@/)).toBeVisible();
@@ -214,12 +231,10 @@ test.describe('SaleADS Mi Negocio full workflow', () => {
           "User info visible, 'BUSINESS PLAN' text visible, and 'Cambiar Plan' button present.",
         );
         results['Información General'].status = 'PASS';
-      });
-    }
+    });
 
     // Step 6: Validate Detalles de la Cuenta
-    {
-      await test.step('Step 6: Validate Detalles de la Cuenta', async () => {
+    await runStep('Detalles de la Cuenta', 'Step 6: Validate Detalles de la Cuenta', async () => {
         const section = page.locator('section,div').filter({ hasText: /detalles de la cuenta/i }).first();
         await expect(section).toBeVisible({ timeout: 30_000 });
         await expect(section.getByText(/cuenta creada/i)).toBeVisible();
@@ -230,12 +245,10 @@ test.describe('SaleADS Mi Negocio full workflow', () => {
           "'Cuenta creada', 'Estado activo', and 'Idioma seleccionado' validated.",
         );
         results['Detalles de la Cuenta'].status = 'PASS';
-      });
-    }
+    });
 
     // Step 7: Validate Tus Negocios
-    {
-      await test.step('Step 7: Validate Tus Negocios', async () => {
+    await runStep('Tus Negocios', 'Step 7: Validate Tus Negocios', async () => {
         const section = page.locator('section,div').filter({ hasText: /tus negocios/i }).first();
         await expect(section).toBeVisible({ timeout: 30_000 });
         await expect(section.getByRole('button', { name: /agregar negocio/i })).toBeVisible();
@@ -250,12 +263,10 @@ test.describe('SaleADS Mi Negocio full workflow', () => {
           "Business list area and 'Agregar Negocio' with quota text 'Tienes 2 de 3 negocios' validated.",
         );
         results['Tus Negocios'].status = 'PASS';
-      });
-    }
+    });
 
     // Step 8: Validate Términos y Condiciones
-    {
-      await test.step('Step 8: Validate Términos y Condiciones', async () => {
+    await runStep('Términos y Condiciones', 'Step 8: Validate Términos y Condiciones', async () => {
         const termsLink = page
           .getByRole('link', { name: /t[eé]rminos y condiciones/i })
           .or(page.getByText(/t[eé]rminos y condiciones/i))
@@ -288,12 +299,10 @@ test.describe('SaleADS Mi Negocio full workflow', () => {
           await page.goBack().catch(() => undefined);
           await waitForUi(page);
         }
-      });
-    }
+    });
 
     // Step 9: Validate Política de Privacidad
-    {
-      await test.step('Step 9: Validate Política de Privacidad', async () => {
+    await runStep('Política de Privacidad', 'Step 9: Validate Política de Privacidad', async () => {
         const privacyLink = page
           .getByRole('link', { name: /pol[ií]tica de privacidad/i })
           .or(page.getByText(/pol[ií]tica de privacidad/i))
@@ -326,8 +335,7 @@ test.describe('SaleADS Mi Negocio full workflow', () => {
           await page.goBack().catch(() => undefined);
           await waitForUi(page);
         }
-      });
-    }
+    });
 
     // Step 10: Final report
     const finalReport = {
@@ -343,5 +351,13 @@ test.describe('SaleADS Mi Negocio full workflow', () => {
       body: Buffer.from(JSON.stringify(finalReport, null, 2), 'utf-8'),
       contentType: 'application/json',
     });
+
+    const failed = Object.values(results)
+      .filter((result) => result.status === 'FAIL')
+      .map((result) => result.name);
+    expect(
+      failed,
+      `One or more validations failed. See JSON report at ${reportPath}`,
+    ).toEqual([]);
   });
 });
