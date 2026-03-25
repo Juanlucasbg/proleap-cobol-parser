@@ -1,0 +1,14 @@
+{
+  "name": "saleads-e2e-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Playwright E2E automation for SaleADS workflows",
+  "scripts": {
+    "test:e2e": "playwright test -c e2e/playwright.config.ts",
+    "test:e2e:saleads-mi-negocio": "playwright test -c e2e/playwright.config.ts e2e/tests/saleads_mi_negocio_full_test.spec.ts",
+    "e2e:install-browsers": "playwright install --with-deps chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0"
+  }
+}
