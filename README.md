@@ -194,6 +194,43 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+SaleADS UI E2E workflow test
+----------------------------
+
+This repository includes an optional Playwright-based Java E2E test for validating the
+SaleADS "Mi Negocio" workflow end to end:
+
+- Test class: `src/test/java/io/proleap/e2e/SaleadsMiNegocioWorkflowTest.java`
+- Scope: Login with Google, Mi Negocio menu, Agregar Negocio modal, Administrar Negocios
+  sections, legal links ("Términos y Condiciones" and "Política de Privacidad"), screenshots,
+  and final PASS/FAIL report.
+
+Required environment variables:
+
+```
+SALEADS_RUN_E2E=true
+SALEADS_LOGIN_URL=<current SaleADS login URL for the active environment>
+```
+
+Optional environment variables:
+
+```
+SALEADS_HEADLESS=true|false
+SALEADS_SLOW_MO_MS=<int>
+SALEADS_SCREENSHOT_DIR=<output directory>
+```
+
+Run only this E2E test:
+
+```
+mvn -Dtest=io.proleap.e2e.SaleadsMiNegocioWorkflowTest test
+```
+
+Evidence output:
+
+- Default screenshot/report directory: `target/saleads-evidence/<run-id>`
+- Final report file: `final-report.txt` in the evidence directory
+
 
 Release process
 ---------------
