@@ -9,9 +9,7 @@ type StepResult = {
 };
 
 const CHECKPOINT_DIR = "checkpoints";
-
 const LOGIN_CANDIDATE_PATHS = ["/login", "/signin", "/auth/login", "/auth/signin"];
-
 const APP_READY_MARKERS = [/dashboard/i, /inicio/i, /panel/i, /negocio/i, /mi negocio/i];
 const REPORT_FIELDS = [
   "Login",
@@ -34,16 +32,15 @@ function env(name: string): string | undefined {
 
 function normalizeBaseUrl(raw?: string): string | undefined {
   if (!raw) return undefined;
-  const normalized = raw.endsWith("/") ? raw.slice(0, -1) : raw;
-  return normalized;
-}
-
-async function screenshot(page: Page, name: string, fullPage = false): Promise<void> {
-  await page.screenshot({ path: `${CHECKPOINT_DIR}/${name}.png`, fullPage });
+  return raw.endsWith("/") ? raw.slice(0, -1) : raw;
 }
 
 function cleanText(value: string | null): string {
   return (value ?? "").replace(/\s+/g, " ").trim();
+}
+
+async function screenshot(page: Page, name: string, fullPage = false): Promise<void> {
+  await page.screenshot({ path: `${CHECKPOINT_DIR}/${name}.png`, fullPage });
 }
 
 async function isVisible(locator: Locator, timeout = 5000): Promise<boolean> {
@@ -72,26 +69,30 @@ async function gotoLogin(page: Page): Promise<void> {
     return;
   }
 
-  if (explicitBaseUrl) {
-    const attempts = [explicitBaseUrl, ...LOGIN_CANDIDATE_PATHS.map((path) => `${explicitBaseUrl}${path}`)];
+  if (!explicitBaseUrl) {
+    return;
+  }
 
-    for (const url of attempts) {
-      await page.goto(url, { waitUntil: "domcontentloaded" });
-      await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => undefined);
-      const signInLocator = page.getByRole("button", { name: /google|iniciar|sign in|acceder/i }).first();
-      if (await signInLocator.isVisible().catch(() => false)) {
-        return;
-      }
+  const attempts = [explicitBaseUrl, ...LOGIN_CANDIDATE_PATHS.map((path) => `${explicitBaseUrl}${path}`)];
+  for (const url of attempts) {
+    await page.goto(url, { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => undefined);
+    const signInLocator = page.getByRole("button", { name: /google|iniciar|sign in|acceder/i }).first();
+    if (await signInLocator.isVisible().catch(() => false)) {
+      return;
     }
   }
 }
 
-async function pickGoogleAccountIfAsked(page: Page): Promise<void> {
+async function pickGoogleAccountIfAsked(page: Page): Promise<boolean> {
   const account = env("SALEADS_GOOGLE_ACCOUNT") ?? "juanlucasbarbiergarzon@gmail.com";
   const accountChip = page.getByText(account, { exact: true });
   if (await accountChip.isVisible().catch(() => false)) {
-    await clickAndWaitUi(page, accountChip);
+    await accountChip.click();
+    await page.waitForLoadState("networkidle", { timeout: 30000 }).catch(() => undefined);
+    return true;
   }
+  return false;
 }
 
 async function waitForMainInterface(page: Page): Promise<void> {
@@ -160,180 +161,197 @@ test.describe("SaleADS - Mi Negocio workflow", () => {
       results.push({ name, status, details });
     };
 
-    // Step 1: Login with Google
     try {
-      await gotoLogin(page);
-      const googleButton = page
-        .getByRole("button", { name: /sign in with google|iniciar sesi[oó]n con google|google/i })
-        .first();
-      await clickAndWaitUi(page, googleButton);
-      await pickGoogleAccountIfAsked(page);
-      await waitForMainInterface(page);
+      // Step 1: Login with Google
+      try {
+        await gotoLogin(page);
+        const googleButton = page
+          .getByRole("button", { name: /sign in with google|iniciar sesi[oó]n con google|google/i })
+          .first();
+        await expect(googleButton).toBeVisible({ timeout: 15000 });
 
-      const sidebarVisible = await isVisible(page.locator("aside, nav").first(), 20000);
-      await screenshot(page, "01-dashboard-loaded");
-      record("Login", sidebarVisible ? "PASS" : "FAIL", "Main interface and left navigation visibility checked.");
-    } catch (error) {
-      await screenshot(page, "01-login-failure");
-      record("Login", "FAIL", `Login step failed: ${(error as Error).message}`);
-      throw error;
-    }
+        const googlePopupPromise = page.waitForEvent("popup", { timeout: 7000 }).catch(() => null);
+        await googleButton.click();
+        const googlePopup = await googlePopupPromise;
 
-    // Step 2: Open Mi Negocio menu
-    try {
-      await expandMiNegocioMenu(page);
-      const agregarVisible = await isVisible(page.getByText("Agregar Negocio", { exact: true }).first(), 15000);
-      const administrarVisible = await isVisible(page.getByText("Administrar Negocios", { exact: true }).first(), 15000);
-      await screenshot(page, "02-mi-negocio-expanded");
-      record(
-        "Mi Negocio menu",
-        agregarVisible && administrarVisible ? "PASS" : "FAIL",
-        "Validated expanded submenu with Agregar/Administrar options."
-      );
-      expect(agregarVisible).toBeTruthy();
-      expect(administrarVisible).toBeTruthy();
-    } catch (error) {
-      await screenshot(page, "02-mi-negocio-failure");
-      record("Mi Negocio menu", "FAIL", `Failed to expand/validate Mi Negocio: ${(error as Error).message}`);
-      throw error;
-    }
+        if (googlePopup) {
+          await googlePopup.waitForLoadState("domcontentloaded");
+          await pickGoogleAccountIfAsked(googlePopup);
+          await googlePopup.waitForEvent("close", { timeout: 60000 }).catch(() => undefined);
+          await page.bringToFront();
+        } else {
+          await page.waitForLoadState("networkidle", { timeout: 30000 }).catch(() => undefined);
+          await pickGoogleAccountIfAsked(page);
+        }
 
-    // Step 3: Validate Agregar Negocio modal
-    try {
-      const agregarOption = page.getByText("Agregar Negocio", { exact: true }).first();
-      await clickAndWaitUi(page, agregarOption);
+        await page.waitForLoadState("networkidle", { timeout: 30000 }).catch(() => undefined);
+        await waitForMainInterface(page);
 
-      const modal = page.getByRole("dialog");
-      await expect(modal).toBeVisible({ timeout: 15000 });
-      await expect(modal).toContainText("Crear Nuevo Negocio");
-      await expect(modal).toContainText("Nombre del Negocio");
-      await expect(modal).toContainText("Tienes 2 de 3 negocios");
-      await expect(modal.getByRole("button", { name: "Cancelar" })).toBeVisible();
-      await expect(modal.getByRole("button", { name: "Crear Negocio" })).toBeVisible();
-
-      const businessNameInput = modal
-        .getByRole("textbox", { name: /Nombre del Negocio/i })
-        .or(modal.getByPlaceholder(/Nombre del Negocio/i))
-        .first();
-
-      if (await businessNameInput.isVisible().catch(() => false)) {
-        await businessNameInput.click();
-        await businessNameInput.fill("Negocio Prueba Automatización");
+        const sidebarVisible = await isVisible(page.locator("aside, nav").first(), 20000);
+        await screenshot(page, "01-dashboard-loaded");
+        record("Login", sidebarVisible ? "PASS" : "FAIL", "Main interface and left navigation visibility checked.");
+      } catch (error) {
+        await screenshot(page, "01-login-failure");
+        record("Login", "FAIL", `Login step failed: ${(error as Error).message}`);
+        throw error;
       }
 
-      await screenshot(page, "03-agregar-negocio-modal");
-      await clickAndWaitUi(page, modal.getByRole("button", { name: "Cancelar" }));
-      record("Agregar Negocio modal", "PASS", "Validated modal content, buttons and optional field input.");
-    } catch (error) {
-      await screenshot(page, "03-modal-failure");
-      record("Agregar Negocio modal", "FAIL", `Agregar Negocio modal validation failed: ${(error as Error).message}`);
-      throw error;
-    }
+      // Step 2: Open Mi Negocio menu
+      try {
+        await expandMiNegocioMenu(page);
+        const agregarVisible = await isVisible(page.getByText("Agregar Negocio", { exact: true }).first(), 15000);
+        const administrarVisible = await isVisible(page.getByText("Administrar Negocios", { exact: true }).first(), 15000);
+        await screenshot(page, "02-mi-negocio-expanded");
 
-    // Step 4: Open Administrar Negocios
-    try {
-      await ensureMiNegocioExpanded(page);
-      await clickAndWaitUi(page, page.getByText("Administrar Negocios", { exact: true }).first());
-      await expect(page.locator("body")).toContainText("Información General", { timeout: 20000 });
-      await expect(page.locator("body")).toContainText("Detalles de la Cuenta", { timeout: 20000 });
-      await expect(page.locator("body")).toContainText("Tus Negocios", { timeout: 20000 });
-      await expect(page.locator("body")).toContainText("Sección Legal", { timeout: 20000 });
-      await screenshot(page, "04-administrar-negocios-page", true);
-      record("Administrar Negocios view", "PASS", "Account page sections are visible.");
-    } catch (error) {
-      await screenshot(page, "04-administrar-negocios-failure", true);
-      record("Administrar Negocios view", "FAIL", `Administrar Negocios page validation failed: ${(error as Error).message}`);
-      throw error;
-    }
-
-    // Step 5: Validate Información General
-    try {
-      const body = page.locator("body");
-      await expect(body).toContainText("BUSINESS PLAN");
-      await expect(body.getByRole("button", { name: "Cambiar Plan" })).toBeVisible();
-
-      // Flexible validation for identity fields in localized UI.
-      const maybeName = page.getByText(/nombre|name/i).first();
-      const maybeEmail = page.getByText(/@/).first();
-      expect(await maybeName.isVisible().catch(() => false)).toBeTruthy();
-      expect(await maybeEmail.isVisible().catch(() => false)).toBeTruthy();
-
-      record("Información General", "PASS", "Name/email and plan details validated.");
-    } catch (error) {
-      record("Información General", "FAIL", `Información General validation failed: ${(error as Error).message}`);
-      throw error;
-    }
-
-    // Step 6: Validate Detalles de la Cuenta
-    try {
-      const body = page.locator("body");
-      await expect(body).toContainText("Cuenta creada");
-      await expect(body).toContainText(/Estado activo|Activo/i);
-      await expect(body).toContainText("Idioma seleccionado");
-      record("Detalles de la Cuenta", "PASS", "Cuenta creada, estado activo e idioma seleccionado validated.");
-    } catch (error) {
-      record("Detalles de la Cuenta", "FAIL", `Detalles de la Cuenta validation failed: ${(error as Error).message}`);
-      throw error;
-    }
-
-    // Step 7: Validate Tus Negocios
-    try {
-      const body = page.locator("body");
-      await expect(body).toContainText("Tus Negocios");
-      await expect(body.getByRole("button", { name: "Agregar Negocio" })).toBeVisible();
-      await expect(body).toContainText("Tienes 2 de 3 negocios");
-      record("Tus Negocios", "PASS", "Business list section and quota text validated.");
-    } catch (error) {
-      record("Tus Negocios", "FAIL", `Tus Negocios validation failed: ${(error as Error).message}`);
-      throw error;
-    }
-
-    // Step 8: Validate Términos y Condiciones
-    let termsUrl = "";
-    try {
-      const legal = await openLinkAndCaptureUrl(page, "Términos y Condiciones");
-      termsUrl = legal.url;
-
-      if (legal.openedInNewTab) {
-        const termsTab = page.context().pages()[page.context().pages().length - 1];
-        await expect(termsTab.locator("body")).toContainText("Términos y Condiciones", { timeout: 20000 });
-        await screenshot(termsTab, "08-terminos-y-condiciones");
-        await termsTab.close();
-        await page.bringToFront();
-      } else {
-        await expect(page.locator("body")).toContainText("Términos y Condiciones", { timeout: 20000 });
-        await screenshot(page, "08-terminos-y-condiciones");
-        await page.goBack({ waitUntil: "domcontentloaded" }).catch(() => undefined);
+        record(
+          "Mi Negocio menu",
+          agregarVisible && administrarVisible ? "PASS" : "FAIL",
+          "Validated expanded submenu with Agregar/Administrar options."
+        );
+        expect(agregarVisible).toBeTruthy();
+        expect(administrarVisible).toBeTruthy();
+      } catch (error) {
+        await screenshot(page, "02-mi-negocio-failure");
+        record("Mi Negocio menu", "FAIL", `Failed to expand/validate Mi Negocio: ${(error as Error).message}`);
+        throw error;
       }
 
-      record("Términos y Condiciones", "PASS", `Legal page validated. URL: ${termsUrl}`);
-    } catch (error) {
-      record("Términos y Condiciones", "FAIL", `Términos y Condiciones validation failed: ${(error as Error).message}`);
-      throw error;
-    }
+      // Step 3: Validate Agregar Negocio modal
+      try {
+        const agregarOption = page.getByText("Agregar Negocio", { exact: true }).first();
+        await clickAndWaitUi(page, agregarOption);
 
-    // Step 9: Validate Política de Privacidad
-    let privacyUrl = "";
-    try {
-      const legal = await openLinkAndCaptureUrl(page, "Política de Privacidad");
-      privacyUrl = legal.url;
+        const modal = page.getByRole("dialog");
+        await expect(modal).toBeVisible({ timeout: 15000 });
+        await expect(modal).toContainText("Crear Nuevo Negocio");
+        await expect(modal).toContainText("Nombre del Negocio");
+        await expect(modal).toContainText("Tienes 2 de 3 negocios");
+        await expect(modal.getByRole("button", { name: "Cancelar" })).toBeVisible();
+        await expect(modal.getByRole("button", { name: "Crear Negocio" })).toBeVisible();
 
-      if (legal.openedInNewTab) {
-        const privacyTab = page.context().pages()[page.context().pages().length - 1];
-        await expect(privacyTab.locator("body")).toContainText("Política de Privacidad", { timeout: 20000 });
-        await screenshot(privacyTab, "09-politica-de-privacidad");
-        await privacyTab.close();
-        await page.bringToFront();
-      } else {
-        await expect(page.locator("body")).toContainText("Política de Privacidad", { timeout: 20000 });
-        await screenshot(page, "09-politica-de-privacidad");
-        await page.goBack({ waitUntil: "domcontentloaded" }).catch(() => undefined);
+        const businessNameInput = modal
+          .getByRole("textbox", { name: /Nombre del Negocio/i })
+          .or(modal.getByPlaceholder(/Nombre del Negocio/i))
+          .first();
+
+        if (await businessNameInput.isVisible().catch(() => false)) {
+          await businessNameInput.click();
+          await businessNameInput.fill("Negocio Prueba Automatización");
+        }
+
+        await screenshot(page, "03-agregar-negocio-modal");
+        await clickAndWaitUi(page, modal.getByRole("button", { name: "Cancelar" }));
+        record("Agregar Negocio modal", "PASS", "Validated modal content, buttons and optional field input.");
+      } catch (error) {
+        await screenshot(page, "03-modal-failure");
+        record("Agregar Negocio modal", "FAIL", `Agregar Negocio modal validation failed: ${(error as Error).message}`);
+        throw error;
       }
 
-      record("Política de Privacidad", "PASS", `Legal page validated. URL: ${privacyUrl}`);
-    } catch (error) {
-      record("Política de Privacidad", "FAIL", `Política de Privacidad validation failed: ${(error as Error).message}`);
-      throw error;
+      // Step 4: Open Administrar Negocios
+      try {
+        await ensureMiNegocioExpanded(page);
+        await clickAndWaitUi(page, page.getByText("Administrar Negocios", { exact: true }).first());
+        await expect(page.locator("body")).toContainText("Información General", { timeout: 20000 });
+        await expect(page.locator("body")).toContainText("Detalles de la Cuenta", { timeout: 20000 });
+        await expect(page.locator("body")).toContainText("Tus Negocios", { timeout: 20000 });
+        await expect(page.locator("body")).toContainText("Sección Legal", { timeout: 20000 });
+        await screenshot(page, "04-administrar-negocios-page", true);
+        record("Administrar Negocios view", "PASS", "Account page sections are visible.");
+      } catch (error) {
+        await screenshot(page, "04-administrar-negocios-failure", true);
+        record("Administrar Negocios view", "FAIL", `Administrar Negocios page validation failed: ${(error as Error).message}`);
+        throw error;
+      }
+
+      // Step 5: Validate Información General
+      try {
+        const body = page.locator("body");
+        await expect(body).toContainText("BUSINESS PLAN");
+        await expect(body.getByRole("button", { name: "Cambiar Plan" })).toBeVisible();
+
+        const maybeName = page.getByText(/nombre|name/i).first();
+        const maybeEmail = page.getByText(/@/).first();
+        expect(await maybeName.isVisible().catch(() => false)).toBeTruthy();
+        expect(await maybeEmail.isVisible().catch(() => false)).toBeTruthy();
+
+        record("Información General", "PASS", "Name/email and plan details validated.");
+      } catch (error) {
+        record("Información General", "FAIL", `Información General validation failed: ${(error as Error).message}`);
+        throw error;
+      }
+
+      // Step 6: Validate Detalles de la Cuenta
+      try {
+        const body = page.locator("body");
+        await expect(body).toContainText("Cuenta creada");
+        await expect(body).toContainText(/Estado activo|Activo/i);
+        await expect(body).toContainText("Idioma seleccionado");
+        record("Detalles de la Cuenta", "PASS", "Cuenta creada, estado activo e idioma seleccionado validated.");
+      } catch (error) {
+        record("Detalles de la Cuenta", "FAIL", `Detalles de la Cuenta validation failed: ${(error as Error).message}`);
+        throw error;
+      }
+
+      // Step 7: Validate Tus Negocios
+      try {
+        const body = page.locator("body");
+        await expect(body).toContainText("Tus Negocios");
+        await expect(body.getByRole("button", { name: "Agregar Negocio" })).toBeVisible();
+        await expect(body).toContainText("Tienes 2 de 3 negocios");
+        record("Tus Negocios", "PASS", "Business list section and quota text validated.");
+      } catch (error) {
+        record("Tus Negocios", "FAIL", `Tus Negocios validation failed: ${(error as Error).message}`);
+        throw error;
+      }
+
+      // Step 8: Validate Términos y Condiciones
+      let termsUrl = "";
+      try {
+        const legal = await openLinkAndCaptureUrl(page, "Términos y Condiciones");
+        termsUrl = legal.url;
+
+        if (legal.openedInNewTab) {
+          const termsTab = page.context().pages()[page.context().pages().length - 1];
+          await expect(termsTab.locator("body")).toContainText("Términos y Condiciones", { timeout: 20000 });
+          await screenshot(termsTab, "08-terminos-y-condiciones");
+          await termsTab.close();
+          await page.bringToFront();
+        } else {
+          await expect(page.locator("body")).toContainText("Términos y Condiciones", { timeout: 20000 });
+          await screenshot(page, "08-terminos-y-condiciones");
+          await page.goBack({ waitUntil: "domcontentloaded" }).catch(() => undefined);
+        }
+
+        record("Términos y Condiciones", "PASS", `Legal page validated. URL: ${termsUrl}`);
+      } catch (error) {
+        record("Términos y Condiciones", "FAIL", `Términos y Condiciones validation failed: ${(error as Error).message}`);
+        throw error;
+      }
+
+      // Step 9: Validate Política de Privacidad
+      let privacyUrl = "";
+      try {
+        const legal = await openLinkAndCaptureUrl(page, "Política de Privacidad");
+        privacyUrl = legal.url;
+
+        if (legal.openedInNewTab) {
+          const privacyTab = page.context().pages()[page.context().pages().length - 1];
+          await expect(privacyTab.locator("body")).toContainText("Política de Privacidad", { timeout: 20000 });
+          await screenshot(privacyTab, "09-politica-de-privacidad");
+          await privacyTab.close();
+          await page.bringToFront();
+        } else {
+          await expect(page.locator("body")).toContainText("Política de Privacidad", { timeout: 20000 });
+          await screenshot(page, "09-politica-de-privacidad");
+          await page.goBack({ waitUntil: "domcontentloaded" }).catch(() => undefined);
+        }
+
+        record("Política de Privacidad", "PASS", `Legal page validated. URL: ${privacyUrl}`);
+      } catch (error) {
+        record("Política de Privacidad", "FAIL", `Política de Privacidad validation failed: ${(error as Error).message}`);
+        throw error;
+      }
     } finally {
       for (const field of REPORT_FIELDS) {
         if (!results.some((result) => result.name === field)) {
