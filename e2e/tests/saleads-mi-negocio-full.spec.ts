@@ -262,6 +262,12 @@ test.describe('SaleADS Mi Negocio workflow', () => {
       }
     };
 
+    const appLoginUrl = process.env.SALEADS_URL?.trim();
+    if (appLoginUrl) {
+      await appPage.goto(appLoginUrl, { waitUntil: 'domcontentloaded' });
+      await appPage.waitForTimeout(1_000);
+    }
+
     await appPage.waitForLoadState('domcontentloaded');
 
     try {

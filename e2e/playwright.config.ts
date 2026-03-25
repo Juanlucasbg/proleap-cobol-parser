@@ -10,6 +10,12 @@ export default defineConfig({
   retries: 0,
   workers: 1,
   reporter: [['list'], ['html', { outputFolder: 'playwright-report', open: 'never' }]],
+  projects: [
+    {
+      name: 'chromium',
+      use: { browserName: 'chromium' },
+    },
+  ],
   use: {
     screenshot: 'only-on-failure',
     trace: 'on-first-retry',
