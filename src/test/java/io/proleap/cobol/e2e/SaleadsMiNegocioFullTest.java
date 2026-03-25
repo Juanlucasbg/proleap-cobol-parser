@@ -38,11 +38,11 @@ public class SaleadsMiNegocioFullTest {
 	private static final String REPORT_MI_NEGOCIO_MENU = "Mi Negocio menu";
 	private static final String REPORT_AGREGAR_NEGOCIO_MODAL = "Agregar Negocio modal";
 	private static final String REPORT_ADMINISTRAR_NEGOCIOS_VIEW = "Administrar Negocios view";
-	private static final String REPORT_INFO_GENERAL = "Informacion General";
+	private static final String REPORT_INFO_GENERAL = "Información General";
 	private static final String REPORT_DETALLES_CUENTA = "Detalles de la Cuenta";
 	private static final String REPORT_TUS_NEGOCIOS = "Tus Negocios";
-	private static final String REPORT_TERMINOS = "Terminos y Condiciones";
-	private static final String REPORT_PRIVACIDAD = "Politica de Privacidad";
+	private static final String REPORT_TERMINOS = "Términos y Condiciones";
+	private static final String REPORT_PRIVACIDAD = "Política de Privacidad";
 
 	private WebDriver driver;
 	private WebDriverWait wait;
@@ -90,7 +90,7 @@ public class SaleadsMiNegocioFullTest {
 	}
 
 	@Test
-	public void saleadsMiNegocioFullTest() {
+	public void saleads_mi_negocio_full_test() {
 		final String appWindowHandle = driver.getWindowHandle();
 
 		executeReportStep(REPORT_LOGIN, this::stepLoginWithGoogleAndValidateMainUi);
