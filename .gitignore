@@ -41,3 +41,10 @@ target/
 
 ## Additional for IntelliJ
 out/
+
+# E2E Playwright artifacts
+e2e-saleads/node_modules/
+e2e-saleads/playwright-report/
+e2e-saleads/test-results/
+e2e-saleads/reports/
+e2e-saleads/screenshots/
