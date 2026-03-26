@@ -41,3 +41,7 @@ target/
 
 ## Additional for IntelliJ
 out/
+e2e/saleads-mi-negocio/node_modules/
+e2e/saleads-mi-negocio/playwright-report/
+e2e/saleads-mi-negocio/test-results/
+e2e/saleads-mi-negocio/artifacts/
