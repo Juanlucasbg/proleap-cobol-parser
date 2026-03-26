@@ -195,6 +195,36 @@ $ mvn clean test
 ```
 
 
+SaleADS UI workflow E2E test
+----------------------------
+
+A dedicated Selenium/JUnit test for the "Mi Negocio" workflow is available at:
+
+`src/test/java/io/proleap/cobol/e2e/SaleadsMiNegocioFullWorkflowTest.java`
+
+The test is **opt-in** and skipped by default. It is environment-agnostic and does not hardcode a SaleADS domain.
+
+Enable and run:
+
+```
+SALEADS_E2E_ENABLED=true \
+SALEADS_START_URL="<current environment login URL>" \
+mvn -Dtest=SaleadsMiNegocioFullWorkflowTest test
+```
+
+Optional configuration:
+
+- `SALEADS_BROWSER` (`auto`, `chrome`, `firefox`; default `auto`)
+- `SALEADS_HEADLESS` (`true`/`false`; default `true`)
+- `SALEADS_SELENIUM_REMOTE_URL` (for remote WebDriver sessions)
+- `SALEADS_WAIT_SECONDS` (default `30`)
+
+Artifacts:
+
+- Final report: `target/surefire-reports/saleads-mi-negocio/<run-id>/final-report.txt`
+- Screenshots: `target/surefire-reports/saleads-mi-negocio/<run-id>/screenshots/`
+
+
 Release process
 ---------------
 
