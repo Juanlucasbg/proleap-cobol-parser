@@ -20,6 +20,12 @@ async function waitForUi(page) {
   await page.waitForLoadState("networkidle");
 }
 
+async function isMainAppVisible(page) {
+  const sidebarVisible = await page.locator("aside").first().isVisible().catch(() => false);
+  const negocioVisible = await page.getByText("Negocio", { exact: false }).first().isVisible().catch(() => false);
+  return sidebarVisible && negocioVisible;
+}
+
 function normalizeUrl(url) {
   if (!url) {
     return null;
@@ -52,6 +58,15 @@ async function clickByText(page, texts, options = {}) {
   }
 
   throw new Error(`Could not click any target text: ${texts.join(", ")}`);
+}
+
+async function findVisibleLocator(page, locators) {
+  for (const locator of locators) {
+    if (await locator.first().isVisible().catch(() => false)) {
+      return locator.first();
+    }
+  }
+  return null;
 }
 
 async function clickLegalLinkAndValidate({
@@ -131,22 +146,48 @@ test.describe("SaleADS Mi Negocio full workflow", () => {
       // Step 1: Login with Google (browser is assumed to already be on login page).
       // If not, we optionally navigate with SALEADS_URL/BASE_URL for portability.
       const configuredUrl = normalizeUrl(process.env.SALEADS_URL || process.env.BASE_URL);
-      if (configuredUrl && !/login|auth|signin|saleads/i.test(page.url())) {
+      const currentUrl = page.url();
+      if (configuredUrl && (!currentUrl || currentUrl === "about:blank" || !/saleads|login|auth|signin/i.test(currentUrl))) {
         await page.goto(configuredUrl, { waitUntil: "domcontentloaded" });
       }
       await waitForUi(page);
 
-      await clickByText(page, [
-        "Iniciar sesión con Google",
-        "Continuar con Google",
-        "Sign in with Google",
-        "Login with Google"
-      ]);
-      await waitForUi(page);
+      const alreadyInApp = await isMainAppVisible(page);
+      if (!alreadyInApp) {
+        const googleEntry = await findVisibleLocator(page, [
+          page.getByRole("button", { name: /google/i }),
+          page.getByRole("link", { name: /google/i }),
+          page.getByText("Iniciar sesión con Google", { exact: false }),
+          page.getByText("Continuar con Google", { exact: false }),
+          page.getByText("Sign in with Google", { exact: false }),
+          page.getByText("Login with Google", { exact: false })
+        ]);
 
-      const googleAccountOption = page.getByText("juanlucasbarbiergarzon@gmail.com", { exact: false }).first();
-      if (await googleAccountOption.isVisible().catch(() => false)) {
-        await googleAccountOption.click();
+        if (!googleEntry) {
+          throw new Error(
+            "Google login entry was not found. Ensure the browser starts on SaleADS login page or set SALEADS_URL/BASE_URL."
+          );
+        }
+
+        const popupPromise = page.waitForEvent("popup", { timeout: 5_000 }).catch(() => null);
+        await googleEntry.click();
+        const googlePopup = await popupPromise;
+
+        if (googlePopup) {
+          await googlePopup.waitForLoadState("domcontentloaded");
+          await googlePopup.waitForLoadState("networkidle");
+          const googleAccountOption = googlePopup.getByText("juanlucasbarbiergarzon@gmail.com", { exact: false }).first();
+          if (await googleAccountOption.isVisible().catch(() => false)) {
+            await googleAccountOption.click();
+          }
+          await page.bringToFront();
+        } else {
+          await waitForUi(page);
+          const googleAccountOption = page.getByText("juanlucasbarbiergarzon@gmail.com", { exact: false }).first();
+          if (await googleAccountOption.isVisible().catch(() => false)) {
+            await googleAccountOption.click();
+          }
+        }
         await waitForUi(page);
       }
 
