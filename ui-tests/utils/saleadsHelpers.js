@@ -30,13 +30,22 @@ async function waitUi(page) {
 }
 
 async function clickByText(pageOrScope, text, options = {}) {
-  const locator = pageOrScope
-    .getByRole("button", { name: text, exact: options.exact ?? false })
-    .or(pageOrScope.getByRole("link", { name: text, exact: options.exact ?? false }))
-    .or(pageOrScope.getByText(text, { exact: options.exact ?? false }))
-    .first();
-  await expect(locator, `Expected clickable text "${text}"`).toBeVisible();
-  await locator.click();
+  const exact = options.exact ?? false;
+  const candidateLocators = [
+    pageOrScope.getByRole("button", { name: text, exact }).first(),
+    pageOrScope.getByRole("link", { name: text, exact }).first(),
+    pageOrScope.getByText(text, { exact }).first()
+  ];
+
+  for (const locator of candidateLocators) {
+    if (await locator.isVisible().catch(() => false)) {
+      await locator.click();
+      return;
+    }
+  }
+
+  await expect(candidateLocators[2], `Expected clickable text "${text}"`).toBeVisible();
+  await candidateLocators[2].click();
 }
 
 async function assertVisibleText(pageOrScope, text, options = {}) {
