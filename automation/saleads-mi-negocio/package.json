@@ -1,0 +1,12 @@
+{
+  "name": "saleads-mi-negocio-automation",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Environment-agnostic SaleADS Mi Negocio workflow validation",
+  "scripts": {
+    "test": "node run-test.js"
+  },
+  "dependencies": {
+    "playwright": "^1.54.2"
+  }
+}
