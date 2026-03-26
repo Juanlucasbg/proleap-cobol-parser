@@ -9,11 +9,6 @@ const {
 } = require("../utils/saleadsHelpers");
 
 test.describe("saleads_mi_negocio_full_test", () => {
-  test.skip(
-    !process.env.SALEADS_BASE_URL,
-    "Set SALEADS_BASE_URL so the test can open the SaleADS login page in this environment."
-  );
-
   test("Login with Google and validate Mi Negocio full workflow", async ({ page, context, baseURL }) => {
     const tracker = createStepTracker();
     const evidence = {
@@ -36,6 +31,11 @@ test.describe("saleads_mi_negocio_full_test", () => {
       // Step 1 - Login with Google
       if (baseURL && page.url() === "about:blank") {
         await page.goto(baseURL, { waitUntil: "domcontentloaded" });
+      }
+      if (!baseURL && page.url() === "about:blank") {
+        throw new Error(
+          "Unable to start login flow from about:blank. Provide SALEADS_BASE_URL for this environment."
+        );
       }
 
       await waitUi(page);
