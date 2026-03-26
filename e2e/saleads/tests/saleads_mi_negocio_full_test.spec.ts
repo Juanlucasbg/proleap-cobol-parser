@@ -139,14 +139,11 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
       'text=/iniciar\\s*con\\s*google/i',
     ]);
 
-    await Promise.all([
-      context.waitForEvent("page").catch(() => null),
-      googleLoginEntry.click(),
-    ]);
-
-    const popup = context
-      .pages()
-      .find((candidate) => candidate !== page && /accounts\.google\.com/i.test(candidate.url()));
+    const loginPopupPromise = context.waitForEvent("page", { timeout: 7000 }).catch(() => null);
+    await googleLoginEntry.click();
+    const popup =
+      (await loginPopupPromise) ??
+      context.pages().find((candidate) => candidate !== page && /accounts\.google\.com/i.test(candidate.url()));
 
     if (popup) {
       await popup.waitForLoadState("domcontentloaded");
