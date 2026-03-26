@@ -195,6 +195,58 @@ $ mvn clean test
 ```
 
 
+SaleADS UI E2E workflow test (Mi Negocio)
+-----------------------------------------
+
+This repository now includes an end-to-end Selenium test for validating the
+SaleADS "Mi Negocio" workflow:
+
+* `src/test/java/io/proleap/e2e/SaleadsMiNegocioFullTest.java`
+
+The test was designed to work across SaleADS environments (dev/staging/prod)
+without hardcoded domain logic. It prefers visible text selectors, waits for
+UI readiness after interactions, handles legal links that can open in the same
+tab or a new tab, captures checkpoint screenshots, and prints a PASS/FAIL
+final report for:
+
+* Login
+* Mi Negocio menu
+* Agregar Negocio modal
+* Administrar Negocios view
+* Información General
+* Detalles de la Cuenta
+* Tus Negocios
+* Términos y Condiciones
+* Política de Privacidad
+
+### Runtime requirements
+
+* Chrome/Chromium available in the environment.
+* A compatible ChromeDriver in PATH (or Selenium Grid via `SELENIUM_REMOTE_URL`).
+
+### Environment variables
+
+* `SALEADS_LOGIN_URL` (optional): login page URL for the active environment.
+  If omitted, the test assumes the browser is already on the login page.
+* `SALEADS_EXPECTED_EMAIL` (optional): expected user email.
+  Default: `juanlucasbarbiergarzon@gmail.com`
+* `SALEADS_EXPECTED_NAME` (optional): expected user name in "Información General".
+* `SELENIUM_REMOTE_URL` (optional): remote Selenium Grid endpoint.
+* `SALEADS_HEADLESS` (optional): `true` or `false` (default `true`).
+* `SALEADS_EVIDENCE_DIR` (optional): screenshot output root directory.
+  Default: `target/saleads-evidence`
+
+### Run only this test
+
+```
+$ mvn -Dtest=SaleadsMiNegocioFullTest test
+```
+
+Evidence screenshots are saved under a timestamped folder in:
+
+* `target/saleads-evidence/<yyyyMMdd-HHmmss>/`
+
+
 Release process
 ---------------
 
