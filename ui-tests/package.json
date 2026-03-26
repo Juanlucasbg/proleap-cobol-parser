@@ -1,0 +1,20 @@
+{
+  "name": "ui-tests",
+  "version": "1.0.0",
+  "description": "Cross-environment SaleADS UI tests",
+  "scripts": {
+    "test": "playwright test",
+    "test:saleads-mi-negocio": "playwright test tests/saleads_mi_negocio_full_test.spec.js --project=chromium",
+    "test:list": "playwright test --list",
+    "pw:install": "playwright install chromium"
+  },
+  "keywords": [
+    "playwright",
+    "e2e",
+    "saleads"
+  ],
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
+  }
+}
