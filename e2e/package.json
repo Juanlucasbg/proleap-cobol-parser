@@ -1,0 +1,15 @@
+{
+  "name": "saleads-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SaleADS end-to-end tests for Mi Negocio workflow",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "test:mi-negocio": "playwright test tests/saleads_mi_negocio_full_test.spec.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "latest"
+  }
+}
