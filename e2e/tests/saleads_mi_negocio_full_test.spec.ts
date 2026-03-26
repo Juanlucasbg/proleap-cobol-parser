@@ -80,6 +80,7 @@ async function openLegalAndValidate(
   expectedHeadingRegex: RegExp,
   screenshotName: string
 ): Promise<{ url: string; screenshotPath: string }> {
+  const appStartUrl = appPage.url();
   const linkLocator = appPage
     .getByRole('link', { name: legalLinkRegex })
     .or(appPage.getByRole('button', { name: legalLinkRegex }))
@@ -112,6 +113,11 @@ async function openLegalAndValidate(
     await legalPage.close();
     await appPage.bringToFront();
     await waitForUiToLoad(appPage);
+  } else {
+    if (appPage.url() !== appStartUrl) {
+      await appPage.goBack({ waitUntil: 'domcontentloaded' }).catch(() => null);
+      await waitForUiToLoad(appPage);
+    }
   }
 
   return { url: finalUrl, screenshotPath };
@@ -124,6 +130,9 @@ test('saleads_mi_negocio_full_test', async ({ page }) => {
     await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
   } else {
     // The workflow may start from an already open login page in any environment.
+    if (page.url() === 'about:blank') {
+      throw new Error('SALEADS_BASE_URL is required when the test context starts at about:blank.');
+    }
     await waitForUiToLoad(page);
   }
 
@@ -187,7 +196,6 @@ test('saleads_mi_negocio_full_test', async ({ page }) => {
     results.Login = { status: 'PASS', detail: `Dashboard loaded. Screenshot: ${dashboardShot}` };
   } catch (error) {
     results.Login = { status: 'FAIL', detail: `Login flow failed: ${String(error)}` };
-    throw error;
   }
 
   // Step 2: Open Mi Negocio menu.
@@ -202,7 +210,6 @@ test('saleads_mi_negocio_full_test', async ({ page }) => {
     results['Mi Negocio menu'] = { status: 'PASS', detail: `Menu expanded. Screenshot: ${menuShot}` };
   } catch (error) {
     results['Mi Negocio menu'] = { status: 'FAIL', detail: `Menu validation failed: ${String(error)}` };
-    throw error;
   }
 
   // Step 3: Validate Agregar Negocio modal.
@@ -224,7 +231,6 @@ test('saleads_mi_negocio_full_test', async ({ page }) => {
     results['Agregar Negocio modal'] = { status: 'PASS', detail: `Modal validated. Screenshot: ${modalShot}` };
   } catch (error) {
     results['Agregar Negocio modal'] = { status: 'FAIL', detail: `Modal validation failed: ${String(error)}` };
-    throw error;
   }
 
   // Step 4: Open Administrar Negocios view.
@@ -250,7 +256,6 @@ test('saleads_mi_negocio_full_test', async ({ page }) => {
       status: 'FAIL',
       detail: `Administrar Negocios validation failed: ${String(error)}`
     };
-    throw error;
   }
 
   // Step 5: Validate Información General.
@@ -268,7 +273,6 @@ test('saleads_mi_negocio_full_test', async ({ page }) => {
       status: 'FAIL',
       detail: `Información General failed: ${String(error)}`
     };
-    throw error;
   }
 
   // Step 6: Validate Detalles de la Cuenta.
@@ -286,7 +290,6 @@ test('saleads_mi_negocio_full_test', async ({ page }) => {
       status: 'FAIL',
       detail: `Detalles de la Cuenta failed: ${String(error)}`
     };
-    throw error;
   }
 
   // Step 7: Validate Tus Negocios.
@@ -301,7 +304,6 @@ test('saleads_mi_negocio_full_test', async ({ page }) => {
     results['Tus Negocios'] = { status: 'PASS', detail: 'Businesses section and limits text are visible.' };
   } catch (error) {
     results['Tus Negocios'] = { status: 'FAIL', detail: `Tus Negocios failed: ${String(error)}` };
-    throw error;
   }
 
   // Step 8: Validate Términos y Condiciones.
@@ -322,7 +324,6 @@ test('saleads_mi_negocio_full_test', async ({ page }) => {
       status: 'FAIL',
       detail: `Términos y Condiciones failed: ${String(error)}`
     };
-    throw error;
   }
 
   // Step 9: Validate Política de Privacidad.
@@ -343,7 +344,6 @@ test('saleads_mi_negocio_full_test', async ({ page }) => {
       status: 'FAIL',
       detail: `Política de Privacidad failed: ${String(error)}`
     };
-    throw error;
   }
 
   // Step 10: Final report.
