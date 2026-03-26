@@ -258,6 +258,7 @@ public class SaleadsMiNegocioFullTest {
 
 	private void clickLegalLinkAndValidate(final String linkText, final String screenshotName) throws IOException {
 		final String originalWindow = driver.getWindowHandle();
+		final String accountPageUrl = driver.getCurrentUrl();
 		if (appWindowHandle == null) {
 			appWindowHandle = originalWindow;
 		}
@@ -286,6 +287,12 @@ public class SaleadsMiNegocioFullTest {
 		if (!finalWindow.equals(originalWindow)) {
 			driver.close();
 			driver.switchTo().window(appWindowHandle);
+		} else {
+			driver.navigate().back();
+			waitForPageReady();
+			if (!isVisible(By.xpath("//*[contains(normalize-space(), 'Seccion Legal') or contains(normalize-space(), 'Sección Legal')]"), SHORT_WAIT)) {
+				driver.navigate().to(accountPageUrl);
+			}
 		}
 		waitForPageReady();
 	}
