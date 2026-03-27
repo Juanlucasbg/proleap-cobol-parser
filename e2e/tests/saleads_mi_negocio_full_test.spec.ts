@@ -31,6 +31,18 @@ async function waitForUi(page: Page, ms = WAIT_UI_MS): Promise<void> {
   await page.waitForTimeout(ms);
 }
 
+function errorDetail(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  if (typeof error === 'string') {
+    return error;
+  }
+
+  return 'Unknown error';
+}
+
 function normalize(text: string): string {
   return text
     .normalize('NFD')
@@ -65,15 +77,20 @@ function firstVisible(...locators: Locator[]): Locator {
   return locators.reduce((acc, current) => acc.or(current));
 }
 
+function setStepResult(results: StepResult[], next: StepResult): void {
+  const index = results.findIndex((entry) => entry.key === next.key);
+  if (index >= 0) {
+    results[index] = next;
+    return;
+  }
+
+  results.push(next);
+}
+
 async function clickAndWait(locator: Locator, page: Page): Promise<void> {
   await expect(locator).toBeVisible();
   await locator.click();
   await waitForUi(page);
-}
-
-async function validateVisibleText(page: Page, text: string): Promise<void> {
-  const primary = page.getByText(new RegExp(text, 'i')).first();
-  await expect(primary).toBeVisible();
 }
 
 async function validateSectionWithFallbacks(
@@ -138,223 +155,295 @@ test.describe('SaleADS Mi Negocio full workflow', () => {
     let privacyUrl = 'N/A';
 
     await test.step('1) Login with Google and validate dashboard', async () => {
-      const loginButton = firstVisible(
-        page.getByRole('button', { name: /sign in with google|continuar con google|iniciar sesion con google/i }),
-        page.getByRole('link', { name: /sign in with google|continuar con google|iniciar sesion con google/i }),
-        page.getByText(/sign in with google|continuar con google|iniciar sesion con google/i).first(),
-      );
+      try {
+        const loginButton = firstVisible(
+          page.getByRole('button', { name: /sign in with google|continuar con google|iniciar sesion con google/i }),
+          page.getByRole('link', { name: /sign in with google|continuar con google|iniciar sesion con google/i }),
+          page.getByText(/sign in with google|continuar con google|iniciar sesion con google/i).first(),
+        );
 
-      const loginGate = firstVisible(
-        page.getByRole('navigation').first(),
-        page.getByText(/negocio|dashboard|panel|inicio/i).first(),
-      );
+        const loginGate = firstVisible(
+          page.getByRole('navigation').first(),
+          page.getByText(/negocio|dashboard|panel|inicio/i).first(),
+        );
 
-      if (await loginButton.isVisible().catch(() => false)) {
-        const popupPromise = page.waitForEvent('popup', { timeout: 15_000 }).catch(() => null);
-        await clickAndWait(loginButton, page);
+        if (await loginButton.isVisible().catch(() => false)) {
+          const popupPromise = page.waitForEvent('popup', { timeout: 15_000 }).catch(() => null);
+          await clickAndWait(loginButton, page);
 
-        const popup = await popupPromise;
-        if (popup) {
-          await popup.waitForLoadState('domcontentloaded');
-          await chooseGoogleAccountIfPresent(popup, 'juanlucasbarbiergarzon@gmail.com');
-          await popup.close().catch(() => undefined);
-          await page.bringToFront();
-        } else {
-          await chooseGoogleAccountIfPresent(page, 'juanlucasbarbiergarzon@gmail.com');
+          const popup = await popupPromise;
+          if (popup) {
+            await popup.waitForLoadState('domcontentloaded');
+            await chooseGoogleAccountIfPresent(popup, 'juanlucasbarbiergarzon@gmail.com');
+            await popup.close().catch(() => undefined);
+            await page.bringToFront();
+          } else {
+            await chooseGoogleAccountIfPresent(page, 'juanlucasbarbiergarzon@gmail.com');
+          }
         }
+
+        await expect(loginGate).toBeVisible();
+        const sidebar = page.getByRole('navigation').first();
+        await expect(sidebar).toBeVisible();
+        await checkpoint(page, '01-dashboard-loaded.png');
+
+        setStepResult(results, {
+          key: 'Login',
+          state: 'PASS',
+          detail: 'Main application interface loaded and sidebar visible.',
+        });
+      } catch (error) {
+        setStepResult(results, {
+          key: 'Login',
+          state: 'FAIL',
+          detail: `Login or dashboard validation failed: ${errorDetail(error)}`,
+        });
       }
-
-      await expect(loginGate).toBeVisible();
-      const sidebar = page.getByRole('navigation').first();
-      await expect(sidebar).toBeVisible();
-      await checkpoint(page, '01-dashboard-loaded.png');
-
-      results.push({
-        key: 'Login',
-        state: 'PASS',
-        detail: 'Main application interface loaded and sidebar visible.',
-      });
     });
 
     await test.step('2) Open Mi Negocio menu and validate submenu', async () => {
-      const sidebar = page.getByRole('navigation').first();
-      await expect(sidebar).toBeVisible();
+      try {
+        const sidebar = page.getByRole('navigation').first();
+        await expect(sidebar).toBeVisible();
 
-      const negocioEntry = menuItemByText(sidebar, 'Negocio')
-        .or(menuItemByText(page, 'Negocio'))
-        .or(page.getByText(/^negocio$/i).first());
-      await clickAndWait(negocioEntry, page);
+        const negocioEntry = menuItemByText(sidebar, 'Negocio')
+          .or(menuItemByText(page, 'Negocio'))
+          .or(page.getByText(/^negocio$/i).first());
+        await clickAndWait(negocioEntry, page);
 
-      const miNegocioEntry = menuItemByText(sidebar, 'Mi Negocio')
-        .or(menuItemByText(page, 'Mi Negocio'))
-        .or(page.getByText(/^mi negocio$/i).first());
-      await clickAndWait(miNegocioEntry, page);
+        const miNegocioEntry = menuItemByText(sidebar, 'Mi Negocio')
+          .or(menuItemByText(page, 'Mi Negocio'))
+          .or(page.getByText(/^mi negocio$/i).first());
+        await clickAndWait(miNegocioEntry, page);
 
-      await expect(page.getByText(/agregar negocio/i).first()).toBeVisible();
-      await expect(page.getByText(/administrar negocios/i).first()).toBeVisible();
-      await checkpoint(page, '02-mi-negocio-expanded.png');
+        await expect(page.getByText(/agregar negocio/i).first()).toBeVisible();
+        await expect(page.getByText(/administrar negocios/i).first()).toBeVisible();
+        await checkpoint(page, '02-mi-negocio-expanded.png');
 
-      results.push({
-        key: 'Mi Negocio menu',
-        state: 'PASS',
-        detail: 'Mi Negocio expanded with Agregar Negocio and Administrar Negocios entries.',
-      });
+        setStepResult(results, {
+          key: 'Mi Negocio menu',
+          state: 'PASS',
+          detail: 'Mi Negocio expanded with Agregar Negocio and Administrar Negocios entries.',
+        });
+      } catch (error) {
+        setStepResult(results, {
+          key: 'Mi Negocio menu',
+          state: 'FAIL',
+          detail: `Mi Negocio menu validation failed: ${errorDetail(error)}`,
+        });
+      }
     });
 
     await test.step('3) Validate Agregar Negocio modal', async () => {
-      const addBusinessMenuItem = page.getByText(/^agregar negocio$/i).first();
-      await clickAndWait(addBusinessMenuItem, page);
+      try {
+        const addBusinessMenuItem = page.getByText(/^agregar negocio$/i).first();
+        await clickAndWait(addBusinessMenuItem, page);
 
-      const modalTitle = page.getByText(/crear nuevo negocio/i).first();
-      await expect(modalTitle).toBeVisible();
-      await expect(page.getByLabel(/nombre del negocio/i).or(page.getByPlaceholder(/nombre del negocio/i))).toBeVisible();
-      await expect(page.getByText(/tienes 2 de 3 negocios/i).first()).toBeVisible();
+        const modalTitle = page.getByText(/crear nuevo negocio/i).first();
+        await expect(modalTitle).toBeVisible();
+        await expect(page.getByLabel(/nombre del negocio/i).or(page.getByPlaceholder(/nombre del negocio/i))).toBeVisible();
+        await expect(page.getByText(/tienes 2 de 3 negocios/i).first()).toBeVisible();
 
-      const cancelButton = page.getByRole('button', { name: /^cancelar$/i });
-      const createButton = page.getByRole('button', { name: /crear negocio/i });
-      await expect(cancelButton).toBeVisible();
-      await expect(createButton).toBeVisible();
+        const cancelButton = page.getByRole('button', { name: /^cancelar$/i });
+        const createButton = page.getByRole('button', { name: /crear negocio/i });
+        await expect(cancelButton).toBeVisible();
+        await expect(createButton).toBeVisible();
 
-      const businessNameInput = page
-        .getByLabel(/nombre del negocio/i)
-        .or(page.getByPlaceholder(/nombre del negocio/i))
-        .first();
-      await businessNameInput.click();
-      await businessNameInput.fill('Negocio Prueba Automatización');
-      await checkpoint(page, '03-agregar-negocio-modal.png');
-      await clickAndWait(cancelButton, page);
+        const businessNameInput = page
+          .getByLabel(/nombre del negocio/i)
+          .or(page.getByPlaceholder(/nombre del negocio/i))
+          .first();
+        await businessNameInput.click();
+        await businessNameInput.fill('Negocio Prueba Automatización');
+        await checkpoint(page, '03-agregar-negocio-modal.png');
+        await clickAndWait(cancelButton, page);
 
-      results.push({
-        key: 'Agregar Negocio modal',
-        state: 'PASS',
-        detail:
-          'Crear Nuevo Negocio modal validated with Nombre del Negocio, business quota text, and action buttons.',
-      });
+        setStepResult(results, {
+          key: 'Agregar Negocio modal',
+          state: 'PASS',
+          detail:
+            'Crear Nuevo Negocio modal validated with Nombre del Negocio, business quota text, and action buttons.',
+        });
+      } catch (error) {
+        setStepResult(results, {
+          key: 'Agregar Negocio modal',
+          state: 'FAIL',
+          detail: `Agregar Negocio modal validation failed: ${errorDetail(error)}`,
+        });
+      }
     });
 
     await test.step('4) Open Administrar Negocios and validate account sections', async () => {
-      const miNegocioEntry = menuItemByText(page, 'Mi Negocio').or(page.getByText(/^mi negocio$/i).first());
-      if (!(await page.getByText(/administrar negocios/i).first().isVisible().catch(() => false))) {
-        await clickAndWait(miNegocioEntry, page);
+      try {
+        const miNegocioEntry = menuItemByText(page, 'Mi Negocio').or(page.getByText(/^mi negocio$/i).first());
+        if (!(await page.getByText(/administrar negocios/i).first().isVisible().catch(() => false))) {
+          await clickAndWait(miNegocioEntry, page);
+        }
+
+        const manageBusinesses = page.getByText(/administrar negocios/i).first();
+        await clickAndWait(manageBusinesses, page);
+        await page.waitForLoadState('domcontentloaded');
+        await waitForUi(page);
+
+        await validateSectionWithFallbacks(page, 'Información General');
+        await validateSectionWithFallbacks(page, 'Detalles de la Cuenta');
+        await validateSectionWithFallbacks(page, 'Tus Negocios');
+        await validateSectionWithFallbacks(page, 'Sección Legal', ['Legal']);
+
+        await checkpoint(page, '04-administrar-negocios-full-page.png', true);
+        setStepResult(results, {
+          key: 'Administrar Negocios view',
+          state: 'PASS',
+          detail: 'All major sections are visible in account management page.',
+        });
+      } catch (error) {
+        setStepResult(results, {
+          key: 'Administrar Negocios view',
+          state: 'FAIL',
+          detail: `Administrar Negocios page validation failed: ${errorDetail(error)}`,
+        });
       }
-
-      const manageBusinesses = page.getByText(/administrar negocios/i).first();
-      await clickAndWait(manageBusinesses, page);
-      await page.waitForLoadState('domcontentloaded');
-      await waitForUi(page);
-
-      await validateSectionWithFallbacks(page, 'Información General');
-      await validateSectionWithFallbacks(page, 'Detalles de la Cuenta');
-      await validateSectionWithFallbacks(page, 'Tus Negocios');
-      await validateSectionWithFallbacks(page, 'Sección Legal', ['Legal']);
-
-      await checkpoint(page, '04-administrar-negocios-full-page.png', true);
-      results.push({
-        key: 'Administrar Negocios view',
-        state: 'PASS',
-        detail: 'All major sections are visible in account management page.',
-      });
     });
 
     await test.step('5) Validate Información General section', async () => {
-      await validateSectionWithFallbacks(page, 'Información General');
-      await validateSectionWithFallbacks(page, 'BUSINESS PLAN');
-      await expect(page.getByRole('button', { name: /cambiar plan/i }).first()).toBeVisible();
+      try {
+        await validateSectionWithFallbacks(page, 'Información General');
+        await validateSectionWithFallbacks(page, 'BUSINESS PLAN');
+        await expect(page.getByRole('button', { name: /cambiar plan/i }).first()).toBeVisible();
 
-      const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-z]{2,}/i;
-      await expect(page.getByText(emailRegex).first()).toBeVisible();
+        const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-z]{2,}/i;
+        await expect(page.getByText(emailRegex).first()).toBeVisible();
 
-      const headingLike = page
-        .locator('h1, h2, h3, h4, h5, h6, p, span, div')
-        .filter({ hasNotText: emailRegex })
-        .filter({ hasText: /[A-Za-zÁÉÍÓÚáéíóúÑñ]/ })
-        .first();
-      await expect(headingLike).toBeVisible();
+        const headingLike = page
+          .locator('h1, h2, h3, h4, h5, h6, p, span, div')
+          .filter({ hasNotText: emailRegex })
+          .filter({ hasText: /[A-Za-zÁÉÍÓÚáéíóúÑñ]/ })
+          .first();
+        await expect(headingLike).toBeVisible();
 
-      results.push({
-        key: 'Información General',
-        state: 'PASS',
-        detail: 'Name-like text, email, BUSINESS PLAN and Cambiar Plan were visible.',
-      });
+        setStepResult(results, {
+          key: 'Información General',
+          state: 'PASS',
+          detail: 'Name-like text, email, BUSINESS PLAN and Cambiar Plan were visible.',
+        });
+      } catch (error) {
+        setStepResult(results, {
+          key: 'Información General',
+          state: 'FAIL',
+          detail: `Información General validation failed: ${errorDetail(error)}`,
+        });
+      }
     });
 
     await test.step('6) Validate Detalles de la Cuenta section', async () => {
-      await validateSectionWithFallbacks(page, 'Detalles de la Cuenta');
-      await validateSectionWithFallbacks(page, 'Cuenta creada');
-      await validateSectionWithFallbacks(page, 'Estado activo');
-      await validateSectionWithFallbacks(page, 'Idioma seleccionado');
+      try {
+        await validateSectionWithFallbacks(page, 'Detalles de la Cuenta');
+        await validateSectionWithFallbacks(page, 'Cuenta creada');
+        await validateSectionWithFallbacks(page, 'Estado activo');
+        await validateSectionWithFallbacks(page, 'Idioma seleccionado');
 
-      results.push({
-        key: 'Detalles de la Cuenta',
-        state: 'PASS',
-        detail: 'Cuenta creada, Estado activo and Idioma seleccionado labels are visible.',
-      });
+        setStepResult(results, {
+          key: 'Detalles de la Cuenta',
+          state: 'PASS',
+          detail: 'Cuenta creada, Estado activo and Idioma seleccionado labels are visible.',
+        });
+      } catch (error) {
+        setStepResult(results, {
+          key: 'Detalles de la Cuenta',
+          state: 'FAIL',
+          detail: `Detalles de la Cuenta validation failed: ${errorDetail(error)}`,
+        });
+      }
     });
 
     await test.step('7) Validate Tus Negocios section', async () => {
-      await validateSectionWithFallbacks(page, 'Tus Negocios');
-      await expect(page.getByRole('button', { name: /agregar negocio/i }).first()).toBeVisible();
-      await expect(page.getByText(/tienes 2 de 3 negocios/i).first()).toBeVisible();
+      try {
+        await validateSectionWithFallbacks(page, 'Tus Negocios');
+        await expect(page.getByRole('button', { name: /agregar negocio/i }).first()).toBeVisible();
+        await expect(page.getByText(/tienes 2 de 3 negocios/i).first()).toBeVisible();
 
-      const businessListRegion = page
-        .locator('section,div')
-        .filter({ hasText: /tus negocios/i })
-        .first();
-      await expect(businessListRegion).toBeVisible();
+        const businessListRegion = page
+          .locator('section,div')
+          .filter({ hasText: /tus negocios/i })
+          .first();
+        await expect(businessListRegion).toBeVisible();
 
-      results.push({
-        key: 'Tus Negocios',
-        state: 'PASS',
-        detail: 'Business list area, Agregar Negocio button and quota text are visible.',
-      });
+        setStepResult(results, {
+          key: 'Tus Negocios',
+          state: 'PASS',
+          detail: 'Business list area, Agregar Negocio button and quota text are visible.',
+        });
+      } catch (error) {
+        setStepResult(results, {
+          key: 'Tus Negocios',
+          state: 'FAIL',
+          detail: `Tus Negocios validation failed: ${errorDetail(error)}`,
+        });
+      }
     });
 
     await test.step('8) Validate Términos y Condiciones', async () => {
-      const termsLink = page
-        .getByRole('link', { name: /t[eé]rminos y condiciones/i })
-        .or(page.getByText(/t[eé]rminos y condiciones/i).first());
+      try {
+        const termsLink = page
+          .getByRole('link', { name: /t[eé]rminos y condiciones/i })
+          .or(page.getByText(/t[eé]rminos y condiciones/i).first());
 
-      const { targetPage, usedPopup } = await withPopupOrNavigation(page, async () => {
-        await clickAndWait(termsLink, page);
-      });
+        const { targetPage, usedPopup } = await withPopupOrNavigation(page, async () => {
+          await clickAndWait(termsLink, page);
+        });
 
-      await expect(targetPage.getByText(/t[eé]rminos y condiciones/i).first()).toBeVisible();
-      const legalText = await targetPage.locator('main, article, body').innerText();
-      expect(normalize(legalText).length).toBeGreaterThan(50);
+        await expect(targetPage.getByText(/t[eé]rminos y condiciones/i).first()).toBeVisible();
+        const legalText = await targetPage.locator('main, article, body').innerText();
+        expect(normalize(legalText).length).toBeGreaterThan(50);
 
-      await checkpoint(targetPage, '08-terminos-y-condiciones.png', true);
-      termsUrl = targetPage.url();
+        await checkpoint(targetPage, '08-terminos-y-condiciones.png', true);
+        termsUrl = targetPage.url();
 
-      await closeOrReturn(targetPage, page, usedPopup);
-      results.push({
-        key: 'Términos y Condiciones',
-        state: 'PASS',
-        detail: `Legal heading and content visible. URL: ${termsUrl}`,
-      });
+        await closeOrReturn(targetPage, page, usedPopup);
+        setStepResult(results, {
+          key: 'Términos y Condiciones',
+          state: 'PASS',
+          detail: `Legal heading and content visible. URL: ${termsUrl}`,
+        });
+      } catch (error) {
+        setStepResult(results, {
+          key: 'Términos y Condiciones',
+          state: 'FAIL',
+          detail: `Términos y Condiciones validation failed: ${errorDetail(error)}`,
+        });
+      }
     });
 
     await test.step('9) Validate Política de Privacidad', async () => {
-      const privacyLink = page
-        .getByRole('link', { name: /pol[ií]tica de privacidad/i })
-        .or(page.getByText(/pol[ií]tica de privacidad/i).first());
+      try {
+        const privacyLink = page
+          .getByRole('link', { name: /pol[ií]tica de privacidad/i })
+          .or(page.getByText(/pol[ií]tica de privacidad/i).first());
 
-      const { targetPage, usedPopup } = await withPopupOrNavigation(page, async () => {
-        await clickAndWait(privacyLink, page);
-      });
+        const { targetPage, usedPopup } = await withPopupOrNavigation(page, async () => {
+          await clickAndWait(privacyLink, page);
+        });
 
-      await expect(targetPage.getByText(/pol[ií]tica de privacidad/i).first()).toBeVisible();
-      const legalText = await targetPage.locator('main, article, body').innerText();
-      expect(normalize(legalText).length).toBeGreaterThan(50);
+        await expect(targetPage.getByText(/pol[ií]tica de privacidad/i).first()).toBeVisible();
+        const legalText = await targetPage.locator('main, article, body').innerText();
+        expect(normalize(legalText).length).toBeGreaterThan(50);
 
-      await checkpoint(targetPage, '09-politica-de-privacidad.png', true);
-      privacyUrl = targetPage.url();
+        await checkpoint(targetPage, '09-politica-de-privacidad.png', true);
+        privacyUrl = targetPage.url();
 
-      await closeOrReturn(targetPage, page, usedPopup);
-      results.push({
-        key: 'Política de Privacidad',
-        state: 'PASS',
-        detail: `Legal heading and content visible. URL: ${privacyUrl}`,
-      });
+        await closeOrReturn(targetPage, page, usedPopup);
+        setStepResult(results, {
+          key: 'Política de Privacidad',
+          state: 'PASS',
+          detail: `Legal heading and content visible. URL: ${privacyUrl}`,
+        });
+      } catch (error) {
+        setStepResult(results, {
+          key: 'Política de Privacidad',
+          state: 'FAIL',
+          detail: `Política de Privacidad validation failed: ${errorDetail(error)}`,
+        });
+      }
     });
 
     await test.step('10) Final report with PASS/FAIL by step', async () => {
