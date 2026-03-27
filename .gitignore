@@ -41,3 +41,9 @@ target/
 
 ## Additional for IntelliJ
 out/
+node_modules/
+playwright-report/
+test-results/
+automation/saleads-mi-negocio/screenshots/
+automation/saleads-mi-negocio/artifacts/
+automation/saleads-mi-negocio/playwright-report/
