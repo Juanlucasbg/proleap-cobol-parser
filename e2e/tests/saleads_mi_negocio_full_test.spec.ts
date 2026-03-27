@@ -153,6 +153,12 @@ test.describe('SaleADS Mi Negocio full workflow', () => {
     const results: StepResult[] = [];
     let termsUrl = 'N/A';
     let privacyUrl = 'N/A';
+    const startUrl = process.env.SALEADS_START_URL ?? process.env.BASE_URL;
+
+    if (startUrl) {
+      await page.goto(startUrl, { waitUntil: 'domcontentloaded' });
+      await waitForUi(page);
+    }
 
     await test.step('1) Login with Google and validate dashboard', async () => {
       try {
