@@ -36,15 +36,6 @@ function getLoginUrl() {
   );
 }
 
-function slug(value) {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-zA-Z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "")
-    .toLowerCase();
-}
-
 async function waitForUiSettle(page) {
   await page.waitForLoadState("domcontentloaded");
   await page.waitForTimeout(800);
@@ -93,7 +84,7 @@ async function tryGoogleAccountSelection(page, targetEmail) {
   return false;
 }
 
-async function clickLegalLinkAndValidate(context, appPage, linkText, headingText, screenshotNameBase) {
+async function clickLegalLinkAndValidate(appPage, linkText, headingText, screenshotNameBase) {
   const evidence = [];
   let legalPage = null;
   let finalUrl = "";
@@ -140,18 +131,37 @@ async function run() {
 
   const loginUrl = getLoginUrl();
   if (!loginUrl) {
+    const reason =
+      "No SALEADS_LOGIN_URL/SALEADS_URL/BASE_URL provided. Cannot navigate to login page in a domain-agnostic way.";
+    for (const stepName of REPORT_FIELDS) {
+      setStepResult(stepName, "FAIL", reason, []);
+    }
     const output = {
       startedAt: new Date().toISOString(),
       status: "FAIL",
-      reason:
-        "No SALEADS_LOGIN_URL/SALEADS_URL/BASE_URL provided. Cannot navigate to login page in a domain-agnostic way.",
+      reason,
       results: stepResults,
     };
     fs.writeFileSync(
       path.join(ARTIFACTS_DIR, "saleads-mi-negocio-report.json"),
       JSON.stringify(output, null, 2)
     );
-    console.error(output.reason);
+    fs.writeFileSync(
+      path.join(ARTIFACTS_DIR, "saleads-mi-negocio-report.md"),
+      [
+        "# SaleADS Mi Negocio Workflow Report",
+        "",
+        `Overall status: **${output.status}**`,
+        "",
+        `Failure reason: ${reason}`,
+        "",
+        ...stepResults.map(
+          (step) => `- **${step.name}**: ${step.status} - ${step.details || "No details"}`
+        ),
+        "",
+      ].join("\n")
+    );
+    console.error(reason);
     process.exit(1);
   }
 
@@ -412,7 +422,6 @@ async function run() {
     // Step 8: Términos y Condiciones
     {
       const legal = await clickLegalLinkAndValidate(
-        context,
         page,
         "Términos y Condiciones",
         "Términos y Condiciones",
@@ -434,7 +443,6 @@ async function run() {
     // Step 9: Política de Privacidad
     {
       const legal = await clickLegalLinkAndValidate(
-        context,
         page,
         "Política de Privacidad",
         "Política de Privacidad",
