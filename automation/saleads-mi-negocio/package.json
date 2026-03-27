@@ -1,0 +1,17 @@
+{
+  "name": "saleads-mi-negocio",
+  "version": "1.0.0",
+  "description": "Environment-agnostic SaleADS Mi Negocio full workflow validation",
+  "main": "run-test.js",
+  "scripts": {
+    "test": "node run-test.js",
+    "test:headed": "PW_HEADLESS=false node run-test.js",
+    "install:browsers": "playwright install chromium"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "playwright": "^1.58.2"
+  }
+}
