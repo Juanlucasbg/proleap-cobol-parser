@@ -41,6 +41,7 @@ npm run test:mi-negocio
 Optional environment variables:
 
 - `SALEADS_BASE_URL`: optional URL to open at test start.
+- `BASE_URL`: fallback URL variable (commonly set by CI).
 - `SALEADS_GOOGLE_EMAIL`: defaults to `juanlucasbarbiergarzon@gmail.com`.
 - `SALEADS_HEADLESS`: defaults to `true`; set to `false` for headed mode.
 
@@ -48,6 +49,12 @@ Example:
 
 ```bash
 SALEADS_BASE_URL="https://your-env.saleads.ai/login" SALEADS_HEADLESS=false npm run test:mi-negocio
+```
+
+or:
+
+```bash
+BASE_URL="https://your-env.saleads.ai/login" npm run test:mi-negocio
 ```
 
 ## Artifacts

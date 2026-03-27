@@ -54,11 +54,20 @@ function createStatusMap() {
   };
 }
 
+async function isMainAppVisible(page) {
+  const sidebar = page.getByRole("navigation").first();
+  if (await sidebar.isVisible().catch(() => false)) {
+    return true;
+  }
+  return page.getByText("Negocio", { exact: false }).first().isVisible().catch(() => false);
+}
+
 test("saleads_mi_negocio_full_test", async ({ page, context }) => {
   fs.mkdirSync(outputRoot, { recursive: true });
   const status = createStatusMap();
+  const startUrl = process.env.SALEADS_BASE_URL || process.env.BASE_URL || process.env.SALEADS_URL || null;
   const details = {
-    envBaseUrl: process.env.SALEADS_BASE_URL || null,
+    envBaseUrl: startUrl,
     evidence: {
       dashboardScreenshot: null,
       expandedMenuScreenshot: null,
@@ -75,45 +84,54 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
   };
   try {
     // The prompt states browser starts at login page; baseURL is optional fallback.
-    if (process.env.SALEADS_BASE_URL) {
-      await page.goto(process.env.SALEADS_BASE_URL, { waitUntil: "domcontentloaded" });
+    if (startUrl) {
+      await page.goto(startUrl, { waitUntil: "domcontentloaded" });
       await waitUi(page);
     } else {
-      details.notes.push("SALEADS_BASE_URL no definido: se asume sesión ya ubicada en la página de login.");
-    }
-
-    // Step 1: Login with Google.
-    const googleLoginCandidates = [
-      "Sign in with Google",
-      "Iniciar sesión con Google",
-      "Continuar con Google",
-      "Google"
-    ];
-    let clickedGoogleLogin = false;
-    for (const candidate of googleLoginCandidates) {
-      const locator = page.getByRole("button", { name: new RegExp(candidate, "i") }).first();
-      if (await locator.isVisible().catch(() => false)) {
-        await locator.click();
-        clickedGoogleLogin = true;
-        break;
+      details.notes.push("No se definió SALEADS_BASE_URL/BASE_URL: se asume sesión ya ubicada en la página de login.");
+      if (page.url() === "about:blank") {
+        throw new Error(
+          "Precondición incumplida: el navegador inició en about:blank. Define SALEADS_BASE_URL o BASE_URL con la página de login de SaleADS."
+        );
       }
     }
 
-    if (!clickedGoogleLogin) {
-      const fallback = page.getByText(/google/i).first();
-      await expect(fallback).toBeVisible({ timeout: 15000 });
-      await fallback.click();
-    }
-    await waitUi(page);
-
-    // Optional Google account chooser.
-    const accountEmail = process.env.SALEADS_GOOGLE_EMAIL || "juanlucasbarbiergarzon@gmail.com";
-    const chooser = page.getByText(accountEmail, { exact: false }).first();
-    if (await chooser.isVisible().catch(() => false)) {
-      await chooser.click();
-      await waitUi(page);
+    // Step 1: Login with Google.
+    if (await isMainAppVisible(page)) {
+      details.notes.push("Sesión ya autenticada: se omite click de login y se continúa con el flujo.");
     } else {
-      details.notes.push("Selector de cuenta Google no visible (posible sesión previa o flujo alterno).");
+      const googleLoginCandidates = [
+        "Sign in with Google",
+        "Iniciar sesión con Google",
+        "Continuar con Google",
+        "Google"
+      ];
+      let clickedGoogleLogin = false;
+      for (const candidate of googleLoginCandidates) {
+        const locator = page.getByRole("button", { name: new RegExp(candidate, "i") }).first();
+        if (await locator.isVisible().catch(() => false)) {
+          await locator.click();
+          clickedGoogleLogin = true;
+          break;
+        }
+      }
+
+      if (!clickedGoogleLogin) {
+        const fallback = page.getByText(/google/i).first();
+        await expect(fallback).toBeVisible({ timeout: 15000 });
+        await fallback.click();
+      }
+      await waitUi(page);
+
+      // Optional Google account chooser.
+      const accountEmail = process.env.SALEADS_GOOGLE_EMAIL || "juanlucasbarbiergarzon@gmail.com";
+      const chooser = page.getByText(accountEmail, { exact: false }).first();
+      if (await chooser.isVisible().catch(() => false)) {
+        await chooser.click();
+        await waitUi(page);
+      } else {
+        details.notes.push("Selector de cuenta Google no visible (posible sesión previa o flujo alterno).");
+      }
     }
 
     // Validate main interface and left sidebar.
@@ -265,6 +283,9 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
         await waitUi(page);
       }
     }
+  } catch (error) {
+    details.notes.push(`Error de ejecución: ${error.message}`);
+    throw error;
   } finally {
     // Step 10: Final report.
     const finalReport = {
