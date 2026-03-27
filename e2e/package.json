@@ -1,0 +1,13 @@
+{
+  "name": "saleads-e2e",
+  "private": true,
+  "scripts": {
+    "test": "npm run test:mi-negocio",
+    "test:mi-negocio": "playwright test tests/saleads_mi_negocio_full_test.spec.ts",
+    "test:mi-negocio:headed": "playwright test tests/saleads_mi_negocio_full_test.spec.ts --headed",
+    "install:browsers": "playwright install chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
+  }
+}
