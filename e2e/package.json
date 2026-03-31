@@ -1,0 +1,18 @@
+{
+  "name": "saleads-mi-negocio-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Portable Playwright E2E workflow for SaleADS Mi Negocio module",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:mi-negocio": "playwright test tests/saleads-mi-negocio.spec.ts",
+    "test:mi-negocio:headed": "playwright test tests/saleads-mi-negocio.spec.ts --headed",
+    "report:open": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.1",
+    "@types/node": "^24.6.0",
+    "typescript": "^5.9.3"
+  }
+}
