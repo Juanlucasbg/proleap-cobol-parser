@@ -173,10 +173,8 @@ public class SaleadsMiNegocioFullTest {
 		final Locator infoSection = firstVisible(page.locator("section, div")
 				.filter(new Locator.FilterOptions().setHasText(Pattern.compile("(?i)Informaci[oó]n General"))));
 		requireVisible(infoSection, "Información General container is visible");
-		requireVisible(firstVisible(infoSection.locator("p, span, h1, h2, h3, h4, strong")
-				.filter(new Locator.FilterOptions().setHasNotText(Pattern.compile("(?i)Informaci[oó]n General|BUSINESS PLAN|Cambiar Plan|@")))),
-				page.locator("header, [class*='profile'], [class*='user']").locator("h1, h2, h3, span, strong")
-						.filter(new Locator.FilterOptions().setHasNotText(Pattern.compile("(?i)@")))),
+		requireVisible(firstVisible(infoSection.locator("p, span, h1, h2, h3, h4, strong"),
+				page.locator("header, [class*='profile'], [class*='user']").locator("h1, h2, h3, span, strong")),
 				"User name is visible");
 		requireVisible(firstVisible(page.locator("text=/@/")), "User email is visible");
 		requireVisible(firstVisible(page.getByText(Pattern.compile("(?i)BUSINESS PLAN"))), "Text 'BUSINESS PLAN' is visible");
