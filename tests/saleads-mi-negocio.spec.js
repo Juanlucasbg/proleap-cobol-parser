@@ -23,6 +23,18 @@ async function waitForUiIdle(page) {
   await page.waitForTimeout(600);
 }
 
+async function safeScreenshot(page, fileName) {
+  try {
+    await page.screenshot({
+      path: path.join(ARTIFACTS_DIR, fileName),
+      fullPage: true
+    });
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
 async function clickByVisibleText(page, textOptions) {
   for (const text of textOptions) {
     const exactLocator = page.getByText(text, { exact: true });
@@ -122,6 +134,7 @@ test.describe("SaleADS Mi Negocio full workflow", () => {
         await page.goto(process.env.SALEADS_BASE_URL, { waitUntil: "domcontentloaded" });
         await waitForUiIdle(page);
       }
+      await safeScreenshot(page, "step0-initial-state.png");
     } catch (_) {
       // Keep going to make it possible to run against an already-open login page in interactive setups.
     }
@@ -166,22 +179,17 @@ test.describe("SaleADS Mi Negocio full workflow", () => {
         const sidebarVisible = sidebar ? await sidebar.isVisible().catch(() => false) : false;
         const mainUiVisible = (await page.locator("main").count()) > 0 || sidebarVisible;
 
-        await page.screenshot({
-          path: path.join(ARTIFACTS_DIR, "step1-dashboard.png"),
-          fullPage: true
-        });
+        const screenshotOk = await safeScreenshot(page, "step1-dashboard.png");
 
         canContinueFromLogin = mainUiVisible && sidebarVisible;
         recordStep(1, "Login", canContinueFromLogin, [
           `Main UI visible: ${mainUiVisible}`,
-          `Left sidebar visible: ${sidebarVisible}`
+          `Left sidebar visible: ${sidebarVisible}`,
+          `Screenshot captured: ${screenshotOk}`
         ]);
       } catch (error) {
-        await page.screenshot({
-          path: path.join(ARTIFACTS_DIR, "step1-login-failed.png"),
-          fullPage: true
-        }).catch(() => null);
-        recordStep(1, "Login", false, [String(error.message || error)]);
+        const screenshotOk = await safeScreenshot(page, "step1-login-failed.png");
+        recordStep(1, "Login", false, [String(error.message || error), `Screenshot captured: ${screenshotOk}`]);
       }
 
       // Step 2: Open Mi Negocio menu
@@ -201,23 +209,18 @@ test.describe("SaleADS Mi Negocio full workflow", () => {
             appPage.getByRole("button", { name: "Administrar Negocios", exact: true })
           );
 
-          await appPage.screenshot({
-            path: path.join(ARTIFACTS_DIR, "step2-mi-negocio-expanded.png"),
-            fullPage: true
-          });
+          const screenshotOk = await safeScreenshot(appPage, "step2-mi-negocio-expanded.png");
 
           const passed = agregarVisible && administrarVisible;
           recordStep(2, "Mi Negocio menu", passed, [
             "Submenu expanded and entries validated.",
             `Agregar Negocio visible: ${agregarVisible}`,
-            `Administrar Negocios visible: ${administrarVisible}`
+            `Administrar Negocios visible: ${administrarVisible}`,
+            `Screenshot captured: ${screenshotOk}`
           ]);
         } catch (error) {
-          await appPage.screenshot({
-            path: path.join(ARTIFACTS_DIR, "step2-mi-negocio-failed.png"),
-            fullPage: true
-          }).catch(() => null);
-          recordStep(2, "Mi Negocio menu", false, [String(error.message || error)]);
+          const screenshotOk = await safeScreenshot(appPage, "step2-mi-negocio-failed.png");
+          recordStep(2, "Mi Negocio menu", false, [String(error.message || error), `Screenshot captured: ${screenshotOk}`]);
         }
       }
 
@@ -249,10 +252,7 @@ test.describe("SaleADS Mi Negocio full workflow", () => {
             createBtn: await createBtn.first().isVisible()
           };
 
-          await appPage.screenshot({
-            path: path.join(ARTIFACTS_DIR, "step3-agregar-negocio-modal.png"),
-            fullPage: true
-          });
+          const screenshotOk = await safeScreenshot(appPage, "step3-agregar-negocio-modal.png");
 
           if (nombreInput) {
             await nombreInput.click();
@@ -262,13 +262,13 @@ test.describe("SaleADS Mi Negocio full workflow", () => {
           await waitForUiIdle(appPage);
 
           const passed = Object.values(checks).every(Boolean);
-          recordStep(3, "Agregar Negocio modal", passed, Object.entries(checks).map(([k, v]) => `${k}: ${v}`));
+          recordStep(3, "Agregar Negocio modal", passed, [
+            ...Object.entries(checks).map(([k, v]) => `${k}: ${v}`),
+            `Screenshot captured: ${screenshotOk}`
+          ]);
         } catch (error) {
-          await appPage.screenshot({
-            path: path.join(ARTIFACTS_DIR, "step3-agregar-negocio-failed.png"),
-            fullPage: true
-          }).catch(() => null);
-          recordStep(3, "Agregar Negocio modal", false, [String(error.message || error)]);
+          const screenshotOk = await safeScreenshot(appPage, "step3-agregar-negocio-failed.png");
+          recordStep(3, "Agregar Negocio modal", false, [String(error.message || error), `Screenshot captured: ${screenshotOk}`]);
         }
       }
 
@@ -291,19 +291,16 @@ test.describe("SaleADS Mi Negocio full workflow", () => {
             seccionLegal: await isAnyVisible(appPage.getByText("Sección Legal", { exact: true }))
           };
 
-          await appPage.screenshot({
-            path: path.join(ARTIFACTS_DIR, "step4-administrar-negocios.png"),
-            fullPage: true
-          });
+          const screenshotOk = await safeScreenshot(appPage, "step4-administrar-negocios.png");
 
           onAccountPage = Object.values(sectionChecks).every(Boolean);
-          recordStep(4, "Administrar Negocios view", onAccountPage, Object.entries(sectionChecks).map(([k, v]) => `${k}: ${v}`));
+          recordStep(4, "Administrar Negocios view", onAccountPage, [
+            ...Object.entries(sectionChecks).map(([k, v]) => `${k}: ${v}`),
+            `Screenshot captured: ${screenshotOk}`
+          ]);
         } catch (error) {
-          await appPage.screenshot({
-            path: path.join(ARTIFACTS_DIR, "step4-administrar-negocios-failed.png"),
-            fullPage: true
-          }).catch(() => null);
-          recordStep(4, "Administrar Negocios view", false, [String(error.message || error)]);
+          const screenshotOk = await safeScreenshot(appPage, "step4-administrar-negocios-failed.png");
+          recordStep(4, "Administrar Negocios view", false, [String(error.message || error), `Screenshot captured: ${screenshotOk}`]);
         }
       }
 
@@ -408,17 +405,15 @@ test.describe("SaleADS Mi Negocio full workflow", () => {
           const bodyText = normalize(await legalPage.locator("body").innerText());
           const hasLegalText = bodyText.length > 100;
 
-          await legalPage.screenshot({
-            path: path.join(ARTIFACTS_DIR, "step8-terminos-y-condiciones.png"),
-            fullPage: true
-          });
+          const screenshotOk = await safeScreenshot(legalPage, "step8-terminos-y-condiciones.png");
           report.urls.terminosYCondiciones = legalPage.url();
 
           const passed = headingVisible && hasLegalText;
           recordStep(8, "Términos y Condiciones", passed, [
             `Heading visible: ${headingVisible}`,
             `Legal content visible: ${hasLegalText}`,
-            `Final URL: ${legalPage.url()}`
+            `Final URL: ${legalPage.url()}`,
+            `Screenshot captured: ${screenshotOk}`
           ]);
 
           if (popup && !popup.isClosed()) {
@@ -461,17 +456,15 @@ test.describe("SaleADS Mi Negocio full workflow", () => {
           const bodyText = normalize(await legalPage.locator("body").innerText());
           const hasLegalText = bodyText.length > 100;
 
-          await legalPage.screenshot({
-            path: path.join(ARTIFACTS_DIR, "step9-politica-de-privacidad.png"),
-            fullPage: true
-          });
+          const screenshotOk = await safeScreenshot(legalPage, "step9-politica-de-privacidad.png");
           report.urls.politicaDePrivacidad = legalPage.url();
 
           const passed = headingVisible && hasLegalText;
           recordStep(9, "Política de Privacidad", passed, [
             `Heading visible: ${headingVisible}`,
             `Legal content visible: ${hasLegalText}`,
-            `Final URL: ${legalPage.url()}`
+            `Final URL: ${legalPage.url()}`,
+            `Screenshot captured: ${screenshotOk}`
           ]);
 
           if (popup && !popup.isClosed()) {
@@ -500,5 +493,7 @@ test.describe("SaleADS Mi Negocio full workflow", () => {
 
       writeJson(path.join(ARTIFACTS_DIR, "report.json"), report);
     }
+
+    expect(report.allPassed, "One or more SaleADS workflow validations failed. See artifacts/saleads-mi-negocio/report.json").toBeTruthy();
   });
 });
