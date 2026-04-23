@@ -1,0 +1,12 @@
+{
+  "name": "saleads-ui-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Environment-agnostic Playwright E2E for SaleADS Mi Negocio workflow",
+  "scripts": {
+    "test:saleads-mi-negocio": "playwright test tests/saleads-mi-negocio.spec.js --project=chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.1"
+  }
+}
