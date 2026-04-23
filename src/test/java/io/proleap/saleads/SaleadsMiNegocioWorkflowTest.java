@@ -11,6 +11,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -78,15 +79,40 @@ public class SaleadsMiNegocioWorkflowTest {
 
 	@Test
 	public void saleads_mi_negocio_full_test() {
-		reportStatus.put("Login", runStep("Login", this::stepLoginWithGoogle));
-		reportStatus.put("Mi Negocio menu", runStep("Mi Negocio menu", this::stepOpenMiNegocioMenu));
-		reportStatus.put("Agregar Negocio modal", runStep("Agregar Negocio modal", this::stepValidateAgregarNegocioModal));
-		reportStatus.put("Administrar Negocios view", runStep("Administrar Negocios view", this::stepOpenAdministrarNegocios));
-		reportStatus.put("Información General", runStep("Información General", this::stepValidateInformacionGeneral));
-		reportStatus.put("Detalles de la Cuenta", runStep("Detalles de la Cuenta", this::stepValidateDetallesCuenta));
-		reportStatus.put("Tus Negocios", runStep("Tus Negocios", this::stepValidateTusNegocios));
-		reportStatus.put("Términos y Condiciones", runStep("Términos y Condiciones", this::stepValidateTerminos));
-		reportStatus.put("Política de Privacidad", runStep("Política de Privacidad", this::stepValidatePrivacidad));
+		final boolean login = runStep("Login", this::stepLoginWithGoogle);
+		reportStatus.put("Login", login);
+
+		final boolean miNegocio = runStepWithPrerequisite("Mi Negocio menu", login, "Login",
+				this::stepOpenMiNegocioMenu);
+		reportStatus.put("Mi Negocio menu", miNegocio);
+
+		final boolean agregarModal = runStepWithPrerequisite("Agregar Negocio modal", miNegocio, "Mi Negocio menu",
+				this::stepValidateAgregarNegocioModal);
+		reportStatus.put("Agregar Negocio modal", agregarModal);
+
+		final boolean administrar = runStepWithPrerequisite("Administrar Negocios view", miNegocio, "Mi Negocio menu",
+				this::stepOpenAdministrarNegocios);
+		reportStatus.put("Administrar Negocios view", administrar);
+
+		final boolean infoGeneral = runStepWithPrerequisite("Información General", administrar,
+				"Administrar Negocios view", this::stepValidateInformacionGeneral);
+		reportStatus.put("Información General", infoGeneral);
+
+		final boolean detalles = runStepWithPrerequisite("Detalles de la Cuenta", administrar,
+				"Administrar Negocios view", this::stepValidateDetallesCuenta);
+		reportStatus.put("Detalles de la Cuenta", detalles);
+
+		final boolean tusNegocios = runStepWithPrerequisite("Tus Negocios", administrar, "Administrar Negocios view",
+				this::stepValidateTusNegocios);
+		reportStatus.put("Tus Negocios", tusNegocios);
+
+		final boolean terminos = runStepWithPrerequisite("Términos y Condiciones", administrar,
+				"Administrar Negocios view", this::stepValidateTerminos);
+		reportStatus.put("Términos y Condiciones", terminos);
+
+		final boolean privacidad = runStepWithPrerequisite("Política de Privacidad", administrar,
+				"Administrar Negocios view", this::stepValidatePrivacidad);
+		reportStatus.put("Política de Privacidad", privacidad);
 
 		printFinalReport();
 
@@ -96,7 +122,7 @@ public class SaleadsMiNegocioWorkflowTest {
 	}
 
 	private boolean stepLoginWithGoogle() throws Exception {
-		final String loginUrl = requiredEnv("SALEADS_LOGIN_URL");
+		final String loginUrl = requiredConfig("SALEADS_LOGIN_URL", "saleads.login.url");
 		driver.get(loginUrl);
 		waitForUiToLoad();
 
@@ -169,6 +195,7 @@ public class SaleadsMiNegocioWorkflowTest {
 		final boolean legal = isTextVisible("Sección Legal", DEFAULT_TIMEOUT);
 
 		captureScreenshot("04-administrar-negocios-view");
+		captureFullPageScreenshot("04-administrar-negocios-view-full");
 		return infoGeneral && detalles && negocios && legal;
 	}
 
@@ -272,6 +299,15 @@ public class SaleadsMiNegocioWorkflowTest {
 			}
 			return false;
 		}
+	}
+
+	private boolean runStepWithPrerequisite(final String stepName, final boolean prerequisitePassed,
+			final String prerequisiteName, final StepAction action) {
+		if (!prerequisitePassed) {
+			reportDetails.put(stepName, "FAIL - blocked because \"" + prerequisiteName + "\" did not pass");
+			return false;
+		}
+		return runStep(stepName, action);
 	}
 
 	private void printFinalReport() {
@@ -479,13 +515,19 @@ public class SaleadsMiNegocioWorkflowTest {
 		}
 	}
 
-	private String requiredEnv(final String key) {
-		final String value = System.getenv(key);
-		if (value == null || value.isBlank()) {
-			throw new IllegalStateException(
-					"Missing environment variable " + key + ". Set it to the current SaleADS login page URL.");
+	private String requiredConfig(final String envKey, final String propertyKey) {
+		final String envValue = System.getenv(envKey);
+		if (envValue != null && !envValue.isBlank()) {
+			return envValue;
 		}
-		return value;
+
+		final String propertyValue = System.getProperty(propertyKey);
+		if (propertyValue != null && !propertyValue.isBlank()) {
+			return propertyValue;
+		}
+
+		throw new IllegalStateException("Missing SaleADS login URL. Set environment variable " + envKey
+				+ " or JVM property -D" + propertyKey + " with the current environment login page URL.");
 	}
 
 	private String captureScreenshot(final String name) throws IOException {
@@ -493,6 +535,42 @@ public class SaleadsMiNegocioWorkflowTest {
 		final Path target = evidenceDir.resolve(name + ".png");
 		Files.copy(source.toPath(), target, StandardCopyOption.REPLACE_EXISTING);
 		return target.toAbsolutePath().toString();
+	}
+
+	@SuppressWarnings("unchecked")
+	private String captureFullPageScreenshot(final String name) throws IOException {
+		if (driver instanceof ChromeDriver) {
+			final ChromeDriver chromeDriver = (ChromeDriver) driver;
+			final Map<String, Object> layoutMetrics = chromeDriver.executeCdpCommand("Page.getLayoutMetrics",
+					new LinkedHashMap<>());
+			final Map<String, Object> contentSize = (Map<String, Object>) layoutMetrics.get("contentSize");
+
+			if (contentSize != null) {
+				final Number width = (Number) contentSize.get("width");
+				final Number height = (Number) contentSize.get("height");
+				final Map<String, Object> clip = new LinkedHashMap<>();
+				clip.put("x", 0);
+				clip.put("y", 0);
+				clip.put("width", Math.max(1, width.intValue()));
+				clip.put("height", Math.max(1, height.intValue()));
+				clip.put("scale", 1);
+
+				final Map<String, Object> params = new LinkedHashMap<>();
+				params.put("format", "png");
+				params.put("captureBeyondViewport", true);
+				params.put("fromSurface", true);
+				params.put("clip", clip);
+
+				final Map<String, Object> screenshotData = chromeDriver.executeCdpCommand("Page.captureScreenshot", params);
+				final String base64 = (String) screenshotData.get("data");
+				if (base64 != null && !base64.isBlank()) {
+					final Path target = evidenceDir.resolve(name + ".png");
+					Files.write(target, Base64.getDecoder().decode(base64));
+					return target.toAbsolutePath().toString();
+				}
+			}
+		}
+		return captureScreenshot(name);
 	}
 
 	private String getPageBodyText() {
