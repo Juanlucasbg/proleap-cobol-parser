@@ -21,17 +21,19 @@ const ARTIFACTS_DIR = path.resolve(process.cwd(), "artifacts");
 const SCREENSHOTS_DIR = path.join(ARTIFACTS_DIR, "screenshots");
 const REPORT_PATH = path.join(ARTIFACTS_DIR, "saleads_mi_negocio_full_test_report.json");
 
-const report: Record<StepKey, StepStatus> = {
-  Login: "FAIL",
-  "Mi Negocio menu": "FAIL",
-  "Agregar Negocio modal": "FAIL",
-  "Administrar Negocios view": "FAIL",
-  "Información General": "FAIL",
-  "Detalles de la Cuenta": "FAIL",
-  "Tus Negocios": "FAIL",
-  "Términos y Condiciones": "FAIL",
-  "Política de Privacidad": "FAIL",
-};
+function createDefaultReport(): Record<StepKey, StepStatus> {
+  return {
+    Login: "FAIL",
+    "Mi Negocio menu": "FAIL",
+    "Agregar Negocio modal": "FAIL",
+    "Administrar Negocios view": "FAIL",
+    "Información General": "FAIL",
+    "Detalles de la Cuenta": "FAIL",
+    "Tus Negocios": "FAIL",
+    "Términos y Condiciones": "FAIL",
+    "Política de Privacidad": "FAIL",
+  };
+}
 
 async function waitForUi(page: Page): Promise<void> {
   await page.waitForLoadState("domcontentloaded");
@@ -152,55 +154,63 @@ async function openLegalAndValidate(
 
 test.describe("saleads_mi_negocio_full_test", () => {
   test("Login to SaleADS with Google and validate Mi Negocio workflow", async ({ page }) => {
+    const report = createDefaultReport();
     const legalUrls: { terminosYCondiciones: string | null; politicaDePrivacidad: string | null } = {
       terminosYCondiciones: null,
       politicaDePrivacidad: null,
     };
     let runtimeError: string | null = null;
 
-    if (!APP_BASE_URL) {
-      throw new Error(
-        "SALEADS_BASE_URL no está configurado. Define esta variable para ejecutar en el entorno actual (dev/staging/prod).",
-      );
-    }
-
     try {
-      await page.goto(APP_BASE_URL, { waitUntil: "domcontentloaded" });
-      await waitForUi(page);
-
-      // 1) Login with Google
-      const googleButtonCandidates = [
-        page.getByRole("button", { name: /sign in with google|iniciar sesi[oó]n con google|google/i }),
-        page.getByRole("link", { name: /sign in with google|iniciar sesi[oó]n con google|google/i }),
-        page.locator("button, a", { hasText: /google/i }),
-      ];
-
-      let clickedGoogle = false;
-      for (const candidate of googleButtonCandidates) {
-        if (await candidate.first().isVisible().catch(() => false)) {
-          const popupPromise = page.waitForEvent("popup", { timeout: 5000 }).catch(() => null);
-          await candidate.first().click();
-          await waitForUi(page);
-          const popup = await popupPromise;
-          if (popup) {
-            await popup.waitForLoadState("domcontentloaded");
-            await popup.waitForTimeout(700);
-
-            const accountOption = popup.getByText(textMatchRegex(GOOGLE_EMAIL)).first();
-            if (await accountOption.isVisible().catch(() => false)) {
-              await accountOption.click();
-            }
-
-            // If still in Google auth, leave popup open briefly for manual completion if needed.
-            await popup.waitForTimeout(1500);
-          }
-          clickedGoogle = true;
-          break;
-        }
+      if (APP_BASE_URL) {
+        await page.goto(APP_BASE_URL, { waitUntil: "domcontentloaded" });
+        await waitForUi(page);
       }
 
-      if (!clickedGoogle) {
-        throw new Error("No se encontró un botón/enlace de inicio de sesión con Google.");
+      if (page.url().startsWith("about:blank")) {
+        throw new Error(
+          "No hay una URL inicial utilizable. Define SALEADS_BASE_URL o inicia la prueba con el navegador ya posicionado en la pantalla de login.",
+        );
+      }
+
+      // 1) Login with Google
+      const sidebarPreLogin = page.locator("nav, aside").first();
+      const alreadyLoggedIn = await sidebarPreLogin.isVisible().catch(() => false);
+
+      if (!alreadyLoggedIn) {
+        const googleButtonCandidates = [
+          page.getByRole("button", { name: /sign in with google|iniciar sesi[oó]n con google|google/i }),
+          page.getByRole("link", { name: /sign in with google|iniciar sesi[oó]n con google|google/i }),
+          page.locator("button, a", { hasText: /google/i }),
+        ];
+
+        let clickedGoogle = false;
+        for (const candidate of googleButtonCandidates) {
+          if (await candidate.first().isVisible().catch(() => false)) {
+            const popupPromise = page.waitForEvent("popup", { timeout: 5000 }).catch(() => null);
+            await candidate.first().click();
+            await waitForUi(page);
+            const popup = await popupPromise;
+            if (popup) {
+              await popup.waitForLoadState("domcontentloaded");
+              await popup.waitForTimeout(700);
+
+              const accountOption = popup.getByText(textMatchRegex(GOOGLE_EMAIL)).first();
+              if (await accountOption.isVisible().catch(() => false)) {
+                await accountOption.click();
+              }
+
+              // If still in Google auth, leave popup open briefly for manual completion if needed.
+              await popup.waitForTimeout(1500);
+            }
+            clickedGoogle = true;
+            break;
+          }
+        }
+
+        if (!clickedGoogle) {
+          throw new Error("No se encontró un botón/enlace de inicio de sesión con Google.");
+        }
       }
 
       await page.waitForTimeout(2500);
