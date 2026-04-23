@@ -1,0 +1,14 @@
+{
+  "name": "saleads-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Environment-agnostic SaleADS.ai end-to-end workflows",
+  "scripts": {
+    "test": "playwright test",
+    "test:saleads-mi-negocio": "playwright test e2e/tests/saleads-mi-negocio-full.spec.js",
+    "test:saleads-mi-negocio:headed": "playwright test e2e/tests/saleads-mi-negocio-full.spec.js --headed"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.54.2"
+  }
+}
