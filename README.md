@@ -194,6 +194,32 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+### SaleADS Mi Negocio workflow E2E test
+
+A dedicated end-to-end test is available at:
+
+`src/test/java/io/proleap/cobol/e2e/SaleadsMiNegocioFullTest.java`
+
+It is environment-agnostic and does not hardcode any SaleADS domain. Pass the login page URL at runtime:
+
+```
+$ mvn -Dtest=SaleadsMiNegocioFullTest -Dsaleads.login.url="<login-page-url>" test
+```
+
+You can also set environment variables instead of JVM properties:
+
+```
+$ export SALEADS_LOGIN_URL="<login-page-url>"
+$ export SALEADS_HEADLESS=true
+$ mvn -Dtest=SaleadsMiNegocioFullTest test
+```
+
+Artifacts are written under `target/saleads-e2e-artifacts/<timestamp>/`, including:
+
+* checkpoint screenshots
+* `final-report.md` with PASS/FAIL status per required workflow step
+* captured legal page final URLs for Términos y Condiciones and Política de Privacidad
+
 
 Release process
 ---------------
