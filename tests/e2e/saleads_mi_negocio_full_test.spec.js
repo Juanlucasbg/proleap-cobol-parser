@@ -143,7 +143,7 @@ test.describe('saleads_mi_negocio_full_test', () => {
         markSkipped(report, field, 'Omitido porque falló el prerrequisito de login.');
       }
       fs.writeFileSync(REPORT_PATH, JSON.stringify(report, null, 2), 'utf8');
-      test.fail(true, 'SALEADS_LOGIN_URL no fue provisto.');
+      expect(report['Login'].status, 'SALEADS_LOGIN_URL no fue provisto.').toBe('PASS');
       return;
     }
 
