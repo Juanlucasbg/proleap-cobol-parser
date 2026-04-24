@@ -74,6 +74,9 @@ public class SaleadsMiNegocioFullTest {
 		if (!isBlank(loginUrl)) {
 			driver.navigate().to(loginUrl.trim());
 			waitForUiLoad();
+		} else {
+			evidenceNotes.add(
+					"No SALEADS login URL configured. Test expects browser/harness to already be on the SaleADS login page.");
 		}
 	}
 
@@ -191,7 +194,7 @@ public class SaleadsMiNegocioFullTest {
 		final boolean seccionLegal = isAnyTextVisible(Arrays.asList("Sección Legal", "Seccion Legal"), LONG_WAIT);
 
 		if (infoGeneral || detallesCuenta || tusNegocios || seccionLegal) {
-			takeScreenshot("04_administrar_negocios");
+			takeFullPageScreenshot("04_administrar_negocios_full");
 		}
 
 		return infoGeneral && detallesCuenta && tusNegocios && seccionLegal;
@@ -620,6 +623,42 @@ public class SaleadsMiNegocioFullTest {
 			evidenceNotes.add("Screenshot: " + screenshotPath.toAbsolutePath());
 		} catch (final IOException ex) {
 			evidenceNotes.add("Screenshot error at " + checkpointName + ": " + ex.getMessage());
+		}
+	}
+
+	private void takeFullPageScreenshot(final String checkpointName) {
+		if (!(driver instanceof JavascriptExecutor)) {
+			takeScreenshot(checkpointName);
+			return;
+		}
+
+		Object originalWidth = null;
+		Object originalHeight = null;
+		try {
+			final JavascriptExecutor js = (JavascriptExecutor) driver;
+			originalWidth = js.executeScript("return window.innerWidth;");
+			originalHeight = js.executeScript("return window.innerHeight;");
+			final Number fullWidth = (Number) js.executeScript(
+					"return Math.max(document.body.scrollWidth, document.documentElement.scrollWidth, window.innerWidth);");
+			final Number fullHeight = (Number) js.executeScript(
+					"return Math.max(document.body.scrollHeight, document.documentElement.scrollHeight, window.innerHeight);");
+			driver.manage().window().setSize(new org.openqa.selenium.Dimension(fullWidth.intValue(), fullHeight.intValue()));
+			waitForUiLoad();
+			takeScreenshot(checkpointName);
+		} catch (final RuntimeException ex) {
+			evidenceNotes.add("Full screenshot fallback due to error: " + ex.getMessage());
+			takeScreenshot(checkpointName);
+		} finally {
+			try {
+				if (originalWidth instanceof Number && originalHeight instanceof Number) {
+					driver.manage().window()
+							.setSize(new org.openqa.selenium.Dimension(((Number) originalWidth).intValue(),
+									((Number) originalHeight).intValue()));
+					waitForUiLoad();
+				}
+			} catch (final RuntimeException ignored) {
+				// Keep test resilient if resizing back fails.
+			}
 		}
 	}
 
