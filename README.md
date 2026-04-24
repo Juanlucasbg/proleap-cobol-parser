@@ -194,6 +194,20 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+### SaleADS end-to-end automation (Playwright)
+
+A standalone Playwright workflow is available under `e2e/` for SaleADS UI validation.
+
+Quick start:
+
+```
+$ npm install
+$ npm run playwright:install
+$ npm run test:saleads:mi-negocio
+```
+
+See `e2e/README.md` for details and prerequisites.
+
 
 Release process
 ---------------
