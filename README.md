@@ -194,6 +194,40 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+SaleADS Mi Negocio E2E workflow (Playwright)
+--------------------------------------------
+
+This repository also includes an environment-agnostic Playwright E2E workflow for validating
+the SaleADS "Mi Negocio" flow end-to-end, including:
+
+- Login with Google (first step only, then continues through workflow)
+- Sidebar "Negocio" -> "Mi Negocio" expansion
+- "Agregar Negocio" modal checks
+- "Administrar Negocios" page sections and details
+- Legal links ("Términos y Condiciones" and "Política de Privacidad"), including new-tab handling
+- Checkpoint screenshots and a final PASS/FAIL report JSON
+
+### Setup
+
+```bash
+npm install
+npm run playwright:install
+```
+
+### Required environment variables
+
+- `SALEADS_BASE_URL` (e.g. `https://your-saleads-environment.example`)
+- `SALEADS_GOOGLE_ACCOUNT` (default: `juanlucasbarbiergarzon@gmail.com`)
+- `SALEADS_ARTIFACTS_DIR` (optional, default: `test-results/saleads-mi-negocio`)
+
+### Run
+
+```bash
+npm run test:saleads
+```
+
+The test stores screenshots and final report JSON under `test-results/`.
+
 
 Release process
 ---------------
