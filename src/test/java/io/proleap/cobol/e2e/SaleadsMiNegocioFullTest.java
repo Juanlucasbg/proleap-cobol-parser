@@ -76,8 +76,9 @@ public class SaleadsMiNegocioFullTest {
 	private WebDriver driver;
 	private WebDriverWait wait;
 	private Path evidenceDir;
-	private String appWindowHandle;
 	private String expectedGoogleEmail;
+	private String terminosFinalUrl;
+	private String privacidadFinalUrl;
 	private final Map<String, StepStatus> finalReport = new LinkedHashMap<>();
 
 	@Before
@@ -182,7 +183,6 @@ public class SaleadsMiNegocioFullTest {
 				"Ingresar con Google", "Login con Google", "Entrar con Google");
 
 		completeGoogleAccountSelectionIfShown(expectedGoogleEmail);
-		appWindowHandle = driver.getWindowHandle();
 
 		waitForAnyVisibleText("Negocio", "Mi Negocio", "Dashboard", "Panel", "Inicio");
 
@@ -312,7 +312,12 @@ public class SaleadsMiNegocioFullTest {
 				meaningfulLines(pageText).size() >= 4 || pageText.length() > 300);
 
 		takeScreenshot(screenshotName);
-		appendToStepDetails(linkText, "Final URL: " + driver.getCurrentUrl());
+		final String finalUrl = driver.getCurrentUrl();
+		if ("Términos y Condiciones".equals(linkText)) {
+			terminosFinalUrl = finalUrl;
+		} else if ("Política de Privacidad".equals(linkText)) {
+			privacidadFinalUrl = finalUrl;
+		}
 
 		if (openedNewTab) {
 			driver.close();
@@ -391,15 +396,6 @@ public class SaleadsMiNegocioFullTest {
 		finalReport.put(stepName, StepStatus.fail("FAIL (blocked): " + reason));
 	}
 
-	private void appendToStepDetails(final String stepLabel, final String details) {
-		if (stepLabel.contains("Términos")) {
-			finalReport.computeIfPresent(TERMINOS_FIELD, (key, value) -> new StepStatus(value.passed, value.details + " | " + details));
-		} else if (stepLabel.contains("Política")) {
-			finalReport.computeIfPresent(PRIVACIDAD_FIELD,
-					(key, value) -> new StepStatus(value.passed, value.details + " | " + details));
-		}
-	}
-
 	private boolean hasFailedSteps() {
 		for (final StepStatus status : finalReport.values()) {
 			if (!status.passed) {
@@ -426,7 +422,14 @@ public class SaleadsMiNegocioFullTest {
 		System.out.println("========== saleads_mi_negocio_full_test FINAL REPORT ==========");
 		for (final String field : orderedFields) {
 			final StepStatus status = finalReport.getOrDefault(field, StepStatus.fail("FAIL: Not executed."));
-			final String line = field + ": " + (status.passed ? "PASS" : "FAIL") + " - " + status.details;
+			String details = status.details;
+			if (TERMINOS_FIELD.equals(field) && terminosFinalUrl != null) {
+				details += " | Final URL: " + terminosFinalUrl;
+			} else if (PRIVACIDAD_FIELD.equals(field) && privacidadFinalUrl != null) {
+				details += " | Final URL: " + privacidadFinalUrl;
+			}
+
+			final String line = field + ": " + (status.passed ? "PASS" : "FAIL") + " - " + details;
 			lines.add(line);
 			System.out.println(line);
 		}
