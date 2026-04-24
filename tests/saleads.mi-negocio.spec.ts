@@ -206,19 +206,40 @@ test.describe("SaleADS - Mi Negocio full workflow", () => {
     const accountEmailPattern = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i;
 
     try {
+      if (page.url() === "about:blank" && process.env.SALEADS_BASE_URL) {
+        await page.goto(process.env.SALEADS_BASE_URL, { waitUntil: "domcontentloaded" });
+      }
+      await page.waitForLoadState("domcontentloaded");
+
       // Step 1: Login with Google and validate app shell.
-      await clickIfVisible([
+      const loginLocators = [
         page.getByRole("button", { name: "Sign in with Google", exact: false }),
         page.getByRole("button", { name: "Iniciar sesión con Google", exact: false }),
+        page.getByRole("button", { name: "Continuar con Google", exact: false }),
         page.getByText("Sign in with Google", { exact: false }),
         page.getByText("Iniciar sesión con Google", { exact: false }),
-      ]);
+        page.getByText("Continuar con Google", { exact: false }),
+      ];
+      const appAlreadyLoaded = await resolveVisible(
+        [
+          page.getByRole("navigation"),
+          page.locator("aside"),
+          page.getByText("Negocio", { exact: false }),
+        ],
+        7_500,
+        "main app or sidebar"
+      ).catch(() => null);
 
-      const googleAccountOption = page.getByText("juanlucasbarbiergarzon@gmail.com", {
-        exact: false,
-      });
-      if (await googleAccountOption.isVisible().catch(() => false)) {
-        await waitAfterClick(googleAccountOption);
+      if (!appAlreadyLoaded) {
+        const loginButton = await resolveVisible(loginLocators, 30_000, "Google login button");
+        await waitAfterClick(loginButton);
+
+        const googleAccountOption = page.getByText("juanlucasbarbiergarzon@gmail.com", {
+          exact: false,
+        });
+        if (await googleAccountOption.isVisible().catch(() => false)) {
+          await waitAfterClick(googleAccountOption);
+        }
       }
 
       await waitForMainAppShell();
