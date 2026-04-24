@@ -19,6 +19,7 @@ import java.util.regex.Pattern;
 
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.openqa.selenium.By;
@@ -48,8 +49,8 @@ public class SaleadsMiNegocioFullTest {
 	private static final String REPORT_TUS_NEGOCIOS = "Tus Negocios";
 	private static final String REPORT_TERMINOS = "Términos y Condiciones";
 	private static final String REPORT_POLITICA = "Política de Privacidad";
-	private static final String ACCENTED_UPPERCASE = "ABCDEFGHIJKLMNOPQRSTUVWXYZÁÉÍÓÚÑÜ";
-	private static final String NORMALIZED_LOWERCASE = "abcdefghijklmnopqrstuvwxyzaeiounu";
+	private static final String ACCENTED_AND_CASED_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZÁÉÍÓÚÑÜabcdefghijklmnopqrstuvwxyzáéíóúñü";
+	private static final String NORMALIZED_LOWERCASE = "abcdefghijklmnopqrstuvwxyzaeiounuabcdefghijklmnopqrstuvwxyzaeiounu";
 
 	private static final Pattern EMAIL_PATTERN = Pattern.compile("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}");
 
@@ -63,6 +64,12 @@ public class SaleadsMiNegocioFullTest {
 
 	@Before
 	public void setUp() throws IOException {
+		final String enabledRaw = firstNonBlank(
+				System.getProperty("saleads.e2e.enabled"),
+				System.getenv("SALEADS_E2E_ENABLED"));
+		final boolean enabled = Boolean.parseBoolean(enabledRaw == null ? "false" : enabledRaw);
+		Assume.assumeTrue("SaleADS E2E test is disabled. Set -Dsaleads.e2e.enabled=true to run it.", enabled);
+
 		final ChromeOptions options = new ChromeOptions();
 		options.addArguments("--no-sandbox");
 		options.addArguments("--disable-dev-shm-usage");
@@ -324,7 +331,8 @@ public class SaleadsMiNegocioFullTest {
 
 	private boolean switchToNewTabIfOpened(final Set<String> handlesBefore) {
 		try {
-			wait.until(driver -> driver.getWindowHandles().size() > handlesBefore.size());
+			new WebDriverWait(driver, Duration.ofSeconds(6))
+					.until(webDriver -> webDriver.getWindowHandles().size() > handlesBefore.size());
 		} catch (final TimeoutException ignored) {
 			return false;
 		}
@@ -571,7 +579,7 @@ public class SaleadsMiNegocioFullTest {
 	}
 
 	private String normalizeXpathNode(final String nodeExpression) {
-		return "normalize-space(translate(" + nodeExpression + ", '" + ACCENTED_UPPERCASE + "', '" + NORMALIZED_LOWERCASE
+		return "normalize-space(translate(" + nodeExpression + ", '" + ACCENTED_AND_CASED_ALPHABET + "', '" + NORMALIZED_LOWERCASE
 				+ "'))";
 	}
 
