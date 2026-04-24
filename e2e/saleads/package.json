@@ -1,0 +1,17 @@
+{
+  "name": "saleads",
+  "version": "1.0.0",
+  "description": "Environment-agnostic SaleADS end-to-end workflows",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:list": "playwright test --list",
+    "test:install": "playwright install --with-deps chromium"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.59.1"
+  }
+}
