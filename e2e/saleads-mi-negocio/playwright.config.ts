@@ -7,6 +7,12 @@ export default defineConfig({
   timeout: 6 * 60 * 1000,
   fullyParallel: false,
   retries: 0,
+  projects: [
+    {
+      name: "chromium",
+      use: { browserName: "chromium" }
+    }
+  ],
   reporter: [["list"], ["html", { open: "never" }]],
   use: {
     baseURL: process.env.SALEADS_URL,

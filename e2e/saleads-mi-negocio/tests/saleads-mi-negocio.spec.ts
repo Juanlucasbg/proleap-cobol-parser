@@ -11,9 +11,21 @@ type StepResult = {
 };
 
 const reportItems: StepResult[] = [];
+const requiredReportFields = [
+  "Login",
+  "Mi Negocio menu",
+  "Agregar Negocio modal",
+  "Administrar Negocios view",
+  "Información General",
+  "Detalles de la Cuenta",
+  "Tus Negocios",
+  "Términos y Condiciones",
+  "Política de Privacidad"
+];
 const screenshotsDir = join(process.cwd(), "artifacts", "screenshots");
 const reportDir = join(process.cwd(), "artifacts");
 const googleAccountEmail = "juanlucasbarbiergarzon@gmail.com";
+const startUrl = process.env.SALEADS_URL;
 
 function slug(input: string): string {
   return input
@@ -29,6 +41,20 @@ async function waitForUi(page: Page): Promise<void> {
   await page.waitForLoadState("networkidle");
 }
 
+async function openStartPageIfConfigured(page: Page): Promise<void> {
+  if (startUrl) {
+    await page.goto(startUrl, { waitUntil: "domcontentloaded" });
+    await waitForUi(page);
+    return;
+  }
+
+  if (page.url() === "about:blank") {
+    throw new Error(
+      "No login page is open. Set SALEADS_URL to the current environment login page or preload the browser page."
+    );
+  }
+}
+
 async function checkpoint(page: Page, name: string, fullPage = false): Promise<string> {
   mkdirSync(screenshotsDir, { recursive: true });
   const filePath = join(screenshotsDir, `${new Date().toISOString().replace(/[:.]/g, "-")}-${slug(name)}.png`);
@@ -38,6 +64,33 @@ async function checkpoint(page: Page, name: string, fullPage = false): Promise<s
 
 function remember(label: string, status: StepStatus, details: string[]): void {
   reportItems.push({ label, status, details });
+}
+
+function rememberFailIfMissing(label: string, reason: string): void {
+  if (!reportItems.some((item) => item.label === label)) {
+    remember(label, "FAIL", [reason]);
+  }
+}
+
+function finalizeReport(details: string[]): void {
+  for (const label of requiredReportFields) {
+    rememberFailIfMissing(label, "Step was not executed due to an earlier failure.");
+  }
+
+  const reportPath = join(reportDir, "saleads-mi-negocio-report.json");
+  writeFileSync(
+    reportPath,
+    JSON.stringify(
+      {
+        testName: "saleads_mi_negocio_full_test",
+        generatedAt: new Date().toISOString(),
+        results: reportItems,
+        evidence: details
+      },
+      null,
+      2
+    )
+  );
 }
 
 function getByTextAlternatives(page: Page, values: string[]): Locator {
@@ -136,183 +189,173 @@ test.describe("SaleADS Mi Negocio full workflow", () => {
     const details: string[] = [];
     mkdirSync(reportDir, { recursive: true });
 
-    // Step 1 - Login with Google
     try {
-      await waitForUi(page);
-      if (!(await page.locator("aside, nav").filter({ hasText: /Negocio|Dashboard|Mi Negocio/i }).first().isVisible().catch(() => false))) {
-        await clickVisibleText(page, ["Sign in with Google", "Continuar con Google", "Iniciar sesión con Google"]);
-        await optionallyPickGoogleAccount(page);
+      // Step 1 - Login with Google
+      try {
+        await openStartPageIfConfigured(page);
+        await waitForUi(page);
+        if (!(await page.locator("aside, nav").filter({ hasText: /Negocio|Dashboard|Mi Negocio/i }).first().isVisible().catch(() => false))) {
+          await clickVisibleText(page, ["Sign in with Google", "Continuar con Google", "Iniciar sesión con Google"]);
+          await optionallyPickGoogleAccount(page);
+        }
+        await ensureSidebarVisible(page);
+        const shot = await checkpoint(page, "dashboard-loaded");
+        details.push(`Dashboard screenshot: ${shot}`);
+        remember("Login", "PASS", ["Main interface visible", "Sidebar visible"]);
+      } catch (error) {
+        remember("Login", "FAIL", [String(error)]);
+        throw error;
       }
-      await ensureSidebarVisible(page);
-      const shot = await checkpoint(page, "dashboard-loaded");
-      details.push(`Dashboard screenshot: ${shot}`);
-      remember("Login", "PASS", ["Main interface visible", "Sidebar visible"]);
-    } catch (error) {
-      remember("Login", "FAIL", [String(error)]);
-      throw error;
-    }
 
-    // Step 2 - Open Mi Negocio menu
-    try {
-      await clickVisibleText(page, ["Negocio"]);
-      await clickVisibleText(page, ["Mi Negocio"]);
-      await expect(getByTextAlternatives(page, ["Agregar Negocio"])).toBeVisible({ timeout: 20_000 });
-      await expect(getByTextAlternatives(page, ["Administrar Negocios"])).toBeVisible({ timeout: 20_000 });
-      const shot = await checkpoint(page, "mi-negocio-menu-expanded");
-      details.push(`Expanded menu screenshot: ${shot}`);
-      remember("Mi Negocio menu", "PASS", [
-        "Submenu expanded",
-        "Agregar Negocio visible",
-        "Administrar Negocios visible"
-      ]);
-    } catch (error) {
-      remember("Mi Negocio menu", "FAIL", [String(error)]);
-      throw error;
-    }
+      // Step 2 - Open Mi Negocio menu
+      try {
+        await clickVisibleText(page, ["Negocio"]);
+        await clickVisibleText(page, ["Mi Negocio"]);
+        await expect(getByTextAlternatives(page, ["Agregar Negocio"])).toBeVisible({ timeout: 20_000 });
+        await expect(getByTextAlternatives(page, ["Administrar Negocios"])).toBeVisible({ timeout: 20_000 });
+        const shot = await checkpoint(page, "mi-negocio-menu-expanded");
+        details.push(`Expanded menu screenshot: ${shot}`);
+        remember("Mi Negocio menu", "PASS", [
+          "Submenu expanded",
+          "Agregar Negocio visible",
+          "Administrar Negocios visible"
+        ]);
+      } catch (error) {
+        remember("Mi Negocio menu", "FAIL", [String(error)]);
+        throw error;
+      }
 
-    // Step 3 - Validate Agregar Negocio modal
-    try {
-      await clickVisibleText(page, ["Agregar Negocio"]);
-      await expect(getByTextAlternatives(page, ["Crear Nuevo Negocio"])).toBeVisible({ timeout: 20_000 });
-      await expect(page.getByLabel("Nombre del Negocio").or(page.getByPlaceholder("Nombre del Negocio"))).toBeVisible({
-        timeout: 20_000
-      });
-      await expect(getByTextAlternatives(page, ["Tienes 2 de 3 negocios"])).toBeVisible({ timeout: 20_000 });
-      await expect(page.getByRole("button", { name: "Cancelar" })).toBeVisible({ timeout: 20_000 });
-      await expect(page.getByRole("button", { name: "Crear Negocio" })).toBeVisible({ timeout: 20_000 });
+      // Step 3 - Validate Agregar Negocio modal
+      try {
+        await clickVisibleText(page, ["Agregar Negocio"]);
+        await expect(getByTextAlternatives(page, ["Crear Nuevo Negocio"])).toBeVisible({ timeout: 20_000 });
+        await expect(page.getByLabel("Nombre del Negocio").or(page.getByPlaceholder("Nombre del Negocio"))).toBeVisible({
+          timeout: 20_000
+        });
+        await expect(getByTextAlternatives(page, ["Tienes 2 de 3 negocios"])).toBeVisible({ timeout: 20_000 });
+        await expect(page.getByRole("button", { name: "Cancelar" })).toBeVisible({ timeout: 20_000 });
+        await expect(page.getByRole("button", { name: "Crear Negocio" })).toBeVisible({ timeout: 20_000 });
 
-      const nameField = page
-        .getByLabel("Nombre del Negocio")
-        .or(page.getByPlaceholder("Nombre del Negocio"))
-        .first();
-      await nameField.click();
-      await nameField.fill("Negocio Prueba Automatización");
+        const nameField = page
+          .getByLabel("Nombre del Negocio")
+          .or(page.getByPlaceholder("Nombre del Negocio"))
+          .first();
+        await nameField.click();
+        await nameField.fill("Negocio Prueba Automatización");
 
-      const shot = await checkpoint(page, "agregar-negocio-modal");
-      details.push(`Modal screenshot: ${shot}`);
-      await page.getByRole("button", { name: "Cancelar" }).click();
-      await waitForUi(page);
+        const shot = await checkpoint(page, "agregar-negocio-modal");
+        details.push(`Modal screenshot: ${shot}`);
+        await page.getByRole("button", { name: "Cancelar" }).click();
+        await waitForUi(page);
 
-      remember("Agregar Negocio modal", "PASS", [
-        "Modal title visible",
-        "Nombre del Negocio field visible",
-        "Business quota text visible",
-        "Cancelar and Crear Negocio buttons visible"
-      ]);
-    } catch (error) {
-      remember("Agregar Negocio modal", "FAIL", [String(error)]);
-      throw error;
-    }
+        remember("Agregar Negocio modal", "PASS", [
+          "Modal title visible",
+          "Nombre del Negocio field visible",
+          "Business quota text visible",
+          "Cancelar and Crear Negocio buttons visible"
+        ]);
+      } catch (error) {
+        remember("Agregar Negocio modal", "FAIL", [String(error)]);
+        throw error;
+      }
 
-    // Step 4 - Open Administrar Negocios
-    try {
-      await ensureExpandedMiNegocio(page);
-      await clickVisibleText(page, ["Administrar Negocios"]);
-      await expect(getByTextAlternatives(page, ["Información General"])).toBeVisible({ timeout: 30_000 });
-      await expect(getByTextAlternatives(page, ["Detalles de la Cuenta"])).toBeVisible({ timeout: 30_000 });
-      await expect(getByTextAlternatives(page, ["Tus Negocios"])).toBeVisible({ timeout: 30_000 });
-      await expect(getByTextAlternatives(page, ["Sección Legal", "Seccion Legal"])).toBeVisible({ timeout: 30_000 });
-      const shot = await checkpoint(page, "administrar-negocios-account-page", true);
-      details.push(`Account page screenshot: ${shot}`);
-      remember("Administrar Negocios view", "PASS", [
-        "Información General visible",
-        "Detalles de la Cuenta visible",
-        "Tus Negocios visible",
-        "Sección Legal visible"
-      ]);
-    } catch (error) {
-      remember("Administrar Negocios view", "FAIL", [String(error)]);
-      throw error;
-    }
+      // Step 4 - Open Administrar Negocios
+      try {
+        await ensureExpandedMiNegocio(page);
+        await clickVisibleText(page, ["Administrar Negocios"]);
+        await expect(getByTextAlternatives(page, ["Información General"])).toBeVisible({ timeout: 30_000 });
+        await expect(getByTextAlternatives(page, ["Detalles de la Cuenta"])).toBeVisible({ timeout: 30_000 });
+        await expect(getByTextAlternatives(page, ["Tus Negocios"])).toBeVisible({ timeout: 30_000 });
+        await expect(getByTextAlternatives(page, ["Sección Legal", "Seccion Legal"])).toBeVisible({ timeout: 30_000 });
+        const shot = await checkpoint(page, "administrar-negocios-account-page", true);
+        details.push(`Account page screenshot: ${shot}`);
+        remember("Administrar Negocios view", "PASS", [
+          "Información General visible",
+          "Detalles de la Cuenta visible",
+          "Tus Negocios visible",
+          "Sección Legal visible"
+        ]);
+      } catch (error) {
+        remember("Administrar Negocios view", "FAIL", [String(error)]);
+        throw error;
+      }
 
-    // Step 5 - Validate Información General
-    try {
-      await expect(page.locator("body")).toContainText(/BUSINESS PLAN/i);
-      await expect(getByTextAlternatives(page, ["Cambiar Plan"])).toBeVisible({ timeout: 20_000 });
-      await expect(page.locator("body")).toContainText(/@[a-z0-9.-]+\.[a-z]{2,}/i);
-      remember("Información General", "PASS", [
-        "Name/email present",
-        "BUSINESS PLAN visible",
-        "Cambiar Plan visible"
-      ]);
-    } catch (error) {
-      remember("Información General", "FAIL", [String(error)]);
-      throw error;
-    }
+      // Step 5 - Validate Información General
+      try {
+        await expect(page.locator("body")).toContainText(/BUSINESS PLAN/i);
+        await expect(getByTextAlternatives(page, ["Cambiar Plan"])).toBeVisible({ timeout: 20_000 });
+        await expect(page.locator("body")).toContainText(/@[a-z0-9.-]+\.[a-z]{2,}/i);
+        remember("Información General", "PASS", [
+          "Name/email present",
+          "BUSINESS PLAN visible",
+          "Cambiar Plan visible"
+        ]);
+      } catch (error) {
+        remember("Información General", "FAIL", [String(error)]);
+        throw error;
+      }
 
-    // Step 6 - Validate Detalles de la Cuenta
-    try {
-      await expect(getByTextAlternatives(page, ["Cuenta creada"])).toBeVisible({ timeout: 20_000 });
-      await expect(getByTextAlternatives(page, ["Estado activo"])).toBeVisible({ timeout: 20_000 });
-      await expect(getByTextAlternatives(page, ["Idioma seleccionado"])).toBeVisible({ timeout: 20_000 });
-      remember("Detalles de la Cuenta", "PASS", [
-        "Cuenta creada visible",
-        "Estado activo visible",
-        "Idioma seleccionado visible"
-      ]);
-    } catch (error) {
-      remember("Detalles de la Cuenta", "FAIL", [String(error)]);
-      throw error;
-    }
+      // Step 6 - Validate Detalles de la Cuenta
+      try {
+        await expect(getByTextAlternatives(page, ["Cuenta creada"])).toBeVisible({ timeout: 20_000 });
+        await expect(getByTextAlternatives(page, ["Estado activo"])).toBeVisible({ timeout: 20_000 });
+        await expect(getByTextAlternatives(page, ["Idioma seleccionado"])).toBeVisible({ timeout: 20_000 });
+        remember("Detalles de la Cuenta", "PASS", [
+          "Cuenta creada visible",
+          "Estado activo visible",
+          "Idioma seleccionado visible"
+        ]);
+      } catch (error) {
+        remember("Detalles de la Cuenta", "FAIL", [String(error)]);
+        throw error;
+      }
 
-    // Step 7 - Validate Tus Negocios
-    try {
-      await expect(getByTextAlternatives(page, ["Tus Negocios"])).toBeVisible({ timeout: 20_000 });
-      await expect(page.getByRole("button", { name: /Agregar Negocio/i })).toBeVisible({ timeout: 20_000 });
-      await expect(getByTextAlternatives(page, ["Tienes 2 de 3 negocios"])).toBeVisible({ timeout: 20_000 });
-      remember("Tus Negocios", "PASS", [
-        "Business list section visible",
-        "Agregar Negocio button visible",
-        "Quota text visible"
-      ]);
-    } catch (error) {
-      remember("Tus Negocios", "FAIL", [String(error)]);
-      throw error;
-    }
+      // Step 7 - Validate Tus Negocios
+      try {
+        await expect(getByTextAlternatives(page, ["Tus Negocios"])).toBeVisible({ timeout: 20_000 });
+        await expect(page.getByRole("button", { name: /Agregar Negocio/i })).toBeVisible({ timeout: 20_000 });
+        await expect(getByTextAlternatives(page, ["Tienes 2 de 3 negocios"])).toBeVisible({ timeout: 20_000 });
+        remember("Tus Negocios", "PASS", [
+          "Business list section visible",
+          "Agregar Negocio button visible",
+          "Quota text visible"
+        ]);
+      } catch (error) {
+        remember("Tus Negocios", "FAIL", [String(error)]);
+        throw error;
+      }
 
-    // Step 8 - Validate Términos y Condiciones
-    try {
-      const legal = await openLegalLinkFromSection(page, "Términos y Condiciones", /Términos y Condiciones/i);
-      details.push(`Términos screenshot: ${legal.screenshot}`);
-      details.push(`Términos URL: ${legal.url}`);
-      remember("Términos y Condiciones", "PASS", [
-        "Heading visible",
-        "Legal content visible",
-        `Final URL: ${legal.url}`
-      ]);
-    } catch (error) {
-      remember("Términos y Condiciones", "FAIL", [String(error)]);
-      throw error;
-    }
+      // Step 8 - Validate Términos y Condiciones
+      try {
+        const legal = await openLegalLinkFromSection(page, "Términos y Condiciones", /Términos y Condiciones/i);
+        details.push(`Términos screenshot: ${legal.screenshot}`);
+        details.push(`Términos URL: ${legal.url}`);
+        remember("Términos y Condiciones", "PASS", [
+          "Heading visible",
+          "Legal content visible",
+          `Final URL: ${legal.url}`
+        ]);
+      } catch (error) {
+        remember("Términos y Condiciones", "FAIL", [String(error)]);
+        throw error;
+      }
 
-    // Step 9 - Validate Política de Privacidad
-    try {
-      const legal = await openLegalLinkFromSection(page, "Política de Privacidad", /Política de Privacidad/i);
-      details.push(`Privacidad screenshot: ${legal.screenshot}`);
-      details.push(`Privacidad URL: ${legal.url}`);
-      remember("Política de Privacidad", "PASS", [
-        "Heading visible",
-        "Legal content visible",
-        `Final URL: ${legal.url}`
-      ]);
-    } catch (error) {
-      remember("Política de Privacidad", "FAIL", [String(error)]);
-      throw error;
+      // Step 9 - Validate Política de Privacidad
+      try {
+        const legal = await openLegalLinkFromSection(page, "Política de Privacidad", /Política de Privacidad/i);
+        details.push(`Privacidad screenshot: ${legal.screenshot}`);
+        details.push(`Privacidad URL: ${legal.url}`);
+        remember("Política de Privacidad", "PASS", [
+          "Heading visible",
+          "Legal content visible",
+          `Final URL: ${legal.url}`
+        ]);
+      } catch (error) {
+        remember("Política de Privacidad", "FAIL", [String(error)]);
+        throw error;
+      }
     } finally {
-      const reportPath = join(reportDir, "saleads-mi-negocio-report.json");
-      writeFileSync(
-        reportPath,
-        JSON.stringify(
-          {
-            testName: "saleads_mi_negocio_full_test",
-            generatedAt: new Date().toISOString(),
-            results: reportItems,
-            evidence: details
-          },
-          null,
-          2
-        )
-      );
+      finalizeReport(details);
     }
 
     // Step 10 - enforce all pass in one place
