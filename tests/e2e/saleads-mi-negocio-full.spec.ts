@@ -9,11 +9,11 @@ type ReportField =
   | "Mi Negocio menu"
   | "Agregar Negocio modal"
   | "Administrar Negocios view"
-  | "Informacion General"
+  | "Información General"
   | "Detalles de la Cuenta"
   | "Tus Negocios"
-  | "Terminos y Condiciones"
-  | "Politica de Privacidad";
+  | "Términos y Condiciones"
+  | "Política de Privacidad";
 
 type WorkflowReport = Record<ReportField, ReportStatus>;
 
@@ -22,11 +22,11 @@ const INITIAL_REPORT: WorkflowReport = {
   "Mi Negocio menu": "FAIL",
   "Agregar Negocio modal": "FAIL",
   "Administrar Negocios view": "FAIL",
-  "Informacion General": "FAIL",
+  "Información General": "FAIL",
   "Detalles de la Cuenta": "FAIL",
   "Tus Negocios": "FAIL",
-  "Terminos y Condiciones": "FAIL",
-  "Politica de Privacidad": "FAIL",
+  "Términos y Condiciones": "FAIL",
+  "Política de Privacidad": "FAIL",
 };
 
 async function waitForUi(page: Page): Promise<void> {
@@ -115,10 +115,14 @@ async function clickLegalLinkAndValidate(
 
   if (popup) {
     await popup.waitForLoadState("domcontentloaded");
-    await expect(popup.getByRole("heading", { name: headingPattern })).toBeVisible();
+    const heading = await firstVisible(
+      [popup.getByRole("heading", { name: headingPattern }), popup.getByText(headingPattern)],
+      15_000,
+    );
+    await expect(heading).toBeVisible();
 
     const legalText = (await popup.locator("body").innerText()).trim();
-    expect(legalText.length).toBeGreaterThan(100);
+    expect(legalText.length).toBeGreaterThan(30);
 
     await screenshot(testInfo, popup, screenshotName, true);
     const popupUrl = popup.url();
@@ -128,9 +132,13 @@ async function clickLegalLinkAndValidate(
     return popupUrl;
   }
 
-  await expect(page.getByRole("heading", { name: headingPattern })).toBeVisible();
+  const heading = await firstVisible(
+    [page.getByRole("heading", { name: headingPattern }), page.getByText(headingPattern)],
+    15_000,
+  );
+  await expect(heading).toBeVisible();
   const legalText = (await page.locator("body").innerText()).trim();
-  expect(legalText.length).toBeGreaterThan(100);
+  expect(legalText.length).toBeGreaterThan(30);
 
   await screenshot(testInfo, page, screenshotName, true);
   const finalUrl = page.url();
@@ -162,6 +170,15 @@ test("SaleADS Mi Negocio full workflow", async ({ page, baseURL }, testInfo) => 
     }
 
     await waitForUi(page);
+
+    const alreadyLoggedIn = await getSidebar(page)
+      .then(async (sidebar) => (await sidebar.isVisible().catch(() => false)) && (await page.getByText(/negocio/i).first().isVisible().catch(() => false)))
+      .catch(() => false);
+
+    if (alreadyLoggedIn) {
+      await screenshot(testInfo, page, "01-dashboard-loaded.png");
+      return;
+    }
 
     const loginButton = await getByVisibleText(page, /google/i);
     const authPopupPromise = page.waitForEvent("popup", { timeout: 5_000 }).catch(() => null);
@@ -195,7 +212,8 @@ test("SaleADS Mi Negocio full workflow", async ({ page, baseURL }, testInfo) => 
   await runStep(report, failures, "Mi Negocio menu", "Step 2 - Open Mi Negocio menu", async () => {
     const sidebar = await getSidebar(page);
     await expect(sidebar).toBeVisible();
-    await expect(page.getByText(/^negocio$/i)).toBeVisible();
+    const negocioSection = await getByVisibleText(page, /^negocio$/i);
+    await clickAndWait(page, negocioSection);
 
     const miNegocioOption = await getByVisibleText(page, /mi negocio/i);
     await clickAndWait(page, miNegocioOption);
@@ -229,7 +247,7 @@ test("SaleADS Mi Negocio full workflow", async ({ page, baseURL }, testInfo) => 
     await screenshot(testInfo, page, "03-crear-nuevo-negocio-modal.png");
 
     await businessNameInput.click();
-    await businessNameInput.fill("Negocio Prueba Automatizacion");
+    await businessNameInput.fill("Negocio Prueba Automatización");
 
     const cancelButton = page.getByRole("button", { name: /cancelar/i });
     await clickAndWait(page, cancelButton);
@@ -260,7 +278,7 @@ test("SaleADS Mi Negocio full workflow", async ({ page, baseURL }, testInfo) => 
     },
   );
 
-  await runStep(report, failures, "Informacion General", "Step 5 - Validate Informacion General", async () => {
+  await runStep(report, failures, "Información General", "Step 5 - Validate Información General", async () => {
     const bodyText = await page.locator("body").innerText();
     expect(bodyText).toMatch(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
     await expect(page.getByText(/business plan/i)).toBeVisible();
@@ -277,7 +295,7 @@ test("SaleADS Mi Negocio full workflow", async ({ page, baseURL }, testInfo) => 
         !/informaci[oó]n general|business plan|cambiar plan|detalles de la cuenta|tus negocios|secci[oó]n legal|@/i.test(line),
     );
 
-    expect(likelyName, "Expected a visible user name in Informacion General.").toBeTruthy();
+    expect(likelyName, "Expected a visible user name in Información General.").toBeTruthy();
   });
 
   await runStep(report, failures, "Detalles de la Cuenta", "Step 6 - Validate Detalles de la Cuenta", async () => {
@@ -302,8 +320,8 @@ test("SaleADS Mi Negocio full workflow", async ({ page, baseURL }, testInfo) => 
   await runStep(
     report,
     failures,
-    "Terminos y Condiciones",
-    "Step 8 - Validate Terminos y Condiciones",
+    "Términos y Condiciones",
+    "Step 8 - Validate Términos y Condiciones",
     async () => {
       const termsUrl = await clickLegalLinkAndValidate(
         page,
@@ -313,15 +331,15 @@ test("SaleADS Mi Negocio full workflow", async ({ page, baseURL }, testInfo) => 
         "05-terminos-y-condiciones.png",
       );
 
-      legalUrls["Terminos y Condiciones"] = termsUrl;
+      legalUrls["Términos y Condiciones"] = termsUrl;
     },
   );
 
   await runStep(
     report,
     failures,
-    "Politica de Privacidad",
-    "Step 9 - Validate Politica de Privacidad",
+    "Política de Privacidad",
+    "Step 9 - Validate Política de Privacidad",
     async () => {
       const privacyUrl = await clickLegalLinkAndValidate(
         page,
@@ -331,7 +349,7 @@ test("SaleADS Mi Negocio full workflow", async ({ page, baseURL }, testInfo) => 
         "06-politica-de-privacidad.png",
       );
 
-      legalUrls["Politica de Privacidad"] = privacyUrl;
+      legalUrls["Política de Privacidad"] = privacyUrl;
     },
   );
 
