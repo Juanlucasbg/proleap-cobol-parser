@@ -41,3 +41,6 @@ target/
 
 ## Additional for IntelliJ
 out/
+
+# JavaScript dependencies
+node_modules/
