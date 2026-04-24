@@ -44,3 +44,8 @@ out/
 
 # JavaScript dependencies
 node_modules/
+
+# Playwright and local E2E artifacts
+playwright-report/
+test-results/
+artifacts/
