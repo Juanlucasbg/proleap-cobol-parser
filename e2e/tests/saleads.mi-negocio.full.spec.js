@@ -122,7 +122,7 @@ async function ensureLoginPageReachable(page) {
     return;
   }
 
-  const baseUrl = process.env.SALEADS_BASE_URL;
+  const baseUrl = process.env.SALEADS_BASE_URL || process.env.BASE_URL || process.env.PLAYWRIGHT_BASE_URL;
   if (baseUrl) {
     await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
     await waitForUi(page);
@@ -133,6 +133,17 @@ async function ensureLoginPageReachable(page) {
     "Page started at about:blank and SALEADS_BASE_URL was not provided. " +
       "Set SALEADS_BASE_URL to run this test in a fresh browser context."
   );
+}
+
+async function runStep(reportField, fn) {
+  try {
+    await fn();
+    pass(reportField);
+    return true;
+  } catch (err) {
+    fail(reportField, String(err));
+    return false;
+  }
 }
 
 test.describe("SaleADS Mi Negocio full workflow", () => {
@@ -149,39 +160,49 @@ test.describe("SaleADS Mi Negocio full workflow", () => {
     await waitForUi(page);
 
     // Step 1: Login with Google
-    try {
+    const loginOk = await runStep("Login", async () => {
       const signInCandidates = [
         page.getByRole("button", { name: TX.google }).first(),
         page.getByRole("link", { name: TX.google }).first(),
         page.getByText(TX.google).first()
       ];
 
+      const alreadyInApp = await page.locator("aside, nav").first().isVisible().catch(() => false);
+      const hasGoogleTrigger = await Promise.all(
+        signInCandidates.map((candidate) => candidate.isVisible().catch(() => false))
+      ).then((states) => states.some(Boolean));
+
       let popupPromise = null;
-      const clicked = await tryClickFirstVisible(signInCandidates, {
-        beforeClick: () => {
-          popupPromise = page.waitForEvent("popup", { timeout: 15000 }).catch(() => null);
+      if (!alreadyInApp || hasGoogleTrigger) {
+        const clicked = await tryClickFirstVisible(signInCandidates, {
+          beforeClick: () => {
+            popupPromise = page.waitForEvent("popup", { timeout: 15000 }).catch(() => null);
+          }
+        });
+        if (!clicked && !alreadyInApp) {
+          throw new Error(
+            "Google login trigger was not visible and main interface was not detected. " +
+              "Provide SALEADS_BASE_URL or start the test from the login page."
+          );
         }
-      });
-      if (!clicked) {
-        throw new Error("Google login trigger was not visible.");
-      }
 
-      const popup = popupPromise ? await popupPromise : null;
+        const popup = popupPromise ? await popupPromise : null;
 
-      if (popup) {
-        await popup.waitForLoadState("domcontentloaded");
-        const account = popup
-          .getByText("juanlucasbarbiergarzon@gmail.com", { exact: true })
-          .first();
-        if (await account.isVisible().catch(() => false)) {
-          await account.click();
-          await waitForUi(popup);
+        if (popup) {
+          await popup.waitForLoadState("domcontentloaded");
+          const account = popup
+            .getByText("juanlucasbarbiergarzon@gmail.com", { exact: true })
+            .first();
+          if (await account.isVisible().catch(() => false)) {
+            await account.click();
+            await waitForUi(popup);
+          } else {
+            report.notes.push("Google selector opened but target account was not visible.");
+          }
         } else {
-          report.notes.push("Google selector opened but target account was not visible.");
+          // Google flow may happen in same page; continue.
+          await waitForUi(page);
         }
-      } else {
-        // Google flow may happen in same page; continue.
-        await waitForUi(page);
       }
 
       await waitForUi(page);
@@ -190,27 +211,22 @@ test.describe("SaleADS Mi Negocio full workflow", () => {
       const sidebarCandidate = page.locator("aside, nav").first();
       await expect(sidebarCandidate).toBeVisible({ timeout: 60000 });
       await checkpoint(page, "dashboard-loaded");
-      pass("Login");
-    } catch (err) {
-      fail("Login", String(err));
-      throw err;
-    }
+    });
 
     // Step 2: Open Mi Negocio menu
-    try {
+    if (loginOk) {
+      await runStep("Mi Negocio menu", async () => {
       await clickByText(page, TX.negocio);
       await clickByText(page, TX.miNegocio);
       await assertVisibleByPattern(page, TX.agregarNegocio);
       await assertVisibleByPattern(page, TX.administrarNegocios);
       await checkpoint(page, "mi-negocio-menu-expanded");
-      pass("Mi Negocio menu");
-    } catch (err) {
-      fail("Mi Negocio menu", String(err));
-      throw err;
+      });
     }
 
     // Step 3: Validate Agregar Negocio modal
-    try {
+    if (report.results["Mi Negocio menu"] === "PASS") {
+      await runStep("Agregar Negocio modal", async () => {
       await clickByText(page, TX.agregarNegocio);
       await assertVisibleByPattern(page, TX.crearNuevoNegocio);
       await expect(
@@ -228,14 +244,12 @@ test.describe("SaleADS Mi Negocio full workflow", () => {
         .first();
       await nameInput.fill("Negocio Prueba Automatizacion");
       await clickRoleByName(page, "button", /cancelar/i);
-      pass("Agregar Negocio modal");
-    } catch (err) {
-      fail("Agregar Negocio modal", String(err));
-      throw err;
+      });
     }
 
     // Step 4: Open Administrar Negocios
-    try {
+    if (report.results["Mi Negocio menu"] === "PASS") {
+      await runStep("Administrar Negocios view", async () => {
       // Re-expand if needed
       if (!(await page.getByText(TX.administrarNegocios).first().isVisible().catch(() => false))) {
         if (await page.getByText(TX.miNegocio).first().isVisible().catch(() => false)) {
@@ -252,14 +266,12 @@ test.describe("SaleADS Mi Negocio full workflow", () => {
       await assertVisibleByPattern(page, TX.tusNegocios);
       await assertVisibleByPattern(page, TX.seccionLegal);
       await checkpoint(page, "administrar-negocios", true);
-      pass("Administrar Negocios view");
-    } catch (err) {
-      fail("Administrar Negocios view", String(err));
-      throw err;
+      });
     }
 
     // Step 5: Validate Informacion General
-    try {
+    if (report.results["Administrar Negocios view"] === "PASS") {
+      await runStep("Información General", async () => {
       const emailLocator = page.getByText(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/).first();
       await expect(emailLocator).toBeVisible({ timeout: 20000 });
 
@@ -273,36 +285,30 @@ test.describe("SaleADS Mi Negocio full workflow", () => {
 
       await assertVisibleByPattern(page, /business plan/i);
       await expect(page.getByRole("button", { name: /cambiar plan/i })).toBeVisible({ timeout: 20000 });
-      pass("Información General");
-    } catch (err) {
-      fail("Información General", String(err));
-      throw err;
+      });
     }
 
     // Step 6: Validate Detalles de la Cuenta
-    try {
+    if (report.results["Administrar Negocios view"] === "PASS") {
+      await runStep("Detalles de la Cuenta", async () => {
       await assertVisibleByPattern(page, /cuenta creada/i);
       await assertVisibleByPattern(page, /estado activo/i);
       await assertVisibleByPattern(page, /idioma seleccionado/i);
-      pass("Detalles de la Cuenta");
-    } catch (err) {
-      fail("Detalles de la Cuenta", String(err));
-      throw err;
+      });
     }
 
     // Step 7: Validate Tus Negocios
-    try {
+    if (report.results["Administrar Negocios view"] === "PASS") {
+      await runStep("Tus Negocios", async () => {
       await assertVisibleByPattern(page, TX.tusNegocios);
       await expect(page.getByRole("button", { name: TX.agregarNegocio })).toBeVisible({ timeout: 20000 });
       await assertVisibleByPattern(page, TX.limiteNegocios);
-      pass("Tus Negocios");
-    } catch (err) {
-      fail("Tus Negocios", String(err));
-      throw err;
+      });
     }
 
     // Step 8: Validate Terminos y Condiciones
-    try {
+    if (report.results["Administrar Negocios view"] === "PASS") {
+      await runStep("Términos y Condiciones", async () => {
       const termsTrigger = page.getByText(TX.terminos).first();
       await termsTrigger.waitFor({ state: "visible", timeout: 20000 });
 
@@ -330,15 +336,12 @@ test.describe("SaleADS Mi Negocio full workflow", () => {
         await page.goBack();
         await waitForUi(page);
       }
-
-      pass("Términos y Condiciones");
-    } catch (err) {
-      fail("Términos y Condiciones", String(err));
-      throw err;
+      });
     }
 
     // Step 9: Validate Politica de Privacidad
-    try {
+    if (report.results["Administrar Negocios view"] === "PASS") {
+      await runStep("Política de Privacidad", async () => {
       const privacyTrigger = page.getByText(TX.privacidad).first();
       await privacyTrigger.waitFor({ state: "visible", timeout: 20000 });
 
@@ -366,13 +369,10 @@ test.describe("SaleADS Mi Negocio full workflow", () => {
         await page.goBack();
         await waitForUi(page);
       }
-
-      pass("Política de Privacidad");
-    } catch (err) {
-      fail("Política de Privacidad", String(err));
-      throw err;
+      });
     }
 
     fs.writeFileSync(REPORT_PATH, JSON.stringify(report, null, 2), "utf-8");
+    expect(Object.values(report.results).every((value) => value === "PASS")).toBeTruthy();
   });
 });
