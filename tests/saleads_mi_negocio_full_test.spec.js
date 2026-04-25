@@ -202,12 +202,30 @@ test('saleads_mi_negocio_full_test', async ({ page, context }, testInfo) => {
 
   try {
     // Step 1: Login with Google
-    await clickVisibleTextAndWait(page, [
+    const loginButtonLabels = [
       'Sign in with Google',
       'Iniciar sesión con Google',
       'Continuar con Google',
       'Login with Google'
-    ]);
+    ];
+    const loginButton = await firstVisibleLocator(page, loginButtonLabels, {
+      roles: ['button', 'link']
+    });
+
+    if (!loginButton) {
+      throw new Error(
+        [
+          `Could not find visible element with text: ${loginButtonLabels.join(' | ')}`,
+          `Current page URL: ${page.url()}`,
+          configuredLoginUrl
+            ? 'Configured login URL was used, but expected login CTA was not present.'
+            : 'No SALEADS_LOGIN_URL configured. Provide SALEADS_LOGIN_URL or ensure the browser starts at the SaleADS login page.'
+        ].join(' ')
+      );
+    }
+
+    await loginButton.click({ timeout: 15000 });
+    await waitForUiToSettle(page);
 
     await resolveAccountEmailSelection(context, 'juanlucasbarbiergarzon@gmail.com');
     await waitForUiToSettle(page);
@@ -224,6 +242,7 @@ test('saleads_mi_negocio_full_test', async ({ page, context }, testInfo) => {
       throw new Error('Dashboard main interface or sidebar not visible after login.');
     }
   } catch (error) {
+    await capture(page, evidenceDir, '01-login-step-failed', true).catch(() => {});
     setFail('Login', `Login validation failed: ${error.message}`);
   }
 
