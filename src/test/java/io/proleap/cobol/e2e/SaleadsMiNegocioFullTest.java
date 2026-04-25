@@ -92,8 +92,9 @@ public class SaleadsMiNegocioFullTest {
 
 		Page googlePage = null;
 		try {
-			googlePage = page.waitForPopup(() -> clickAndWait(page, loginButton),
-					new Page.WaitForPopupOptions().setTimeout(7000));
+			googlePage = page.waitForPopup(
+					new Page.WaitForPopupOptions().setTimeout(7000),
+					() -> clickAndWait(page, loginButton));
 		} catch (PlaywrightException ignored) {
 			waitForUi(page);
 		}
@@ -213,8 +214,9 @@ public class SaleadsMiNegocioFullTest {
 		boolean openedInPopup = false;
 
 		try {
-			legalPage = appPage.waitForPopup(() -> clickAndWait(appPage, appPage.getByText(linkText)),
-					new Page.WaitForPopupOptions().setTimeout(6000));
+			legalPage = appPage.waitForPopup(
+					new Page.WaitForPopupOptions().setTimeout(6000),
+					() -> clickAndWait(appPage, appPage.getByText(linkText)));
 			openedInPopup = true;
 		} catch (PlaywrightException ignored) {
 			clickAndWait(appPage, appPage.getByText(linkText));
