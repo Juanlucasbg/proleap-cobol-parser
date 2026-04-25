@@ -61,6 +61,7 @@ public class SaleadsMiNegocioFullTest {
 	private static final String FIELD_POLITICA = "Política de Privacidad";
 
 	private static final Duration DEFAULT_WAIT = Duration.ofSeconds(30);
+	private static final Duration WINDOW_OR_NAV_WAIT = Duration.ofSeconds(12);
 	private static final Pattern EMAIL_PATTERN = Pattern.compile("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}");
 	private static final DateTimeFormatter EVIDENCE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
 
@@ -231,11 +232,12 @@ public class SaleadsMiNegocioFullTest {
 	private String validateLegalLink(final String linkText, final String headingText, final String screenshotPrefix) {
 		final String appHandle = driver.getWindowHandle();
 		final Set<String> handlesBefore = new LinkedHashSet<>(driver.getWindowHandles());
+		final String urlBeforeClick = driver.getCurrentUrl();
 
 		clickByVisibleText(linkText);
 		waitForUiToSettle();
 
-		final String targetHandle = awaitNewWindowOrCurrent(handlesBefore);
+		final String targetHandle = awaitNewWindowOrCurrent(handlesBefore, urlBeforeClick);
 		driver.switchTo().window(targetHandle);
 		waitForUiToSettle();
 
@@ -259,7 +261,8 @@ public class SaleadsMiNegocioFullTest {
 
 	private void chooseGoogleAccountIfShown(final Set<String> handlesBefore, final String accountEmail) {
 		try {
-			final String maybeGoogleHandle = awaitNewWindowOrCurrent(handlesBefore);
+			final String urlBeforeClick = driver.getCurrentUrl();
+			final String maybeGoogleHandle = awaitNewWindowOrCurrent(handlesBefore, urlBeforeClick);
 			driver.switchTo().window(maybeGoogleHandle);
 			waitForUiToSettle();
 
@@ -421,8 +424,23 @@ public class SaleadsMiNegocioFullTest {
 		return null;
 	}
 
-	private String awaitNewWindowOrCurrent(final Set<String> handlesBefore) {
-		wait.until((ExpectedCondition<Boolean>) d -> d != null && d.getWindowHandles().size() >= handlesBefore.size());
+	private String awaitNewWindowOrCurrent(final Set<String> handlesBefore, final String urlBeforeClick) {
+		final WebDriverWait shortWait = new WebDriverWait(driver, WINDOW_OR_NAV_WAIT);
+		try {
+			shortWait.until((ExpectedCondition<Boolean>) d -> {
+				if (d == null) {
+					return false;
+				}
+				final boolean newWindowOpened = d.getWindowHandles().size() > handlesBefore.size();
+				final String currentUrl = d.getCurrentUrl();
+				final boolean sameTabNavigated = urlBeforeClick != null && currentUrl != null
+						&& !urlBeforeClick.equals(currentUrl);
+				return newWindowOpened || sameTabNavigated;
+			});
+		} catch (final TimeoutException ignored) {
+			// Fallback to current tab when the application handles transitions inline.
+		}
+
 		final Set<String> handlesAfter = driver.getWindowHandles();
 		for (final String handle : handlesAfter) {
 			if (!handlesBefore.contains(handle)) {
