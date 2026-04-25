@@ -195,6 +195,32 @@ $ mvn clean test
 ```
 
 
+SaleADS E2E automation
+----------------------
+
+This repository now includes an isolated Playwright E2E test for the SaleADS "Mi Negocio" workflow:
+
+- Spec: `src/test/e2e/saleads_mi_negocio_full_test.spec.ts`
+- Config: `playwright.config.ts`
+
+The test is environment-agnostic and does not hardcode a specific SaleADS domain.
+Set the login URL at runtime:
+
+```bash
+export SALEADS_LOGIN_URL="https://<your-saleads-environment>/login"
+npm run test:e2e:saleads-mi-negocio
+```
+
+You can also use:
+
+```bash
+export SALEADS_BASE_URL="https://<your-saleads-environment>/login"
+npm run test:e2e:saleads-mi-negocio
+```
+
+Artifacts are generated in `test-results/` and `playwright-report/`, including checkpoint screenshots and a `final-report.json` summary with PASS/FAIL by validation group.
+
+
 Release process
 ---------------
 

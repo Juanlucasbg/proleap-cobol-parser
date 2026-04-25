@@ -1,0 +1,13 @@
+{
+  "name": "saleads-e2e-automation",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Playwright E2E automation for SaleADS workflows",
+  "scripts": {
+    "test:e2e:saleads-mi-negocio": "playwright test src/test/e2e/saleads_mi_negocio_full_test.spec.ts",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.1"
+  }
+}
