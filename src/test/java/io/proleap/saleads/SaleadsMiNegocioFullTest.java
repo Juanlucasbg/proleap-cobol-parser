@@ -272,12 +272,13 @@ public class SaleadsMiNegocioFullTest {
 
 	private void navigateToLoginPage() {
 		final String loginUrl = resolveConfig(LOGIN_URL_PROPERTY, LOGIN_URL_ENV, "");
-		if (loginUrl.isBlank()) {
-			throw new IllegalArgumentException(
-					"Debe definirse la URL de login en -D" + LOGIN_URL_PROPERTY + " o variable " + LOGIN_URL_ENV);
+		if (!loginUrl.isBlank()) {
+			driver.get(loginUrl);
+			waitForDocumentReady();
+			return;
 		}
 
-		driver.get(loginUrl);
+		// Env-agnostic mode: keep the current page when no explicit URL is provided.
 		waitForDocumentReady();
 	}
 
