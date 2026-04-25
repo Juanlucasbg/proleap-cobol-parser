@@ -1,3 +1,4 @@
+import { writeFile } from "node:fs/promises";
 import { expect, Page, BrowserContext, test, Locator, TestInfo } from "@playwright/test";
 
 const GOOGLE_ACCOUNT_EMAIL = "juanlucasbarbiergarzon@gmail.com";
@@ -301,9 +302,22 @@ test.describe("saleads_mi_negocio_full_test", () => {
     };
 
     const reportPath = testInfo.outputPath("final-report.json");
+    await writeFile(reportPath, JSON.stringify(summary, null, 2), "utf-8");
     await testInfo.attach("final-report.json", {
-      body: Buffer.from(JSON.stringify(summary, null, 2), "utf-8"),
+      path: reportPath,
       contentType: "application/json",
+    });
+
+    const finalStatePath = testInfo.outputPath("07-final-state.png");
+    await page
+      .screenshot({
+        path: finalStatePath,
+        fullPage: true,
+      })
+      .catch(() => undefined);
+    await testInfo.attach("07-final-state.png", {
+      path: finalStatePath,
+      contentType: "image/png",
     });
 
     const failedSections = Object.entries(report)
@@ -314,7 +328,5 @@ test.describe("saleads_mi_negocio_full_test", () => {
       failedSections,
       `One or more validation groups failed: ${failedSections.join(", ")}. Check attached final-report.json for details.`,
     ).toEqual([]);
-
-    await page.screenshot({ path: reportPath.replace("final-report.json", "07-final-state.png"), fullPage: true });
   });
 });
