@@ -1,0 +1,9 @@
+{
+  "scripts": {
+    "test:e2e": "playwright test",
+    "test:e2e:saleads-mi-negocio": "playwright test tests/e2e/saleads-mi-negocio-full-test.spec.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.1"
+  }
+}
