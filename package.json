@@ -1,0 +1,15 @@
+{
+  "name": "saleads-mi-negocio-e2e",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Cross-environment SaleADS Mi Negocio E2E workflow test",
+  "scripts": {
+    "test:e2e": "playwright test tests/saleads-mi-negocio.spec.js",
+    "test:e2e:headed": "playwright test tests/saleads-mi-negocio.spec.js --headed",
+    "test:e2e:install": "playwright install chromium",
+    "test:e2e:report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0"
+  }
+}
