@@ -197,20 +197,25 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
   const legalUrls: Record<string, string> = {};
   const screenshots: Record<string, string> = {};
   const executionErrors: string[] = [];
+  let preconditionError: string | null = null;
 
   const providedUrl = process.env.SALEADS_BASE_URL;
   if (providedUrl) {
     await page.goto(providedUrl, { waitUntil: "domcontentloaded" });
   } else if (page.url() === "about:blank") {
-    throw new Error(
+    preconditionError =
       "No SALEADS_BASE_URL provided and browser is on about:blank. " +
-        "Set SALEADS_BASE_URL or pre-open SaleADS login page before running."
-    );
+      "Set SALEADS_BASE_URL or pre-open SaleADS login page before running.";
   }
-  await waitForUi(page);
+  if (!preconditionError) {
+    await waitForUi(page);
+  }
 
   // Step 1: Login with Google
   try {
+    if (preconditionError) {
+      throw new Error(preconditionError);
+    }
     const googleSignInButton = page
       .getByRole("button", { name: /google|sign in|iniciar sesión/i })
       .or(byText(page, "Sign in with Google"))
@@ -243,6 +248,9 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
 
   // Step 2: Open Mi Negocio menu
   try {
+    if (preconditionError) {
+      throw new Error(preconditionError);
+    }
     const negocio = await findSidebarAction(page, "Negocio");
     await clickAndWait(negocio, page);
     const miNegocio = await findSidebarAction(page, "Mi Negocio");
@@ -273,6 +281,9 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
 
   // Step 3: Validate Agregar Negocio modal
   try {
+    if (preconditionError) {
+      throw new Error(preconditionError);
+    }
     await clickAndWait(byText(page, "Agregar Negocio"), page);
 
     await expect(byText(page, "Crear Nuevo Negocio")).toBeVisible();
@@ -312,6 +323,9 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
 
   // Step 4: Open Administrar Negocios
   try {
+    if (preconditionError) {
+      throw new Error(preconditionError);
+    }
     if (!(await byText(page, "Administrar Negocios").isVisible().catch(() => false))) {
       const miNegocio = await findSidebarAction(page, "Mi Negocio");
       await clickAndWait(miNegocio, page);
@@ -347,6 +361,9 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
 
   // Step 5: Validate Información General
   try {
+    if (preconditionError) {
+      throw new Error(preconditionError);
+    }
     const emailPattern = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i;
     await expect(page.getByText(emailPattern)).toBeVisible();
     await expect(byText(page, "BUSINESS PLAN")).toBeVisible();
@@ -379,6 +396,9 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
 
   // Step 6: Validate Detalles de la Cuenta
   try {
+    if (preconditionError) {
+      throw new Error(preconditionError);
+    }
     await expect(byText(page, "Cuenta creada")).toBeVisible();
     await expect(byText(page, "Estado activo")).toBeVisible();
     await expect(byText(page, "Idioma seleccionado")).toBeVisible();
@@ -399,6 +419,9 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
 
   // Step 7: Validate Tus Negocios
   try {
+    if (preconditionError) {
+      throw new Error(preconditionError);
+    }
     const tusNegociosSection = byText(page, "Tus Negocios")
       .locator("xpath=ancestor::*[self::section or self::div][1]")
       .first();
@@ -427,6 +450,9 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
 
   // Step 8: Validate Términos y Condiciones
   try {
+    if (preconditionError) {
+      throw new Error(preconditionError);
+    }
     const terminosResult = await validateLegalLink(
       page,
       testInfo,
@@ -452,6 +478,9 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
 
   // Step 9: Validate Política de Privacidad
   try {
+    if (preconditionError) {
+      throw new Error(preconditionError);
+    }
     const privacyResult = await validateLegalLink(
       page,
       testInfo,
