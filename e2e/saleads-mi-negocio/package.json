@@ -1,0 +1,19 @@
+{
+  "name": "saleads-mi-negocio",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:mi-negocio": "playwright test tests/saleads-mi-negocio-full-test.spec.ts",
+    "test:mi-negocio:headed": "playwright test tests/saleads-mi-negocio-full-test.spec.ts --headed"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.59.1",
+    "@types/node": "^25.6.0"
+  }
+}
