@@ -51,6 +51,88 @@ async function clickByVisibleText(page, ...texts) {
   return false;
 }
 
+async function waitForAnyVisible(page, candidateTexts, timeoutMs = 10000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    for (const text of candidateTexts) {
+      const byText = page.getByText(text, { exact: false }).first();
+      if (await byText.isVisible().catch(() => false)) {
+        return true;
+      }
+    }
+    await page.waitForTimeout(300);
+  }
+  return false;
+}
+
+async function goToLoginPageIfNeeded(page) {
+  const loginIndicators = [
+    "Sign in with Google",
+    "Iniciar sesión con Google",
+    "Acceder con Google",
+    "Continuar con Google",
+  ];
+
+  if (await waitForAnyVisible(page, loginIndicators, 4000)) {
+    return;
+  }
+
+  // If we land on a marketing page, use the visible CTA/login actions to reach auth.
+  const ctaTexts = [
+    "Iniciar sesión",
+    "Iniciar Sesión",
+    "Login",
+    "Log in",
+    "Acceder",
+    "Get started",
+    "Start now",
+    "Activar cuenta",
+    "ACTIVAR CUENTA",
+    "Select Plan",
+  ];
+
+  for (const cta of ctaTexts) {
+    const popupPromise = page.waitForEvent("popup", { timeout: 3000 }).catch(() => null);
+    const clicked = await clickByVisibleText(page, cta);
+    if (!clicked) {
+      continue;
+    }
+
+    const popupPage = await popupPromise;
+    if (popupPage) {
+      await popupPage.waitForLoadState("domcontentloaded");
+      if (await waitForAnyVisible(popupPage, loginIndicators, 7000)) {
+        await popupPage.close().catch(() => Promise.resolve());
+        return;
+      }
+      await popupPage.close().catch(() => Promise.resolve());
+      await page.bringToFront();
+    }
+
+    if (await waitForAnyVisible(page, loginIndicators, 7000)) {
+      return;
+    }
+  }
+
+  // Last fallback for any environment with custom routing.
+  const fallbackPaths = ["/login", "/auth/login", "/signin", "/auth/signin"];
+  for (const pathname of fallbackPaths) {
+    try {
+      const current = new URL(page.url());
+      current.pathname = pathname;
+      current.search = "";
+      current.hash = "";
+      await page.goto(current.toString(), { waitUntil: "domcontentloaded" });
+      await waitForUi(page);
+      if (await waitForAnyVisible(page, loginIndicators, 5000)) {
+        return;
+      }
+    } catch (_error) {
+      // Ignore and continue trying the next fallback.
+    }
+  }
+}
+
 async function capture(page, title) {
   const fileName = `${Date.now()}-${sanitizeFileName(title)}.png`;
   const fullPath = path.join(SCREENSHOT_DIR, fileName);
@@ -105,6 +187,7 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
       await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
     }
     await waitForUi(page);
+    await goToLoginPageIfNeeded(page);
 
     await runStep("Login", async () => {
       const loginClicked = await clickByVisibleText(
@@ -112,9 +195,8 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
         "Sign in with Google",
         "Iniciar sesión con Google",
         "Acceder con Google",
-        "Google",
-        "Iniciar sesión",
-        "Ingresar"
+        "Continuar con Google",
+        "Continue with Google"
       );
       expect(loginClicked).toBeTruthy();
 
