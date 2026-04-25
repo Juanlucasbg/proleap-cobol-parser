@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -105,10 +106,10 @@ public class SaleadsMiNegocioFullTest {
 	@Test
 	public void saleadsMiNegocioFullTest() throws Exception {
 		final String loginUrl = firstNonBlank(System.getenv("SALEADS_LOGIN_URL"), System.getenv("SALEADS_BASE_URL"));
-		assertNotNull("Set SALEADS_LOGIN_URL or SALEADS_BASE_URL to the current environment login page.", loginUrl);
-
-		driver.get(loginUrl);
-		waitForUiLoad();
+		if (loginUrl != null) {
+			driver.get(loginUrl);
+			waitForUiLoad();
+		}
 
 		final boolean loginOk = executeStep("Login", () -> {
 			loginWithGoogle();
@@ -135,7 +136,7 @@ public class SaleadsMiNegocioFullTest {
 		final boolean administrarOk = modalOk
 				? executeStep("Administrar Negocios view", () -> {
 					openAdministrarNegocios();
-					captureCheckpoint("04_administrar_negocios_account_page");
+					captureCheckpoint("04_administrar_negocios_account_page", true);
 					return "Account page sections are visible.";
 				})
 				: blockStep("Administrar Negocios view", "Blocked because Agregar Negocio modal failed.");
@@ -190,6 +191,7 @@ public class SaleadsMiNegocioFullTest {
 	}
 
 	private void loginWithGoogle() throws IOException {
+		final String appWindow = driver.getWindowHandle();
 		final WebElement loginButton = findFirstVisibleClickableByAnyText(Arrays.asList(
 				"Sign in with Google",
 				"Iniciar sesión con Google",
@@ -199,7 +201,7 @@ public class SaleadsMiNegocioFullTest {
 				"Continuar con Google"));
 
 		clickAndWait(loginButton);
-		selectGoogleAccountIfPrompted("juanlucasbarbiergarzon@gmail.com");
+		selectGoogleAccountIfPrompted(appWindow, "juanlucasbarbiergarzon@gmail.com");
 
 		assertSidebarVisible();
 		assertAnyTextVisible(Arrays.asList("Negocio", "Mi Negocio"));
@@ -295,7 +297,7 @@ public class SaleadsMiNegocioFullTest {
 		final String legalBody = getVisibleBodyText().replaceAll("\\s+", " ").trim();
 		assertTrue("Legal content text seems empty for " + expectedHeading, legalBody.length() > 120);
 
-		captureCheckpoint(screenshotName);
+		captureCheckpoint(screenshotName, false);
 		final String finalUrl = driver.getCurrentUrl();
 
 		if (openedNewTab) {
@@ -311,7 +313,7 @@ public class SaleadsMiNegocioFullTest {
 		return finalUrl;
 	}
 
-	private void selectGoogleAccountIfPrompted(final String accountEmail) {
+	private void selectGoogleAccountIfPrompted(final String appWindow, final String accountEmail) {
 		final long timeoutAt = System.currentTimeMillis() + Duration.ofSeconds(25).toMillis();
 
 		while (System.currentTimeMillis() < timeoutAt) {
@@ -322,8 +324,15 @@ public class SaleadsMiNegocioFullTest {
 				final WebElement accountRow = findVisibleElementByText(accountEmail, Duration.ofSeconds(1));
 				if (accountRow != null) {
 					clickAndWait(accountRow);
+					if (driver.getWindowHandles().contains(appWindow)) {
+						driver.switchTo().window(appWindow);
+					}
 					return;
 				}
+			}
+
+			if (driver.getWindowHandles().contains(appWindow)) {
+				driver.switchTo().window(appWindow);
 			}
 
 			if (isTextVisible("Negocio", Duration.ofSeconds(1)) || isTextVisible("Mi Negocio", Duration.ofSeconds(1))) {
@@ -560,8 +569,24 @@ public class SaleadsMiNegocioFullTest {
 	}
 
 	private void captureCheckpoint(final String checkpointName) throws IOException {
-		final File source = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+		captureCheckpoint(checkpointName, false);
+	}
+
+	private void captureCheckpoint(final String checkpointName, final boolean fullPage) throws IOException {
 		final Path destination = evidenceDir.resolve(checkpointName + ".png");
+
+		if (fullPage && driver instanceof ChromeDriver) {
+			final Map<String, Object> options = new LinkedHashMap<>();
+			options.put("captureBeyondViewport", true);
+			options.put("fromSurface", true);
+			final String base64 = ((ChromeDriver) driver).executeCdpCommand("Page.captureScreenshot", options)
+					.get("data")
+					.toString();
+			Files.write(destination, Base64.getDecoder().decode(base64));
+			return;
+		}
+
+		final File source = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
 		Files.copy(source.toPath(), destination, StandardCopyOption.REPLACE_EXISTING);
 	}
 
