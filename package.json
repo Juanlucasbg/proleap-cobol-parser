@@ -1,0 +1,16 @@
+{
+  "name": "saleads-mi-negocio-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Environment-agnostic Playwright test for SaleADS Mi Negocio workflow",
+  "scripts": {
+    "test:e2e:saleads": "playwright test tests/saleads-mi-negocio.spec.ts",
+    "test:e2e:saleads:headed": "playwright test tests/saleads-mi-negocio.spec.ts --headed",
+    "test:e2e:saleads:report": "playwright show-report",
+    "test:e2e:saleads:summary": "node scripts/render-saleads-report.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "@types/node": "^24.9.0"
+  }
+}
