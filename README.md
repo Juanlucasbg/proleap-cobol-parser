@@ -195,6 +195,44 @@ $ mvn clean test
 ```
 
 
+SaleADS end-to-end workflow test
+--------------------------------
+
+This repository now includes an opt-in Selenium/JUnit test for validating the
+SaleADS.ai "Mi Negocio" workflow end-to-end:
+
+* Test class: `io.proleap.cobol.e2e.SaleadsMiNegocioFullTest`
+* Evidence output: `target/saleads-mi-negocio-evidence/<run-id>/`
+  * Checkpoint screenshots (`*.png`)
+  * Final PASS/FAIL report (`final-report.txt`)
+
+### Execution requirements
+
+The test is disabled by default and only executes when explicitly enabled.
+
+Required:
+
+* `saleads.e2e.enabled=true`
+* Login page URL of the current environment (`saleads.login.url` or
+  `SALEADS_LOGIN_URL`)
+
+Optional:
+
+* `saleads.selenium.remote.url` / `SALEADS_SELENIUM_REMOTE_URL` for remote WebDriver
+* `saleads.headless=true` for headless Chrome
+* `saleads.user.name` / `SALEADS_USER_NAME` to assert a specific user name in
+  "Información General"
+
+### Run command
+
+```
+mvn -Dtest=io.proleap.cobol.e2e.SaleadsMiNegocioFullTest \
+    -Dsaleads.e2e.enabled=true \
+    -Dsaleads.login.url="<current-saleads-login-url>" \
+    test
+```
+
+
 Release process
 ---------------
 
