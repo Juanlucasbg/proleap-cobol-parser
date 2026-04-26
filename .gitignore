@@ -43,3 +43,4 @@ target/
 out/
 node_modules/
 e2e/artifacts/
+test-results/
