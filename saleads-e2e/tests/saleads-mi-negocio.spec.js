@@ -84,14 +84,14 @@ async function clickFirstVisible(candidates) {
 test.describe('SaleADS - Mi Negocio full workflow', () => {
   test('login with Google and validate complete Mi Negocio flow', async ({ page }) => {
     const targetUrl = process.env.SALEADS_URL || process.env.BASE_URL;
-    if (!targetUrl) {
-      throw new Error('SALEADS_URL (or BASE_URL) environment variable is required for this test run.');
-    }
 
     fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });
     let runError = null;
 
     try {
+      if (!targetUrl) {
+        throw new Error('SALEADS_URL (or BASE_URL) environment variable is required for this test run.');
+      }
       await page.goto(targetUrl, { waitUntil: 'domcontentloaded' });
       await waitForAppReady(page);
 
@@ -340,7 +340,10 @@ test.describe('SaleADS - Mi Negocio full workflow', () => {
         if (STEP_REPORT[key].status === 'NOT_RUN') {
           STEP_REPORT[key] = {
             status: 'FAIL',
-            error: 'Not executed due to an earlier failure in the workflow.',
+            error:
+              runError instanceof Error
+                ? `Not executed due to an earlier failure in the workflow: ${runError.message}`
+                : 'Not executed due to an earlier failure in the workflow.',
           };
         }
       }

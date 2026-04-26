@@ -44,3 +44,4 @@ out/
 saleads-e2e/node_modules/
 saleads-e2e/playwright-report/
 saleads-e2e/test-results/
+saleads-e2e/artifacts/
