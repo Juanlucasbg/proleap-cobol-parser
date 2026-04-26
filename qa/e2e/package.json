@@ -1,0 +1,14 @@
+{
+  "name": "saleads-e2e",
+  "private": true,
+  "description": "Environment-agnostic SaleADS end-to-end tests",
+  "scripts": {
+    "test": "playwright test",
+    "test:saleads-mi-negocio": "playwright test tests/saleads-mi-negocio.spec.js",
+    "test:saleads-mi-negocio:headed": "playwright test tests/saleads-mi-negocio.spec.js --headed",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "latest"
+  }
+}
