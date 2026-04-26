@@ -1,0 +1,19 @@
+{
+  "name": "e2e",
+  "version": "1.0.0",
+  "description": "SaleADS end-to-end workflow tests",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:mi-negocio": "playwright test tests/saleads-mi-negocio.spec.ts",
+    "test:mi-negocio:headed": "playwright test tests/saleads-mi-negocio.spec.ts --headed",
+    "test:list": "playwright test --list",
+    "install:browsers": "playwright install --with-deps chromium"
+  },
+  "keywords": [],
+  "author": "automation",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.59.1"
+  }
+}
