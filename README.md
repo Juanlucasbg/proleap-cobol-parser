@@ -205,3 +205,56 @@ License
 -------
 
 Licensed under the MIT License. See LICENSE for details.
+
+
+SaleADS E2E workflow test (Playwright)
+--------------------------------------
+
+This repository now includes an end-to-end Playwright test for validating the **SaleADS Mi Negocio full workflow**:
+
+- Test file: `tests/e2e/saleads_mi_negocio_full_test.spec.js`
+- Playwright config: `playwright.config.js`
+
+The test is environment-agnostic and does not hardcode a SaleADS domain. It can run against dev, staging or production by changing environment variables.
+
+### Prerequisites
+
+Install Node dependencies and Playwright browser(s):
+
+```
+npm install
+npx playwright install --with-deps chromium
+```
+
+### Environment variables
+
+- `SALEADS_LOGIN_URL` (or `BASE_URL`): Login page URL for the target SaleADS environment.
+- `GOOGLE_ACCOUNT_EMAIL` (optional): Google account to select if account picker appears.
+  - Defaults to `juanlucasbarbiergarzon@gmail.com`.
+- `HEADLESS` (optional): set `false` to run headed mode.
+
+### Run only this workflow test
+
+```
+SALEADS_LOGIN_URL="https://<your-saleads-environment>/login" \
+GOOGLE_ACCOUNT_EMAIL="juanlucasbarbiergarzon@gmail.com" \
+npm run e2e:saleads-mi-negocio
+```
+
+### Test behavior and evidence
+
+The test:
+
+1. Performs Google login (or continues if already logged in).
+2. Validates `Mi Negocio` sidebar expansion.
+3. Opens and validates the `Agregar Negocio` modal.
+4. Navigates to `Administrar Negocios` and validates sections.
+5. Validates `Información General`, `Detalles de la Cuenta`, and `Tus Negocios`.
+6. Opens and validates legal links (`Términos y Condiciones`, `Política de Privacidad`), handling same-tab or new-tab behavior.
+7. Captures screenshots at key checkpoints.
+8. Generates a final PASS/FAIL JSON report with per-step status and legal URLs.
+
+### Artifacts
+
+- HTML report: `playwright-report/`
+- Attachments and screenshot outputs: `test-results/`
