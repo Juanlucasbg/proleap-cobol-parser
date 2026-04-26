@@ -82,52 +82,54 @@ public class SaleadsMiNegocioFullTest {
 			appPage = appPageHolder[0];
 
 			if (appPage != null) {
+				final Page finalAppPage = appPage;
+
 				runStep("Mi Negocio menu", report, failures, new StepAction() {
 					@Override
 					public void run() throws Exception {
-						expandMiNegocioMenu(appPage, evidenceDir);
+						expandMiNegocioMenu(finalAppPage, evidenceDir);
 					}
 				});
 
 				runStep("Agregar Negocio modal", report, failures, new StepAction() {
 					@Override
 					public void run() throws Exception {
-						validateAgregarNegocioModal(appPage, evidenceDir);
+						validateAgregarNegocioModal(finalAppPage, evidenceDir);
 					}
 				});
 
 				runStep("Administrar Negocios view", report, failures, new StepAction() {
 					@Override
 					public void run() throws Exception {
-						openAdministrarNegocios(appPage, evidenceDir);
+						openAdministrarNegocios(finalAppPage, evidenceDir);
 					}
 				});
 
 				runStep("Informacion General", report, failures, new StepAction() {
 					@Override
 					public void run() throws Exception {
-						validateInformacionGeneral(appPage);
+						validateInformacionGeneral(finalAppPage);
 					}
 				});
 
 				runStep("Detalles de la Cuenta", report, failures, new StepAction() {
 					@Override
 					public void run() throws Exception {
-						validateDetallesCuenta(appPage);
+						validateDetallesCuenta(finalAppPage);
 					}
 				});
 
 				runStep("Tus Negocios", report, failures, new StepAction() {
 					@Override
 					public void run() throws Exception {
-						validateTusNegocios(appPage);
+						validateTusNegocios(finalAppPage);
 					}
 				});
 
 				runStep("Terminos y Condiciones", report, failures, new StepAction() {
 					@Override
 					public void run() throws Exception {
-						final String url = validateLegalLink(context, appPage, "Terminos y Condiciones",
+						final String url = validateLegalLink(context, finalAppPage, "Terminos y Condiciones",
 								"terminos-condiciones", evidenceDir);
 						legalUrls.put("Terminos y Condiciones", url);
 					}
@@ -136,7 +138,7 @@ public class SaleadsMiNegocioFullTest {
 				runStep("Politica de Privacidad", report, failures, new StepAction() {
 					@Override
 					public void run() throws Exception {
-						final String url = validateLegalLink(context, appPage, "Politica de Privacidad", "politica-privacidad",
+						final String url = validateLegalLink(context, finalAppPage, "Politica de Privacidad", "politica-privacidad",
 								evidenceDir);
 						legalUrls.put("Politica de Privacidad", url);
 					}
