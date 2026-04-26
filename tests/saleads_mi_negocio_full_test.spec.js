@@ -5,17 +5,19 @@ const path = require("path");
 const OUTPUT_DIR = path.join(process.cwd(), "test-results", "saleads-mi-negocio");
 const GOOGLE_ACCOUNT_EMAIL =
   process.env.SALEADS_GOOGLE_ACCOUNT_EMAIL || "juanlucasbarbiergarzon@gmail.com";
+const START_URL =
+  process.env.SALEADS_START_URL || process.env.SALEADS_URL || process.env.BASE_URL || "";
 
 const REPORT_FIELDS = [
   "Login",
   "Mi Negocio menu",
   "Agregar Negocio modal",
   "Administrar Negocios view",
-  "Informacion General",
+  "Información General",
   "Detalles de la Cuenta",
   "Tus Negocios",
-  "Terminos y Condiciones",
-  "Politica de Privacidad",
+  "Términos y Condiciones",
+  "Política de Privacidad",
 ];
 
 function slugify(value) {
@@ -48,6 +50,32 @@ async function clickByText(page, labels) {
       return;
     }
   }
+  throw new Error(`Unable to click any label from: ${labels.join(", ")}`);
+}
+
+async function clickByTextWithOptionalPopup(page, context, labels) {
+  for (const label of labels) {
+    const buttonLocator = page.getByRole("button", { name: label }).first();
+    if ((await buttonLocator.count()) > 0) {
+      const [popup] = await Promise.all([
+        context.waitForEvent("page", { timeout: 7000 }).catch(() => null),
+        buttonLocator.click(),
+      ]);
+      await waitForUiToLoad(page);
+      return popup;
+    }
+
+    const textLocator = page.getByText(label, { exact: false }).first();
+    if ((await textLocator.count()) > 0) {
+      const [popup] = await Promise.all([
+        context.waitForEvent("page", { timeout: 7000 }).catch(() => null),
+        textLocator.click(),
+      ]);
+      await waitForUiToLoad(page);
+      return popup;
+    }
+  }
+
   throw new Error(`Unable to click any label from: ${labels.join(", ")}`);
 }
 
@@ -143,19 +171,31 @@ test.describe("saleads_mi_negocio_full_test", () => {
     };
 
     await test.step("1) Login with Google", async () => {
+      if (START_URL && /about:blank/i.test(page.url())) {
+        await page.goto(START_URL, { waitUntil: "domcontentloaded" });
+      }
+      expect(
+        /about:blank/i.test(page.url()),
+        "Provide SALEADS_START_URL if the page is not preloaded on SaleADS login."
+      ).toBeFalsy();
+
       await waitForUiToLoad(page);
-      await clickByText(page, [
+      const loginPopup = await clickByTextWithOptionalPopup(page, context, [
         "Sign in with Google",
         "Iniciar sesion con Google",
         "Continuar con Google",
         "Login with Google",
       ]);
 
-      const googleAccountOption = page.getByText(GOOGLE_ACCOUNT_EMAIL, { exact: false });
+      const googleSurface = loginPopup || page;
+      await waitForUiToLoad(googleSurface);
+      const googleAccountOption = googleSurface.getByText(GOOGLE_ACCOUNT_EMAIL, { exact: false });
       if ((await googleAccountOption.count()) > 0) {
         await googleAccountOption.first().click();
-        await waitForUiToLoad(page);
+        await waitForUiToLoad(googleSurface);
       }
+      await page.bringToFront();
+      await waitForUiToLoad(page);
 
       const sidebar = page.locator("aside, nav").filter({ hasText: /negocio|dashboard|inicio/i }).first();
       await expect(sidebar).toBeVisible();
@@ -239,7 +279,7 @@ test.describe("saleads_mi_negocio_full_test", () => {
       await expect(page.getByText(/@/).first()).toBeVisible();
       await expect(page.getByText("BUSINESS PLAN", { exact: false })).toBeVisible();
       await expect(page.getByRole("button", { name: "Cambiar Plan" })).toBeVisible();
-      reportState.steps["Informacion General"] = "PASS";
+      reportState.steps["Información General"] = "PASS";
     });
 
     await test.step("6) Validate Detalles de la Cuenta", async () => {
@@ -267,10 +307,10 @@ test.describe("saleads_mi_negocio_full_test", () => {
         linkTexts: ["Terminos y Condiciones", "Términos y Condiciones"],
         headingRegex: /t[eé]rminos y condiciones/i,
         screenshotName: "08_terminos_y_condiciones",
-        stepLabel: "Terminos y Condiciones",
+        stepLabel: "Términos y Condiciones",
         reportState,
       });
-      reportState.steps["Terminos y Condiciones"] = "PASS";
+      reportState.steps["Términos y Condiciones"] = "PASS";
     });
 
     await test.step("9) Validate Politica de Privacidad", async () => {
@@ -280,10 +320,10 @@ test.describe("saleads_mi_negocio_full_test", () => {
         linkTexts: ["Politica de Privacidad", "Política de Privacidad"],
         headingRegex: /pol[ií]tica de privacidad/i,
         screenshotName: "09_politica_de_privacidad",
-        stepLabel: "Politica de Privacidad",
+        stepLabel: "Política de Privacidad",
         reportState,
       });
-      reportState.steps["Politica de Privacidad"] = "PASS";
+      reportState.steps["Política de Privacidad"] = "PASS";
     });
 
     const finalReport = {
