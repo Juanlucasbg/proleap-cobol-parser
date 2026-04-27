@@ -33,6 +33,15 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
     });
   }
 
+  function toSlug(value) {
+    return value
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "");
+  }
+
   async function clickElementByVisibleText(label) {
     const roleCandidates = [
       page.getByRole("button", { name: new RegExp(`^${label}$`, "i") }).first(),
@@ -111,7 +120,7 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
       await expect(externalPage.getByText(expectedHeading, { exact: true }).first()).toBeVisible();
       await expect(externalPage.locator("main, article, body")).toContainText(/\S+/);
       await externalPage.screenshot({
-        path: `${CHECKPOINT_DIR}/${linkText.replace(/\s+/g, "-").toLowerCase()}.png`,
+        path: `${CHECKPOINT_DIR}/${toSlug(linkText)}.png`,
         fullPage: true,
       });
       const finalUrl = externalPage.url();
@@ -124,7 +133,7 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
     await waitForUiIdle();
     await expect(page.getByText(expectedHeading, { exact: true }).first()).toBeVisible();
     await expect(page.locator("main, article, body")).toContainText(/\S+/);
-    await snap(linkText.replace(/\s+/g, "-").toLowerCase(), true);
+    await snap(toSlug(linkText), true);
     const finalUrl = page.url();
 
     await page.goBack().catch(async () => {
@@ -152,6 +161,16 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
       });
       return false;
     }
+  }
+
+  const startUrl = process.env.SALEADS_URL || process.env.SALEADS_LOGIN_URL || "";
+  if (startUrl) {
+    await page.goto(startUrl, { waitUntil: "domcontentloaded" });
+    await waitForUiIdle();
+  } else if (page.url() === "about:blank") {
+    throw new Error(
+      "La prueba requiere una pagina de login cargada. Define SALEADS_URL o SALEADS_LOGIN_URL con la URL de login del entorno actual."
+    );
   }
 
   const loginOk = await markStep("Login", async () => {
