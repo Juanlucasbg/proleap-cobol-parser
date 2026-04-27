@@ -53,9 +53,6 @@ public class SaleadsMiNegocioFullTest {
         Assume.assumeTrue("Skipping test: enable with SALEADS_RUN_ENABLED=true (or -Dsaleads.run.enabled=true).", runEnabled);
 
         final String startUrl = readConfig("saleads.start.url", "SALEADS_START_URL", "").trim();
-        Assume.assumeTrue(
-                "Skipping test: set SALEADS_START_URL (or -Dsaleads.start.url) to the login page URL of the current environment.",
-                !startUrl.isEmpty());
 
         final ChromeOptions options = new ChromeOptions();
         options.addArguments("--window-size=1920,1080", "--disable-dev-shm-usage", "--no-sandbox", "--disable-gpu");
@@ -72,7 +69,9 @@ public class SaleadsMiNegocioFullTest {
 
         wait = new WebDriverWait(driver, DEFAULT_TIMEOUT);
         evidenceDir = createEvidenceDir();
-        driver.get(startUrl);
+        if (!startUrl.isEmpty()) {
+            driver.get(startUrl);
+        }
         waitForUiToLoad();
     }
 
@@ -161,6 +160,7 @@ public class SaleadsMiNegocioFullTest {
     }
 
     private void stepValidateInformacionGeneral() {
+        assertUserNameVisible();
         assertEmailVisible();
         assertAnyTextVisible("BUSINESS PLAN");
         assertAnyTextVisible("Cambiar Plan");
@@ -360,6 +360,47 @@ public class SaleadsMiNegocioFullTest {
     private void assertEmailVisible() {
         final By emailLocator = By.xpath("//*[contains(text(),'@') and contains(text(),'.')]");
         wait.until(ExpectedConditions.visibilityOfElementLocated(emailLocator));
+    }
+
+    private void assertUserNameVisible() {
+        final String expectedName = readConfig("saleads.expected.user.name", "SALEADS_EXPECTED_USER_NAME", "").trim();
+        if (!expectedName.isEmpty()) {
+            assertAnyTextVisible(expectedName);
+            return;
+        }
+
+        final WebElement container = wait.until(ExpectedConditions.visibilityOfElementLocated(
+                By.xpath("//*[normalize-space(.)='Información General']/ancestor::*[self::section or self::div][1]")));
+        final List<WebElement> candidates = container.findElements(By.xpath(".//*[normalize-space(text())!='']"));
+
+        for (WebElement candidate : candidates) {
+            if (!candidate.isDisplayed()) {
+                continue;
+            }
+            final String text = candidate.getText().trim();
+            if (text.length() < 3 || text.length() > 80) {
+                continue;
+            }
+            if (text.contains("@")) {
+                continue;
+            }
+            if (text.equalsIgnoreCase("Información General")
+                    || text.equalsIgnoreCase("BUSINESS PLAN")
+                    || text.equalsIgnoreCase("Cambiar Plan")
+                    || text.equalsIgnoreCase("Cuenta creada")
+                    || text.equalsIgnoreCase("Estado activo")
+                    || text.equalsIgnoreCase("Idioma seleccionado")
+                    || text.equalsIgnoreCase("Tus Negocios")
+                    || text.equalsIgnoreCase("Sección Legal")) {
+                continue;
+            }
+            if (text.matches(".*[A-Za-zÁÉÍÓÚÜÑáéíóúüñ].*")) {
+                return;
+            }
+        }
+
+        throw new AssertionError(
+                "User name was not clearly visible. Set SALEADS_EXPECTED_USER_NAME for a strict assertion if needed.");
     }
 
     private void assertLegalContentVisible() {
