@@ -97,11 +97,21 @@ public class SaleadsMiNegocioFullTest {
 		runStep("Mi Negocio menu", this::step2OpenMiNegocioMenu);
 		runStep("Agregar Negocio modal", this::step3ValidateAgregarNegocioModal);
 		runStep("Administrar Negocios view", this::step4OpenAdministrarNegocios);
-		runStep("Informacion General", this::step5ValidateInformacionGeneral);
-		runStep("Detalles de la Cuenta", this::step6ValidateDetallesCuenta);
-		runStep("Tus Negocios", this::step7ValidateTusNegocios);
-		runStep("Terminos y Condiciones", () -> step8ValidateLegalPage("Términos y Condiciones", "Términos y Condiciones", "terminos-y-condiciones"));
-		runStep("Politica de Privacidad", () -> step8ValidateLegalPage("Política de Privacidad", "Política de Privacidad", "politica-de-privacidad"));
+
+		if (Boolean.TRUE.equals(stepResults.get("Administrar Negocios view"))) {
+			runStep("Informacion General", this::step5ValidateInformacionGeneral);
+			runStep("Detalles de la Cuenta", this::step6ValidateDetallesCuenta);
+			runStep("Tus Negocios", this::step7ValidateTusNegocios);
+			runStep("Terminos y Condiciones", () -> step8ValidateLegalPage("Términos y Condiciones", "Términos y Condiciones", "terminos-y-condiciones"));
+			runStep("Politica de Privacidad", () -> step8ValidateLegalPage("Política de Privacidad", "Política de Privacidad", "politica-de-privacidad"));
+		} else {
+			// Downstream sections depend on a successful "Administrar Negocios" navigation.
+			markStepAsFailed("Informacion General");
+			markStepAsFailed("Detalles de la Cuenta");
+			markStepAsFailed("Tus Negocios");
+			markStepAsFailed("Terminos y Condiciones");
+			markStepAsFailed("Politica de Privacidad");
+		}
 
 		final List<String> failed = new ArrayList<>();
 		for (final Map.Entry<String, Boolean> entry : stepResults.entrySet()) {
@@ -275,6 +285,10 @@ public class SaleadsMiNegocioFullTest {
 			saveScreenshot("FAILED-" + normalize(stepName));
 			System.err.println("Step failed: " + stepName + " -> " + ex.getMessage());
 		}
+	}
+
+	private void markStepAsFailed(final String stepName) {
+		stepResults.put(stepName, false);
 	}
 
 	private void selectGoogleAccountIfShown() {
