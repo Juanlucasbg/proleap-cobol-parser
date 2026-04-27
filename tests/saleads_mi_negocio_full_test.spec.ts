@@ -2,7 +2,7 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 import fs from "node:fs/promises";
 import path from "node:path";
 
-type ReportStatus = "PASS" | "FAIL" | "SKIPPED";
+type ReportStatus = "PASS" | "FAIL";
 
 type StepResult = {
   name: string;
@@ -34,7 +34,7 @@ const stepResults = (): Record<string, StepResult> =>
       step.key,
       {
         name: step.name,
-        status: "SKIPPED",
+        status: "FAIL",
         details: [],
         screenshots: [],
         urls: [],
@@ -55,9 +55,18 @@ const setFail = (result: StepResult, detail: string): void => {
   addDetail(result, detail);
 };
 
-const setSkipped = (result: StepResult, detail: string): void => {
-  result.status = "SKIPPED";
-  addDetail(result, detail);
+const setFailedPrerequisite = (result: StepResult, detail: string): void => {
+  setFail(result, `Prerequisite failed: ${detail}`);
+};
+
+const setFailWithScreenshot = async (
+  page: Page,
+  result: StepResult,
+  detail: string,
+  screenshotFile: string,
+): Promise<void> => {
+  setFail(result, detail);
+  await takeEvidenceShot(page, result, screenshotFile, true).catch(() => undefined);
 };
 
 const takeEvidenceShot = async (
@@ -217,7 +226,12 @@ test.describe("saleads_mi_negocio_full_test", () => {
         setPass(loginStep);
         await takeEvidenceShot(page, loginStep, "01-dashboard-loaded.png");
       } catch (error) {
-        setFail(loginStep, `Login flow failed: ${(error as Error).message}`);
+        await setFailWithScreenshot(
+          page,
+          loginStep,
+          `Login flow failed: ${(error as Error).message}`,
+          "01-login-failure.png",
+        );
       }
 
       // Step 2: Open Mi Negocio menu
@@ -230,10 +244,15 @@ test.describe("saleads_mi_negocio_full_test", () => {
           setPass(menuStep);
           await takeEvidenceShot(page, menuStep, "02-mi-negocio-menu-expanded.png");
         } catch (error) {
-          setFail(menuStep, `Mi Negocio menu validation failed: ${(error as Error).message}`);
+          await setFailWithScreenshot(
+            page,
+            menuStep,
+            `Mi Negocio menu validation failed: ${(error as Error).message}`,
+            "02-mi-negocio-menu-failure.png",
+          );
         }
       } else {
-        setSkipped(menuStep, "Skipped because Login failed.");
+        setFailedPrerequisite(menuStep, "Login failed.");
       }
 
       // Step 3: Validate Agregar Negocio modal
@@ -260,10 +279,15 @@ test.describe("saleads_mi_negocio_full_test", () => {
           await clickVisibleByText(page, ["Cancelar"]);
           setPass(modalStep);
         } catch (error) {
-          setFail(modalStep, `Agregar Negocio modal validation failed: ${(error as Error).message}`);
+          await setFailWithScreenshot(
+            page,
+            modalStep,
+            `Agregar Negocio modal validation failed: ${(error as Error).message}`,
+            "03-agregar-negocio-modal-failure.png",
+          );
         }
       } else {
-        setSkipped(modalStep, "Skipped because Mi Negocio menu failed.");
+        setFailedPrerequisite(modalStep, "Mi Negocio menu failed.");
       }
 
       // Step 4: Open Administrar Negocios
@@ -281,10 +305,15 @@ test.describe("saleads_mi_negocio_full_test", () => {
           setPass(adminStep);
           await takeEvidenceShot(page, adminStep, "04-administrar-negocios-full-page.png", true);
         } catch (error) {
-          setFail(adminStep, `Administrar Negocios view validation failed: ${(error as Error).message}`);
+          await setFailWithScreenshot(
+            page,
+            adminStep,
+            `Administrar Negocios view validation failed: ${(error as Error).message}`,
+            "04-administrar-negocios-failure.png",
+          );
         }
       } else {
-        setSkipped(adminStep, "Skipped because Mi Negocio menu failed.");
+        setFailedPrerequisite(adminStep, "Mi Negocio menu failed.");
       }
 
       // Step 5: Validate Información General
@@ -298,10 +327,15 @@ test.describe("saleads_mi_negocio_full_test", () => {
           await visibleInInfo("Cambiar Plan");
           setPass(infoStep);
         } catch (error) {
-          setFail(infoStep, `Información General validation failed: ${(error as Error).message}`);
+          await setFailWithScreenshot(
+            page,
+            infoStep,
+            `Información General validation failed: ${(error as Error).message}`,
+            "05-informacion-general-failure.png",
+          );
         }
       } else {
-        setSkipped(infoStep, "Skipped because Administrar Negocios view failed.");
+        setFailedPrerequisite(infoStep, "Administrar Negocios view failed.");
       }
 
       // Step 6: Validate Detalles de la Cuenta
@@ -312,10 +346,15 @@ test.describe("saleads_mi_negocio_full_test", () => {
           await validateVisibleText(page, "Idioma seleccionado");
           setPass(detailsStep);
         } catch (error) {
-          setFail(detailsStep, `Detalles de la Cuenta validation failed: ${(error as Error).message}`);
+          await setFailWithScreenshot(
+            page,
+            detailsStep,
+            `Detalles de la Cuenta validation failed: ${(error as Error).message}`,
+            "06-detalles-cuenta-failure.png",
+          );
         }
       } else {
-        setSkipped(detailsStep, "Skipped because Administrar Negocios view failed.");
+        setFailedPrerequisite(detailsStep, "Administrar Negocios view failed.");
       }
 
       // Step 7: Validate Tus Negocios
@@ -326,10 +365,15 @@ test.describe("saleads_mi_negocio_full_test", () => {
           await validateVisibleText(page, "Tienes 2 de 3 negocios");
           setPass(negociosStep);
         } catch (error) {
-          setFail(negociosStep, `Tus Negocios validation failed: ${(error as Error).message}`);
+          await setFailWithScreenshot(
+            page,
+            negociosStep,
+            `Tus Negocios validation failed: ${(error as Error).message}`,
+            "07-tus-negocios-failure.png",
+          );
         }
       } else {
-        setSkipped(negociosStep, "Skipped because Administrar Negocios view failed.");
+        setFailedPrerequisite(negociosStep, "Administrar Negocios view failed.");
       }
 
       // Step 8: Validate Términos y Condiciones
@@ -345,10 +389,15 @@ test.describe("saleads_mi_negocio_full_test", () => {
           );
           setPass(termsStep);
         } catch (error) {
-          setFail(termsStep, `Términos y Condiciones validation failed: ${(error as Error).message}`);
+          await setFailWithScreenshot(
+            page,
+            termsStep,
+            `Términos y Condiciones validation failed: ${(error as Error).message}`,
+            "08-terminos-y-condiciones-failure.png",
+          );
         }
       } else {
-        setSkipped(termsStep, "Skipped because Administrar Negocios view failed.");
+        setFailedPrerequisite(termsStep, "Administrar Negocios view failed.");
       }
 
       // Step 9: Validate Política de Privacidad
@@ -364,12 +413,22 @@ test.describe("saleads_mi_negocio_full_test", () => {
           );
           setPass(privacyStep);
         } catch (error) {
-          setFail(privacyStep, `Política de Privacidad validation failed: ${(error as Error).message}`);
+          await setFailWithScreenshot(
+            page,
+            privacyStep,
+            `Política de Privacidad validation failed: ${(error as Error).message}`,
+            "09-politica-de-privacidad-failure.png",
+          );
         }
       } else {
-        setSkipped(privacyStep, "Skipped because Administrar Negocios view failed.");
+        setFailedPrerequisite(privacyStep, "Administrar Negocios view failed.");
       }
     } finally {
+      for (const result of Object.values(results)) {
+        if (result.status === "FAIL" && result.details.length === 0) {
+          addDetail(result, "Step failed without a specific error detail.");
+        }
+      }
       await writeSummary(results);
       const hardFailures = Object.values(results).filter((step) => step.status === "FAIL");
       expect(
