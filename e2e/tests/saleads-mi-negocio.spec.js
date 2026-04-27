@@ -117,10 +117,11 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
 
   const checkpoints = [];
   const accountEmail = "juanlucasbarbiergarzon@gmail.com";
-  await ensureLoginPageContext(page);
 
   await test.step("Step 1 - Login with Google", async () => {
     await runStep(results, "Login", async () => {
+      await ensureLoginPageContext(page);
+
       const { targetPage, openedInNewTab } = await withNewTabSupport(page, async () => {
         const googleButton = page
           .locator("button, a, div[role='button']")
