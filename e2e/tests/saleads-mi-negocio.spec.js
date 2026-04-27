@@ -87,7 +87,15 @@ async function ensureLoginPageContext(page) {
   }
 }
 
-async function runStep(results, stepName, handler) {
+async function runStep(results, stepName, handler, options = {}) {
+  const precondition = options.precondition ?? true;
+  const dependencyError = options.dependencyError ?? "Skipped because a prerequisite step failed.";
+  if (!precondition) {
+    results[stepName].status = "FAIL";
+    results[stepName].details.push(dependencyError);
+    return false;
+  }
+
   try {
     const detail = await handler();
     results[stepName].status = "PASS";
@@ -117,9 +125,12 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
 
   const checkpoints = [];
   const accountEmail = "juanlucasbarbiergarzon@gmail.com";
+  let loginPassed = false;
+  let miNegocioMenuPassed = false;
+  let administrarNegociosPassed = false;
 
   await test.step("Step 1 - Login with Google", async () => {
-    await runStep(results, "Login", async () => {
+    loginPassed = await runStep(results, "Login", async () => {
       await ensureLoginPageContext(page);
 
       const { targetPage, openedInNewTab } = await withNewTabSupport(page, async () => {
@@ -151,7 +162,10 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
   });
 
   await test.step("Step 2 - Open Mi Negocio menu", async () => {
-    await runStep(results, "Mi Negocio menu", async () => {
+    miNegocioMenuPassed = await runStep(
+      results,
+      "Mi Negocio menu",
+      async () => {
       await ensureVisibleText(page, "Negocio");
       await clickByTextAndWait(page, "Mi Negocio");
       await ensureVisibleText(page, "Agregar Negocio");
@@ -160,11 +174,16 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
       const shot = await saveCheckpoint(page, "02-mi-negocio-expanded");
       checkpoints.push({ step: 2, path: shot });
       return "Submenu expanded and options are visible.";
-    });
+      },
+      { precondition: loginPassed, dependencyError: "Skipped because Login failed." }
+    );
   });
 
   await test.step("Step 3 - Validate Agregar Negocio modal", async () => {
-    await runStep(results, "Agregar Negocio modal", async () => {
+    await runStep(
+      results,
+      "Agregar Negocio modal",
+      async () => {
       await clickByTextAndWait(page, "Agregar Negocio");
       await ensureVisibleText(page, "Crear Nuevo Negocio");
       await ensureVisibleText(page, "Nombre del Negocio");
@@ -182,11 +201,16 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
       checkpoints.push({ step: 3, path: shot });
       await clickByTextAndWait(page, "Cancelar");
       return "Modal validated and closed via Cancelar.";
-    });
+      },
+      { precondition: miNegocioMenuPassed, dependencyError: "Skipped because Mi Negocio menu step failed." }
+    );
   });
 
   await test.step("Step 4 - Open Administrar Negocios", async () => {
-    await runStep(results, "Administrar Negocios view", async () => {
+    administrarNegociosPassed = await runStep(
+      results,
+      "Administrar Negocios view",
+      async () => {
       const administrarOption = page.getByText(asRegex("Administrar Negocios")).first();
       if (!(await administrarOption.isVisible({ timeout: 3_000 }).catch(() => false))) {
         await clickByTextAndWait(page, "Mi Negocio");
@@ -201,11 +225,16 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
       const shot = await saveCheckpoint(page, "04-administrar-negocios-page", true);
       checkpoints.push({ step: 4, path: shot });
       return "All main sections are visible.";
-    });
+      },
+      { precondition: miNegocioMenuPassed, dependencyError: "Skipped because Mi Negocio menu step failed." }
+    );
   });
 
   await test.step("Step 5 - Validate Información General", async () => {
-    await runStep(results, "Información General", async () => {
+    await runStep(
+      results,
+      "Información General",
+      async () => {
       await ensureVisibleText(page, "Información General");
       await ensureVisibleText(page, "BUSINESS PLAN");
       await ensureVisibleText(page, "Cambiar Plan");
@@ -242,21 +271,37 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
 
       expect(candidateName, `Expected visible user name. Section text: ${normalized}`).toBeTruthy();
       return `User name and email visible (${emailMatch[0]}).`;
-    });
+      },
+      {
+        precondition: administrarNegociosPassed,
+        dependencyError: "Skipped because Administrar Negocios view step failed."
+      }
+    );
   });
 
   await test.step("Step 6 - Validate Detalles de la Cuenta", async () => {
-    await runStep(results, "Detalles de la Cuenta", async () => {
+    await runStep(
+      results,
+      "Detalles de la Cuenta",
+      async () => {
       await ensureVisibleText(page, "Detalles de la Cuenta");
       await ensureVisibleText(page, "Cuenta creada");
       await ensureVisibleText(page, "Estado activo");
       await ensureVisibleText(page, "Idioma seleccionado");
       return "All expected detail labels visible.";
-    });
+      },
+      {
+        precondition: administrarNegociosPassed,
+        dependencyError: "Skipped because Administrar Negocios view step failed."
+      }
+    );
   });
 
   await test.step("Step 7 - Validate Tus Negocios", async () => {
-    await runStep(results, "Tus Negocios", async () => {
+    await runStep(
+      results,
+      "Tus Negocios",
+      async () => {
       await ensureVisibleText(page, "Tus Negocios");
       await ensureVisibleText(page, "Agregar Negocio");
       await ensureVisibleText(page, "Tienes 2 de 3 negocios");
@@ -268,11 +313,19 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
       const sectionText = await businessSection.innerText();
       expect(sectionText.trim().length, "Expected business list content in Tus Negocios").toBeGreaterThan(40);
       return "Business list section and quota text visible.";
-    });
+      },
+      {
+        precondition: administrarNegociosPassed,
+        dependencyError: "Skipped because Administrar Negocios view step failed."
+      }
+    );
   });
 
   await test.step("Step 8 - Validate Términos y Condiciones", async () => {
-    await runStep(results, "Términos y Condiciones", async () => {
+    await runStep(
+      results,
+      "Términos y Condiciones",
+      async () => {
       await ensureVisibleText(page, "Sección Legal");
 
       const { targetPage, openedInNewTab } = await withNewTabSupport(page, async () => {
@@ -294,11 +347,19 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
         await waitForUiSettled(page);
       }
       return `Validated legal page. URL: ${finalUrl}`;
-    });
+      },
+      {
+        precondition: administrarNegociosPassed,
+        dependencyError: "Skipped because Administrar Negocios view step failed."
+      }
+    );
   });
 
   await test.step("Step 9 - Validate Política de Privacidad", async () => {
-    await runStep(results, "Política de Privacidad", async () => {
+    await runStep(
+      results,
+      "Política de Privacidad",
+      async () => {
       const { targetPage, openedInNewTab } = await withNewTabSupport(page, async () => {
         await clickByTextAndWait(page, "Política de Privacidad");
       });
@@ -318,7 +379,12 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
         await waitForUiSettled(page);
       }
       return `Validated legal page. URL: ${finalUrl}`;
-    });
+      },
+      {
+        precondition: administrarNegociosPassed,
+        dependencyError: "Skipped because Administrar Negocios view step failed."
+      }
+    );
   });
 
   await test.step("Step 10 - Final report", async () => {
