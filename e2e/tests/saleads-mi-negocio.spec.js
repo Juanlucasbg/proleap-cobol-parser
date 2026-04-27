@@ -4,6 +4,7 @@ const { test, expect } = require("@playwright/test");
 
 const OUTPUT_DIR = path.resolve(process.cwd(), "e2e", "artifacts", "saleads-mi-negocio");
 const SCREENSHOTS_DIR = path.join(OUTPUT_DIR, "screenshots");
+const CHECK_TIMEOUT_MS = Number(process.env.SALEADS_CHECK_TIMEOUT_MS || 7000);
 
 const googleAccountEmail = process.env.SALEADS_GOOGLE_ACCOUNT || "juanlucasbarbiergarzon@gmail.com";
 const appUrl = process.env.SALEADS_URL;
@@ -20,8 +21,13 @@ function normalizeName(value) {
 }
 
 async function waitForUiLoad(page) {
-  await page.waitForLoadState("domcontentloaded");
-  await page.waitForLoadState("networkidle");
+  // Avoid hard dependency on networkidle because SPAs can keep network busy.
+  await page.waitForLoadState("domcontentloaded", { timeout: 10000 }).catch(() => null);
+  const possibleLoaders = page.locator(
+    '[aria-busy="true"], [role="progressbar"], .loading, .loader, .spinner, [data-testid*="loading"]'
+  );
+  await possibleLoaders.first().waitFor({ state: "hidden", timeout: 5000 }).catch(() => null);
+  await page.waitForTimeout(750);
 }
 
 async function clickAndWait(target) {
@@ -72,7 +78,7 @@ async function captureScreenshot(page, steps, key, title, checkpointName, option
 
 async function expectVisibleAndRecord(steps, key, title, locator, checkName) {
   try {
-    await expect(locator).toBeVisible();
+    await expect(locator).toBeVisible({ timeout: CHECK_TIMEOUT_MS });
     addCheck(steps, key, title, checkName, true);
     return true;
   } catch (error) {
@@ -187,6 +193,43 @@ function buildSummary(steps) {
   };
 }
 
+function writeFinalReports(page, steps) {
+  const summary = buildSummary(steps);
+  const finalReport = {
+    testName: "saleads_mi_negocio_full_test",
+    generatedAt: new Date().toISOString(),
+    environment: {
+      saleadsUrlProvided: Boolean(appUrl),
+      currentUrl: page.url(),
+      googleAccountEmail
+    },
+    summary,
+    steps
+  };
+
+  const reportFile = path.join(OUTPUT_DIR, "final-report.json");
+  fs.writeFileSync(reportFile, JSON.stringify(finalReport, null, 2), "utf8");
+
+  const markdownLines = [
+    "# SaleADS Mi Negocio - Final Report",
+    "",
+    `Generated at: ${finalReport.generatedAt}`,
+    "",
+    "## PASS/FAIL Summary",
+    ""
+  ];
+
+  for (const [label, pass] of Object.entries(summary)) {
+    markdownLines.push(`- ${label}: ${pass ? "PASS" : "FAIL"}`);
+  }
+
+  markdownLines.push("", `JSON report: ${reportFile}`);
+  markdownLines.push(`Screenshots folder: ${SCREENSHOTS_DIR}`);
+  fs.writeFileSync(path.join(OUTPUT_DIR, "final-report.md"), markdownLines.join("\n"), "utf8");
+
+  return summary;
+}
+
 test.describe("SaleADS Mi Negocio workflow", () => {
   test("saleads_mi_negocio_full_test", async ({ page }) => {
     ensureOutputDirs();
@@ -206,6 +249,22 @@ test.describe("SaleADS Mi Negocio workflow", () => {
       await page.goto(appUrl, { waitUntil: "domcontentloaded" });
     }
     await waitForUiLoad(page);
+
+    const currentUrl = page.url();
+    if (!appUrl && currentUrl === "about:blank") {
+      addCheck(
+        steps,
+        "login",
+        "Login",
+        "Login page available",
+        false,
+        "No SALEADS_URL provided and browser started on about:blank. Provide SALEADS_URL in headless/CI mode."
+      );
+      const summary = writeFinalReports(page, steps);
+      const allPassed = Object.values(summary).every(Boolean);
+      expect(allPassed).toBeTruthy();
+      return;
+    }
 
     const loginClicked = await clickAny(
       page,
@@ -285,7 +344,17 @@ test.describe("SaleADS Mi Negocio workflow", () => {
       page.getByText(/administrar negocios/i),
       "Administrar Negocios is visible"
     );
-    addCheck(steps, "miNegocioMenu", "Mi Negocio menu", "Submenu expands", true);
+    const submenuExpanded =
+      (steps.miNegocioMenu.checks.find((check) => check.name === "Agregar Negocio is visible")?.pass ?? false) &&
+      (steps.miNegocioMenu.checks.find((check) => check.name === "Administrar Negocios is visible")?.pass ?? false);
+    addCheck(
+      steps,
+      "miNegocioMenu",
+      "Mi Negocio menu",
+      "Submenu expands",
+      submenuExpanded,
+      submenuExpanded ? "" : "Submenu did not expose expected options."
+    );
     await captureScreenshot(page, steps, "miNegocioMenu", "Mi Negocio menu", "02-mi-negocio-expanded");
 
     const agregarNegocioClicked = await clickAny(
@@ -488,39 +557,7 @@ test.describe("SaleADS Mi Negocio workflow", () => {
     await openLegalLink(page, steps, "terminos", "Términos y Condiciones", "Términos y Condiciones", "05-terminos-condiciones");
     await openLegalLink(page, steps, "privacidad", "Política de Privacidad", "Política de Privacidad", "06-politica-privacidad");
 
-    const summary = buildSummary(steps);
-    const finalReport = {
-      testName: "saleads_mi_negocio_full_test",
-      generatedAt: new Date().toISOString(),
-      environment: {
-        saleadsUrlProvided: Boolean(appUrl),
-        currentUrl: page.url(),
-        googleAccountEmail
-      },
-      summary,
-      steps
-    };
-
-    const reportFile = path.join(OUTPUT_DIR, "final-report.json");
-    fs.writeFileSync(reportFile, JSON.stringify(finalReport, null, 2), "utf8");
-
-    const markdownLines = [
-      "# SaleADS Mi Negocio - Final Report",
-      "",
-      `Generated at: ${finalReport.generatedAt}`,
-      "",
-      "## PASS/FAIL Summary",
-      ""
-    ];
-
-    for (const [label, pass] of Object.entries(summary)) {
-      markdownLines.push(`- ${label}: ${pass ? "PASS" : "FAIL"}`);
-    }
-
-    markdownLines.push("", `JSON report: ${reportFile}`);
-    markdownLines.push(`Screenshots folder: ${SCREENSHOTS_DIR}`);
-    fs.writeFileSync(path.join(OUTPUT_DIR, "final-report.md"), markdownLines.join("\n"), "utf8");
-
+    const summary = writeFinalReports(page, steps);
     const allPassed = Object.values(summary).every(Boolean);
     expect(allPassed).toBeTruthy();
   });
