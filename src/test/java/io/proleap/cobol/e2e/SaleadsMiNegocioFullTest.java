@@ -103,7 +103,9 @@ public class SaleadsMiNegocioFullTest {
 	@After
 	public void tearDown() throws IOException {
 		try {
-			writeReport();
+			if (!report.isEmpty()) {
+				writeReport();
+			}
 		} finally {
 			if (driver != null) {
 				driver.quit();
@@ -535,6 +537,9 @@ public class SaleadsMiNegocioFullTest {
 	}
 
 	private void writeReport() throws IOException {
+		if (reportPath.getParent() != null) {
+			Files.createDirectories(reportPath.getParent());
+		}
 		Files.writeString(reportPath, buildSummary(), StandardCharsets.UTF_8);
 	}
 
