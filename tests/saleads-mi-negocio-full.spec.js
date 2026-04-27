@@ -124,19 +124,8 @@ function newReport() {
   };
 }
 
-function ensureAppUrlConfigured() {
-  const configured = process.env.SALEADS_BASE_URL;
-  if (configured && configured.trim()) {
-    return;
-  }
-  throw new Error(
-    "SALEADS_BASE_URL env var is required so this test can target any SaleADS environment without hardcoded URLs."
-  );
-}
-
 test.describe("SaleADS Mi Negocio full workflow", () => {
   test("saleads_mi_negocio_full_test", async ({ page, context }) => {
-    ensureAppUrlConfigured();
     const report = newReport();
     const evidences = [];
     const notes = [];
@@ -188,6 +177,13 @@ test.describe("SaleADS Mi Negocio full workflow", () => {
 
     let scenarioError = null;
     try {
+      const configuredBaseUrl = process.env.SALEADS_BASE_URL;
+      if (!configuredBaseUrl || !configuredBaseUrl.trim()) {
+        throw new Error(
+          "SALEADS_BASE_URL env var is required so this test can target any SaleADS environment without hardcoded URLs."
+        );
+      }
+
       // Step 1: Login with Google
       await page.goto("/", { waitUntil: "domcontentloaded" });
       await waitForUi(page);

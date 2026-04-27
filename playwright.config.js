@@ -17,6 +17,7 @@ module.exports = defineConfig({
     ["json", { outputFile: "e2e-artifacts/reports/mi-negocio-playwright-report.json" }]
   ],
   use: {
+    baseURL: process.env.SALEADS_BASE_URL || undefined,
     headless: process.env.HEADLESS === "false" ? false : true,
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
