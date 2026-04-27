@@ -194,6 +194,39 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+Browser E2E automation (SaleADS workflow)
+----------------------------------------
+
+This repository also contains an optional Playwright-based UI automation for the
+`saleads_mi_negocio_full_test` workflow.
+
+The test is intentionally environment-agnostic and does not hardcode a domain.
+Provide the target environment at runtime using `SALEADS_BASE_URL`.
+
+### Setup
+
+```bash
+npm install
+npm run pw:install
+```
+
+### Run
+
+```bash
+SALEADS_BASE_URL="https://<current-saleads-environment>" npm run test:mi-negocio
+```
+
+Optional:
+
+- `HEADLESS=false` to run headed
+- `SALEADS_UI_WAIT_MS=1500` to tune post-click UI waits for slower environments
+
+### Artifacts
+
+- Checkpoint screenshots: `e2e-artifacts/screenshots/`
+- Final PASS/FAIL report:
+  `e2e-artifacts/reports/saleads_mi_negocio_full_test.report.json`
+
 
 Release process
 ---------------

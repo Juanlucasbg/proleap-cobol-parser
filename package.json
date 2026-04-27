@@ -1,0 +1,15 @@
+{
+  "name": "saleads-e2e-workflows",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Environment-agnostic SaleADS end-to-end workflow tests",
+  "scripts": {
+    "test:e2e": "playwright test",
+    "test:mi-negocio": "playwright test tests/saleads-mi-negocio-full.spec.js",
+    "test:mi-negocio:headed": "playwright test tests/saleads-mi-negocio-full.spec.js --headed",
+    "pw:install": "playwright install --with-deps chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.54.1"
+  }
+}
