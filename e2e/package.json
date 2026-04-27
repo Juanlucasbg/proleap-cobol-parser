@@ -1,0 +1,15 @@
+{
+  "name": "saleads-e2e-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Environment-agnostic Playwright E2E tests for SaleADS.ai",
+  "scripts": {
+    "test": "playwright test",
+    "test:mi-negocio": "playwright test tests/saleads-mi-negocio.spec.js",
+    "test:mi-negocio:headed": "playwright test tests/saleads-mi-negocio.spec.js --headed",
+    "install:browsers": "playwright install --with-deps chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "latest"
+  }
+}
