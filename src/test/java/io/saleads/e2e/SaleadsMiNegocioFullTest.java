@@ -8,7 +8,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.Keys;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.TimeoutException;
@@ -16,7 +15,6 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -52,11 +50,11 @@ public class SaleadsMiNegocioFullTest {
 	private static final String MI_NEGOCIO_MENU = "Mi Negocio menu";
 	private static final String AGREGAR_NEGOCIO_MODAL = "Agregar Negocio modal";
 	private static final String ADMINISTRAR_NEGOCIOS_VIEW = "Administrar Negocios view";
-	private static final String INFORMACION_GENERAL = "Informacion General";
+	private static final String INFORMACION_GENERAL = "Informaci\u00f3n General";
 	private static final String DETALLES_CUENTA = "Detalles de la Cuenta";
 	private static final String TUS_NEGOCIOS = "Tus Negocios";
-	private static final String TERMINOS = "Terminos y Condiciones";
-	private static final String PRIVACIDAD = "Politica de Privacidad";
+	private static final String TERMINOS = "T\u00e9rminos y Condiciones";
+	private static final String PRIVACIDAD = "Pol\u00edtica de Privacidad";
 
 	private static final List<String> REPORT_ORDER = Arrays.asList(
 			LOGIN,
@@ -112,7 +110,9 @@ public class SaleadsMiNegocioFullTest {
 	@After
 	public void tearDown() {
 		try {
-			printFinalReport();
+			if (screenshotsDir != null || !results.isEmpty()) {
+				printFinalReport();
+			}
 		} finally {
 			if (driver != null) {
 				driver.quit();
@@ -183,6 +183,7 @@ public class SaleadsMiNegocioFullTest {
 
 		final WebElement nameInput = findInputByLabel("Nombre del Negocio");
 		nameInput.click();
+		waitForUiSettled();
 		nameInput.clear();
 		nameInput.sendKeys("Negocio Prueba Automatizacion");
 		clickByAnyVisibleText("Cancelar");
@@ -198,7 +199,7 @@ public class SaleadsMiNegocioFullTest {
 		assertVisibleText("Detalles de la Cuenta");
 		assertVisibleText("Tus Negocios");
 		assertVisibleText("Secci\u00f3n Legal");
-		takeScreenshot("04-administrar-negocios");
+		takeFullPageScreenshot("04-administrar-negocios");
 	}
 
 	private void stepValidateInformacionGeneral() {
@@ -305,11 +306,13 @@ public class SaleadsMiNegocioFullTest {
 	}
 
 	private void clickByAnyVisibleText(final String text) {
+		final String textLiteral = xpathLiteral(text);
 		final List<By> locators = Arrays.asList(
-				By.xpath("//button[normalize-space()='" + text + "']"),
-				By.xpath("//a[normalize-space()='" + text + "']"),
-				By.xpath("//*[@role='button' and normalize-space()='" + text + "']"),
-				By.xpath("//*[normalize-space()='" + text + "']")
+				By.xpath("//button[normalize-space(.)=" + textLiteral + "]"),
+				By.xpath("//a[normalize-space(.)=" + textLiteral + "]"),
+				By.xpath("//*[@role='button' and normalize-space(.)=" + textLiteral + "]"),
+				By.xpath("//*[normalize-space(.)=" + textLiteral + "]"),
+				By.xpath("//*[contains(normalize-space(.)," + textLiteral + ")]")
 		);
 
 		WebElement target = null;
@@ -389,8 +392,10 @@ public class SaleadsMiNegocioFullTest {
 
 	private boolean isTextVisible(final String text) {
 		try {
-			final By textLocator = By.xpath("//*[normalize-space()='" + text + "']");
-			final List<WebElement> elements = driver.findElements(textLocator);
+			final String textLiteral = xpathLiteral(text);
+			final List<WebElement> elements = new ArrayList<>();
+			elements.addAll(driver.findElements(By.xpath("//*[normalize-space(.)=" + textLiteral + "]")));
+			elements.addAll(driver.findElements(By.xpath("//*[contains(normalize-space(.)," + textLiteral + ")]")));
 			for (final WebElement element : elements) {
 				if (element.isDisplayed()) {
 					return true;
@@ -408,10 +413,11 @@ public class SaleadsMiNegocioFullTest {
 	}
 
 	private WebElement findInputByLabel(final String labelText) {
+		final String labelLiteral = xpathLiteral(labelText);
 		final List<By> candidateLocators = Arrays.asList(
-				By.xpath("//label[normalize-space()='" + labelText + "']/following::input[1]"),
-				By.xpath("//*[normalize-space()='" + labelText + "']/following::input[1]"),
-				By.xpath("//input[@placeholder='" + labelText + "']")
+				By.xpath("//label[normalize-space(.)=" + labelLiteral + "]/following::input[1]"),
+				By.xpath("//*[normalize-space(.)=" + labelLiteral + "]/following::input[1]"),
+				By.xpath("//input[@placeholder=" + labelLiteral + "]")
 		);
 		for (final By locator : candidateLocators) {
 			try {
@@ -490,6 +496,24 @@ public class SaleadsMiNegocioFullTest {
 		details.put("screenshot." + checkpointName, target.toAbsolutePath().toString());
 	}
 
+	private void takeFullPageScreenshot(final String checkpointName) throws IOException {
+		final Object originalHeight = ((JavascriptExecutor) driver).executeScript(
+				"return document.body ? document.body.style.height : '';"
+		);
+		try {
+			((JavascriptExecutor) driver).executeScript(
+					"if (document.body) { document.body.style.height = 'auto'; }"
+			);
+			waitForUiSettled();
+			takeScreenshot(checkpointName);
+		} finally {
+			((JavascriptExecutor) driver).executeScript(
+					"if (document.body) { document.body.style.height = arguments[0] || ''; }",
+					originalHeight
+			);
+		}
+	}
+
 	private void printFinalReport() {
 		System.out.println();
 		System.out.println("========== SaleADS Mi Negocio Final Report ==========");
@@ -506,7 +530,9 @@ public class SaleadsMiNegocioFullTest {
 		if (details.containsKey("06-politica-de-privacidad.url")) {
 			System.out.println("Politica URL: " + details.get("06-politica-de-privacidad.url"));
 		}
-		System.out.println("Screenshots directory: " + screenshotsDir.toAbsolutePath());
+		if (screenshotsDir != null) {
+			System.out.println("Screenshots directory: " + screenshotsDir.toAbsolutePath());
+		}
 		System.out.println("=====================================================");
 		System.out.println();
 	}
@@ -529,6 +555,29 @@ public class SaleadsMiNegocioFullTest {
 			return envValue.trim();
 		}
 		return fallback;
+	}
+
+	private String xpathLiteral(final String value) {
+		if (!value.contains("'")) {
+			return "'" + value + "'";
+		}
+		if (!value.contains("\"")) {
+			return "\"" + value + "\"";
+		}
+		final String[] parts = value.split("'", -1);
+		final StringBuilder builder = new StringBuilder("concat(");
+		for (int i = 0; i < parts.length; i++) {
+			if (i > 0) {
+				builder.append(", \"'\", ");
+			}
+			if (parts[i].isEmpty()) {
+				builder.append("\"\"");
+			} else {
+				builder.append("'").append(parts[i]).append("'");
+			}
+		}
+		builder.append(")");
+		return builder.toString();
 	}
 
 	@FunctionalInterface
