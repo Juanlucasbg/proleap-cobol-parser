@@ -193,6 +193,10 @@ function buildSummary(steps) {
   };
 }
 
+function markStepNotExecuted(steps, key, title, reason) {
+  addCheck(steps, key, title, "Step executed", false, reason);
+}
+
 function writeFinalReports(page, steps) {
   const summary = buildSummary(steps);
   const finalReport = {
@@ -259,6 +263,54 @@ test.describe("SaleADS Mi Negocio workflow", () => {
         "Login page available",
         false,
         "No SALEADS_URL provided and browser started on about:blank. Provide SALEADS_URL in headless/CI mode."
+      );
+      markStepNotExecuted(
+        steps,
+        "miNegocioMenu",
+        "Mi Negocio menu",
+        "Not executed because login precondition failed."
+      );
+      markStepNotExecuted(
+        steps,
+        "agregarNegocioModal",
+        "Agregar Negocio modal",
+        "Not executed because login precondition failed."
+      );
+      markStepNotExecuted(
+        steps,
+        "administrarNegocios",
+        "Administrar Negocios view",
+        "Not executed because login precondition failed."
+      );
+      markStepNotExecuted(
+        steps,
+        "informacionGeneral",
+        "Información General",
+        "Not executed because login precondition failed."
+      );
+      markStepNotExecuted(
+        steps,
+        "detallesCuenta",
+        "Detalles de la Cuenta",
+        "Not executed because login precondition failed."
+      );
+      markStepNotExecuted(
+        steps,
+        "tusNegocios",
+        "Tus Negocios",
+        "Not executed because login precondition failed."
+      );
+      markStepNotExecuted(
+        steps,
+        "terminos",
+        "Términos y Condiciones",
+        "Not executed because login precondition failed."
+      );
+      markStepNotExecuted(
+        steps,
+        "privacidad",
+        "Política de Privacidad",
+        "Not executed because login precondition failed."
       );
       const summary = writeFinalReports(page, steps);
       const allPassed = Object.values(summary).every(Boolean);
