@@ -36,6 +36,18 @@ const reportTemplate = (): RunReport => ({
   'Política de Privacidad': { status: 'FAIL', details: 'Not executed' },
 });
 
+const stepOrder: StepKey[] = [
+  'Login',
+  'Mi Negocio menu',
+  'Agregar Negocio modal',
+  'Administrar Negocios view',
+  'Información General',
+  'Detalles de la Cuenta',
+  'Tus Negocios',
+  'Términos y Condiciones',
+  'Política de Privacidad',
+];
+
 const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 async function firstVisible(candidates: Locator[], description: string): Promise<Locator> {
@@ -74,6 +86,17 @@ async function clickVisibleText(page: Page, label: string): Promise<void> {
   );
   await target.click();
   await waitForApplicationStable(page);
+}
+
+function markUnexecutedAsFail(report: RunReport, reason: string): void {
+  for (const key of stepOrder) {
+    if (report[key].details === 'Not executed') {
+      report[key] = {
+        status: 'FAIL',
+        details: reason,
+      };
+    }
+  }
 }
 
 async function openLegalLinkAndValidate(
@@ -126,6 +149,14 @@ test.describe('SaleADS Mi Negocio workflow', () => {
         await page.goto(saleadsBaseUrl, { waitUntil: 'domcontentloaded' });
         await waitForApplicationStable(page);
       }
+      const startShot = await takeCheckpoint(page, `00-start-state-${Date.now()}.png`);
+
+      if (!saleadsBaseUrl && page.url() === 'about:blank') {
+        throw new Error(
+          `Precondition not met: page is ${page.url()} and SALEADS_BASE_URL is not set. ` +
+            'Set SALEADS_BASE_URL to the current SaleADS login URL to run this workflow in automation.',
+        );
+      }
 
       // 1) Login with Google
       try {
@@ -150,7 +181,7 @@ test.describe('SaleADS Mi Negocio workflow', () => {
           screenshot: loginShot,
         };
       } catch (error) {
-        report.Login = { status: 'FAIL', details: String(error) };
+        report.Login = { status: 'FAIL', details: String(error), screenshot: startShot };
         throw error;
       }
 
@@ -286,6 +317,7 @@ test.describe('SaleADS Mi Negocio workflow', () => {
       };
     } catch (error) {
       workflowError = error;
+      markUnexecutedAsFail(report, `Not executed because workflow stopped early: ${String(error)}`);
     }
 
     const reportPath = path.join(ARTIFACTS_DIR, `final-report-${Date.now()}.json`);

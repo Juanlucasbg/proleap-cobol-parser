@@ -31,6 +31,7 @@ Optional env vars:
 
 - `SALEADS_BASE_URL` (required in CI if not already on login page)
 - `GOOGLE_ACCOUNT_EMAIL` (default: `juanlucasbarbiergarzon@gmail.com`)
+- `GOOGLE_ACCOUNT_NAME` (optional strict user-name assertion)
 - `HEADLESS` (`true` by default)
 
 Example:
