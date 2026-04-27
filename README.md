@@ -194,6 +194,35 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+SaleADS Mi Negocio E2E test
+---------------------------
+
+A dedicated Selenium/JUnit test exists at:
+
+`src/test/java/io/proleap/e2e/SaleadsMiNegocioFullTest.java`
+
+It validates the full "Mi Negocio" workflow (Google sign-in handoff, menu checks, modal checks,
+account sections, legal links, screenshots, and PASS/FAIL report output).
+
+Run only this test:
+
+```
+$ mvn -Dtest=SaleadsMiNegocioFullTest test
+```
+
+Environment variables:
+
+* `SALEADS_LOGIN_URL` (optional): environment-specific login page URL (dev/staging/prod).
+* `SALEADS_REMOTE_WEBDRIVER_URL` (optional): Selenium Grid or remote WebDriver endpoint.
+* `SALEADS_HEADLESS` (optional, default `true`).
+* `SALEADS_WAIT_SECONDS` (optional, default `30`).
+
+Notes:
+
+* The test intentionally uses visible text locators where possible, as requested.
+* If legal links open in a new tab/window, the test validates and returns to the app tab.
+* Each important checkpoint writes a screenshot file under `target/saleads-mi-negocio-evidence/<timestamp>/`.
+
 
 Release process
 ---------------
