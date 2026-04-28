@@ -24,6 +24,8 @@
 		<exclude.tests>nothing.to.exclude</exclude.tests>
 		<antlr.version>4.7.2</antlr.version>
 		<slf4j.version>2.0.9</slf4j.version>
+		<selenium.version>4.41.0</selenium.version>
+		<webdrivermanager.version>6.3.3</webdrivermanager.version>
 	</properties>
 	<profiles>
 		<profile>
@@ -62,6 +64,18 @@
 			<version>1.4.14</version>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.seleniumhq.selenium</groupId>
+			<artifactId>selenium-java</artifactId>
+			<version>${selenium.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.github.bonigarcia</groupId>
+			<artifactId>webdrivermanager</artifactId>
+			<version>${webdrivermanager.version}</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 	<build>
 		<resources>
@@ -95,6 +109,13 @@
 				<version>2.22.2</version>
 				<configuration>
 					<argLine>-Xmx2048m -Djava.awt.headless=true</argLine>
+					<systemPropertyVariables>
+						<saleads.baseUrl>${saleads.baseUrl}</saleads.baseUrl>
+						<saleads.google.email>${saleads.google.email}</saleads.google.email>
+						<saleads.browser>${saleads.browser}</saleads.browser>
+						<saleads.headless>${saleads.headless}</saleads.headless>
+						<saleads.screenshots.dir>${saleads.screenshots.dir}</saleads.screenshots.dir>
+					</systemPropertyVariables>
 					<excludes>
 						<exclude>${exclude.tests}</exclude>
 					</excludes>
