@@ -16,6 +16,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.junit.Assume;
 import org.junit.Test;
 
 import com.microsoft.playwright.Browser;
@@ -86,10 +87,10 @@ public class SaleadsMiNegocioFullTest {
 
 			try {
 				final String configuredUrl = resolveUrl();
-				if (configuredUrl != null) {
-					page.navigate(configuredUrl);
-					waitForUi(page);
-				}
+				Assume.assumeTrue("Set SALEADS_URL env var or -Dsaleads.url to run this E2E workflow test.",
+					configuredUrl != null && !configuredUrl.isBlank());
+				page.navigate(configuredUrl);
+				waitForUi(page);
 
 				runStep("Login", report, () -> {
 					final Locator loginButton = firstVisible(page,
