@@ -1,0 +1,12 @@
+{
+  "name": "saleads-ui-automation",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Environment-agnostic Playwright workflow validations for SaleADS.ai",
+  "scripts": {
+    "saleads:mi-negocio": "node ./automation/saleads_mi_negocio_full_test.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.54.2"
+  }
+}
