@@ -1,0 +1,15 @@
+{
+  "name": "e2e",
+  "version": "1.0.0",
+  "description": "SaleADS end-to-end automation tests",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "test:saleads-mi-negocio": "playwright test tests/saleads-mi-negocio-workflow.spec.js",
+    "test:saleads-mi-negocio:headed": "playwright test tests/saleads-mi-negocio-workflow.spec.js --headed"
+  },
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@playwright/test": "^1.59.1"
+  }
+}
