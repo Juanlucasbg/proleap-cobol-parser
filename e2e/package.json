@@ -1,0 +1,12 @@
+{
+  "name": "saleads-e2e-workflows",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:mi-negocio": "node saleads_mi_negocio_full_test.mjs",
+    "pw:install": "playwright install --with-deps chromium"
+  },
+  "dependencies": {
+    "playwright": "^1.54.2"
+  }
+}
