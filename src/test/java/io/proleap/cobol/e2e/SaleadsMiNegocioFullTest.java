@@ -3,7 +3,6 @@ package io.proleap.cobol.e2e;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
@@ -82,7 +81,7 @@ public class SaleadsMiNegocioFullTest {
 					new Browser.NewContextOptions().setViewportSize(1920, 1080));
 			final Page appPage = context.newPage();
 
-			appPage.navigate(loginUrl, new Page.NavigateOptions().setWaitUntil(LoadState.DOMCONTENTLOADED));
+			appPage.navigate(loginUrl);
 			waitForUi(appPage);
 
 			recordStep(report, errors, STEP_LOGIN, () -> {
@@ -150,8 +149,7 @@ public class SaleadsMiNegocioFullTest {
 
 		Page popupPage = null;
 		try {
-			popupPage = context.waitForPage(() -> clickAndWait(appPage, loginButton),
-					new BrowserContext.WaitForPageOptions().setTimeout(8000));
+			popupPage = context.waitForPage(() -> clickAndWait(appPage, loginButton));
 		} catch (PlaywrightException ex) {
 			clickAndWait(appPage, loginButton);
 		}
@@ -233,8 +231,7 @@ public class SaleadsMiNegocioFullTest {
 		final String currentUrl = appPage.url();
 
 		try {
-			legalPage = context.waitForPage(() -> clickAndWait(appPage, link),
-					new BrowserContext.WaitForPageOptions().setTimeout(8000));
+			legalPage = context.waitForPage(() -> clickAndWait(appPage, link));
 		} catch (PlaywrightException ex) {
 			clickAndWait(appPage, link);
 		}
@@ -277,7 +274,7 @@ public class SaleadsMiNegocioFullTest {
 	private void chooseGoogleAccountIfShown(final Page page) {
 		try {
 			final Locator account = page.getByText(GOOGLE_ACCOUNT_EMAIL, new Page.GetByTextOptions().setExact(true));
-			if (hasVisible(account, 5000)) {
+			if (hasVisible(page, account, 5000)) {
 				clickAndWait(page, account.first());
 			}
 		} catch (PlaywrightException ex) {
@@ -309,7 +306,7 @@ public class SaleadsMiNegocioFullTest {
 		throw new AssertionError("Could not find a visible element for the requested selector set.");
 	}
 
-	private boolean hasVisible(final Locator locator, final long timeoutMs) {
+	private boolean hasVisible(final Page page, final Locator locator, final long timeoutMs) {
 		final long end = System.currentTimeMillis() + timeoutMs;
 		while (System.currentTimeMillis() < end) {
 			final int count = (int) locator.count();
@@ -318,15 +315,14 @@ public class SaleadsMiNegocioFullTest {
 					return true;
 				}
 			}
-			locator.page().waitForTimeout(200);
+			page.waitForTimeout(200);
 		}
 		return false;
 	}
 
 	private void waitForTextVisible(final Page page, final Pattern pattern, final double timeoutMs) {
 		final Locator text = page.getByText(pattern);
-		assertTrue("Expected visible text pattern: " + pattern.pattern(),
-				text.first().isVisible(new Locator.IsVisibleOptions().setTimeout(timeoutMs)));
+		assertTrue("Expected visible text pattern: " + pattern.pattern(), hasVisible(page, text, (long) timeoutMs));
 	}
 
 	private void waitForSidebarVisible(final Page page) {
@@ -402,6 +398,6 @@ public class SaleadsMiNegocioFullTest {
 
 	@FunctionalInterface
 	private interface CheckedRunnable {
-		void run() throws IOException;
+		void run() throws Exception;
 	}
 }
