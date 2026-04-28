@@ -163,6 +163,12 @@ async function run() {
 
   await ensureDir(outputDir);
 
+  if (!baseUrl && !wsEndpoint) {
+    throw new Error(
+      "Provide SALEADS_BASE_URL to open the login page, or SALEADS_WS_ENDPOINT to attach to an existing browser already on login."
+    );
+  }
+
   const launchedBrowser = wsEndpoint ? null : await chromium.launch({ headless });
   const browser = wsEndpoint ? await chromium.connect(wsEndpoint) : launchedBrowser;
   const existingContext = browser.contexts()[0];
@@ -173,10 +179,6 @@ async function run() {
     if (baseUrl) {
       await page.goto(baseUrl, { waitUntil: "domcontentloaded", timeout: 30000 });
       await waitForUi(page, 15000);
-    } else if (!wsEndpoint) {
-      throw new Error(
-        "Provide SALEADS_BASE_URL to open the login page, or SALEADS_WS_ENDPOINT to attach to an existing browser already on login."
-      );
     } else {
       await waitForUi(page, 8000);
     }

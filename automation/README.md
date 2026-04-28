@@ -26,6 +26,7 @@ The script is environment-agnostic and does not hardcode any SaleADS domain.
 
 ```bash
 npm install
+npx playwright install chromium
 ```
 
 ## Execution options
