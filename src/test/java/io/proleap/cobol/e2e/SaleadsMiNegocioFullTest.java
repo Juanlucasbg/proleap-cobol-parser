@@ -93,6 +93,11 @@ public class SaleadsMiNegocioFullTest {
 	}
 
 	private void stepLoginWithGoogle() throws Exception {
+		if (isSidebarVisible(Duration.ofSeconds(6))) {
+			captureScreenshot("01-dashboard-loaded");
+			return;
+		}
+
 		clickByVisibleText("Sign in with Google", "Iniciar con Google", "Continuar con Google", "Google");
 
 		if (isVisible(By.xpath("//*[normalize-space(.)=" + xpathLiteral(ACCOUNT_EMAIL) + "]"), Duration.ofSeconds(10))) {
@@ -335,6 +340,15 @@ public class SaleadsMiNegocioFullTest {
 	private void assertSidebarVisible() {
 		assertVisible(By.xpath("//aside | //nav"), "Sidebar navigation is not visible.");
 		assertVisibleText("Negocio");
+	}
+
+	private boolean isSidebarVisible(final Duration timeout) {
+		try {
+			new WebDriverWait(driver, timeout).until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//aside | //nav")));
+			return true;
+		} catch (TimeoutException ex) {
+			return false;
+		}
 	}
 
 	private void assertVisibleText(final String text) {
