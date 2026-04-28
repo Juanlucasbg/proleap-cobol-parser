@@ -201,6 +201,56 @@ Release process
 * Milestones of the grammar are published in the [ANTLR grammars repo](https://github.com/antlr/grammars-v4).
 
 
+SaleADS Mi Negocio E2E test (Playwright)
+----------------------------------------
+
+This repository now includes an environment-agnostic browser E2E test for the SaleADS "Mi Negocio" workflow:
+
+- Test class: `src/test/java/io/proleap/saleads/e2e/SaleadsMiNegocioWorkflowTest.java`
+- Purpose: login with Google and validate the full Mi Negocio flow, including legal links and evidence capture
+
+The test is safe for shared CI because it is skipped unless `SALEADS_LOGIN_URL` is provided.
+
+### Required environment variable
+
+- `SALEADS_LOGIN_URL`: login page URL for the current environment (dev/staging/prod)
+
+### Optional environment variables
+
+- `SALEADS_GOOGLE_ACCOUNT` (default: `juanlucasbarbiergarzon@gmail.com`)
+- `SALEADS_EXPECTED_USER_NAME` (optional strict check for profile name)
+- `SALEADS_TIMEOUT_MS` (default: `30000`)
+- `SALEADS_HEADLESS` (default: `true`)
+
+### Run only this workflow test
+
+```
+mvn -Dtest=io.proleap.saleads.e2e.SaleadsMiNegocioWorkflowTest test
+```
+
+### Evidence and report output
+
+For each run, screenshots and a final PASS/FAIL report are written to:
+
+```
+target/saleads-evidence/<timestamp>/
+```
+
+Including:
+
+- checkpoint screenshots for dashboard/menu/modal/account/legal pages
+- `final-report.txt` with PASS/FAIL for:
+  - Login
+  - Mi Negocio menu
+  - Agregar Negocio modal
+  - Administrar Negocios view
+  - Información General
+  - Detalles de la Cuenta
+  - Tus Negocios
+  - Términos y Condiciones
+  - Política de Privacidad
+
+
 License
 -------
 
