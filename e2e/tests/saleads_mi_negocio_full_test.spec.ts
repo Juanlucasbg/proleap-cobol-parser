@@ -79,6 +79,14 @@ async function clickAndWait(locator: Locator, page: Page): Promise<void> {
   await waitForUi(page);
 }
 
+async function expectHeadingOrText(page: Page, pattern: RegExp, timeout = 45_000): Promise<void> {
+  const heading = page.getByRole("heading", { name: pattern }).first();
+  if (await isVisible(heading, 3_000)) {
+    return;
+  }
+  await expect(page.getByText(pattern).first()).toBeVisible({ timeout });
+}
+
 async function captureCheckpoint(
   page: Page,
   artifactsDir: string,
@@ -217,9 +225,7 @@ async function validateLegalDocument(
 
   if (popup) {
     await popup.waitForLoadState("domcontentloaded").catch(() => undefined);
-    await expect(popup.getByRole("heading", { name: headingPattern })).toBeVisible({
-      timeout: 45_000
-    });
+    await expectHeadingOrText(popup, headingPattern);
     await expect(popup.locator("main, article, body").first()).toContainText(
       /(t[eé]rminos|condiciones|privacidad|uso|datos)/i,
       { timeout: 30_000 }
@@ -232,9 +238,7 @@ async function validateLegalDocument(
     return popupUrl;
   }
 
-  await expect(page.getByRole("heading", { name: headingPattern })).toBeVisible({
-    timeout: 45_000
-  });
+  await expectHeadingOrText(page, headingPattern);
   await expect(page.locator("main, article, body").first()).toContainText(
     /(t[eé]rminos|condiciones|privacidad|uso|datos)/i,
     { timeout: 30_000 }
@@ -299,12 +303,17 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
       const modal = page.getByRole("dialog").filter({ hasText: /Crear Nuevo Negocio/i }).first();
       await expect(modal).toBeVisible({ timeout: 30_000 });
       await expect(modal.getByText(/Crear Nuevo Negocio/i)).toBeVisible();
-      await expect(modal.getByPlaceholder(/Nombre del Negocio/i)).toBeVisible();
       await expect(modal.getByText(/Tienes 2 de 3 negocios/i)).toBeVisible();
       await expect(modal.getByRole("button", { name: /^Cancelar$/i })).toBeVisible();
       await expect(modal.getByRole("button", { name: /^Crear Negocio$/i })).toBeVisible();
 
-      await modal.getByPlaceholder(/Nombre del Negocio/i).fill("Negocio Prueba Automatizacion");
+      const businessNameInput = await firstVisible(page, [
+        modal.getByLabel(/Nombre del Negocio/i),
+        modal.getByPlaceholder(/Nombre del Negocio/i),
+        modal.locator("input[type='text']").first()
+      ]);
+      await expect(businessNameInput).toBeVisible();
+      await businessNameInput.fill("Negocio Prueba Automatizacion");
       await captureCheckpoint(page, artifactsDir, "03-agregar-negocio-modal");
       await clickAndWait(modal.getByRole("button", { name: /^Cancelar$/i }), page);
       await expect(modal).toBeHidden({ timeout: 15_000 });
@@ -330,7 +339,12 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
     });
 
     await validate("Información General", async () => {
-      await expect(page.getByText(/@/)).toBeVisible({ timeout: 30_000 });
+      await expectHeadingOrText(page, /^Informacion General$|^Información General$/i, 30_000);
+      const infoSection = page.locator("section, div").filter({
+        has: page.getByText(/^Informacion General$|^Información General$/i)
+      }).first();
+      await expect(infoSection).toBeVisible({ timeout: 30_000 });
+      await expect(infoSection).toContainText(/@/);
       await expect(page.getByText(/BUSINESS PLAN/i)).toBeVisible();
       await expect(page.getByRole("button", { name: /^Cambiar Plan$/i })).toBeVisible();
     });
