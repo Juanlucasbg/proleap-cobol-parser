@@ -195,6 +195,45 @@ $ mvn clean test
 ```
 
 
+SaleADS Mi Negocio end-to-end UI test
+-------------------------------------
+
+A dedicated end-to-end test was added at:
+
+`src/test/java/io/proleap/saleads/e2e/SaleadsMiNegocioFullWorkflowTest.java`
+
+This test validates the full **Mi Negocio** workflow after Google login, including:
+
+* login continuation into the app
+* sidebar navigation and **Mi Negocio** submenu validation
+* **Agregar Negocio** modal validation
+* **Administrar Negocios** sections validation
+* legal links (**Términos y Condiciones** and **Política de Privacidad**) with same-tab/new-tab handling
+* checkpoint screenshots and final PASS/FAIL report in test output
+
+Environment-agnostic execution notes:
+
+* The test does **not** hardcode any SaleADS domain.
+* You must provide the login page URL for the target environment via `saleads.baseUrl`.
+
+Run example:
+
+```
+$ mvn -Dtest=SaleadsMiNegocioFullWorkflowTest \
+  -Dsaleads.baseUrl="https://<current-saleads-login-url>" \
+  -Dsaleads.google.email="juanlucasbarbiergarzon@gmail.com" \
+  -Dsaleads.browser=chrome \
+  -Dsaleads.headless=false \
+  test
+```
+
+Optional properties:
+
+* `saleads.browser` = `chrome` | `firefox` | `edge` (default: `chrome`)
+* `saleads.headless` = `true` | `false` (default: `false`)
+* `saleads.screenshots.dir` (default: `target/saleads-screenshots`)
+
+
 Release process
 ---------------
 
