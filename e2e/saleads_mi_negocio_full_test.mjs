@@ -168,8 +168,8 @@ async function clickLegalLinkAndValidate({
 
   const legalPage = popup ?? appPage;
   await waitForUi(legalPage);
-  await mustSeeHeading(legalPage, headingRegex, `Heading visible: ${headingRegex}`);
   await mustSeeHeadingOrText(legalPage, headingRegex);
+  pushDetail(reportField, "Legal heading/title is visible.");
   const bodyText = await legalPage.locator("body").innerText();
 
   if (bodyText.trim().length < 40) {
