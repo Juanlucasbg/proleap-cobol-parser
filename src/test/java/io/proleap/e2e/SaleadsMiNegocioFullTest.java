@@ -214,7 +214,7 @@ public class SaleadsMiNegocioFullTest {
 
 		Page popup = null;
 		try {
-			popup = page.waitForPopup(() -> loginButton.click(), new Page.WaitForPopupOptions().setTimeout(7000));
+			popup = page.waitForPopup(new Page.WaitForPopupOptions().setTimeout(7000), () -> loginButton.click());
 		} catch (PlaywrightException popupNotOpened) {
 			loginButton.click();
 		}
@@ -223,11 +223,7 @@ public class SaleadsMiNegocioFullTest {
 		if (popup != null) {
 			waitForUi(popup);
 			selectGoogleAccountIfVisible(popup, googleEmail, timeoutMs);
-			try {
-				popup.waitForClose(new Page.WaitForCloseOptions().setTimeout(timeoutMs));
-			} catch (PlaywrightException ignored) {
-				// The popup may stay open if no account switch is needed; continue with app validation.
-			}
+			waitForPageClose(popup, timeoutMs);
 		}
 
 		selectGoogleAccountIfVisible(page, googleEmail, timeoutMs);
@@ -259,7 +255,7 @@ public class SaleadsMiNegocioFullTest {
 		}
 	}
 
-	private void ensureMiNegocioExpanded(final Page page, final long timeoutMs) throws InterruptedException {
+	private void ensureMiNegocioExpanded(final Page page, final long timeoutMs) throws Exception {
 		if (!hasVisibleText(page, "Administrar Negocios", 1500)) {
 			clickByVisibleText(page, "Mi Negocio", timeoutMs);
 			waitForUi(page);
@@ -277,8 +273,8 @@ public class SaleadsMiNegocioFullTest {
 		Page popup = null;
 
 		try {
-			popup = appPage.waitForPopup(() -> clickByVisibleText(appPage, linkText, timeoutMs),
-					new Page.WaitForPopupOptions().setTimeout(7000));
+			popup = appPage.waitForPopup(new Page.WaitForPopupOptions().setTimeout(7000),
+					() -> clickByVisibleTextUnchecked(appPage, linkText, timeoutMs));
 		} catch (PlaywrightException popupNotOpened) {
 			clickByVisibleText(appPage, linkText, timeoutMs);
 		}
@@ -325,6 +321,14 @@ public class SaleadsMiNegocioFullTest {
 				page.getByText(textPattern(text)));
 		locator.click();
 		waitForUi(page);
+	}
+
+	private void clickByVisibleTextUnchecked(final Page page, final String text, final long timeoutMs) {
+		try {
+			clickByVisibleText(page, text, timeoutMs);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	private void requireVisible(final Page page, final String text, final long timeoutMs) throws Exception {
@@ -416,6 +420,16 @@ public class SaleadsMiNegocioFullTest {
 			// Network can stay active due to polling; continue after a short pause.
 		}
 		Thread.sleep(450);
+	}
+
+	private void waitForPageClose(final Page page, final long timeoutMs) throws InterruptedException {
+		long maxTime = System.currentTimeMillis() + timeoutMs;
+		while (System.currentTimeMillis() < maxTime) {
+			if (page.isClosed()) {
+				return;
+			}
+			Thread.sleep(200);
+		}
 	}
 
 	private void captureScreenshot(final Page page, final Path evidenceDir, final String fileName, final boolean fullPage)
