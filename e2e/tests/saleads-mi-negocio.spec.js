@@ -45,11 +45,11 @@ function createMatrix() {
     "Mi Negocio menu": "FAIL",
     "Agregar Negocio modal": "FAIL",
     "Administrar Negocios view": "FAIL",
-    "Informacion General": "FAIL",
+    "Información General": "FAIL",
     "Detalles de la Cuenta": "FAIL",
     "Tus Negocios": "FAIL",
-    "Terminos y Condiciones": "FAIL",
-    "Politica de Privacidad": "FAIL"
+    "Términos y Condiciones": "FAIL",
+    "Política de Privacidad": "FAIL"
   };
 }
 
@@ -296,7 +296,7 @@ test.describe("saleads_mi_negocio_full_test", () => {
       ).toBeVisible({ timeout: 20000 });
       await validateVisibleText(page, TXT.businessPlan);
       await validateVisibleText(page, TXT.cambiarPlan);
-      matrix["Informacion General"] = "PASS";
+      matrix["Información General"] = "PASS";
     } catch (error) {
       throw new Error(`Step 5 (Validate Informacion General) failed: ${error.message}`);
     }
@@ -339,7 +339,7 @@ test.describe("saleads_mi_negocio_full_test", () => {
       await safeBackToAppPage(page, termsPage, termsResult.openedInNewTab);
       await waitForUi(page);
 
-      matrix["Terminos y Condiciones"] = "PASS";
+      matrix["Términos y Condiciones"] = "PASS";
     } catch (error) {
       throw new Error(
         `Step 8 (Validate Terminos y Condiciones) failed: ${error.message}`
@@ -361,7 +361,7 @@ test.describe("saleads_mi_negocio_full_test", () => {
       await safeBackToAppPage(page, privacyPage, privacyResult.openedInNewTab);
       await waitForUi(page);
 
-      matrix["Politica de Privacidad"] = "PASS";
+      matrix["Política de Privacidad"] = "PASS";
     } catch (error) {
       throw new Error(
         `Step 9 (Validate Politica de Privacidad) failed: ${error.message}`
