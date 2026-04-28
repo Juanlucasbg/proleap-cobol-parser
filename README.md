@@ -194,6 +194,50 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+SaleADS E2E workflow test
+-------------------------
+
+This repository now includes an end-to-end UI test for the SaleADS Mi Negocio
+workflow:
+
+* Test class: `io.proleap.saleads.SaleadsMiNegocioFullTest`
+* Scope:
+  * Login with Google
+  * Navigate to `Negocio -> Mi Negocio`
+  * Validate `Agregar Negocio` modal
+  * Validate `Administrar Negocios` sections
+  * Validate `Términos y Condiciones` and `Política de Privacidad`
+  * Capture screenshots at key checkpoints
+  * Generate a final PASS/FAIL markdown report
+
+The test is environment-agnostic and does not hardcode a SaleADS domain.
+Provide the environment login URL at runtime:
+
+```
+export SALEADS_URL="https://<your-saleads-environment>/login"
+mvn -Dtest=SaleadsMiNegocioFullTest test
+```
+
+Alternatively:
+
+```
+mvn -Dtest=SaleadsMiNegocioFullTest -Dsaleads.url="https://<your-saleads-environment>/login" test
+```
+
+Optional:
+
+```
+export PLAYWRIGHT_HEADLESS=false
+```
+
+Artifacts are generated under:
+
+* `target/saleads-mi-negocio/<timestamp>/screenshots`
+* `target/saleads-mi-negocio/<timestamp>/final-report.md`
+
+If `SALEADS_URL`/`saleads.url` is not set, the E2E test is skipped so normal CI
+for this repository remains unaffected.
+
 
 Release process
 ---------------
