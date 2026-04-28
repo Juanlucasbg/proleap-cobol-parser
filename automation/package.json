@@ -1,0 +1,18 @@
+{
+  "name": "automation",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:saleads-mi-negocio": "playwright test tests/saleads_mi_negocio_full_test.spec.js --reporter=line",
+    "test:saleads-mi-negocio:headed": "playwright test tests/saleads_mi_negocio_full_test.spec.js --headed --reporter=line",
+    "report:show": "playwright show-report"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.59.1"
+  }
+}

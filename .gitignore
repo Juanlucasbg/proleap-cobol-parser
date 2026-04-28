@@ -41,3 +41,7 @@ target/
 
 ## Additional for IntelliJ
 out/
+automation/node_modules/
+automation/playwright-report/
+automation/test-results/
+automation/artifacts/
