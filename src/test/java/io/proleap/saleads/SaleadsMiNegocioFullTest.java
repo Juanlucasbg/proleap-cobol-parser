@@ -12,6 +12,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -71,9 +72,9 @@ public class SaleadsMiNegocioFullTest {
 		report.put("Términos y Condiciones", StepResult.pending());
 		report.put("Política de Privacidad", StepResult.pending());
 
-		String termsUrl = "";
-		String privacyUrl = "";
-		String administrarNegociosUrl = "";
+		final AtomicReference<String> termsUrl = new AtomicReference<>("");
+		final AtomicReference<String> privacyUrl = new AtomicReference<>("");
+		final AtomicReference<String> administrarNegociosUrl = new AtomicReference<>("");
 
 		try (Playwright playwright = Playwright.create()) {
 			final Browser browser = playwright.chromium().launch(new BrowserType.LaunchOptions()
@@ -177,7 +178,7 @@ public class SaleadsMiNegocioFullTest {
 					mustBeVisible(page.getByText(Pattern.compile("Secci[oó]n\\s+Legal", Pattern.CASE_INSENSITIVE)).first(),
 						"Sección 'Sección Legal'");
 
-					administrarNegociosUrl = page.url();
+					administrarNegociosUrl.set(page.url());
 					screenshot(page, screenshotsDir.resolve("04-administrar-negocios.png"), true);
 				});
 
@@ -221,16 +222,16 @@ public class SaleadsMiNegocioFullTest {
 					final LegalValidationResult result = openAndValidateLegalDocument(page, context,
 						Pattern.compile("T[eé]rminos\\s+y\\s+Condiciones", Pattern.CASE_INSENSITIVE),
 						Pattern.compile("T[eé]rminos\\s+y\\s+Condiciones", Pattern.CASE_INSENSITIVE),
-						screenshotsDir.resolve("05-terminos-y-condiciones.png"), administrarNegociosUrl);
-					termsUrl = result.finalUrl;
+						screenshotsDir.resolve("05-terminos-y-condiciones.png"), administrarNegociosUrl.get());
+					termsUrl.set(result.finalUrl);
 				});
 
 				runStep("Política de Privacidad", report, () -> {
 					final LegalValidationResult result = openAndValidateLegalDocument(page, context,
 						Pattern.compile("Pol[ií]tica\\s+de\\s+Privacidad", Pattern.CASE_INSENSITIVE),
 						Pattern.compile("Pol[ií]tica\\s+de\\s+Privacidad", Pattern.CASE_INSENSITIVE),
-						screenshotsDir.resolve("06-politica-de-privacidad.png"), administrarNegociosUrl);
-					privacyUrl = result.finalUrl;
+						screenshotsDir.resolve("06-politica-de-privacidad.png"), administrarNegociosUrl.get());
+					privacyUrl.set(result.finalUrl);
 				});
 			} finally {
 				context.close();
@@ -239,7 +240,7 @@ public class SaleadsMiNegocioFullTest {
 		}
 
 		final Path reportPath = outputDir.resolve("final-report.md");
-		writeReport(reportPath, report, termsUrl, privacyUrl, screenshotsDir);
+		writeReport(reportPath, report, termsUrl.get(), privacyUrl.get(), screenshotsDir);
 
 		final boolean allPassed = report.values().stream().allMatch(StepResult::isPassed);
 		assertTrue("One or more SaleADS Mi Negocio validations failed. See report: " + reportPath, allPassed);
@@ -325,11 +326,11 @@ public class SaleadsMiNegocioFullTest {
 
 		try {
 			final Page popup = appPage.waitForPopup(new Page.WaitForPopupOptions().setTimeout((double) QUICK_TIMEOUT_MS),
-				() -> clickAndWait(appPage, legalLink));
+				() -> legalLink.click());
 			targetPage = popup;
 			openedInPopup = true;
 		} catch (final PlaywrightException popupTimeout) {
-			clickAndWait(appPage, legalLink);
+			targetPage = appPage;
 		}
 
 		waitForUi(targetPage);
