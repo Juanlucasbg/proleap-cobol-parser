@@ -278,9 +278,10 @@ public class SaleadsMiNegocioFullTest {
 			return;
 		}
 
-		if ("about:blank".equalsIgnoreCase(driver.getCurrentUrl())) {
+		final String currentUrl = driver.getCurrentUrl();
+		if ("about:blank".equalsIgnoreCase(currentUrl) || currentUrl.startsWith("data:")) {
 			throw new IllegalStateException(
-					"WebDriver is on about:blank. Provide SALEADS_ENTRY_URL for the active environment login page.");
+					"WebDriver has no SaleADS page loaded. Provide SALEADS_ENTRY_URL for the active environment login page.");
 		}
 	}
 
