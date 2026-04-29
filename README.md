@@ -194,6 +194,33 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+### Optional SaleADS E2E workflow test
+
+The repository also includes an opt-in Selenium/JUnit test for validating the SaleADS "Mi Negocio"
+workflow end-to-end (login with Google + account/legal validations + screenshots).
+
+It is disabled by default and only runs when explicitly enabled:
+
+```
+$ mvn -Dtest=io.proleap.saleads.e2e.SaleadsMiNegocioWorkflowTest \
+    -Dsaleads.e2e.enabled=true \
+    -Dsaleads.login.url="<saleads-login-url>" \
+    -Dsaleads.headless=true \
+    test
+```
+
+Configuration options:
+
+- `saleads.e2e.enabled` / `SALEADS_E2E_ENABLED`: enable/disable test (`false` by default)
+- `saleads.login.url` / `SALEADS_LOGIN_URL`: SaleADS login URL for current environment (required)
+- `saleads.headless` / `SALEADS_HEADLESS`: run browser headless (`false` by default)
+- `saleads.remote.url` / `SALEADS_REMOTE_URL`: optional Selenium Grid URL
+
+Artifacts are written to `target/saleads-e2e/`:
+
+- checkpoint screenshots (`*.png`)
+- `final-report.txt` with PASS/FAIL per requested validation step and legal final URLs
+
 
 Release process
 ---------------
