@@ -1,0 +1,13 @@
+{
+  "name": "saleads-mi-negocio-automation",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Environment-agnostic Playwright automation for the SaleADS Mi Negocio workflow.",
+  "type": "module",
+  "scripts": {
+    "saleads:mi-negocio": "node automation/saleads_mi_negocio_full_test.mjs"
+  },
+  "dependencies": {
+    "playwright": "^1.54.1"
+  }
+}
