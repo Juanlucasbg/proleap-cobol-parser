@@ -4,9 +4,9 @@ import { chromium } from "playwright";
 
 const GOOGLE_ACCOUNT_EMAIL =
   process.env.SALEADS_GOOGLE_EMAIL || "juanlucasbarbiergarzon@gmail.com";
-const APP_URL = process.env.SALEADS_APP_URL;
+const APP_URL = process.env.SALEADS_APP_URL || process.env.SALEADS_BASE_URL || process.env.APP_URL;
 const CDP_ENDPOINT = process.env.SALEADS_CDP_ENDPOINT || process.env.PW_CDP_ENDPOINT;
-const HEADLESS = (process.env.SALEADS_HEADLESS || "false").toLowerCase() === "true";
+const HEADLESS = (process.env.SALEADS_HEADLESS || "true").toLowerCase() === "true";
 const ACTION_PAUSE_MS = Number(process.env.SALEADS_ACTION_PAUSE_MS || 900);
 const DEFAULT_TIMEOUT_MS = Number(process.env.SALEADS_TIMEOUT_MS || 20000);
 const RUN_ID = new Date().toISOString().replace(/[:.]/g, "-");
@@ -149,6 +149,35 @@ async function chooseGoogleAccountIfPrompted(targetPage) {
       await targetPage.waitForTimeout(ACTION_PAUSE_MS);
     }
   }
+}
+
+async function resolveApplicationPage(context, fallbackPage) {
+  const pages = context.pages();
+  const candidates = [...pages];
+  if (fallbackPage && !candidates.includes(fallbackPage)) {
+    candidates.push(fallbackPage);
+  }
+
+  for (const candidate of candidates) {
+    try {
+      await candidate.waitForTimeout(250);
+      const hasMain = await candidate.locator("main, [role='main']").first().isVisible();
+      const hasSidebarKeywords = await candidate
+        .getByText(/negocio|mi negocio|administrar negocios/i)
+        .first()
+        .isVisible()
+        .catch(() => false);
+
+      if (hasMain || hasSidebarKeywords) {
+        await candidate.bringToFront().catch(() => {});
+        return candidate;
+      }
+    } catch {
+      // Continue searching.
+    }
+  }
+
+  return fallbackPage;
 }
 
 async function sectionByHeading(page, headingText) {
@@ -392,9 +421,12 @@ async function main() {
       await page.goto(APP_URL, { waitUntil: "domcontentloaded" });
       await page.waitForTimeout(ACTION_PAUSE_MS);
     } else {
-      log(
-        "SALEADS_APP_URL not provided. Assuming the current browser page is already on the SaleADS login screen."
-      );
+      if (!CDP_ENDPOINT) {
+        throw new Error(
+          "Missing startup target. Set SALEADS_APP_URL (or SALEADS_BASE_URL / APP_URL) to navigate to login, or set SALEADS_CDP_ENDPOINT to attach to an already-open browser page."
+        );
+      }
+      log("No explicit app URL provided; continuing with attached browser's current page.");
     }
 
     // Step 1: Login with Google
@@ -405,6 +437,7 @@ async function main() {
     } else if (/accounts\.google\.com/i.test(page.url())) {
       await chooseGoogleAccountIfPrompted(page);
     }
+    page = await resolveApplicationPage(context, page);
 
     await page.waitForTimeout(1500);
     const mainUiVisible = await expectVisible(
