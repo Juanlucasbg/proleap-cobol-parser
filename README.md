@@ -194,6 +194,37 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+### Optional E2E test: SaleADS Mi Negocio workflow
+
+The repository also includes an optional Playwright-based UI test:
+
+`io.proleap.saleads.SaleadsMiNegocioFullTest`
+
+The test is disabled by default and works against any SaleADS environment.
+It does not hardcode a domain.
+
+Required runtime inputs:
+
+- `SALEADS_LOGIN_URL` (or JVM property `saleads.login.url`): login page URL for the current environment
+- `SALEADS_E2E_ENABLED=true` (or JVM property `saleads.e2e.enabled=true`)
+
+Optional:
+
+- `SALEADS_E2E_HEADLESS=false` (or JVM property `saleads.e2e.headless=false`) to run headed
+
+Example:
+
+```
+mvn -Dtest=SaleadsMiNegocioFullTest \
+  -Dsaleads.e2e.enabled=true \
+  -Dsaleads.login.url=https://<your-saleads-login-page> \
+  test
+```
+
+Screenshots are saved under:
+
+`target/saleads-e2e/saleads_mi_negocio_full_test_<timestamp>/`
+
 
 Release process
 ---------------
