@@ -50,10 +50,11 @@ public class SaleAdsMiNegocioWorkflowTest {
 
 			try {
 				boolean workflowBlocked = false;
+				final Page initialPage = appPage;
 
-				if (!executeStep("Login", report, appPage, evidenceDir, () -> {
-					runLoginStep(appPage);
-					takeScreenshot(appPage, evidenceDir.resolve("step1_dashboard_loaded.png"), true);
+				if (!executeStep("Login", report, initialPage, evidenceDir, () -> {
+					runLoginStep(initialPage);
+					takeScreenshot(initialPage, evidenceDir.resolve("step1_dashboard_loaded.png"), true);
 				})) {
 					workflowBlocked = true;
 				}
@@ -65,25 +66,27 @@ public class SaleAdsMiNegocioWorkflowTest {
 					return;
 				}
 
-				executeStep("Mi Negocio menu", report, appPage, evidenceDir, () -> {
-					runMiNegocioMenuStep(appPage);
-					takeScreenshot(appPage, evidenceDir.resolve("step2_mi_negocio_menu_expanded.png"), false);
+				executeStep("Mi Negocio menu", report, initialPage, evidenceDir, () -> {
+					runMiNegocioMenuStep(initialPage);
+					takeScreenshot(initialPage, evidenceDir.resolve("step2_mi_negocio_menu_expanded.png"), false);
 				});
 
-				executeStep("Agregar Negocio modal", report, appPage, evidenceDir, () -> {
-					runAgregarNegocioModalStep(appPage);
-					takeScreenshot(appPage, evidenceDir.resolve("step3_agregar_negocio_modal.png"), false);
-					clickText(appPage, "Cancelar");
+				executeStep("Agregar Negocio modal", report, initialPage, evidenceDir, () -> {
+					runAgregarNegocioModalStep(initialPage);
+					takeScreenshot(initialPage, evidenceDir.resolve("step3_agregar_negocio_modal.png"), false);
+					clickText(initialPage, "Cancelar");
 				});
 
-				executeStep("Administrar Negocios view", report, appPage, evidenceDir, () -> {
-					runAdministrarNegociosStep(appPage);
-					takeScreenshot(appPage, evidenceDir.resolve("step4_administrar_negocios_view.png"), true);
+				executeStep("Administrar Negocios view", report, initialPage, evidenceDir, () -> {
+					runAdministrarNegociosStep(initialPage);
+					takeScreenshot(initialPage, evidenceDir.resolve("step4_administrar_negocios_view.png"), true);
 				});
 
-				executeStep("Información General", report, appPage, evidenceDir, () -> runInformacionGeneralStep(appPage));
-				executeStep("Detalles de la Cuenta", report, appPage, evidenceDir, () -> runDetallesCuentaStep(appPage));
-				executeStep("Tus Negocios", report, appPage, evidenceDir, () -> runTusNegociosStep(appPage));
+				executeStep("Información General", report, initialPage, evidenceDir,
+						() -> runInformacionGeneralStep(initialPage));
+				executeStep("Detalles de la Cuenta", report, initialPage, evidenceDir,
+						() -> runDetallesCuentaStep(initialPage));
+				executeStep("Tus Negocios", report, initialPage, evidenceDir, () -> runTusNegociosStep(initialPage));
 
 				appPage = runLegalStep(context, appPage, "Términos y Condiciones", "Términos y Condiciones",
 						"step8_terminos_condiciones.png", report, evidenceDir, legalUrls);
@@ -217,8 +220,8 @@ public class SaleAdsMiNegocioWorkflowTest {
 			boolean openedNewTab = true;
 
 			try {
-				legalPage = context.waitForPage(() -> clickText(appPage, linkText),
-						new BrowserContext.WaitForPageOptions().setTimeout(7000));
+				legalPage = context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(7000),
+						() -> clickText(appPage, linkText));
 				waitForUi(legalPage);
 			} catch (PlaywrightException ex) {
 				openedNewTab = false;
