@@ -30,7 +30,7 @@ public class SaleadsMiNegocioFullTest {
 
 	@Test
 	public void saleadsMiNegocioFullWorkflow() throws Exception {
-		final String startUrl = trimToNull(System.getenv("SALEADS_START_URL"));
+		final String startUrl = trimToNull(readConfig("SALEADS_START_URL"));
 		final boolean headless = Boolean.parseBoolean(System.getenv().getOrDefault("SALEADS_HEADLESS", "true"));
 		final String googleAccount = trimToNull(System.getenv().getOrDefault("SALEADS_GOOGLE_ACCOUNT",
 				"juanlucasbarbiergarzon@gmail.com"));
@@ -60,8 +60,12 @@ public class SaleadsMiNegocioFullTest {
 			final BrowserContext context = browser.newContext();
 			final Page page = context.newPage();
 
-		Assert.assertNotNull("SALEADS_START_URL is required for environment-agnostic execution.", startUrl);
-		navigateAndWait(page, startUrl);
+			if (startUrl == null) {
+				errors.addAll(report.keySet());
+				writeFinalReport(report, legalUrls, reportPath);
+				Assert.fail("SALEADS_START_URL (or -DSALEADS_START_URL) is required for execution.");
+			}
+			navigateAndWait(page, startUrl);
 
 			final boolean loginPass = stepLoginWithGoogle(context, page, googleAccount, evidenceDir);
 			report.put("Login", loginPass);
@@ -502,6 +506,14 @@ public class SaleadsMiNegocioFullTest {
 			return null;
 		}
 		return value.trim();
+	}
+
+	private static String readConfig(final String key) {
+		final String envValue = System.getenv(key);
+		if (envValue != null) {
+			return envValue;
+		}
+		return System.getProperty(key);
 	}
 
 	private static String escapeForRegex(final String value) {
