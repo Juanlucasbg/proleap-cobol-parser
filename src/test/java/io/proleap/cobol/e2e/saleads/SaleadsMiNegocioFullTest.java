@@ -199,9 +199,18 @@ public class SaleadsMiNegocioFullTest {
 
 	private void validateInformacionGeneral() {
 		waitVisibleText("Información General");
-		assertVisibleAny(
-				By.xpath("//*[contains(normalize-space(.), '@')]"),
-				By.xpath("//*[contains(normalize-space(.), 'BUSINESS PLAN')]"));
+		final String expectedEmail = env("SALEADS_GOOGLE_ACCOUNT_EMAIL", "juanlucasbarbiergarzon@gmail.com");
+		final String expectedUserName = env("SALEADS_EXPECTED_USER_NAME", "");
+
+		assertVisibleText(expectedEmail);
+		if (!expectedUserName.isBlank()) {
+			assertVisibleText(expectedUserName);
+		} else {
+			assertVisibleAny(
+					By.xpath("//*[contains(normalize-space(.), 'Nombre')]"),
+					By.xpath("//*[contains(normalize-space(.), 'Usuario')]"),
+					By.xpath("//*[contains(normalize-space(.), 'Perfil')]"));
+		}
 		assertVisibleText("BUSINESS PLAN");
 		assertVisibleText("Cambiar Plan");
 	}
@@ -226,6 +235,7 @@ public class SaleadsMiNegocioFullTest {
 	private void validateLegalLink(final String linkText, final String headingText, final String screenshotSlug)
 			throws Exception {
 		final String appWindow = driver.getWindowHandle();
+		final String appUrlBeforeClick = driver.getCurrentUrl();
 		final Set<String> beforeClickWindows = driver.getWindowHandles();
 
 		clickFirst(By.xpath("//*[self::a or self::button][contains(normalize-space(.), '" + linkText + "')]"));
@@ -243,6 +253,11 @@ public class SaleadsMiNegocioFullTest {
 
 		if (legalWindow != null && !Objects.equals(legalWindow, appWindow)) {
 			driver.close();
+		} else if (Objects.equals(driver.getCurrentUrl(), appUrlBeforeClick)) {
+			// Some apps use in-page navigation; keeping current page is acceptable.
+		} else {
+			driver.navigate().back();
+			waitForUiLoad();
 		}
 		driver.switchTo().window(appWindow);
 		waitForUiLoad();
@@ -330,9 +345,12 @@ public class SaleadsMiNegocioFullTest {
 
 	private void clickIfVisible(final By selector) {
 		final List<WebElement> elements = driver.findElements(selector);
-		if (!elements.isEmpty() && elements.get(0).isDisplayed()) {
-			elements.get(0).click();
-			waitForUiLoad();
+		for (final WebElement element : elements) {
+			if (element.isDisplayed()) {
+				element.click();
+				waitForUiLoad();
+				return;
+			}
 		}
 	}
 
