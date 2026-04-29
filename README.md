@@ -194,6 +194,30 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+### Optional E2E: SaleADS Mi Negocio workflow
+
+An opt-in Selenium E2E test was added to validate the complete SaleADS "Mi Negocio"
+workflow (Google login + module validations + legal links + screenshots + final report).
+
+By default it is skipped, so existing parser CI behavior is unchanged.
+
+Run it with:
+
+```
+$ mvn -Dtest=SaleadsMiNegocioFullWorkflowTest test \
+  -Dsaleads.e2e.enabled=true \
+  -Dsaleads.login.url=https://<current-saleads-login-page> \
+  -Dsaleads.headless=true
+```
+
+Artifacts are written to:
+
+```
+target/saleads-artifacts/<timestamp>/
+```
+
+including screenshots and `final-report.md` with PASS/FAIL per required step.
+
 
 Release process
 ---------------
