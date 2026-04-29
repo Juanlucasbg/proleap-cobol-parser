@@ -1,0 +1,13 @@
+{
+  "name": "saleads-ui-automation",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Standalone SaleADS UI automation harness",
+  "scripts": {
+    "saleads:mi-negocio": "playwright test tests/saleads_mi_negocio_full_test.spec.ts --config=playwright.config.ts"
+  },
+  "dependencies": {
+    "@playwright/test": "^1.59.1",
+    "playwright": "^1.59.1"
+  }
+}
