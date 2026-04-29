@@ -9,11 +9,12 @@ It validates the complete Mi Negocio workflow after Google login and captures sc
 ## Environment-agnostic behavior
 
 - The test does **not** hardcode a domain.
-- It uses a runtime URL from environment variable `SALEADS_URL`.
+- If `SALEADS_URL` is provided, it navigates there first.
+- If `SALEADS_URL` is not provided, it assumes the browser is already on the current environment login page.
 
 ## Environment variables
 
-- `SALEADS_URL` (required): Login page URL for the current environment.
+- `SALEADS_URL` (optional): Login page URL for the current environment.
 - `GOOGLE_ACCOUNT_EMAIL` (optional): Defaults to `juanlucasbarbiergarzon@gmail.com`.
 
 ## Commands
@@ -21,13 +22,15 @@ It validates the complete Mi Negocio workflow after Google login and captures sc
 ```bash
 cd /workspace/saleads-e2e
 npx playwright install chromium
+npm run test:mi-negocio
+# or explicitly:
 SALEADS_URL="https://your-saleads-env.example/login" npm run test:mi-negocio
 ```
 
 Headed run:
 
 ```bash
-SALEADS_URL="https://your-saleads-env.example/login" npm run test:mi-negocio -- --headed
+npm run test:mi-negocio -- --headed
 ```
 
 ## Output artifacts

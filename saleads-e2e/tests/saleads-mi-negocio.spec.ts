@@ -124,18 +124,18 @@ async function clickLegalLinkAndValidate(
 
 test.describe("saleads_mi_negocio_full_test", () => {
   test("Login and validate full Mi Negocio workflow", async ({ page }, testInfo) => {
-    if (!APP_URL) {
-      throw new Error("SALEADS_URL is required. Example: SALEADS_URL='https://<env-host>/login' npm run test:mi-negocio");
-    }
-
     const results = initResults();
     const evidence: Record<string, string> = {};
     const legalUrls: Record<string, string> = {};
 
     try {
       // Step 1: Login with Google
-      await page.goto(APP_URL, { waitUntil: "domcontentloaded" });
-      await waitAfterAction(page);
+      if (APP_URL) {
+        await page.goto(APP_URL, { waitUntil: "domcontentloaded" });
+        await waitAfterAction(page);
+      } else {
+        await waitAfterAction(page);
+      }
 
       const sidebarVisible = await page.locator("aside").isVisible().catch(() => false);
       const negocioVisible = await page.getByText("Negocio", { exact: true }).isVisible().catch(() => false);
@@ -267,7 +267,7 @@ test.describe("saleads_mi_negocio_full_test", () => {
       const finalReport = {
         testName: "saleads_mi_negocio_full_test",
         environment: {
-          saleadsUrl: APP_URL ?? null,
+          saleadsUrl: APP_URL ?? page.url(),
           googleAccountEmail: GOOGLE_ACCOUNT_EMAIL,
         },
         report: reportOrder.map((name) => ({
