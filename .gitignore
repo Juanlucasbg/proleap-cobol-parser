@@ -41,3 +41,10 @@ target/
 
 ## Additional for IntelliJ
 out/
+
+# Node/Playwright artifacts for SaleADS E2E suite
+e2e/node_modules/
+e2e/reports/
+e2e/screenshots/
+e2e/test-results/
+e2e/playwright/.cache/
