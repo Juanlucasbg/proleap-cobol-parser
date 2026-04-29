@@ -65,6 +65,16 @@ async function saveCheckpointScreenshot(page: Page, screenshotPath: string): Pro
   await page.screenshot({ path: screenshotPath, fullPage: true });
 }
 
+async function resolvePopupAfterClick(page: Page, clickAction: () => Promise<void>): Promise<Page | null> {
+  const popupPromise = page.waitForEvent("popup", { timeout: 5000 }).catch(() => null);
+  await clickAction();
+  return popupPromise;
+}
+
+function loginPageNotReadyReason(currentUrl: string): string {
+  return `Unable to detect SaleADS login page. Current URL is "${currentUrl}". Set SALEADS_BASE_URL/SALEADS_URL/SALEADS_LOGIN_URL or start the run from the login page.`;
+}
+
 async function clickVisibleText(page: Page, text: string): Promise<void> {
   const escaped = text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const roleRegex = new RegExp(`^${escaped}$`, "i");
@@ -112,11 +122,30 @@ test("saleads_mi_negocio_full_test", async ({ page, context, baseURL }, testInfo
       );
     }
 
+    const currentUrl = page.url();
+    if (!configuredUrl && (currentUrl === "about:blank" || currentUrl.startsWith("data:"))) {
+      markFailure(report, "Login", loginPageNotReadyReason(currentUrl));
+      throw new Error(loginPageNotReadyReason(currentUrl));
+    }
+
     // Step 1: Login with Google.
     try {
+      const loginByRole = page
+        .getByRole("button", { name: /(Sign in with Google|Iniciar sesión con Google|Google)/i })
+        .first();
+      const loginByLink = page
+        .getByRole("link", { name: /(Sign in with Google|Iniciar sesión con Google|Google)/i })
+        .first();
       const loginByText = page.getByText(/(Sign in with Google|Google|Iniciar sesión con Google)/i).first();
-      await expect(loginByText).toBeVisible({ timeout: 30000 });
-      await loginByText.click();
+
+      if (await loginByRole.isVisible().catch(() => false)) {
+        await loginByRole.click();
+      } else if (await loginByLink.isVisible().catch(() => false)) {
+        await loginByLink.click();
+      } else {
+        await expect(loginByText).toBeVisible({ timeout: 30000 });
+        await loginByText.click();
+      }
       await page.waitForLoadState("domcontentloaded");
       await page.waitForTimeout(1500);
 
@@ -254,7 +283,9 @@ test("saleads_mi_negocio_full_test", async ({ page, context, baseURL }, testInfo
       const termsLink = page.getByRole("link", { name: termsLabel }).first();
       await expect(termsLink).toBeVisible({ timeout: 20000 });
 
-      const [termsPage] = await Promise.all([context.waitForEvent("page").catch(() => null), termsLink.click()]);
+      const termsPage = await resolvePopupAfterClick(page, async () => {
+        await termsLink.click();
+      });
 
       const activeTermsPage = termsPage ?? page;
       await activeTermsPage.waitForLoadState("domcontentloaded");
@@ -290,7 +321,9 @@ test("saleads_mi_negocio_full_test", async ({ page, context, baseURL }, testInfo
       const privacyLink = page.getByRole("link", { name: privacyLabel }).first();
       await expect(privacyLink).toBeVisible({ timeout: 20000 });
 
-      const [privacyPage] = await Promise.all([context.waitForEvent("page").catch(() => null), privacyLink.click()]);
+      const privacyPage = await resolvePopupAfterClick(page, async () => {
+        await privacyLink.click();
+      });
 
       const activePrivacyPage = privacyPage ?? page;
       await activePrivacyPage.waitForLoadState("domcontentloaded");
