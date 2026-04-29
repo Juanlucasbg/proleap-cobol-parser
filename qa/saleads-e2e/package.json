@@ -1,0 +1,20 @@
+{
+  "name": "saleads-e2e",
+  "version": "1.0.0",
+  "description": "Playwright E2E workflows for SaleADS modules.",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "install:browsers": "playwright install --with-deps chromium"
+  },
+  "keywords": [
+    "playwright",
+    "saleads",
+    "e2e"
+  ],
+  "author": "Cursor Automation",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.59.1"
+  }
+}
