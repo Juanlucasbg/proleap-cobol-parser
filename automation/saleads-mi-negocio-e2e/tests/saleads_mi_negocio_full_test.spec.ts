@@ -21,6 +21,12 @@ type Report = {
   "Política de Privacidad": CheckResult;
 };
 
+const configuredLoginUrl =
+  process.env.SALEADS_LOGIN_URL ??
+  process.env.SALEADS_URL ??
+  process.env.BASE_URL ??
+  null;
+
 const report: Report = {
   Login: { status: "FAIL", details: "Not executed." },
   "Mi Negocio menu": { status: "FAIL", details: "Not executed." },
@@ -45,6 +51,21 @@ function markFail(field: keyof Report, details: unknown) {
 async function waitForUiAfterClick(page: Page) {
   await page.waitForLoadState("domcontentloaded");
   await page.waitForTimeout(600);
+}
+
+async function ensureStartOnLoginPage(page: Page) {
+  await page.waitForLoadState("domcontentloaded").catch(() => {});
+
+  if (page.url() === "about:blank" && configuredLoginUrl) {
+    await page.goto(configuredLoginUrl, { waitUntil: "domcontentloaded" });
+    await page.waitForTimeout(600);
+  }
+
+  if (page.url() === "about:blank") {
+    throw new Error(
+      "No SaleADS login page is loaded. Open the login page first or set SALEADS_LOGIN_URL."
+    );
+  }
 }
 
 async function firstVisible(locatorCandidates: Locator[]): Promise<Locator> {
@@ -138,6 +159,7 @@ test.describe("saleads_mi_negocio_full_test", () => {
 
     try {
       // Step 1: assumes current environment login page is already open.
+      await ensureStartOnLoginPage(page);
       await clickByText(page, [/sign in with google/i, /continuar con google/i, /google/i]);
       const accountOption = page.getByText("juanlucasbarbiergarzon@gmail.com", { exact: false });
       if (await accountOption.first().isVisible().catch(() => false)) {

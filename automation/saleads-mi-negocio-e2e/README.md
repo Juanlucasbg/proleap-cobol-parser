@@ -29,7 +29,10 @@ npm run test:headed
 
 ## Assumptions
 
-- The browser starts on the SaleADS login page for the current environment.
+- The browser starts on the SaleADS login page for the current environment, or one of these env vars is set:
+  - `SALEADS_LOGIN_URL`
+  - `SALEADS_URL`
+  - `BASE_URL`
 - A valid Google session/account is available for:
   - `juanlucasbarbiergarzon@gmail.com`
 
