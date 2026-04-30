@@ -125,11 +125,16 @@ public class SaleAdsMiNegocioFullWorkflowTest {
 
 	private void stepLoginWithGoogle() {
 		try {
+			final String applicationHandle = driver.getWindowHandle();
+			final Set<String> beforeHandles = new LinkedHashSet<String>(driver.getWindowHandles());
 			clickByVisibleText(Arrays.asList("Sign in with Google", "Iniciar sesión con Google", "Continuar con Google",
-					"Login with Google", "Iniciar sesión"));
+					"Login with Google", "Acceder con Google", "Iniciar sesión"));
 			waitForUiToLoad();
 
+			switchToNewestWindowIfPresent(beforeHandles);
 			clickIfVisibleByText("juanlucasbarbiergarzon@gmail.com");
+			waitForUiToLoad();
+			switchToWindowIfPresent(applicationHandle);
 			waitForUiToLoad();
 
 			final boolean sidebarVisible = isSidebarVisible();
@@ -180,6 +185,7 @@ public class SaleAdsMiNegocioFullWorkflowTest {
 			final boolean quotaText = isTextVisible("Tienes 2 de 3 negocios");
 			final boolean cancelButton = isTextVisible("Cancelar");
 			final boolean createButton = isTextVisible("Crear Negocio");
+			captureScreenshot("03_agregar_negocio_modal");
 
 			if (businessNameInput) {
 				typeIfVisible(Arrays.asList(By.xpath("//input[contains(@placeholder,'Nombre del Negocio')]"),
@@ -189,8 +195,6 @@ public class SaleAdsMiNegocioFullWorkflowTest {
 			}
 			clickIfVisibleByText("Cancelar");
 			waitForUiToLoad();
-
-			captureScreenshot("03_agregar_negocio_modal");
 
 			final boolean passed = modalTitle && businessNameInput && quotaText && cancelButton && createButton;
 			markResult(AGREGAR_NEGOCIO_MODAL, passed,
@@ -340,6 +344,39 @@ public class SaleAdsMiNegocioFullWorkflowTest {
 		if (!isTextVisible("Administrar Negocios") || !isTextVisible("Agregar Negocio")) {
 			clickIfVisibleByText("Mi Negocio");
 			waitForUiToLoad();
+		}
+	}
+
+	private void switchToNewestWindowIfPresent(final Set<String> previousHandles) {
+		try {
+			shortWait.until(currentDriver -> currentDriver.getWindowHandles().size() > previousHandles.size());
+		} catch (final Exception ignored) {
+		}
+
+		final Set<String> currentHandles = driver.getWindowHandles();
+		if (currentHandles.size() <= previousHandles.size()) {
+			return;
+		}
+		for (final String currentHandle : currentHandles) {
+			if (!previousHandles.contains(currentHandle)) {
+				driver.switchTo().window(currentHandle);
+				waitForUiToLoad();
+				return;
+			}
+		}
+	}
+
+	private void switchToWindowIfPresent(final String windowHandle) {
+		try {
+			wait.until(currentDriver -> currentDriver.getWindowHandles().contains(windowHandle));
+			driver.switchTo().window(windowHandle);
+		} catch (final Exception ignored) {
+			for (final String availableHandle : driver.getWindowHandles()) {
+				driver.switchTo().window(availableHandle);
+				if (isSidebarVisible() || isAnyTextVisible(Arrays.asList("Negocio", "Mi Negocio", "Dashboard"))) {
+					break;
+				}
+			}
 		}
 	}
 
