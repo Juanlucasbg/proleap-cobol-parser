@@ -108,16 +108,17 @@ test.describe("saleads_mi_negocio_full_test", () => {
     const startUrl = process.env.SALEADS_LOGIN_URL;
     const googleAccountEmail =
       process.env.GOOGLE_ACCOUNT_EMAIL ?? "juanlucasbarbiergarzon@gmail.com";
-    if (!startUrl) {
-      throw new Error(
-        "Missing SALEADS_LOGIN_URL env var. Set it to the current environment login URL (dev/staging/prod).",
-      );
-    }
 
     let terminosUrl = "";
     let privacidadUrl = "";
 
     try {
+      if (!startUrl) {
+        throw new Error(
+          "Missing SALEADS_LOGIN_URL env var. Set it to the current environment login URL (dev/staging/prod).",
+        );
+      }
+
       await page.goto(startUrl, { waitUntil: "domcontentloaded" });
 
       // Step 1: Login with Google
