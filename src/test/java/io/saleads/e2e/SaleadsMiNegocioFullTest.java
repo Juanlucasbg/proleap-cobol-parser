@@ -210,7 +210,9 @@ public class SaleadsMiNegocioFullTest {
 
 		assertContainsCaseInsensitive(text, "BUSINESS PLAN", "Text 'BUSINESS PLAN' is not visible.");
 		assertContainsCaseInsensitive(text, "Cambiar Plan", "Button text 'Cambiar Plan' is not visible.");
-		assertTrue("User email is not visible.", EMAIL_PATTERN.matcher(text).find());
+		if (!EMAIL_PATTERN.matcher(text).find()) {
+			throw new IllegalStateException("User email is not visible.");
+		}
 
 		final String[] lines = text.split("\\n");
 		boolean foundLikelyUserName = false;
@@ -227,7 +229,9 @@ public class SaleadsMiNegocioFullTest {
 				break;
 			}
 		}
-		assertTrue("User name is not visible.", foundLikelyUserName);
+		if (!foundLikelyUserName) {
+			throw new IllegalStateException("User name is not visible.");
+		}
 	}
 
 	private void stepValidateDetallesCuenta() {
@@ -242,7 +246,9 @@ public class SaleadsMiNegocioFullTest {
 		final WebElement section = findSectionByHeading("Tus Negocios");
 		final String text = normalizedText(section.getText());
 
-		assertTrue("Business list is not visible.", text.length() > 20);
+		if (text.length() <= 20) {
+			throw new IllegalStateException("Business list is not visible.");
+		}
 		assertContainsCaseInsensitive(text, "Agregar Negocio", "Button 'Agregar Negocio' is missing.");
 		assertContainsCaseInsensitive(text, "Tienes 2 de 3 negocios", "Text 'Tienes 2 de 3 negocios' is not visible.");
 	}
@@ -280,7 +286,9 @@ public class SaleadsMiNegocioFullTest {
 		assertAnyVisible("Expected legal heading '" + legalText + "' is not visible.", containsTextXpath(legalText));
 
 		final String bodyText = normalizedText(driver.findElement(By.tagName("body")).getText());
-		assertTrue("Legal content text is not visible for '" + legalText + "'.", bodyText.length() > 120);
+		if (bodyText.length() <= 120) {
+			throw new IllegalStateException("Legal content text is not visible for '" + legalText + "'.");
+		}
 
 		takeScreenshot(screenshotName);
 		final String finalUrl = driver.getCurrentUrl();
@@ -326,7 +334,7 @@ public class SaleadsMiNegocioFullTest {
 		try {
 			runnable.run();
 			report.put(stepName, "PASS");
-		} catch (final Exception ex) {
+		} catch (final Throwable ex) {
 			report.put(stepName, "FAIL - " + safeMessage(ex));
 			try {
 				takeScreenshot("failed-" + stepName.toLowerCase(Locale.ROOT).replace(" ", "-"));
