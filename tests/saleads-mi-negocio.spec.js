@@ -93,6 +93,7 @@ async function clickAndCapturePopup(page, context, labels) {
 }
 
 async function validateLegalLink(page, context, linkLabels, headingPattern, screenshotName) {
+  const appUrlBeforeClick = page.url();
   const clickResult = await clickAndCapturePopup(page, context, linkLabels);
   if (!clickResult.clicked) {
     return {
@@ -140,6 +141,17 @@ async function validateLegalLink(page, context, linkLabels, headingPattern, scre
     await legalPage.close().catch(() => {});
     await page.bringToFront();
     await waitForUi(page);
+  } else {
+    // When legal links open in the same tab, return to app state for the next validation step.
+    const navigatedAway = page.url() !== appUrlBeforeClick;
+    if (navigatedAway) {
+      await page.goBack({ waitUntil: "domcontentloaded" }).catch(async () => {
+        if (appUrlBeforeClick && appUrlBeforeClick !== "about:blank") {
+          await page.goto(appUrlBeforeClick, { waitUntil: "domcontentloaded" });
+        }
+      });
+      await waitForUi(page);
+    }
   }
 
   return { passed, details, finalUrl, screenshot };
@@ -156,6 +168,11 @@ test.describe("saleads_mi_negocio_full_test", () => {
     }
 
     await waitForUi(page);
+    if (!baseUrl && page.url() === "about:blank") {
+      throw new Error(
+        "No SaleADS page detected. Provide SALEADS_BASE_URL (or BASE_URL), or run this test in a browser context that is already on the SaleADS login page."
+      );
+    }
     const results = [];
 
     // Step 1: Login with Google

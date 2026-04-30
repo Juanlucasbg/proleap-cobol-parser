@@ -30,6 +30,15 @@ npm install
 npx playwright install chromium
 ```
 
+### Required runtime context
+
+This workflow needs one of these preconditions:
+
+1. Provide a login page URL with `SALEADS_BASE_URL` (or `BASE_URL`), or
+2. Run in a browser context that is already on the SaleADS login page.
+
+If neither precondition is met (for example, Playwright starts on `about:blank`), the test fails fast with a clear message instead of producing ambiguous selector failures.
+
 ### Run
 
 ```bash
