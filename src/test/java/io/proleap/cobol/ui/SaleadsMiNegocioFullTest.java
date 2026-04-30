@@ -21,6 +21,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.openqa.selenium.By;
@@ -66,6 +67,11 @@ public class SaleadsMiNegocioFullTest {
 
 	@Before
 	public void setUp() throws IOException {
+		final String loginUrl = readString("saleads.url", "SALEADS_URL", "SALEADS_LOGIN_URL");
+		Assume.assumeTrue(
+				"Skipping SaleADS UI test. Set saleads.url or SALEADS_URL or SALEADS_LOGIN_URL to run it.",
+				loginUrl != null && !loginUrl.isBlank());
+
 		evidenceDir = Paths.get("target", "saleads-evidence", LocalDateTime.now()
 				.format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")));
 		Files.createDirectories(evidenceDir);
@@ -83,11 +89,6 @@ public class SaleadsMiNegocioFullTest {
 		driver = new ChromeDriver(options);
 		wait = new WebDriverWait(driver, DEFAULT_WAIT);
 		appWindowHandle = driver.getWindowHandle();
-
-		final String loginUrl = readString("saleads.url", "SALEADS_URL", "SALEADS_LOGIN_URL");
-		if (loginUrl == null || loginUrl.isBlank()) {
-			throw new IllegalStateException("Missing SaleADS login URL. Set saleads.url or SALEADS_URL or SALEADS_LOGIN_URL.");
-		}
 
 		driver.get(loginUrl);
 		waitForUiToLoad();
