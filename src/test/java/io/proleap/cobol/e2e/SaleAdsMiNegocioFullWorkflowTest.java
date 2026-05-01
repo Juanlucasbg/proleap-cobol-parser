@@ -80,24 +80,22 @@ public class SaleAdsMiNegocioFullWorkflowTest {
 		final LinkedHashMap<String, StepResult> report = new LinkedHashMap<>();
 		initializeReport(report);
 
-		WebDriver driver = null;
-		WebDriverWait wait = null;
-		String originalAppWindow = null;
+		final ExecutionContext context = new ExecutionContext();
 
 		try {
-			driver = createDriver();
-			wait = new WebDriverWait(driver, WAIT_TIMEOUT);
+			context.driver = createDriver();
+			context.wait = new WebDriverWait(context.driver, WAIT_TIMEOUT);
 
-			openLoginPageIfConfigured(driver, wait);
+			openLoginPageIfConfigured(context.driver, context.wait);
 
 			final StepResult loginResult = runStep(() -> {
-				final Set<String> handlesBeforeLogin = driver.getWindowHandles();
-				clickFirstVisibleText(driver, wait, Arrays.asList("Sign in with Google", "Login with Google",
+				final Set<String> handlesBeforeLogin = context.driver.getWindowHandles();
+				clickFirstVisibleText(context.driver, context.wait, Arrays.asList("Sign in with Google", "Login with Google",
 						"Ingresar con Google", "Continuar con Google", "Google"), true);
-				chooseGoogleAccountIfPrompted(driver, wait, handlesBeforeLogin, GOOGLE_ACCOUNT_EMAIL);
-				waitForMainInterface(driver, wait);
-				ensureSidebarVisible(driver, wait);
-				captureScreenshot(driver, screenshotsDir, "01-dashboard-loaded.png");
+				chooseGoogleAccountIfPrompted(context.driver, context.wait, handlesBeforeLogin, GOOGLE_ACCOUNT_EMAIL);
+				waitForMainInterface(context.driver, context.wait);
+				ensureSidebarVisible(context.driver, context.wait);
+				captureScreenshot(context.driver, screenshotsDir, "01-dashboard-loaded.png");
 				return null;
 			});
 			report.put(REPORT_LOGIN, loginResult);
@@ -106,13 +104,13 @@ public class SaleAdsMiNegocioFullWorkflowTest {
 				return;
 			}
 
-			originalAppWindow = driver.getWindowHandle();
+			context.originalAppWindow = context.driver.getWindowHandle();
 
 			final StepResult menuResult = runStep(() -> {
-				openMiNegocioMenu(driver, wait);
-				waitForVisibleText(driver, wait, "Agregar Negocio");
-				waitForVisibleText(driver, wait, "Administrar Negocios");
-				captureScreenshot(driver, screenshotsDir, "02-mi-negocio-expanded.png");
+				openMiNegocioMenu(context.driver, context.wait);
+				waitForVisibleText(context.driver, context.wait, "Agregar Negocio");
+				waitForVisibleText(context.driver, context.wait, "Administrar Negocios");
+				captureScreenshot(context.driver, screenshotsDir, "02-mi-negocio-expanded.png");
 				return null;
 			});
 			report.put(REPORT_MI_NEGOCIO_MENU, menuResult);
@@ -122,19 +120,20 @@ public class SaleAdsMiNegocioFullWorkflowTest {
 			}
 
 			final StepResult modalResult = runStep(() -> {
-				clickFirstVisibleText(driver, wait, Arrays.asList("Agregar Negocio"), true);
-				waitForVisibleText(driver, wait, "Crear Nuevo Negocio");
-				findBusinessNameInput(driver, wait);
-				waitForVisibleText(driver, wait, "Tienes 2 de 3 negocios");
-				waitForVisibleText(driver, wait, "Cancelar");
-				waitForVisibleText(driver, wait, "Crear Negocio");
-				captureScreenshot(driver, screenshotsDir, "03-agregar-negocio-modal.png");
+				clickFirstVisibleText(context.driver, context.wait, Arrays.asList("Agregar Negocio"), true);
+				waitForVisibleText(context.driver, context.wait, "Crear Nuevo Negocio");
+				findBusinessNameInput(context.driver, context.wait);
+				waitForVisibleText(context.driver, context.wait, "Tienes 2 de 3 negocios");
+				waitForVisibleText(context.driver, context.wait, "Cancelar");
+				waitForVisibleText(context.driver, context.wait, "Crear Negocio");
+				captureScreenshot(context.driver, screenshotsDir, "03-agregar-negocio-modal.png");
 
-				final WebElement input = findBusinessNameInput(driver, wait);
+				final WebElement input = findBusinessNameInput(context.driver, context.wait);
 				input.click();
 				input.sendKeys(Keys.chord(Keys.CONTROL, "a"), TEST_BUSINESS_NAME);
-				clickFirstVisibleText(driver, wait, Arrays.asList("Cancelar"), true);
-				waitForElementInvisibility(driver, wait, By.xpath("//*[contains(normalize-space(), 'Crear Nuevo Negocio')]"));
+				clickFirstVisibleText(context.driver, context.wait, Arrays.asList("Cancelar"), true);
+				waitForElementInvisibility(context.driver, context.wait,
+						By.xpath("//*[contains(normalize-space(), 'Crear Nuevo Negocio')]"));
 				return null;
 			});
 			report.put(REPORT_AGREGAR_MODAL, modalResult);
@@ -144,13 +143,13 @@ public class SaleAdsMiNegocioFullWorkflowTest {
 			}
 
 			final StepResult administrarResult = runStep(() -> {
-				ensureAdministrarNegociosVisible(driver, wait);
-				clickFirstVisibleText(driver, wait, Arrays.asList("Administrar Negocios"), true);
-				waitForVisibleText(driver, wait, "Informacion General", "Información General");
-				waitForVisibleText(driver, wait, "Detalles de la Cuenta");
-				waitForVisibleText(driver, wait, "Tus Negocios");
-				waitForVisibleText(driver, wait, "Seccion Legal", "Sección Legal");
-				captureScreenshot(driver, screenshotsDir, "04-administrar-negocios.png");
+				ensureAdministrarNegociosVisible(context.driver, context.wait);
+				clickFirstVisibleText(context.driver, context.wait, Arrays.asList("Administrar Negocios"), true);
+				waitForVisibleText(context.driver, context.wait, "Informacion General", "Información General");
+				waitForVisibleText(context.driver, context.wait, "Detalles de la Cuenta");
+				waitForVisibleText(context.driver, context.wait, "Tus Negocios");
+				waitForVisibleText(context.driver, context.wait, "Seccion Legal", "Sección Legal");
+				captureScreenshot(context.driver, screenshotsDir, "04-administrar-negocios.png");
 				return null;
 			});
 			report.put(REPORT_ADMINISTRAR_VIEW, administrarResult);
@@ -160,31 +159,31 @@ public class SaleAdsMiNegocioFullWorkflowTest {
 			}
 
 			report.put(REPORT_INFO_GENERAL, runStep(() -> {
-				validateInformacionGeneral(driver, wait);
+				validateInformacionGeneral(context.driver, context.wait);
 				return null;
 			}));
 			report.put(REPORT_DETALLES_CUENTA, runStep(() -> {
-				validateDetallesCuenta(driver, wait);
+				validateDetallesCuenta(context.driver, context.wait);
 				return null;
 			}));
 			report.put(REPORT_TUS_NEGOCIOS, runStep(() -> {
-				validateTusNegocios(driver, wait);
+				validateTusNegocios(context.driver, context.wait);
 				return null;
 			}));
 
 			report.put(REPORT_TERMINOS,
-					runStepWithDetails(() -> validateLegalPage(driver, wait, screenshotsDir, originalAppWindow,
+					runStepWithDetails(() -> validateLegalPage(context.driver, context.wait, screenshotsDir, context.originalAppWindow,
 							Arrays.asList("Términos y Condiciones", "Terminos y Condiciones"),
 							"08-terminos-y-condiciones.png")));
 
 			report.put(REPORT_POLITICA,
-					runStepWithDetails(() -> validateLegalPage(driver, wait, screenshotsDir, originalAppWindow,
+					runStepWithDetails(() -> validateLegalPage(context.driver, context.wait, screenshotsDir, context.originalAppWindow,
 							Arrays.asList("Política de Privacidad", "Politica de Privacidad"),
 							"09-politica-de-privacidad.png")));
 		} finally {
 			writeReport(artifactsDir.resolve("final-report.txt"), report);
-			if (driver != null) {
-				driver.quit();
+			if (context.driver != null) {
+				context.driver.quit();
 			}
 		}
 
@@ -594,6 +593,12 @@ public class SaleAdsMiNegocioFullWorkflowTest {
 		String run() throws Exception;
 	}
 
+	private static final class ExecutionContext {
+		private WebDriver driver;
+		private WebDriverWait wait;
+		private String originalAppWindow;
+	}
+
 	private static final class StepResult {
 		private final boolean passed;
 		private final String details;
@@ -619,10 +624,6 @@ public class SaleAdsMiNegocioFullWorkflowTest {
 
 		private static StepResult pending() {
 			return new StepResult(false, "Pending", true);
-		}
-
-		private StepResult withDetails(final String newDetails) {
-			return new StepResult(this.passed, newDetails, this.pending);
 		}
 
 		private boolean isPending() {
