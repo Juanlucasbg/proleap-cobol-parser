@@ -120,6 +120,7 @@ public class SaleadsMiNegocioFullTest {
 
 			final String googleEmail = getConfigValue("saleads.google.email", "SALEADS_GOOGLE_EMAIL", DEFAULT_EMAIL);
 			clickTextIfVisibleAnyWindow(googleEmail, Duration.ofSeconds(20));
+			switchToAppWindow(Duration.ofSeconds(40));
 			waitForUiToLoad();
 		}
 
@@ -280,6 +281,7 @@ public class SaleadsMiNegocioFullTest {
 	}
 
 	private boolean clickTextIfVisibleAnyWindow(final String text, final Duration timeout) {
+		final String initialHandle = driver.getWindowHandle();
 		final long end = System.currentTimeMillis() + timeout.toMillis();
 		while (System.currentTimeMillis() < end) {
 			for (final String handle : driver.getWindowHandles()) {
@@ -295,7 +297,21 @@ public class SaleadsMiNegocioFullTest {
 			}
 			sleep(400);
 		}
+		driver.switchTo().window(initialHandle);
 		return false;
+	}
+
+	private void switchToAppWindow(final Duration timeout) {
+		final long end = System.currentTimeMillis() + timeout.toMillis();
+		while (System.currentTimeMillis() < end) {
+			for (final String handle : driver.getWindowHandles()) {
+				driver.switchTo().window(handle);
+				if (isSidebarVisible() || isVisible(By.xpath("//main | //aside | //nav"))) {
+					return;
+				}
+			}
+			sleep(400);
+		}
 	}
 
 	private void clickAndWait(final WebElement element) {
