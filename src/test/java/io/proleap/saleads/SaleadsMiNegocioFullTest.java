@@ -444,7 +444,8 @@ public class SaleadsMiNegocioFullTest {
 		}
 	}
 
-	private Set<String> newWindowOrSameWindowNavigation(final Set<String> beforeHandles, final String currentWindow) {
+	private ExpectedCondition<Set<String>> newWindowOrSameWindowNavigation(final Set<String> beforeHandles,
+			final String currentWindow) {
 		final String urlBefore = driver.getCurrentUrl();
 		return drv -> {
 			Set<String> currentHandles = drv.getWindowHandles();
