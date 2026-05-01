@@ -195,6 +195,38 @@ $ mvn clean test
 ```
 
 
+SaleADS Mi Negocio E2E workflow test (opt-in)
+---------------------------------------------
+
+This repository includes an opt-in Selenium test for validating the complete
+SaleADS "Mi Negocio" workflow:
+
+* `src/test/java/e2e/SaleAdsMiNegocioFullTest.java`
+
+The test is disabled by default and must be explicitly enabled.
+
+Run command example:
+
+```
+mvn -Dtest=SaleAdsMiNegocioFullTest \
+    -Dsaleads.test.enabled=true \
+    -Dsaleads.startUrl="https://<your-saleads-login-url>" \
+    test
+```
+
+Optional runtime flags (system property or equivalent environment variable):
+
+* `saleads.test.enabled` / `SALEADS_TEST_ENABLED` (`true|false`)
+* `saleads.startUrl` / `SALEADS_START_URL` (login URL for current environment)
+* `saleads.headless` / `SALEADS_HEADLESS` (`true|false`, defaults to `true`)
+* `saleads.debuggerAddress` / `SALEADS_DEBUGGER_ADDRESS` (attach to an existing Chrome session)
+
+Evidence output:
+
+* screenshots and final report are written to:
+  `target/saleads-mi-negocio-evidence/<timestamp>/`
+
+
 Release process
 ---------------
 

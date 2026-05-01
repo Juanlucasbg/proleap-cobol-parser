@@ -189,7 +189,7 @@ public class SaleAdsMiNegocioFullTest {
 		try {
 			checkedStep.run();
 			finalReport.put(stepName, StepResult.pass());
-		} catch (Exception ex) {
+		} catch (Throwable ex) {
 			final String screenshotPath = safelyCaptureFailureScreenshot(stepName);
 			final String message = ex.getMessage() == null ? ex.getClass().getSimpleName() : ex.getMessage();
 			finalReport.put(stepName, StepResult.fail(message, screenshotPath));
@@ -254,6 +254,7 @@ public class SaleAdsMiNegocioFullTest {
 			final String screenshotName
 	) throws IOException {
 		final String originalWindow = driver.getWindowHandle();
+		final String originalUrl = driver.getCurrentUrl();
 		final Set<String> handlesBefore = driver.getWindowHandles();
 
 		clickUsingVisibleTexts(linkTextCandidates);
@@ -285,6 +286,9 @@ public class SaleAdsMiNegocioFullTest {
 			driver.close();
 			driver.switchTo().window(originalWindow);
 			waitForUiToLoad();
+		} else if (!driver.getCurrentUrl().equals(originalUrl)) {
+			driver.navigate().back();
+			waitForUiToLoad();
 		}
 
 		return finalUrl;
@@ -292,6 +296,7 @@ public class SaleAdsMiNegocioFullTest {
 
 	private void selectGoogleAccountIfShown(final String email) {
 		waitForUiToLoad();
+		final String initialWindow = driver.getWindowHandle();
 		final Set<String> handles = driver.getWindowHandles();
 		for (String handle : handles) {
 			driver.switchTo().window(handle);
@@ -306,9 +311,8 @@ public class SaleAdsMiNegocioFullTest {
 			}
 		}
 
-		final List<String> handlesAsList = new ArrayList<>(driver.getWindowHandles());
-		if (!handlesAsList.isEmpty()) {
-			driver.switchTo().window(handlesAsList.get(0));
+		if (driver.getWindowHandles().contains(initialWindow)) {
+			driver.switchTo().window(initialWindow);
 		}
 	}
 
@@ -590,7 +594,7 @@ public class SaleAdsMiNegocioFullTest {
 			return "\"" + value + "\"";
 		}
 		StringBuilder builder = new StringBuilder("concat(");
-		String[] parts = value.split("'");
+		String[] parts = value.split("'", -1);
 		for (int i = 0; i < parts.length; i++) {
 			if (i > 0) {
 				builder.append(", \"'\", ");
