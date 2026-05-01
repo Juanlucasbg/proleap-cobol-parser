@@ -580,6 +580,9 @@ public class SaleadsMiNegocioFullTest {
 		}
 		try {
 			final URI uri = URI.create(input);
+			if (uri.getScheme() == null || uri.getScheme().isBlank()) {
+				return "N/A";
+			}
 			final String host = uri.getHost() == null ? "" : uri.getHost();
 			final String path = uri.getPath() == null ? "" : uri.getPath();
 			final String query = uri.getQuery() == null ? "" : "?...";
