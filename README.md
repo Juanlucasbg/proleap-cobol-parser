@@ -194,6 +194,30 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+### Execute the SaleADS Mi Negocio E2E workflow test
+
+This repository now includes a Selenium/JUnit test for the SaleADS "Mi Negocio" full workflow:
+
+```
+$ mvn -Dtest=SaleadsMiNegocioFullTest test
+```
+
+Configuration options:
+
+* `-Dsaleads.login.url` (or env `SALEADS_LOGIN_URL`): login URL for the current environment.  
+  If omitted, the test assumes Chrome is already on the SaleADS login page.
+* `-Dsaleads.account.email` (or env `SALEADS_ACCOUNT_EMAIL`): Google account to select.  
+  Default: `juanlucasbarbiergarzon@gmail.com`.
+* `-Dsaleads.headless=true` (or env `SALEADS_HEADLESS=true`) to run headless.
+* `-Dsaleads.chrome.debugger=host:port` (or env `SALEADS_CHROME_DEBUGGER`) to attach
+  to an already open Chrome session (useful when login page is preloaded manually).
+
+Evidence screenshots are written to:
+
+```
+target/saleads-evidence/<timestamp>/
+```
+
 
 Release process
 ---------------
