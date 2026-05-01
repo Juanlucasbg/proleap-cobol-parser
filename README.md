@@ -194,6 +194,38 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+### SaleADS Mi Negocio full workflow E2E
+
+An environment-agnostic E2E test was added at:
+
+`src/test/java/io/proleap/e2e/SaleadsMiNegocioFullTest.java`
+
+This test:
+
+* logs in with Google (first step only, then continues with full flow),
+* validates the "Mi Negocio" sidebar workflow end-to-end,
+* validates modal and account sections,
+* validates legal links (same tab or new tab),
+* captures screenshots at key checkpoints,
+* prints a PASS/FAIL report per requested section.
+
+Configuration (no hardcoded environment URL in test code):
+
+* `SALEADS_BASE_URL` (required): login URL for the current SaleADS environment.
+* `SALEADS_GOOGLE_ACCOUNT` (optional, default: `juanlucasbarbiergarzon@gmail.com`)
+* `SALEADS_HEADLESS` (optional, default: `true`)
+* `SALEADS_EVIDENCE_DIR` (optional, default: `target/saleads-evidence/mi-negocio-<timestamp>`)
+
+Run only this workflow test:
+
+```
+$ SALEADS_BASE_URL="https://<your-saleads-env-login>" \
+  SALEADS_GOOGLE_ACCOUNT="juanlucasbarbiergarzon@gmail.com" \
+  mvn -Dtest=io.proleap.e2e.SaleadsMiNegocioFullTest test
+```
+
+The test prints the final validation report to stdout and saves screenshots under the configured evidence directory.
+
 
 Release process
 ---------------
