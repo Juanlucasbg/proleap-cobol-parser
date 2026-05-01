@@ -194,6 +194,45 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+Optional SaleADS UI E2E workflow test
+-------------------------------------
+
+This repository now includes an optional Selenium-based end-to-end UI test for the SaleADS
+"Mi Negocio" workflow:
+
+`src/test/java/io/proleap/e2e/saleads/SaleAdsMiNegocioWorkflowTest.java`
+
+The test is environment agnostic:
+- no hardcoded SaleADS domain;
+- runtime URL configured with environment variables;
+- text-based element selection where possible;
+- screenshots generated for major checkpoints.
+
+Set the required environment variables:
+
+```
+export SALEADS_E2E_ENABLED=true
+export SALEADS_LOGIN_URL="https://<current-saleads-environment>/login"
+```
+
+Optional variables:
+
+```
+export SALEADS_BROWSER=chrome            # or firefox
+export SALEADS_HEADLESS=false            # true/false
+export SALEADS_E2E_TIMEOUT_SECONDS=45
+```
+
+Run only this workflow test:
+
+```
+$ mvn -Dtest=io.proleap.e2e.saleads.SaleAdsMiNegocioWorkflowTest test
+```
+
+Evidence screenshots and final report output are written under:
+
+`target/saleads-evidence/<timestamp>/`
+
 
 Release process
 ---------------
