@@ -449,18 +449,44 @@ class SaleadsMiNegocioWorkflow:
             raise
 
     def step_validate_terminos_condiciones(self) -> None:
-        self._click_legal_link_and_validate(
-            link_text="Términos y Condiciones",
-            heading="Términos y Condiciones",
-            key="terminos_condiciones",
-        )
+        assert self.main_page is not None
+        details: List[str] = []
+        try:
+            self._click_legal_link_and_validate(
+                link_text="Términos y Condiciones",
+                heading="Términos y Condiciones",
+                key="terminos_condiciones",
+            )
+        except Exception as exc:  # noqa: BLE001
+            details.append(f"Failure: {exc}")
+            self._record(
+                key="terminos_condiciones",
+                name="Términos y Condiciones",
+                passed=False,
+                details=details,
+                url=self.main_page.url,
+            )
+            raise
 
     def step_validate_politica_privacidad(self) -> None:
-        self._click_legal_link_and_validate(
-            link_text="Política de Privacidad",
-            heading="Política de Privacidad",
-            key="politica_privacidad",
-        )
+        assert self.main_page is not None
+        details: List[str] = []
+        try:
+            self._click_legal_link_and_validate(
+                link_text="Política de Privacidad",
+                heading="Política de Privacidad",
+                key="politica_privacidad",
+            )
+        except Exception as exc:  # noqa: BLE001
+            details.append(f"Failure: {exc}")
+            self._record(
+                key="politica_privacidad",
+                name="Política de Privacidad",
+                passed=False,
+                details=details,
+                url=self.main_page.url,
+            )
+            raise
 
     def _build_report(self) -> Dict[str, object]:
         mapping = [
