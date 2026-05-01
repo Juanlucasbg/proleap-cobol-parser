@@ -195,6 +195,32 @@ $ mvn clean test
 ```
 
 
+SaleADS E2E workflow test (opt-in)
+----------------------------------
+
+This repository includes an opt-in Selenium E2E test for the SaleADS "Mi Negocio" workflow:
+
+* Test class: `src/test/java/io/proleap/e2e/saleads/SaleadsMiNegocioFullTest.java`
+* The test is skipped by default and only runs when `SALEADS_RUN_E2E=true`.
+* It uses visible-text based interactions and captures evidence artifacts:
+  * screenshots in `target/saleads-evidence/screenshots`
+  * final status report in `target/saleads-evidence/final-report.json`
+
+Environment variables:
+
+* `SALEADS_RUN_E2E=true` (required to run this test)
+* `SALEADS_START_URL` (optional; environment-specific login page URL)
+* `SALEADS_SELENIUM_REMOTE_URL` (optional; Selenium Grid URL)
+* `SALEADS_HEADLESS=true|false` (optional; default `true`)
+* `SALEADS_TIMEOUT_SECONDS` (optional; default `30`)
+
+Run only this workflow test:
+
+```
+$ mvn -Dtest=io.proleap.e2e.saleads.SaleadsMiNegocioFullTest test
+```
+
+
 Release process
 ---------------
 
