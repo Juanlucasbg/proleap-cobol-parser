@@ -194,6 +194,32 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+SaleADS E2E workflow test
+-------------------------
+
+The repository now includes a dedicated Selenium/JUnit workflow test for:
+
+- `saleads_mi_negocio_full_test`
+
+This test is environment-agnostic and does not hardcode a domain. Provide the active
+SaleADS login page URL at runtime, so the same test can run on dev/staging/production.
+
+Run command:
+
+```
+$ SALEADS_LOGIN_URL="https://<current-saleads-login-url>" mvn -Dtest=SaleadsMiNegocioFullTest test
+```
+
+Optional runtime settings:
+
+- `SALEADS_HEADLESS=true` (or `-Dsaleads.headless=true`) to run headless
+- `CHROMEDRIVER_PATH=/path/to/chromedriver` (or `-Dchromedriver.path=...`) if needed
+
+Evidence output:
+
+- Screenshots are saved under `target/saleads-e2e-screenshots/<timestamp>/`
+- Final PASS/FAIL report is printed in test output with legal page URLs
+
 
 Release process
 ---------------
