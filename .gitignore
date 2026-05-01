@@ -42,3 +42,5 @@ target/
 ## Additional for IntelliJ
 out/
 automation/artifacts/
+__pycache__/
+*.pyc
