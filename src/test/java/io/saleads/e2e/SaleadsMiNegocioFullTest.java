@@ -114,31 +114,30 @@ public class SaleadsMiNegocioFullTest {
 				markBlocked("Tus Negocios", "Blocked because login did not succeed.");
 				markBlocked("Términos y Condiciones", "Blocked because login did not succeed.");
 				markBlocked("Política de Privacidad", "Blocked because login did not succeed.");
-				return;
-			}
-
-			stepOpenMiNegocioMenu();
-			stepAgregarNegocioModal();
-			final boolean administrarOk = stepAdministrarNegociosView();
-
-			if (administrarOk) {
-				stepInformacionGeneral();
-				stepDetallesCuenta();
-				stepTusNegocios();
-				stepLegalDocument(
-						"Términos y Condiciones",
-						Arrays.asList("Términos y Condiciones", "Terminos y Condiciones"),
-						Arrays.asList("Términos y Condiciones", "Terminos y Condiciones"));
-				stepLegalDocument(
-						"Política de Privacidad",
-						Arrays.asList("Política de Privacidad", "Politica de Privacidad"),
-						Arrays.asList("Política de Privacidad", "Politica de Privacidad"));
 			} else {
-				markBlocked("Información General", "Blocked because 'Administrar Negocios' did not load.");
-				markBlocked("Detalles de la Cuenta", "Blocked because 'Administrar Negocios' did not load.");
-				markBlocked("Tus Negocios", "Blocked because 'Administrar Negocios' did not load.");
-				markBlocked("Términos y Condiciones", "Blocked because 'Administrar Negocios' did not load.");
-				markBlocked("Política de Privacidad", "Blocked because 'Administrar Negocios' did not load.");
+				stepOpenMiNegocioMenu();
+				stepAgregarNegocioModal();
+				final boolean administrarOk = stepAdministrarNegociosView();
+
+				if (administrarOk) {
+					stepInformacionGeneral();
+					stepDetallesCuenta();
+					stepTusNegocios();
+					stepLegalDocument(
+							"Términos y Condiciones",
+							Arrays.asList("Términos y Condiciones", "Terminos y Condiciones"),
+							Arrays.asList("Términos y Condiciones", "Terminos y Condiciones"));
+					stepLegalDocument(
+							"Política de Privacidad",
+							Arrays.asList("Política de Privacidad", "Politica de Privacidad"),
+							Arrays.asList("Política de Privacidad", "Politica de Privacidad"));
+				} else {
+					markBlocked("Información General", "Blocked because 'Administrar Negocios' did not load.");
+					markBlocked("Detalles de la Cuenta", "Blocked because 'Administrar Negocios' did not load.");
+					markBlocked("Tus Negocios", "Blocked because 'Administrar Negocios' did not load.");
+					markBlocked("Términos y Condiciones", "Blocked because 'Administrar Negocios' did not load.");
+					markBlocked("Política de Privacidad", "Blocked because 'Administrar Negocios' did not load.");
+				}
 			}
 		} finally {
 			writeFinalReport();
@@ -166,8 +165,10 @@ public class SaleadsMiNegocioFullTest {
 	private boolean stepLogin() {
 		try {
 			if (loginUrl == null && isBlank(driver.getCurrentUrl())) {
-				markFail("Login",
-						"Login page URL not configured. Provide SALEADS_LOGIN_URL or saleads.login.url.");
+				markFailWithScreenshot(
+						"Login",
+						"Login page URL not configured. Provide SALEADS_LOGIN_URL or saleads.login.url.",
+						"01-login-failure");
 				return false;
 			}
 
@@ -193,10 +194,13 @@ public class SaleadsMiNegocioFullTest {
 				return true;
 			}
 
-			markFail("Login", "Main application UI or sidebar was not detected after Google login.");
+			markFailWithScreenshot(
+					"Login",
+					"Main application UI or sidebar was not detected after Google login.",
+					"01-login-failure");
 			return false;
 		} catch (final Exception e) {
-			markFail("Login", "Login with Google failed: " + e.getMessage());
+			markFailWithScreenshot("Login", "Login with Google failed: " + e.getMessage(), "01-login-failure");
 			return false;
 		}
 	}
@@ -646,6 +650,16 @@ public class SaleadsMiNegocioFullTest {
 
 	private void markFail(final String field, final String details) {
 		results.put(field, StepResult.fail(details));
+	}
+
+	private void markFailWithScreenshot(final String field, final String details, final String screenshotName) {
+		final StepResult result = StepResult.fail(details);
+		try {
+			result.screenshot = captureScreenshot(screenshotName).toString();
+		} catch (final Exception ignored) {
+			// Keep failure details even if screenshot capture fails.
+		}
+		results.put(field, result);
 	}
 
 	private void markBlocked(final String field, final String details) {
