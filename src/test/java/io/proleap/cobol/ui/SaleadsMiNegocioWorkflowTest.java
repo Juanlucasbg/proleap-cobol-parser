@@ -93,7 +93,12 @@ public class SaleadsMiNegocioWorkflowTest {
 		// Step 1: Login with Google
 		boolean step1 = false;
 		try {
-			driver.get(resolveLoginUrl());
+			final String loginUrl = resolveLoginUrl();
+			if (loginUrl != null) {
+				driver.get(loginUrl);
+			} else {
+				notes.add("No login URL provided. Using the current browser page as preloaded SaleADS login screen.");
+			}
 			waitForUiSettled();
 
 			final WebElement googleButton = findByVisibleTextClickTarget(
@@ -234,9 +239,7 @@ public class SaleadsMiNegocioWorkflowTest {
 		if (propertyUrl != null && !propertyUrl.isBlank()) {
 			return propertyUrl.trim();
 		}
-
-		throw new IllegalStateException(
-				"No login URL provided. Set SALEADS_LOGIN_URL env var or -Dsaleads.login.url JVM property.");
+		return null;
 	}
 
 	private void selectGoogleAccountIfShown(final String accountEmail) {
