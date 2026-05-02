@@ -126,6 +126,22 @@ class SaleadsMiNegocioWorkflow:
             result.add_fail(f"Expected visible text not found: {text}")
             return False
 
+    def assert_body_contains(self, result: StepResult, text: str, label: str | None = None) -> bool:
+        body_text = self.page.locator("body").inner_text(timeout=10_000)
+        if text.lower() in body_text.lower():
+            result.add_ok(f"Body contains expected text: {label or text}")
+            return True
+        result.add_fail(f"Body missing expected text: {label or text}")
+        return False
+
+    def assert_body_regex(self, result: StepResult, pattern: str, label: str) -> bool:
+        body_text = self.page.locator("body").inner_text(timeout=10_000)
+        if re.search(pattern, body_text):
+            result.add_ok(f"Body matches expected pattern: {label}")
+            return True
+        result.add_fail(f"Body missing expected pattern: {label}")
+        return False
+
     def assert_role_visible(
         self,
         result: StepResult,
@@ -298,8 +314,10 @@ class SaleadsMiNegocioWorkflow:
 
     def step_validate_informacion_general(self) -> None:
         def action(result: StepResult) -> None:
+            account_username = GOOGLE_ACCOUNT_EMAIL.split("@", maxsplit=1)[0]
             self.assert_text_visible(result, "Información General")
-            self.assert_text_visible(result, "@")
+            self.assert_body_contains(result, account_username, "expected account username")
+            self.assert_body_regex(result, r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", "user email")
             self.assert_text_visible(result, "BUSINESS PLAN")
             self.assert_role_visible(result, "button", "Cambiar Plan", exact=False)
 
@@ -474,8 +492,8 @@ def parse_args() -> argparse.Namespace:
         "--base-url",
         default=os.getenv("SALEADS_BASE_URL", ""),
         help=(
-            "Optional base URL for the active SaleADS environment login page. "
-            "If omitted, script expects an already-open login page."
+            "Base URL for the active SaleADS environment login page. "
+            "Can also be provided via SALEADS_BASE_URL."
         ),
     )
     parser.add_argument("--headless", action="store_true", help="Run browser in headless mode.")
@@ -498,8 +516,17 @@ def main() -> int:
         context: BrowserContext = browser.new_context()
         page = context.new_page()
 
-        if args.base_url:
-            page.goto(args.base_url, wait_until="domcontentloaded", timeout=45_000)
+        if not args.base_url:
+            print(
+                "ERROR: Missing --base-url (or SALEADS_BASE_URL). "
+                "Provide the current SaleADS environment login URL.",
+                file=sys.stderr,
+            )
+            context.close()
+            browser.close()
+            return 2
+
+        page.goto(args.base_url, wait_until="domcontentloaded", timeout=45_000)
 
         workflow = SaleadsMiNegocioWorkflow(
             page=page,

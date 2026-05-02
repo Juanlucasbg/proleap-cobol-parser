@@ -13,7 +13,7 @@ handling (same tab/new tab), screenshots, and a PASS/FAIL report.
 
 - The script does **not** hardcode a SaleADS domain.
 - It accepts `--base-url` (or `SALEADS_BASE_URL`) for the current environment.
-- If no URL is provided, it can run with an already-open login page context.
+- The start URL is required so execution always begins on the active environment's login page.
 
 ## Setup
 
@@ -39,6 +39,9 @@ python scripts/saleads_mi_negocio_full_test.py \
 export SALEADS_BASE_URL="https://<current-saleads-env>/login"
 python scripts/saleads_mi_negocio_full_test.py
 ```
+
+> Note: A base URL is required for this standalone runner. This ensures the script
+> starts on the correct login page in the active SaleADS environment.
 
 ### Optional flags
 
