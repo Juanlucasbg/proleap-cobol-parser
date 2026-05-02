@@ -55,7 +55,7 @@ function setResult(report, field, pass, detail) {
   };
 }
 
-test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
+test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
   const loginUrl = process.env.SALEADS_START_URL || "";
   const googleEmail = process.env.SALEADS_GOOGLE_EMAIL || DEFAULT_EMAIL;
   const expectedUserName = process.env.SALEADS_USER_NAME || "";
@@ -87,6 +87,17 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
       await waitForUi(page);
     } else if (page.url() === "about:blank") {
       throw new Error("Set SALEADS_START_URL or start from login page.");
+    }
+
+    const alreadyLoggedIn = await pickFirstVisible([
+      page.getByRole("navigation"),
+      page.locator("aside"),
+      page.getByText(/mi negocio/i),
+      page.getByText(/negocio/i),
+    ]);
+    if (alreadyLoggedIn) {
+      await checkpoint(page, testInfo, "01-dashboard-loaded");
+      return;
     }
 
     const signInWithGoogle = await pickFirstVisible([
@@ -202,11 +213,11 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
       "Crear Negocio button is missing."
     );
 
+    await checkpoint(page, testInfo, "03-agregar-negocio-modal");
+
     await businessNameInput.click();
     await businessNameInput.fill("Negocio Prueba Automatización");
     await clickAndWait(page.getByRole("button", { name: /^Cancelar$/i }), page);
-
-    await checkpoint(page, testInfo, "03-agregar-negocio-modal");
   });
 
   await runStep("Administrar Negocios view", async () => {
