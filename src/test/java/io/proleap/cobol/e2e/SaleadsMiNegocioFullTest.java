@@ -320,9 +320,10 @@ public class SaleadsMiNegocioFullTest {
 			action.run();
 			finalReport.put(stepName, "PASS");
 			return true;
-		} catch (Exception e) {
+		} catch (Throwable e) {
 			finalReport.put(stepName, "FAIL");
-			failureDetails.add(stepName + ": " + e.getMessage());
+			final String message = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
+			failureDetails.add(stepName + ": " + message);
 			return false;
 		}
 	}
