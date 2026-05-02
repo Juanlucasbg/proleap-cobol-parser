@@ -26,9 +26,19 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import TYPE_CHECKING, Dict, List, Optional
 
-from playwright.sync_api import BrowserContext, Locator, Page, TimeoutError, sync_playwright
+if TYPE_CHECKING:
+    from playwright.sync_api import BrowserContext, Locator, Page
+
+try:
+    from playwright.sync_api import Locator, TimeoutError, sync_playwright
+except ModuleNotFoundError:
+    class TimeoutError(Exception):
+        pass
+
+    Locator = object  # type: ignore[assignment]
+    sync_playwright = None
 
 
 REPORT_FIELDS = [
