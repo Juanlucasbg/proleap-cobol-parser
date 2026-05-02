@@ -141,8 +141,9 @@ public class SaleadsMiNegocioFullTest {
 		assertVisibleText("Cancelar");
 		assertVisibleText("Crear Negocio");
 
-		optionalFillBusinessNameAndCancel();
 		takeScreenshot("03-agregar-negocio-modal");
+		optionalFillBusinessName();
+		clickByVisibleText("Cancelar");
 	}
 
 	private void stepOpenAdministrarNegocios() {
@@ -242,7 +243,7 @@ public class SaleadsMiNegocioFullTest {
 		throw new NoSuchElementException("No clickable element found by visible text: " + String.join(", ", candidates));
 	}
 
-	private void optionalFillBusinessNameAndCancel() {
+	private void optionalFillBusinessName() {
 		final By inputLocator = By.xpath(
 				"//input[contains(@placeholder,'Nombre del Negocio') or @aria-label='Nombre del Negocio' or @name='Nombre del Negocio' or @name='businessName']");
 		if (isVisible(inputLocator, SHORT_TIMEOUT)) {
@@ -252,8 +253,6 @@ public class SaleadsMiNegocioFullTest {
 			input.sendKeys("Negocio Prueba Automatización");
 			waitForUiLoad();
 		}
-
-		clickByVisibleText("Cancelar");
 	}
 
 	private void selectGoogleAccountIfVisible(final String accountEmail) {
