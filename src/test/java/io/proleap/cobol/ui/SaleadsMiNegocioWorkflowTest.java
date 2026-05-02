@@ -108,7 +108,7 @@ public class SaleadsMiNegocioWorkflowTest {
 			captureScreenshot("01-dashboard-loaded");
 
 			step1 = true;
-		} catch (Exception e) {
+		} catch (AssertionError | Exception e) {
 			notes.add("Step 1 failure: " + e.getMessage());
 		}
 		stepResult.put("Login", step1);
@@ -121,7 +121,7 @@ public class SaleadsMiNegocioWorkflowTest {
 			assertTrue("No se visualiza 'Administrar Negocios'.", isAnyVisibleTextPresent("Administrar Negocios"));
 			captureScreenshot("02-mi-negocio-expanded");
 			step2 = true;
-		} catch (Exception e) {
+		} catch (AssertionError | Exception e) {
 			notes.add("Step 2 failure: " + e.getMessage());
 		}
 		stepResult.put("Mi Negocio menu", step2);
@@ -141,7 +141,7 @@ public class SaleadsMiNegocioWorkflowTest {
 			captureScreenshot("03-agregar-negocio-modal");
 			optionalTypeBusinessNameAndCancel();
 			step3 = true;
-		} catch (Exception e) {
+		} catch (AssertionError | Exception e) {
 			notes.add("Step 3 failure: " + e.getMessage());
 		}
 		stepResult.put("Agregar Negocio modal", step3);
@@ -159,7 +159,7 @@ public class SaleadsMiNegocioWorkflowTest {
 			assertTrue("No existe sección 'Sección Legal'.", isAnyVisibleTextPresent("Sección Legal"));
 			captureScreenshot("04-administrar-negocios-view");
 			step4 = true;
-		} catch (Exception e) {
+		} catch (AssertionError | Exception e) {
 			notes.add("Step 4 failure: " + e.getMessage());
 		}
 		stepResult.put("Administrar Negocios view", step4);
@@ -172,7 +172,7 @@ public class SaleadsMiNegocioWorkflowTest {
 			assertTrue("No aparece texto BUSINESS PLAN.", isAnyVisibleTextPresent("BUSINESS PLAN"));
 			assertTrue("No aparece botón Cambiar Plan.", isAnyVisibleTextPresent("Cambiar Plan"));
 			step5 = true;
-		} catch (Exception e) {
+		} catch (AssertionError | Exception e) {
 			notes.add("Step 5 failure: " + e.getMessage());
 		}
 		stepResult.put("Información General", step5);
@@ -184,7 +184,7 @@ public class SaleadsMiNegocioWorkflowTest {
 			assertTrue("No aparece 'Estado activo'.", isAnyVisibleTextPresent("Estado activo"));
 			assertTrue("No aparece 'Idioma seleccionado'.", isAnyVisibleTextPresent("Idioma seleccionado"));
 			step6 = true;
-		} catch (Exception e) {
+		} catch (AssertionError | Exception e) {
 			notes.add("Step 6 failure: " + e.getMessage());
 		}
 		stepResult.put("Detalles de la Cuenta", step6);
@@ -196,7 +196,7 @@ public class SaleadsMiNegocioWorkflowTest {
 			assertTrue("No existe botón Agregar Negocio en sección.", isAnyVisibleTextPresent("Agregar Negocio"));
 			assertTrue("No aparece texto de cupo en sección.", isAnyVisibleTextPresent("Tienes 2 de 3 negocios"));
 			step7 = true;
-		} catch (Exception e) {
+		} catch (AssertionError | Exception e) {
 			notes.add("Step 7 failure: " + e.getMessage());
 		}
 		stepResult.put("Tus Negocios", step7);
@@ -206,7 +206,7 @@ public class SaleadsMiNegocioWorkflowTest {
 		try {
 			termsUrl = openLegalLinkAndValidate("Términos y Condiciones", "08-terminos");
 			step8 = true;
-		} catch (Exception e) {
+		} catch (AssertionError | Exception e) {
 			notes.add("Step 8 failure: " + e.getMessage());
 		}
 		stepResult.put("Términos y Condiciones", step8);
@@ -216,7 +216,7 @@ public class SaleadsMiNegocioWorkflowTest {
 		try {
 			privacyUrl = openLegalLinkAndValidate("Política de Privacidad", "09-politica-privacidad");
 			step9 = true;
-		} catch (Exception e) {
+		} catch (AssertionError | Exception e) {
 			notes.add("Step 9 failure: " + e.getMessage());
 		}
 		stepResult.put("Política de Privacidad", step9);
