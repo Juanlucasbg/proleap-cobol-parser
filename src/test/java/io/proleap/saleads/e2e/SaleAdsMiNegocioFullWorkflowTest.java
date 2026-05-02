@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -92,7 +93,7 @@ public class SaleAdsMiNegocioFullWorkflowTest {
 	private void stepLoginWithGoogle() throws Exception {
 		assertDriverContextReady();
 
-		final Set<String> beforeClickHandles = driver.getWindowHandles();
+		final Set<String> beforeClickHandles = new HashSet<>(driver.getWindowHandles());
 		final WebElement loginButton = waitForVisibleTextAny(
 				"Sign in with Google",
 				"Iniciar sesión con Google",
@@ -225,7 +226,7 @@ public class SaleAdsMiNegocioFullWorkflowTest {
 
 	private void validateLegalLink(final String expectedHeading, final String headingWithoutAccent, final String screenshotName)
 			throws Exception {
-		final Set<String> beforeHandles = driver.getWindowHandles();
+		final Set<String> beforeHandles = new HashSet<>(driver.getWindowHandles());
 		final String sourceHandle = driver.getWindowHandle();
 		clickByVisibleTextAny(expectedHeading, headingWithoutAccent);
 
