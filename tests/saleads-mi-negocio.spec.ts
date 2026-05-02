@@ -41,6 +41,28 @@ function createInitialReport(): FinalReport {
   };
 }
 
+function fillPendingFailureDetails(report: FinalReport): void {
+  const orderedSteps = Object.keys(report) as Array<keyof FinalReport>;
+  let prerequisiteFailed = false;
+
+  for (const stepName of orderedSteps) {
+    const step = report[stepName];
+    if (step.status === "PASS") {
+      continue;
+    }
+
+    if (step.details.length === 0) {
+      if (prerequisiteFailed) {
+        step.details.push("Prerequisite failed in a previous step; this validation was not executed.");
+      } else {
+        step.details.push("Step failed without a captured detail. Check trace and screenshots.");
+      }
+    }
+
+    prerequisiteFailed = true;
+  }
+}
+
 async function captureCheckpoint(page: Page, name: string, fullPage = false): Promise<string> {
   fs.mkdirSync(CHECKPOINTS_DIR, { recursive: true });
   const safeName = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
@@ -367,6 +389,7 @@ test.describe("saleads_mi_negocio_full_test", () => {
       };
       throw error;
     } finally {
+      fillPendingFailureDetails(report);
       const reportPath = path.join(CHECKPOINTS_DIR, "final-report.json");
       fs.mkdirSync(CHECKPOINTS_DIR, { recursive: true });
       fs.writeFileSync(reportPath, JSON.stringify(report, null, 2), "utf-8");
