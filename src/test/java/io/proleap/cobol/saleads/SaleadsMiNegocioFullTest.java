@@ -2,6 +2,7 @@ package io.proleap.cobol.saleads;
 
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.openqa.selenium.By;
@@ -92,6 +93,9 @@ public class SaleadsMiNegocioFullTest {
 
 	@Test
 	public void saleadsMiNegocioFullWorkflow() throws IOException {
+		Assume.assumeTrue("Skipping SaleADS UI test unless -Dsaleads.runUiTest=true",
+				Boolean.parseBoolean(System.getProperty("saleads.runUiTest", "false")));
+
 		recordValidation("Login", runLoginStep());
 		recordValidation("Mi Negocio menu", runOpenMiNegocioMenuStep());
 		recordValidation("Agregar Negocio modal", runAgregarNegocioModalStep());
