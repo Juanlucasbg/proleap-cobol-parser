@@ -55,6 +55,7 @@ public class SaleadsMiNegocioFullTest {
 
 	private final DateTimeFormatter tsFormatter = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss_SSS");
 	private final Map<String, StepResult> report = new LinkedHashMap<>();
+	private final Map<String, String> stepNotes = new LinkedHashMap<>();
 
 	private Path evidenceDir;
 	private WebDriver driver;
@@ -294,7 +295,10 @@ public class SaleadsMiNegocioFullTest {
 
 		try {
 			action.run();
-			report.put(reportField, StepResult.pass("All validations passed."));
+			final String note = stepNotes.get(reportField);
+			final String details = note == null || note.isBlank() ? "All validations passed."
+					: "All validations passed. " + note;
+			report.put(reportField, StepResult.pass(details));
 		} catch (final Exception ex) {
 			try {
 				takeScreenshot("failure_" + sanitize(reportField));
@@ -535,11 +539,7 @@ public class SaleadsMiNegocioFullTest {
 	}
 
 	private void appendStepDetail(final String stepName, final String details) {
-		final StepResult current = report.get(stepName);
-		if (current == null) {
-			return;
-		}
-		report.put(stepName, new StepResult(current.pass, current.details + " " + details));
+		stepNotes.put(stepName, details);
 	}
 
 	private void printFinalReport() {
@@ -556,6 +556,12 @@ public class SaleadsMiNegocioFullTest {
 				System.out.println(key + ": FAIL - Step not executed.");
 			} else {
 				System.out.println(key + ": " + (result.pass ? "PASS" : "FAIL") + " - " + result.details);
+			}
+		}
+		if (!stepNotes.isEmpty()) {
+			System.out.println("Additional notes:");
+			for (final Map.Entry<String, String> entry : stepNotes.entrySet()) {
+				System.out.println("- " + entry.getKey() + ": " + entry.getValue());
 			}
 		}
 		System.out.println("Evidence folder: " + evidenceDir.toAbsolutePath());
