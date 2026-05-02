@@ -23,6 +23,7 @@ import java.util.regex.Pattern;
 
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.openqa.selenium.By;
@@ -48,6 +49,7 @@ import org.openqa.selenium.support.ui.WebDriverWait;
  * <ul>
  * <li>saleads.login.url or SALEADS_LOGIN_URL</li>
  * <li>saleads.google.email or SALEADS_GOOGLE_EMAIL (defaults to juanlucasbarbiergarzon@gmail.com)</li>
+ * <li>saleads.e2e.enabled or SALEADS_E2E_ENABLED (defaults to false)</li>
  * <li>saleads.headless or SALEADS_HEADLESS (defaults to true)</li>
  * <li>saleads.wait.seconds or SALEADS_WAIT_SECONDS (defaults to 30)</li>
  * <li>saleads.selenium.remote.url or SELENIUM_REMOTE_URL</li>
@@ -79,6 +81,10 @@ public class SaleadsMiNegocioFullTest {
 
 	@Before
 	public void setUp() throws IOException, MalformedURLException {
+		final boolean e2eEnabled = Boolean.parseBoolean(
+				readConfig("saleads.e2e.enabled", "SALEADS_E2E_ENABLED", "false").toLowerCase(Locale.ROOT));
+		Assume.assumeTrue("Skipping SaleADS E2E test: set saleads.e2e.enabled=true to run it.", e2eEnabled);
+
 		initializeReport();
 		evidenceDir = Files.createDirectories(
 				Path.of("target", "saleads-evidence", LocalDateTime.now().format(EVIDENCE_DIR_FORMAT)));
