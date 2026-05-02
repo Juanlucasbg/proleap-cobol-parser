@@ -201,6 +201,18 @@ Release process
 * Milestones of the grammar are published in the [ANTLR grammars repo](https://github.com/antlr/grammars-v4).
 
 
+Browser workflow automation
+---------------------------
+
+This repository also contains an optional browser automation script for validating
+the SaleADS "Mi Negocio" flow:
+
+- [docs/saleads_mi_negocio_full_test.md](docs/saleads_mi_negocio_full_test.md)
+
+It is intentionally separate from the Maven test suite and generates its own
+artifacts (screenshots and PASS/FAIL reports).
+
+
 License
 -------
 
