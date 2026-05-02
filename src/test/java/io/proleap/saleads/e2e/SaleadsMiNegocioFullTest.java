@@ -85,11 +85,11 @@ public class SaleadsMiNegocioFullTest {
 		runStep("Mi Negocio menu", this::stepOpenMiNegocioMenu);
 		runStep("Agregar Negocio modal", this::stepAgregarNegocioModal);
 		runStep("Administrar Negocios view", this::stepOpenAdministrarNegocios);
-		runStep("Informacion General", this::stepValidateInformacionGeneral);
+		runStep("Información General", this::stepValidateInformacionGeneral);
 		runStep("Detalles de la Cuenta", this::stepValidateDetallesCuenta);
 		runStep("Tus Negocios", this::stepValidateTusNegocios);
-		runStep("Terminos y Condiciones", this::stepValidateTerminosYCondiciones);
-		runStep("Politica de Privacidad", this::stepValidatePoliticaPrivacidad);
+		runStep("Términos y Condiciones", this::stepValidateTerminosYCondiciones);
+		runStep("Política de Privacidad", this::stepValidatePoliticaPrivacidad);
 
 		printFinalReport();
 
@@ -291,7 +291,7 @@ public class SaleadsMiNegocioFullTest {
 				pattern("terminos\\s*y\\s*condiciones"),
 				pattern("terminos\\s*y\\s*condiciones"),
 				"05-terminos-y-condiciones.png",
-				"Terminos y Condiciones");
+				"Términos y Condiciones");
 	}
 
 	private void stepValidatePoliticaPrivacidad() throws Exception {
@@ -299,7 +299,7 @@ public class SaleadsMiNegocioFullTest {
 				pattern("politica\\s*de\\s*privacidad"),
 				pattern("politica\\s*de\\s*privacidad"),
 				"06-politica-de-privacidad.png",
-				"Politica de Privacidad");
+				"Política de Privacidad");
 	}
 
 	private void validateLegalLink(final Pattern linkPattern, final Pattern headingPattern, final String screenshotName,
