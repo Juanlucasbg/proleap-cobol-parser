@@ -18,6 +18,7 @@ bin/
 build/
 lib/
 target/
+target/e2e-reports/
 
 **/proprietary/
 
