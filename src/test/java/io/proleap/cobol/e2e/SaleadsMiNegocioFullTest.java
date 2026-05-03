@@ -56,11 +56,11 @@ public class SaleadsMiNegocioFullTest {
 			runStep("Mi Negocio menu", this::stepOpenMiNegocioMenu);
 			runStep("Agregar Negocio modal", this::stepValidateAgregarNegocioModal);
 			runStep("Administrar Negocios view", this::stepOpenAdministrarNegocios);
-			runStep("Informacion General", this::stepValidateInformacionGeneral);
+			runStep("Información General", this::stepValidateInformacionGeneral);
 			runStep("Detalles de la Cuenta", this::stepValidateDetallesCuenta);
 			runStep("Tus Negocios", this::stepValidateTusNegocios);
-			runStep("Terminos y Condiciones", this::stepValidateTerminos);
-			runStep("Politica de Privacidad", this::stepValidatePrivacidad);
+			runStep("Términos y Condiciones", this::stepValidateTerminos);
+			runStep("Política de Privacidad", this::stepValidatePrivacidad);
 
 			writeFinalReport();
 
@@ -204,7 +204,7 @@ public class SaleadsMiNegocioFullTest {
 				Pattern.compile("(?i)T[eé]rminos\\s+y\\s+Condiciones"),
 				Pattern.compile("(?i)T[eé]rminos\\s+y\\s+Condiciones"),
 				"08-terminos-y-condiciones.png",
-				"Terminos y Condiciones");
+				"Términos y Condiciones");
 	}
 
 	private void stepValidatePrivacidad() {
@@ -212,7 +212,7 @@ public class SaleadsMiNegocioFullTest {
 				Pattern.compile("(?i)Pol[ií]tica\\s+de\\s+Privacidad"),
 				Pattern.compile("(?i)Pol[ií]tica\\s+de\\s+Privacidad"),
 				"09-politica-de-privacidad.png",
-				"Politica de Privacidad");
+				"Política de Privacidad");
 	}
 
 	private void validateLegalLink(final Pattern linkPattern, final Pattern headingPattern, final String screenshotName, final String label) {
@@ -381,11 +381,11 @@ public class SaleadsMiNegocioFullTest {
 				"Mi Negocio menu",
 				"Agregar Negocio modal",
 				"Administrar Negocios view",
-				"Informacion General",
+				"Información General",
 				"Detalles de la Cuenta",
 				"Tus Negocios",
-				"Terminos y Condiciones",
-				"Politica de Privacidad");
+				"Términos y Condiciones",
+				"Política de Privacidad");
 
 		for (final String field : orderedFields) {
 			sb.append(String.format("%s: %s%n", field, report.getOrDefault(field, false) ? "PASS" : "FAIL"));
@@ -397,8 +397,8 @@ public class SaleadsMiNegocioFullTest {
 
 		sb.append('\n').append("Captured URLs\n");
 		sb.append("-------------\n");
-		appendUrlIfPresent(sb, "Terminos y Condiciones URL");
-		appendUrlIfPresent(sb, "Politica de Privacidad URL");
+		appendUrlIfPresent(sb, "Términos y Condiciones URL");
+		appendUrlIfPresent(sb, "Política de Privacidad URL");
 
 		final Path reportPath = evidenceDir.resolve("final-report.txt");
 		Files.writeString(reportPath, sb.toString(), StandardCharsets.UTF_8);
