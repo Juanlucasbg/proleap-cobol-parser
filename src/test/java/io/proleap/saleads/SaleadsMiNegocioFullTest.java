@@ -177,7 +177,7 @@ public class SaleadsMiNegocioFullTest {
 		}
 
 		page.bringToFront();
-		waitForCondition(page, this::isMainApplicationVisible, LOGIN_TIMEOUT_MS,
+		waitForCondition(page, () -> isMainApplicationVisible(page), LOGIN_TIMEOUT_MS,
 				"Main application interface did not appear after Google login.");
 		assertTrue("Left sidebar navigation must be visible after login.", isSidebarVisible(page));
 	}
