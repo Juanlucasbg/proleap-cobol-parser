@@ -237,6 +237,15 @@ class MiNegocioWorkflowTest:
         self._wait_ui(google_page)
 
         email_selected = False
+        google_selector_visible = False
+        try:
+            # Detect account chooser to enforce selection only when it is actually shown.
+            chooser = google_page.get_by_text(re.compile(r"(elige una cuenta|choose an account)", re.I)).first
+            chooser.wait_for(state="visible", timeout=1800)
+            google_selector_visible = True
+        except TimeoutError:
+            google_selector_visible = False
+
         email_locator, _ = self._find_visible_locator([self.google_email], scope=google_page, timeout_ms=2500)
         if email_locator is not None:
             email_locator.click()
@@ -245,8 +254,12 @@ class MiNegocioWorkflowTest:
 
         self.results[step].add_check(
             "Seleccionar cuenta de Google",
-            True,
-            f"Cuenta seleccionada automáticamente: {email_selected}",
+            (not google_selector_visible) or email_selected,
+            (
+                "Selector de cuenta no visible; el flujo continuó sin selección manual."
+                if not google_selector_visible
+                else f"Selector visible. Cuenta seleccionada: {email_selected}"
+            ),
         )
 
         # Wait for dashboard/main app to load.
@@ -294,6 +307,9 @@ class MiNegocioWorkflowTest:
         self._assert_visible_text(self.page, step, "Botón Cancelar", ["Cancelar"])
         self._assert_visible_text(self.page, step, "Botón Crear Negocio", ["Crear Negocio"])
 
+        screenshot = self._save_screenshot(self.page, "step-3-agregar-negocio-modal.png")
+        self.results[step].evidence["modal_screenshot"] = screenshot
+
         field_locator, _ = self._find_visible_locator(["Nombre del Negocio"])
         if field_locator is not None:
             try:
@@ -308,8 +324,6 @@ class MiNegocioWorkflowTest:
             self.results[step].add_check("Acción opcional: escribir nombre", False, "No se encontró el campo.")
 
         self._click_text(["Cancelar"], step, "Cerrar modal con Cancelar")
-        screenshot = self._save_screenshot(self.page, "step-3-agregar-negocio-modal.png")
-        self.results[step].evidence["modal_screenshot"] = screenshot
 
     def step_open_administrar_negocios(self) -> None:
         step = "Administrar Negocios view"
