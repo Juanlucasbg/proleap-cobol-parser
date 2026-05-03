@@ -1,6 +1,7 @@
 package io.proleap.cobol.e2e.saleads;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -47,6 +48,9 @@ public class SaleadsMiNegocioFullTest {
 
 	@Test
 	public void saleadsMiNegocioFullWorkflow() throws Exception {
+		assumeTrue("SaleADS E2E test is disabled. Set -Dsaleads.e2e.enabled=true (or SALEADS_E2E_ENABLED=true) to run.",
+				isE2eEnabled());
+
 		Files.createDirectories(ARTIFACTS_DIR);
 
 		final String loginUrl = resolveLoginUrl();
@@ -486,6 +490,13 @@ public class SaleadsMiNegocioFullTest {
 
 		final Optional<String> match = candidates.stream().filter(value -> value != null && !value.isBlank()).findFirst();
 		return match.orElse(null);
+	}
+
+	private boolean isE2eEnabled() {
+		final String enabledProperty = System.getProperty("saleads.e2e.enabled");
+		final String enabledEnv = System.getenv("SALEADS_E2E_ENABLED");
+		final String enabledValue = enabledProperty != null ? enabledProperty : enabledEnv;
+		return Boolean.parseBoolean(enabledValue);
 	}
 
 	private Page waitForNewPage(final BrowserContext context, final int initialPageCount, final long timeoutMs) {
