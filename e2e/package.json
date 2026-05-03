@@ -1,0 +1,14 @@
+{
+  "name": "saleads-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "description": "End-to-end tests for SaleADS Mi Negocio workflow",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "PW_HEADLESS=false playwright test",
+    "install:browsers": "playwright install --with-deps chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0"
+  }
+}
