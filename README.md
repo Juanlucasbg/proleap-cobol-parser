@@ -194,6 +194,32 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+SaleADS Mi Negocio E2E test
+---------------------------
+
+This repository also contains a Playwright-based E2E validation for the SaleADS
+"Mi Negocio" workflow:
+
+* Test class: `io.proleap.saleads.SaleadsMiNegocioFullTest`
+* Evidence output: `target/saleads-evidence/<timestamp>/`
+
+Required runtime configuration:
+
+* `SALEADS_URL` (or JVM property `-Dsaleads.url`) - login page URL for the
+  current SaleADS environment. The test does not hardcode any domain.
+* Optional: `SALEADS_GOOGLE_ACCOUNT` (default:
+  `juanlucasbarbiergarzon@gmail.com`)
+* Optional: `SALEADS_HEADLESS` / `-Dsaleads.headless` (default: `true`)
+
+Run only this test:
+
+```
+$ SALEADS_URL="https://<current-env-login-url>" mvn -Dtest=io.proleap.saleads.SaleadsMiNegocioFullTest test
+```
+
+The test captures screenshots at key checkpoints and writes a step-by-step
+PASS/FAIL `final-report.txt`, including the final URLs for legal pages.
+
 
 Release process
 ---------------
