@@ -172,6 +172,20 @@ async function maybeSelectGoogleAccount(page: Page): Promise<void> {
   }
 }
 
+async function ensureOnLoginPage(page: Page): Promise<void> {
+  const configuredUrl = process.env.SALEADS_URL ?? process.env.SALEADS_LOGIN_URL ?? process.env.BASE_URL;
+  const currentUrl = page.url();
+  if (currentUrl === "about:blank" || currentUrl === "data:,") {
+    if (!configuredUrl) {
+      throw new Error(
+        "Browser started on a blank page. Set SALEADS_URL (or SALEADS_LOGIN_URL/BASE_URL) to the login page of the current environment."
+      );
+    }
+    await page.goto(configuredUrl, { waitUntil: "domcontentloaded" });
+    await waitForUiSettle(page);
+  }
+}
+
 test.describe("saleads_mi_negocio_full_test", () => {
   test("Login with Google and validate Mi Negocio complete workflow", async ({ page, context }, testInfo) => {
     const stepResults = new Map<ReportField, StepStatus>(ORDERED_FIELDS.map((field) => [field, "FAIL"]));
@@ -242,6 +256,8 @@ test.describe("saleads_mi_negocio_full_test", () => {
     }
 
     await runStep("Login", async () => {
+      await ensureOnLoginPage(page);
+
       const loginCandidates = [
         "Sign in with Google",
         "Iniciar sesion con Google",
