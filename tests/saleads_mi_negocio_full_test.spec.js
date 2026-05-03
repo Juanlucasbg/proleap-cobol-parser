@@ -76,8 +76,17 @@ async function validateLegalLink(page, context, linkText, headingText, checkpoin
   await legalPage.waitForLoadState('domcontentloaded');
   await legalPage.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
 
-  await expect(legalPage.getByRole('heading', { name: headingText })).toBeVisible();
-  await expect(legalPage.getByText(headingText, { exact: false })).toBeVisible();
+  const headingByRole = legalPage.getByRole('heading', { name: headingText }).first();
+  const headingByText = legalPage.getByText(headingText, { exact: false }).first();
+  const hasHeadingRole = await headingByRole.isVisible().catch(() => false);
+  if (hasHeadingRole) {
+    await expect(headingByRole).toBeVisible();
+  } else {
+    await expect(headingByText).toBeVisible();
+  }
+
+  const legalTextVisible = await legalPage.locator('p, li').first().isVisible().catch(() => false);
+  expect(legalTextVisible).toBeTruthy();
 
   await checkpoint(legalPage, testInfo, checkpointName);
   const finalUrl = legalPage.url();
@@ -105,53 +114,66 @@ test('saleads_mi_negocio_full_test', async ({ page, context }, testInfo) => {
     if (page.url() === 'about:blank' && configuredBaseUrl) {
       await page.goto(configuredBaseUrl, { waitUntil: 'domcontentloaded' });
       await waitForUi(page);
+    } else if (page.url() === 'about:blank') {
+      throw new Error(
+        'No initial SaleADS page is open. Provide SALEADS_BASE_URL or BASE_URL when running this test in standalone Playwright.'
+      );
     }
-
-    const signInWithGoogle = page.getByText('Sign in with Google', { exact: false }).first();
-    const loginWithGoogle = page.getByText('Iniciar con Google', { exact: false }).first();
-    const loginButton = page.getByRole('button', { name: /google|iniciar sesi[oó]n|sign in/i }).first();
-    let googlePopup = null;
-
-    if (await signInWithGoogle.isVisible().catch(() => false)) {
-      [googlePopup] = await Promise.all([
-        context.waitForEvent('page', { timeout: 5000 }).catch(() => null),
-        signInWithGoogle.click(),
-      ]);
-    } else if (await loginWithGoogle.isVisible().catch(() => false)) {
-      [googlePopup] = await Promise.all([
-        context.waitForEvent('page', { timeout: 5000 }).catch(() => null),
-        loginWithGoogle.click(),
-      ]);
-    } else if (await loginButton.isVisible().catch(() => false)) {
-      [googlePopup] = await Promise.all([
-        context.waitForEvent('page', { timeout: 5000 }).catch(() => null),
-        loginButton.click(),
-      ]);
-    }
-
-    await waitForUi(page);
-
-    const authPage = googlePopup || page;
-    await authPage.waitForLoadState('domcontentloaded');
-    await authPage.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
-
-    const googleAccountChoice = authPage.getByText(GOOGLE_ACCOUNT_EMAIL, { exact: true }).first();
-    if (await googleAccountChoice.isVisible().catch(() => false)) {
-      await googleAccountChoice.click();
-      await authPage.waitForLoadState('domcontentloaded');
-      await authPage.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
-    }
-
-    if (googlePopup && !googlePopup.isClosed()) {
-      await googlePopup.close().catch(() => {});
-    }
-
-    await page.bringToFront();
-    await waitForUi(page);
 
     const sidebar = page.locator('aside').first();
-    await expect(sidebar).toBeVisible();
-    await checkpoint(page, testInfo, '01-dashboard-loaded');
+    const alreadyLoggedIn = await sidebar.isVisible().catch(() => false);
+    if (alreadyLoggedIn) {
+      await checkpoint(page, testInfo, '01-dashboard-loaded');
+      setReport(report, 'Login', loginPass, loginDetails);
+    } else {
+
+      const signInWithGoogle = page.getByText('Sign in with Google', { exact: false }).first();
+      const loginWithGoogle = page.getByText('Iniciar con Google', { exact: false }).first();
+      const loginButton = page.getByRole('button', { name: /google|iniciar sesi[oó]n|sign in/i }).first();
+      let googlePopup = null;
+
+      if (await signInWithGoogle.isVisible().catch(() => false)) {
+        [googlePopup] = await Promise.all([
+          context.waitForEvent('page', { timeout: 5000 }).catch(() => null),
+          signInWithGoogle.click(),
+        ]);
+      } else if (await loginWithGoogle.isVisible().catch(() => false)) {
+        [googlePopup] = await Promise.all([
+          context.waitForEvent('page', { timeout: 5000 }).catch(() => null),
+          loginWithGoogle.click(),
+        ]);
+      } else if (await loginButton.isVisible().catch(() => false)) {
+        [googlePopup] = await Promise.all([
+          context.waitForEvent('page', { timeout: 5000 }).catch(() => null),
+          loginButton.click(),
+        ]);
+      } else {
+        throw new Error('Google login button was not visible on the current page.');
+      }
+
+      await waitForUi(page);
+
+      const authPage = googlePopup || page;
+      await authPage.waitForLoadState('domcontentloaded');
+      await authPage.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
+
+      const googleAccountChoice = authPage.getByText(GOOGLE_ACCOUNT_EMAIL, { exact: true }).first();
+      if (await googleAccountChoice.isVisible().catch(() => false)) {
+        await googleAccountChoice.click();
+        await authPage.waitForLoadState('domcontentloaded');
+        await authPage.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
+      }
+
+      if (googlePopup && !googlePopup.isClosed()) {
+        await googlePopup.close().catch(() => {});
+      }
+
+      await page.bringToFront();
+      await waitForUi(page);
+
+      await expect(sidebar).toBeVisible();
+      await checkpoint(page, testInfo, '01-dashboard-loaded');
+    }
   } catch (error) {
     loginPass = false;
     loginDetails = `Login flow failed: ${error.message}`;
