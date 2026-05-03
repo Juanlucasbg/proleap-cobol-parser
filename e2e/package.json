@@ -1,0 +1,15 @@
+{
+  "name": "saleads-e2e",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Playwright E2E tests for SaleADS workflows",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:mi-negocio": "playwright test tests/saleads-mi-negocio-full-test.spec.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.53.0",
+    "@types/node": "^24.0.0"
+  }
+}
