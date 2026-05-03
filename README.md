@@ -194,6 +194,49 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+SaleADS E2E workflow test
+-------------------------
+
+The repository now includes an environment-agnostic Selenium test for validating
+the complete **Mi Negocio** workflow in SaleADS:
+
+* Test class: `io.proleap.saleads.e2e.SaleAdsMiNegocioFullTest`
+* Test method: `saleads_mi_negocio_full_test`
+* Output artifacts:
+  * Screenshots for key checkpoints
+  * `final-report.txt` with PASS/FAIL per requested validation step and captured legal URLs
+* Default output directory: `target/saleads-mi-negocio-full-test/<timestamp>/`
+
+### Behavior
+
+* Does **not** depend on any fixed domain.
+* Uses visible-text-first selectors.
+* Waits for UI load after each click.
+* Continues beyond login to execute the full workflow.
+* Handles legal links that open in the same tab or a new tab, then returns to the app.
+
+### Runtime configuration
+
+Use either JVM properties (`-D...`) or environment variables:
+
+* `saleads.url` / `SALEADS_URL` - SaleADS login URL for the current environment.
+  * If omitted, the test expects the browser session to already be on the SaleADS login page.
+* `saleads.browser` / `SALEADS_BROWSER` - `chrome` (default) or `firefox`.
+* `saleads.headless` / `SALEADS_HEADLESS` - `true` (default) or `false`.
+* `saleads.timeout.seconds` / `SALEADS_TIMEOUT_SECONDS` - explicit wait timeout (default `40`).
+* `saleads.google.account.email` / `SALEADS_GOOGLE_ACCOUNT_EMAIL` - Google account to choose (default `juanlucasbarbiergarzon@gmail.com`).
+* `saleads.remote.url` / `SELENIUM_REMOTE_URL` - optional Selenium Grid URL.
+* `saleads.output.dir` / `SALEADS_OUTPUT_DIR` - base directory for evidence files.
+
+### Example command
+
+```bash
+mvn -Dtest=SaleAdsMiNegocioFullTest test \
+  -Dsaleads.url="https://<current-saleads-environment>/login" \
+  -Dsaleads.browser=chrome \
+  -Dsaleads.headless=true
+```
+
 
 Release process
 ---------------
