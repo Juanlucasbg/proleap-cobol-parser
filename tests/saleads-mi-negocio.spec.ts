@@ -161,6 +161,9 @@ test.describe("SaleADS Mi Negocio workflow", () => {
   test("saleads_mi_negocio_full_test", async ({ page }) => {
     ensureDir(ARTIFACTS_DIR);
     const stepResults: StepResult[] = [];
+    let isLoggedIn = false;
+    let accountViewLoaded = false;
+    let legalSectionReady = false;
 
     const pushResult = (result: StepResult): void => {
       stepResults.push(result);
@@ -202,6 +205,7 @@ test.describe("SaleADS Mi Negocio workflow", () => {
           ],
           screenshotPath
         });
+        isLoggedIn = true;
       } catch (error) {
         pushResult({
           name: stepName,
@@ -215,6 +219,9 @@ test.describe("SaleADS Mi Negocio workflow", () => {
     {
       const stepName = "Mi Negocio menu";
       try {
+        if (!isLoggedIn) {
+          throw new Error("Skipped because login did not succeed.");
+        }
         await clickByVisibleText(page, ["Mi Negocio", "Negocio"]);
         await expect(textLocator(page, "Agregar Negocio").first()).toBeVisible({ timeout: 30_000 });
         await expect(textLocator(page, "Administrar Negocios").first()).toBeVisible({ timeout: 30_000 });
@@ -242,6 +249,9 @@ test.describe("SaleADS Mi Negocio workflow", () => {
     {
       const stepName = "Agregar Negocio modal";
       try {
+        if (!isLoggedIn) {
+          throw new Error("Skipped because login did not succeed.");
+        }
         await clickByVisibleText(page, ["Agregar Negocio"]);
         await expect(page.getByRole("heading", { name: /Crear Nuevo Negocio/i }).first()).toBeVisible({ timeout: 30_000 });
         const businessNameInput = page
@@ -284,6 +294,9 @@ test.describe("SaleADS Mi Negocio workflow", () => {
     {
       const stepName = "Administrar Negocios view";
       try {
+        if (!isLoggedIn) {
+          throw new Error("Skipped because login did not succeed.");
+        }
         await ensureMiNegocioExpanded(page);
         await clickByVisibleText(page, ["Administrar Negocios"]);
 
@@ -304,6 +317,8 @@ test.describe("SaleADS Mi Negocio workflow", () => {
           ],
           screenshotPath
         });
+        accountViewLoaded = true;
+        legalSectionReady = true;
       } catch (error) {
         pushResult({
           name: stepName,
@@ -317,6 +332,9 @@ test.describe("SaleADS Mi Negocio workflow", () => {
     {
       const stepName = "Información General";
       try {
+        if (!accountViewLoaded) {
+          throw new Error("Skipped because Administrar Negocios view did not load.");
+        }
         const section = page.locator("section, div").filter({ hasText: "Información General" }).first();
         await expect(section).toBeVisible({ timeout: 30_000 });
         await expect(section).toContainText(/@/);
@@ -345,6 +363,9 @@ test.describe("SaleADS Mi Negocio workflow", () => {
     {
       const stepName = "Detalles de la Cuenta";
       try {
+        if (!accountViewLoaded) {
+          throw new Error("Skipped because Administrar Negocios view did not load.");
+        }
         const section = page.locator("section, div").filter({ hasText: "Detalles de la Cuenta" }).first();
         await expect(section).toBeVisible({ timeout: 30_000 });
         await expect(section).toContainText(/Cuenta creada/i);
@@ -372,6 +393,9 @@ test.describe("SaleADS Mi Negocio workflow", () => {
     {
       const stepName = "Tus Negocios";
       try {
+        if (!accountViewLoaded) {
+          throw new Error("Skipped because Administrar Negocios view did not load.");
+        }
         const section = page.locator("section, div").filter({ hasText: "Tus Negocios" }).first();
         await expect(section).toBeVisible({ timeout: 30_000 });
         await expect(section.getByRole("button", { name: "Agregar Negocio" }).first()).toBeVisible({ timeout: 30_000 });
@@ -398,6 +422,9 @@ test.describe("SaleADS Mi Negocio workflow", () => {
     {
       const stepName = "Términos y Condiciones";
       try {
+        if (!legalSectionReady) {
+          throw new Error("Skipped because legal section was not reached.");
+        }
         const { finalUrl, screenshotPath } = await clickLegalLinkAndValidate(page, "Términos y Condiciones");
         pushResult({
           name: stepName,
@@ -422,6 +449,9 @@ test.describe("SaleADS Mi Negocio workflow", () => {
     {
       const stepName = "Política de Privacidad";
       try {
+        if (!legalSectionReady) {
+          throw new Error("Skipped because legal section was not reached.");
+        }
         const { finalUrl, screenshotPath } = await clickLegalLinkAndValidate(page, "Política de Privacidad");
         pushResult({
           name: stepName,

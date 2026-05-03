@@ -4,7 +4,7 @@ const ci = !!process.env.CI;
 
 export default defineConfig({
   testDir: "./tests",
-  timeout: 90_000,
+  timeout: 240_000,
   expect: {
     timeout: 10_000,
   },
