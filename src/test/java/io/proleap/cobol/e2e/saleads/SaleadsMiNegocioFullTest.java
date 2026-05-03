@@ -17,7 +17,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.junit.Test;
@@ -102,26 +101,15 @@ public class SaleadsMiNegocioFullTest {
 				textByPattern(appPage, ".*(sign\\s*in\\s*with\\s*google|iniciar\\s*sesi[oó]n\\s*con\\s*google|continuar\\s*con\\s*google).*"),
 				textByPattern(appPage, ".*google.*"));
 
-		Page googlePage = null;
-		try {
-			googlePage = appPage.waitForPopup(() -> {
-				loginButton.click();
-				waitForUi(appPage);
-			}, new Page.WaitForPopupOptions().setTimeout(8_000));
-		} catch (final PlaywrightException popupNotOpened) {
-			loginButton.click();
-			waitForUi(appPage);
-		}
+		final int initialPageCount = appPage.context().pages().size();
+		clickAndWaitForUi(appPage, loginButton);
+		Page googlePage = waitForNewPage(appPage.context(), initialPageCount, 8_000);
 
 		if (googlePage != null) {
 			waitForUi(googlePage);
 			selectGoogleAccountIfVisible(googlePage);
 
-			try {
-				googlePage.waitForClose(new Page.WaitForCloseOptions().setTimeout(45_000));
-			} catch (final PlaywrightException ignored) {
-				// OAuth windows can remain open in some environments. Continue with app page checks.
-			}
+			waitForClosureOrTimeout(googlePage, 45_000);
 		} else {
 			selectGoogleAccountIfVisible(appPage);
 		}
@@ -168,8 +156,10 @@ public class SaleadsMiNegocioFullTest {
 		assertVisible(modalTitle, "Expected modal title 'Crear Nuevo Negocio'.");
 
 		final Locator businessNameInput = findFirstVisible(appPage,
-				appPage.getByLabel(compilePattern(".*nombre\\s+del\\s+negocio.*")),
-				appPage.locator("input[placeholder*='Nombre'][placeholder*='Negocio']"), appPage.locator("input[name*='nombre']"));
+				appPage.locator("input[placeholder*='Nombre'][placeholder*='Negocio']"),
+				appPage.locator("input[aria-label*='Nombre'][aria-label*='Negocio']"),
+				appPage.locator("label:has-text('Nombre del Negocio')").locator("xpath=following::input[1]"),
+				appPage.locator("[role='dialog'] input"));
 		assertVisible(businessNameInput, "Expected input field 'Nombre del Negocio'.");
 
 		assertVisible(findFirstVisible(appPage, textByPattern(appPage, ".*tienes\\s+2\\s+de\\s+3\\s+negocios.*")),
@@ -251,16 +241,12 @@ public class SaleadsMiNegocioFullTest {
 				textByPattern(appPage, ".*" + Pattern.quote(linkText) + ".*"), roleButtonByName(appPage, ".*" + Pattern.quote(linkText) + ".*"));
 
 		final String appUrlBeforeNavigation = appPage.url();
-		Page destinationPage = null;
-		boolean openedPopup = false;
+		final int initialPageCount = appPage.context().pages().size();
+		clickAndWaitForUi(appPage, legalLink);
 
-		try {
-			destinationPage = appPage.waitForPopup(() -> clickAndWaitForUi(appPage, legalLink),
-					new Page.WaitForPopupOptions().setTimeout(7_000));
-			openedPopup = true;
-			waitForUi(destinationPage);
-		} catch (final PlaywrightException popupNotOpened) {
-			clickAndWaitForUi(appPage, legalLink);
+		Page destinationPage = waitForNewPage(appPage.context(), initialPageCount, 7_000);
+		final boolean openedPopup = destinationPage != null;
+		if (!openedPopup) {
 			destinationPage = appPage;
 		}
 
@@ -312,7 +298,7 @@ public class SaleadsMiNegocioFullTest {
 		try {
 			stepAction.run();
 			stepResults.put(label, StepResult.pass("PASS"));
-		} catch (final Exception ex) {
+		} catch (final AssertionError | Exception ex) {
 			stepResults.put(label, StepResult.fail(ex.getMessage()));
 			try {
 				takeScreenshot(page, "failure-" + slugify(label) + ".png", true);
@@ -361,8 +347,7 @@ public class SaleadsMiNegocioFullTest {
 	private Locator findFirstVisible(final Page page, final Locator... candidates) {
 		for (final Locator candidate : candidates) {
 			try {
-				if (candidate != null && candidate.count() > 0
-						&& candidate.first().isVisible(new Locator.IsVisibleOptions().setTimeout(SHORT_TIMEOUT_MS))) {
+				if (candidate != null && candidate.count() > 0 && candidate.first().isVisible()) {
 					return candidate.first();
 				}
 			} catch (final PlaywrightException ignored) {
@@ -427,7 +412,7 @@ public class SaleadsMiNegocioFullTest {
 
 	private void clickIfVisible(final Page page, final Locator locator) {
 		try {
-			if (locator.count() > 0 && locator.first().isVisible(new Locator.IsVisibleOptions().setTimeout(SHORT_TIMEOUT_MS))) {
+			if (locator.count() > 0 && locator.first().isVisible()) {
 				clickAndWaitForUi(page, locator.first());
 			}
 		} catch (final PlaywrightException ignored) {
@@ -437,7 +422,7 @@ public class SaleadsMiNegocioFullTest {
 
 	private boolean isVisible(final Locator locator) {
 		try {
-			return locator.count() > 0 && locator.first().isVisible(new Locator.IsVisibleOptions().setTimeout(SHORT_TIMEOUT_MS));
+			return locator.count() > 0 && locator.first().isVisible();
 		} catch (final PlaywrightException ignored) {
 			return false;
 		}
@@ -445,10 +430,17 @@ public class SaleadsMiNegocioFullTest {
 
 	private void assertVisible(final Locator locator, final String message) {
 		locator.first().waitFor(new Locator.WaitForOptions().setTimeout(UI_TIMEOUT_MS));
-		assertTrue(message, locator.first().isVisible(new Locator.IsVisibleOptions().setTimeout(SHORT_TIMEOUT_MS)));
+		assertTrue(message, locator.first().isVisible());
 	}
 
 	private void assertNotVisible(final Locator locator, final String message) {
+		final long deadline = System.currentTimeMillis() + 5_000;
+		while (System.currentTimeMillis() < deadline) {
+			if (!isVisible(locator)) {
+				return;
+			}
+			sleep(200);
+		}
 		assertTrue(message, !isVisible(locator));
 	}
 
@@ -494,6 +486,41 @@ public class SaleadsMiNegocioFullTest {
 
 		final Optional<String> match = candidates.stream().filter(value -> value != null && !value.isBlank()).findFirst();
 		return match.orElse(null);
+	}
+
+	private Page waitForNewPage(final BrowserContext context, final int initialPageCount, final long timeoutMs) {
+		final long deadline = System.currentTimeMillis() + timeoutMs;
+		while (System.currentTimeMillis() < deadline) {
+			final List<Page> pages = context.pages();
+			if (pages.size() > initialPageCount) {
+				return pages.get(pages.size() - 1);
+			}
+			sleep(200);
+		}
+		return null;
+	}
+
+	private void waitForClosureOrTimeout(final Page page, final long timeoutMs) {
+		final long deadline = System.currentTimeMillis() + timeoutMs;
+		while (System.currentTimeMillis() < deadline) {
+			try {
+				if (page.isClosed()) {
+					return;
+				}
+			} catch (final PlaywrightException ignored) {
+				return;
+			}
+			sleep(250);
+		}
+	}
+
+	private void sleep(final long millis) {
+		try {
+			Thread.sleep(millis);
+		} catch (final InterruptedException interrupted) {
+			Thread.currentThread().interrupt();
+			throw new IllegalStateException("Interrupted while waiting for UI operation.", interrupted);
+		}
 	}
 
 	private String slugify(final String input) {
