@@ -1,0 +1,12 @@
+{
+  "name": "saleads-e2e-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Environment-agnostic SaleADS end-to-end tests",
+  "scripts": {
+    "test:saleads:mi-negocio": "playwright test tests/e2e/saleads-mi-negocio-full.spec.ts --project=chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.53.0"
+  }
+}
