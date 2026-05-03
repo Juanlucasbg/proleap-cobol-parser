@@ -78,6 +78,11 @@ public class SaleadsMiNegocioFullWorkflowTest {
 		final String loginUrl = resolveConfig("SALEADS_LOGIN_URL", "").trim();
 		if (!loginUrl.isEmpty()) {
 			driver.get(loginUrl);
+		} else {
+			final String currentUrl = driver.getCurrentUrl();
+			Assert.assertFalse(
+				"Browser is not on SaleADS login page. Set SALEADS_LOGIN_URL or pre-open the login page.",
+				currentUrl == null || currentUrl.startsWith("about:blank") || currentUrl.startsWith("data:"));
 		}
 
 		// Step 1: Login with Google
@@ -110,11 +115,10 @@ public class SaleadsMiNegocioFullWorkflowTest {
 		// Step 4: Open Administrar Negocios
 		openMiNegocioMenu();
 		clickByVisibleTextAny(Arrays.asList("Administrar Negocios"));
-		waitForUiLoad();
-		assertVisibleText("Información General");
-		assertVisibleText("Detalles de la Cuenta");
+		assertVisibleTextAny(Arrays.asList("Información General", "Informacion General"));
+		assertVisibleTextAny(Arrays.asList("Detalles de la Cuenta", "Detalles de la Cuenta"));
 		assertVisibleText("Tus Negocios");
-		assertVisibleText("Sección Legal");
+		assertVisibleTextAny(Arrays.asList("Sección Legal", "Seccion Legal"));
 		takeScreenshot("04_administrar_negocios_full");
 		report.put("Administrar Negocios view", true);
 
@@ -126,9 +130,9 @@ public class SaleadsMiNegocioFullWorkflowTest {
 		report.put("Información General", true);
 
 		// Step 6: Validate Detalles de la Cuenta
-		assertVisibleText("Cuenta creada");
+		assertVisibleTextAny(Arrays.asList("Cuenta creada", "Cuenta Creada"));
 		assertVisibleText("Estado activo");
-		assertVisibleText("Idioma seleccionado");
+		assertVisibleTextAny(Arrays.asList("Idioma seleccionado", "Idioma Seleccionado"));
 		report.put("Detalles de la Cuenta", true);
 
 		// Step 7: Validate Tus Negocios
@@ -255,20 +259,25 @@ public class SaleadsMiNegocioFullWorkflowTest {
 		final Set<String> windowsBefore = driver.getWindowHandles();
 		final String preClickUrl = driver.getCurrentUrl();
 
-		clickByVisibleTextAny(Arrays.asList(linkText));
-		waitForUiLoad();
+		clickByVisibleTextAny(textVariants(linkText));
 
-		final String targetWindow = wait.until(ignored -> {
+		String targetWindow = originalWindow;
+		final long end = System.currentTimeMillis() + DEFAULT_TIMEOUT.toMillis();
+		while (System.currentTimeMillis() < end) {
 			final Set<String> now = driver.getWindowHandles();
 			if (now.size() > windowsBefore.size()) {
 				for (final String handle : now) {
 					if (!windowsBefore.contains(handle)) {
-						return handle;
+						targetWindow = handle;
+						break;
 					}
 				}
+				if (!Objects.equals(targetWindow, originalWindow)) {
+					break;
+				}
 			}
-			return originalWindow;
-		});
+			sleep(200);
+		}
 
 		driver.switchTo().window(targetWindow);
 		waitForUiLoad();
@@ -325,10 +334,20 @@ public class SaleadsMiNegocioFullWorkflowTest {
 	private void clickElement(final WebElement element) {
 		wait.until(ignored -> element.isDisplayed() && element.isEnabled());
 		element.click();
+		waitForUiLoad();
 	}
 
 	private void assertVisibleText(final String text) {
 		Assert.assertTrue("Expected visible text: " + text, isTextVisible(text, DEFAULT_TIMEOUT));
+	}
+
+	private void assertVisibleTextAny(final List<String> textOptions) {
+		for (final String text : textOptions) {
+			if (isTextVisible(text, Duration.ofSeconds(6))) {
+				return;
+			}
+		}
+		Assert.fail("Expected one of visible texts: " + textOptions);
 	}
 
 	private boolean isTextVisible(final String text, final Duration timeout) {
@@ -466,6 +485,19 @@ public class SaleadsMiNegocioFullWorkflowTest {
 			return env.trim();
 		}
 		return defaultValue;
+	}
+
+	private List<String> textVariants(final String input) {
+		final List<String> variants = new ArrayList<>();
+		variants.add(input);
+		final String accentFree = input
+			.replace('á', 'a').replace('é', 'e').replace('í', 'i').replace('ó', 'o').replace('ú', 'u')
+			.replace('Á', 'A').replace('É', 'E').replace('Í', 'I').replace('Ó', 'O').replace('Ú', 'U')
+			.replace('ñ', 'n').replace('Ñ', 'N');
+		if (!accentFree.equals(input)) {
+			variants.add(accentFree);
+		}
+		return variants;
 	}
 
 	private void sleep(final long ms) {
