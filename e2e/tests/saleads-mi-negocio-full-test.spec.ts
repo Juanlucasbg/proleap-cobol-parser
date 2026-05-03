@@ -94,6 +94,14 @@ async function clickAndWait(locator: Locator, page: Page): Promise<void> {
   await waitForUi(page);
 }
 
+async function waitForPageClose(page: Page, timeoutMs = 25_000): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+
+  while (!page.isClosed() && Date.now() < deadline) {
+    await page.waitForTimeout(200);
+  }
+}
+
 async function firstVisibleOrThrow(
   _page: Page,
   locators: Locator[],
@@ -296,7 +304,7 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     }
 
     if (popup) {
-      await popup.waitForClose({ timeout: 25000 }).catch(() => undefined);
+      await waitForPageClose(popup, 25_000);
       await page.bringToFront();
     }
 
