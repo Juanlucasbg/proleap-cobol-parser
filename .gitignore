@@ -41,3 +41,7 @@ target/
 
 ## Additional for IntelliJ
 out/
+__pycache__/
+*.pyc
+saleads_e2e/artifacts/
+saleads_e2e/.venv/
