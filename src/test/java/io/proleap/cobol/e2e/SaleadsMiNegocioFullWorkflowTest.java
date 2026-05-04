@@ -27,6 +27,7 @@ import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.openqa.selenium.By;
+import org.openqa.selenium.Dimension;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.TakesScreenshot;
@@ -93,12 +94,13 @@ public class SaleadsMiNegocioFullWorkflowTest {
 		executeStep(STEP_INFO_GENERAL, this::validateInformacionGeneralSection);
 		executeStep(STEP_DETALLES_CUENTA, this::validateDetallesDeLaCuentaSection);
 		executeStep(STEP_TUS_NEGOCIOS, this::validateTusNegociosSection);
-		executeStep(STEP_TERMINOS, () -> validateLegalLink(new String[] { "Términos y Condiciones", "Terminos y Condiciones" },
-				new String[] { "Términos y Condiciones", "Terminos y Condiciones" }, "terminos-url",
+		executeStep(STEP_TERMINOS,
+				() -> validateLegalLink(new String[] { "T\u00E9rminos y Condiciones", "Terminos y Condiciones" },
+						new String[] { "T\u00E9rminos y Condiciones", "Terminos y Condiciones" }, "terminos-url",
 				"08-terminos-y-condiciones"));
 		executeStep(STEP_PRIVACIDAD,
-				() -> validateLegalLink(new String[] { "Política de Privacidad", "Politica de Privacidad" },
-						new String[] { "Política de Privacidad", "Politica de Privacidad" }, "privacidad-url",
+				() -> validateLegalLink(new String[] { "Pol\u00EDtica de Privacidad", "Politica de Privacidad" },
+						new String[] { "Pol\u00EDtica de Privacidad", "Politica de Privacidad" }, "privacidad-url",
 						"09-politica-de-privacidad"));
 
 		final String report = buildFinalReport();
@@ -179,11 +181,12 @@ public class SaleadsMiNegocioFullWorkflowTest {
 		clickByAnyText("Administrar Negocios");
 		waitForUiToSettle();
 
-		assertVisibleByAnyText("Informacion General section should be visible.", "Información General", "Informacion General");
+		assertVisibleByAnyText("Informacion General section should be visible.", "Informaci\u00F3n General",
+				"Informacion General");
 		assertVisibleByAnyText("Detalles de la Cuenta section should be visible.", "Detalles de la Cuenta");
 		assertVisibleByAnyText("Tus Negocios section should be visible.", "Tus Negocios");
-		assertVisibleByAnyText("Seccion Legal section should be visible.", "Sección Legal", "Seccion Legal");
-		captureScreenshot("04-administrar-negocios-view");
+		assertVisibleByAnyText("Seccion Legal section should be visible.", "Secci\u00F3n Legal", "Seccion Legal");
+		captureFullPageScreenshot("04-administrar-negocios-view");
 	}
 
 	private void validateInformacionGeneralSection() throws Exception {
@@ -191,7 +194,7 @@ public class SaleadsMiNegocioFullWorkflowTest {
 		assertVisibleByAnyText("BUSINESS PLAN text should be visible.", "BUSINESS PLAN");
 		assertVisibleByAnyText("Cambiar Plan button should be visible.", "Cambiar Plan");
 
-		final WebElement infoSection = findContainerByHeading("Información General", "Informacion General");
+		final WebElement infoSection = findContainerByHeading("Informaci\u00F3n General", "Informacion General");
 		final String sectionText = normalizeSpace(infoSection.getText());
 		assertTrue("User name should be visible in Informacion General.",
 				containsLikelyPersonName(sectionText, GOOGLE_ACCOUNT_EMAIL));
@@ -478,6 +481,24 @@ public class SaleadsMiNegocioFullWorkflowTest {
 		Files.copy(screenshot.toPath(), destination, StandardCopyOption.REPLACE_EXISTING);
 	}
 
+	private void captureFullPageScreenshot(final String checkpointName) throws Exception {
+		final Dimension originalSize = driver.manage().window().getSize();
+		try {
+			final Number scrollHeightValue = (Number) ((JavascriptExecutor) driver)
+					.executeScript("return Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);");
+			final Number scrollWidthValue = (Number) ((JavascriptExecutor) driver)
+					.executeScript("return Math.max(document.body.scrollWidth, document.documentElement.scrollWidth);");
+
+			final int fullHeight = Math.max(originalSize.getHeight(), Math.min(12000, scrollHeightValue.intValue() + 200));
+			final int fullWidth = Math.max(originalSize.getWidth(), scrollWidthValue.intValue());
+			driver.manage().window().setSize(new Dimension(fullWidth, fullHeight));
+			Thread.sleep(300);
+			captureScreenshot(checkpointName);
+		} finally {
+			driver.manage().window().setSize(originalSize);
+		}
+	}
+
 	private void captureScreenshotSafe(final String checkpointName) {
 		try {
 			if (driver != null) {
@@ -496,11 +517,11 @@ public class SaleadsMiNegocioFullWorkflowTest {
 		lines.add("Mi Negocio menu: " + stepStatus.get(STEP_MI_NEGOCIO_MENU));
 		lines.add("Agregar Negocio modal: " + stepStatus.get(STEP_AGREGAR_NEGOCIO_MODAL));
 		lines.add("Administrar Negocios view: " + stepStatus.get(STEP_ADMINISTRAR_VIEW));
-		lines.add("Información General: " + stepStatus.get(STEP_INFO_GENERAL));
+		lines.add("Informaci\u00F3n General: " + stepStatus.get(STEP_INFO_GENERAL));
 		lines.add("Detalles de la Cuenta: " + stepStatus.get(STEP_DETALLES_CUENTA));
 		lines.add("Tus Negocios: " + stepStatus.get(STEP_TUS_NEGOCIOS));
-		lines.add("Términos y Condiciones: " + stepStatus.get(STEP_TERMINOS));
-		lines.add("Política de Privacidad: " + stepStatus.get(STEP_PRIVACIDAD));
+		lines.add("T\u00E9rminos y Condiciones: " + stepStatus.get(STEP_TERMINOS));
+		lines.add("Pol\u00EDtica de Privacidad: " + stepStatus.get(STEP_PRIVACIDAD));
 
 		lines.add("");
 		lines.add("Step details:");
