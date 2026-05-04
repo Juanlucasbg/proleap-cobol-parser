@@ -48,7 +48,7 @@ public class SaleAdsMiNegocioFullTest {
 	private Path evidenceDir;
 
 	@Before
-	public void setup() throws IOException {
+	public void setup() throws Exception {
 		WebDriverManager.chromedriver().setup();
 
 		final ChromeOptions options = new ChromeOptions();
