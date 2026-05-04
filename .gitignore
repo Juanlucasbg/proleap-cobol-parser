@@ -43,3 +43,5 @@ target/
 out/
 qa/saleads-e2e/.venv/
 qa/saleads-e2e/artifacts/
+__pycache__/
+*.pyc
