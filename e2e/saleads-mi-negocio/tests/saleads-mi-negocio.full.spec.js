@@ -15,6 +15,12 @@ async function safeScreenshot(page, fileName, fullPage = false) {
   return target;
 }
 
+async function waitForUiToSettle(page) {
+  await page.waitForLoadState("domcontentloaded").catch(() => {});
+  await page.waitForLoadState("networkidle", { timeout: 5000 }).catch(() => {});
+  await page.waitForTimeout(500);
+}
+
 async function clickByVisibleText(page, text, options = {}) {
   const candidateLocators = [
     page.getByRole("button", { name: text, exact: false }),
@@ -28,7 +34,7 @@ async function clickByVisibleText(page, text, options = {}) {
       const first = locator.first();
       if (await first.isVisible().catch(() => false)) {
         await first.click(options);
-        await page.waitForLoadState("networkidle");
+        await waitForUiToSettle(page);
         return true;
       }
     }
@@ -52,12 +58,11 @@ async function clickAndWaitForPossibleNewTab(page, context, text) {
   popup = await popupPromise;
   if (popup) {
     await popup.waitForLoadState("domcontentloaded");
-    await popup.waitForLoadState("networkidle");
+    await popup.waitForLoadState("networkidle", { timeout: 5000 }).catch(() => {});
     return { clicked: true, popup, activePage: popup };
   }
 
-  await page.waitForLoadState("domcontentloaded");
-  await page.waitForLoadState("networkidle");
+  await waitForUiToSettle(page);
   return { clicked: true, popup: null, activePage: page };
 }
 
@@ -95,12 +100,12 @@ async function clickLoginWithGoogle(page, context) {
 
     if (await googleAccount.count()) {
       await googleAccount.first().click();
-      await googlePage.waitForLoadState("networkidle").catch(() => {});
+      await waitForUiToSettle(googlePage);
     }
 
     if (popup) {
       await page.bringToFront();
-      await page.waitForLoadState("networkidle").catch(() => {});
+      await waitForUiToSettle(page);
     }
 
     return true;
@@ -139,8 +144,7 @@ test.describe("saleads_mi_negocio_full_test", () => {
     const loginClicked = await clickLoginWithGoogle(page, context);
     expect(loginClicked).toBeTruthy();
 
-    await page.waitForLoadState("domcontentloaded");
-    await page.waitForLoadState("networkidle");
+    await waitForUiToSettle(page);
 
     const sidebar = page.locator("aside, nav").first();
     const sidebarVisible = await sidebar.isVisible().catch(() => false);
@@ -225,10 +229,10 @@ test.describe("saleads_mi_negocio_full_test", () => {
     }
     if (await cancelButton.count()) {
       await cancelButton.first().click();
-      await page.waitForLoadState("networkidle");
+      await waitForUiToSettle(page);
     } else {
       await page.keyboard.press("Escape");
-      await page.waitForLoadState("networkidle");
+      await waitForUiToSettle(page);
     }
 
     // Step 4: Open Administrar Negocios.
@@ -384,10 +388,10 @@ test.describe("saleads_mi_negocio_full_test", () => {
     if (terminosResult.popup) {
       await terminosResult.popup.close();
       await page.bringToFront();
-      await page.waitForLoadState("networkidle");
+      await waitForUiToSettle(page);
     } else {
       await page.goto(administrarNegociosUrl, { waitUntil: "networkidle" });
-      await page.waitForLoadState("networkidle");
+      await waitForUiToSettle(page);
     }
 
     // Step 9: Validate Politica de Privacidad.
@@ -422,10 +426,10 @@ test.describe("saleads_mi_negocio_full_test", () => {
     if (privacidadResult.popup) {
       await privacidadResult.popup.close();
       await page.bringToFront();
-      await page.waitForLoadState("networkidle");
+      await waitForUiToSettle(page);
     } else {
       await page.goto(administrarNegociosUrl, { waitUntil: "networkidle" });
-      await page.waitForLoadState("networkidle");
+      await waitForUiToSettle(page);
     }
 
     // Step 10: Final report artifact with PASS/FAIL per requested fields.
