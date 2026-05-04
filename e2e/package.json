@@ -1,0 +1,15 @@
+{
+  "name": "saleads-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cross-environment SaleADS E2E workflows",
+  "scripts": {
+    "test:mi-negocio": "playwright test tests/saleads-mi-negocio-workflow.spec.ts --project=chromium",
+    "test:mi-negocio:headed": "playwright test tests/saleads-mi-negocio-workflow.spec.ts --project=chromium --headed",
+    "test:mi-negocio:debug": "playwright test tests/saleads-mi-negocio-workflow.spec.ts --project=chromium --debug"
+  },
+  "devDependencies": {
+    "@playwright/test": "latest",
+    "typescript": "latest"
+  }
+}

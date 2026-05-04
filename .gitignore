@@ -41,3 +41,8 @@ target/
 
 ## Additional for IntelliJ
 out/
+e2e/test-results/
+e2e/playwright-report/
+e2e/.auth/
+e2e/screenshots/
+e2e/artifacts/
