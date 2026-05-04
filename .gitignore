@@ -41,3 +41,7 @@ target/
 
 ## Additional for IntelliJ
 out/
+
+# QA automation local artifacts
+qa/.venv/
+qa/artifacts/
