@@ -45,3 +45,4 @@ out/
 # SaleADS automation artifacts
 automation/.venv/
 automation/artifacts/
+automation/__pycache__/
