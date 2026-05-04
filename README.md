@@ -195,6 +195,51 @@ $ mvn clean test
 ```
 
 
+SaleADS Mi Negocio E2E test
+---------------------------
+
+An opt-in Selenium E2E test is available at:
+
+`src/test/java/io/proleap/saleads/SaleadsMiNegocioFullTest.java`
+
+This test is disabled by default and only runs when explicitly enabled.
+
+### What it validates
+
+- Login with Google and dashboard/sidebar visibility.
+- "Mi Negocio" menu expansion.
+- "Agregar Negocio" modal fields and buttons.
+- "Administrar Negocios" sections:
+  - Informacion General
+  - Detalles de la Cuenta
+  - Tus Negocios
+  - Seccion Legal
+- "Terminos y Condiciones" and "Politica de Privacidad" pages (including new-tab flows).
+- Screenshot capture for key checkpoints and a final PASS/FAIL report.
+
+### Run it
+
+```
+mvn -Dtest=SaleadsMiNegocioFullTest \
+    -Dsaleads.e2e=true \
+    -Dsaleads.baseUrl=<current_environment_login_url> \
+    test
+```
+
+Optional properties:
+
+- `-Dsaleads.headless=true` to run headless.
+- `-Dsaleads.browser=firefox` to use Firefox (default is Chrome).
+- `-Dsaleads.google.email=<email>` to change selected Google account
+  (default: `juanlucasbarbiergarzon@gmail.com`).
+
+Evidence output is written under:
+
+`target/saleads-evidence/<timestamp>/`
+
+including screenshots and `final-report.txt`.
+
+
 Release process
 ---------------
 
