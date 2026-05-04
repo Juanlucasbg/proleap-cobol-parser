@@ -41,3 +41,8 @@ target/
 
 ## Additional for IntelliJ
 out/
+
+# UI automation artifacts
+ui-tests/artifacts/
+__pycache__/
+*.pyc
