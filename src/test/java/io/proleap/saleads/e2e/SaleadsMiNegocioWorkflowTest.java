@@ -18,6 +18,7 @@ import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.openqa.selenium.By;
+import org.openqa.selenium.Dimension;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.TakesScreenshot;
@@ -176,7 +177,7 @@ public class SaleadsMiNegocioWorkflowTest {
 			final boolean tusNegocios = textVisible("Tus Negocios");
 			final boolean seccionLegal = anyTextVisible("Sección Legal", "Términos y Condiciones", "Política de Privacidad");
 
-			captureScreenshot("04-administrar-negocios-account-page");
+			captureFullPageScreenshot("04-administrar-negocios-account-page-full");
 			record(field, infoGeneral && detallesCuenta && tusNegocios && seccionLegal);
 		} catch (Exception ex) {
 			record(field, false);
@@ -452,6 +453,25 @@ public class SaleadsMiNegocioWorkflowTest {
 		final Path target = evidenceDir.resolve(name + ".png");
 		final byte[] bytes = ((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES);
 		Files.write(target, bytes);
+	}
+
+	private void captureFullPageScreenshot(final String name) throws IOException {
+		final Dimension originalSize = driver.manage().window().getSize();
+		try {
+			final JavascriptExecutor js = (JavascriptExecutor) driver;
+			final long fullWidth = ((Number) js.executeScript(
+					"return Math.max(document.body.scrollWidth, document.documentElement.scrollWidth);")).longValue();
+			final long fullHeight = ((Number) js.executeScript(
+					"return Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);")).longValue();
+			final int width = (int) Math.max(1200L, Math.min(fullWidth, 3000L));
+			final int height = (int) Math.max(900L, Math.min(fullHeight, 6000L));
+			driver.manage().window().setSize(new Dimension(width, height));
+			sleep(400);
+			captureScreenshot(name);
+		} finally {
+			driver.manage().window().setSize(originalSize);
+			sleep(200);
+		}
 	}
 
 	private void writeUrlFile(final String filename, final String url) throws IOException {
