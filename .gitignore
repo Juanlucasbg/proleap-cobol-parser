@@ -45,3 +45,6 @@ out/
 # Python / Playwright E2E artifacts
 .pytest_cache/
 e2e/artifacts/
+.venv/
+**/__pycache__/
+*.pyc
