@@ -5,7 +5,7 @@ Playwright end-to-end test suite for validating the **Mi Negocio** workflow in a
 ## Why this is environment-agnostic
 
 - It does **not** hardcode a domain or URL.
-- It expects the browser to already be on the login page, or uses `SALEADS_BASE_URL` only if provided.
+- It expects the browser to already be on the login page, and also supports `SALEADS_BASE_URL` as a fallback when the page is blank.
 - It relies primarily on **visible text selectors** and resilient waiting.
 
 ## Test included
@@ -37,6 +37,7 @@ npx playwright install --with-deps chromium
 
 - `SALEADS_BASE_URL`: If set, test navigates to this URL first.
 - `GOOGLE_ACCOUNT_EMAIL`: Defaults to `juanlucasbarbiergarzon@gmail.com`.
+- `PWDEBUG=1`: Useful for interactive local debugging.
 
 ## Run
 

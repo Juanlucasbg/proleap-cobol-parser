@@ -79,8 +79,11 @@ async function screenshot(page: Page, name: string): Promise<void> {
 async function clickByVisibleText(page: Page, text: string): Promise<void> {
   const candidates = [
     page.getByRole("button", { name: text, exact: true }),
+    page.getByRole("button", { name: text }),
     page.getByRole("link", { name: text, exact: true }),
+    page.getByRole("link", { name: text }),
     page.getByText(text, { exact: true }),
+    page.getByText(text),
   ];
 
   for (const locator of candidates) {
@@ -174,15 +177,17 @@ async function openLegalLinkAndValidate(
   linkText: string,
   headingText: string,
   screenshotName: string,
-): Promise<{ finalUrl: string }> {
+): Promise<{ finalUrl: string; openedInNewTab: boolean }> {
   const appPageUrlBefore = appPage.url();
   const existingPages = context.pages().length;
 
   await clickByVisibleText(appPage, linkText);
 
   let legalPage: Page = appPage;
+  let openedInNewTab = false;
   if (context.pages().length > existingPages) {
     legalPage = context.pages()[context.pages().length - 1];
+    openedInNewTab = true;
     await legalPage.bringToFront();
     await waitForUiSettled(legalPage);
   } else {
@@ -197,7 +202,7 @@ async function openLegalLinkAndValidate(
   await expectLegalContentVisible(legalPage);
   await screenshot(legalPage, screenshotName);
 
-  return { finalUrl: legalPage.url() };
+  return { finalUrl: legalPage.url(), openedInNewTab };
 }
 
 test.describe("saleads_mi_negocio_full_test", () => {
@@ -208,6 +213,10 @@ test.describe("saleads_mi_negocio_full_test", () => {
 
     try {
       // Step 1: Login with Google.
+      if (page.url() === "about:blank" && process.env.SALEADS_BASE_URL) {
+        await page.goto(process.env.SALEADS_BASE_URL, { waitUntil: "domcontentloaded" });
+        await waitForUiSettled(page);
+      }
       await waitForUiSettled(page);
 
       await clickGoogleLoginAndHandleAuth(page, context);
@@ -314,9 +323,12 @@ test.describe("saleads_mi_negocio_full_test", () => {
         details: `Legal page opened and validated. URL: ${termsResult.finalUrl}`,
       };
 
-      // Return to app tab if needed.
-      if (context.pages().length > 1) {
+      // Return to app tab/page after legal validation.
+      if (termsResult.openedInNewTab) {
         await page.bringToFront();
+        await waitForUiSettled(page);
+      } else {
+        await page.goBack({ waitUntil: "domcontentloaded" }).catch(() => undefined);
         await waitForUiSettled(page);
       }
 
@@ -334,8 +346,11 @@ test.describe("saleads_mi_negocio_full_test", () => {
         details: `Legal page opened and validated. URL: ${privacyResult.finalUrl}`,
       };
 
-      if (context.pages().length > 1) {
+      if (privacyResult.openedInNewTab) {
         await page.bringToFront();
+        await waitForUiSettled(page);
+      } else {
+        await page.goBack({ waitUntil: "domcontentloaded" }).catch(() => undefined);
         await waitForUiSettled(page);
       }
     } catch (error) {
