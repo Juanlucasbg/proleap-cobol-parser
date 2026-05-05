@@ -41,3 +41,7 @@ target/
 
 ## Additional for IntelliJ
 out/
+
+# Python (for isolated saleads-e2e tests)
+__pycache__/
+*.pyc
