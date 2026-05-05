@@ -41,3 +41,5 @@ target/
 
 ## Additional for IntelliJ
 out/
+automation/.venv/
+automation/saleads/artifacts/
