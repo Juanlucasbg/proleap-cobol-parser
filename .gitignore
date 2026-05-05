@@ -44,3 +44,6 @@ out/
 
 # e2e artifacts
 e2e/artifacts/
+
+# python cache
+__pycache__/
