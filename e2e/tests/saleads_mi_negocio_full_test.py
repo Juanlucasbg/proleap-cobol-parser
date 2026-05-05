@@ -184,6 +184,10 @@ class MiNegocioWorkflowTest:
         if self.start_url:
             self.page.goto(self.start_url, wait_until="domcontentloaded", timeout=self.timeout_ms)
             self.wait_after_ui_action(self.page)
+        elif self.page.url in {"", "about:blank"}:
+            raise AssertionError(
+                "No SaleADS login page is loaded. Set SALEADS_START_URL for standalone execution."
+            )
 
         login_button = self.first_visible(
             [
@@ -502,14 +506,19 @@ class MiNegocioWorkflowTest:
             self.page.set_default_timeout(self.timeout_ms)
 
             self.run_step("Login", self.step_login)
-            self.run_step("Mi Negocio menu", self.step_open_mi_negocio_menu)
-            self.run_step("Agregar Negocio modal", self.step_validate_agregar_negocio_modal)
-            self.run_step("Administrar Negocios view", self.step_open_administrar_negocios)
-            self.run_step("Información General", self.step_validate_informacion_general)
-            self.run_step("Detalles de la Cuenta", self.step_validate_detalles_cuenta)
-            self.run_step("Tus Negocios", self.step_validate_tus_negocios)
-            self.run_step("Términos y Condiciones", self.step_validate_terminos)
-            self.run_step("Política de Privacidad", self.step_validate_politica)
+            if self.results["Login"] == "PASS":
+                self.run_step("Mi Negocio menu", self.step_open_mi_negocio_menu)
+                self.run_step("Agregar Negocio modal", self.step_validate_agregar_negocio_modal)
+                self.run_step("Administrar Negocios view", self.step_open_administrar_negocios)
+                self.run_step("Información General", self.step_validate_informacion_general)
+                self.run_step("Detalles de la Cuenta", self.step_validate_detalles_cuenta)
+                self.run_step("Tus Negocios", self.step_validate_tus_negocios)
+                self.run_step("Términos y Condiciones", self.step_validate_terminos)
+                self.run_step("Política de Privacidad", self.step_validate_politica)
+            else:
+                self.errors.append(
+                    "Login failed; remaining workflow steps were not executed in this run."
+                )
 
             browser.close()
 
