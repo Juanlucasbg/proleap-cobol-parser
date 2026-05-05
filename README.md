@@ -194,6 +194,36 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+SaleADS UI E2E workflow test
+----------------------------
+
+This repository now includes an opt-in Selenium end-to-end test for the SaleADS
+"Mi Negocio" module workflow:
+
+`src/test/java/io/proleap/cobol/e2e/SaleadsMiNegocioFullTest.java`
+
+The test is environment-agnostic and does not hardcode a domain. It uses
+environment variables:
+
+* `SALEADS_E2E=true` (required to enable execution)
+* `SALEADS_LOGIN_URL` (required, current environment login URL)
+* `SALEADS_GOOGLE_ACCOUNT` (optional, default: `juanlucasbarbiergarzon@gmail.com`)
+* `SALEADS_HEADLESS` (optional, default: `true`)
+* `SALEADS_TIMEOUT_SECONDS` (optional, default: `30`)
+
+Run only this test with:
+
+```
+$ SALEADS_E2E=true SALEADS_LOGIN_URL="https://your-saleads-login" mvn -Dtest=SaleadsMiNegocioFullTest test
+```
+
+Evidence is written to:
+
+`target/saleads-evidence/<timestamp>/`
+
+The folder includes checkpoint screenshots and a `final-report.txt` containing
+PASS/FAIL status for each required validation and captured legal URLs.
+
 
 Release process
 ---------------
