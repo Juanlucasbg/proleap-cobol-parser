@@ -136,12 +136,12 @@ public class SaleadsMiNegocioFullTest {
 			expandMiNegocioMenu();
 			clickByText(appPage, "Administrar Negocios");
 			waitForUiSettle(appPage);
-			waitForVisibleText(appPage, "Informacion General", UI_TIMEOUT_MS);
+			waitForAnyVisibleText(appPage, UI_TIMEOUT_MS, "Informacion General", "Información General");
 
-			final boolean info = isAnyVisibleNormalized(appPage, "Informacion General");
+			final boolean info = isAnyVisibleNormalized(appPage, "Información General");
 			final boolean detalles = isAnyVisibleNormalized(appPage, "Detalles de la Cuenta");
 			final boolean negocios = isAnyVisibleNormalized(appPage, "Tus Negocios");
-			final boolean legal = isAnyVisibleNormalized(appPage, "Seccion Legal");
+			final boolean legal = isAnyVisibleNormalized(appPage, "Sección Legal");
 			recordResult(report, failures, "Administrar Negocios view", info && detalles && negocios && legal,
 					"Administrar Negocios page sections were not fully visible.");
 			takeScreenshot(appPage, "04-administrar-negocios-full.png", true);
@@ -152,18 +152,18 @@ public class SaleadsMiNegocioFullTest {
 
 		// 5) Validate Informacion General
 		try {
-			final Locator infoSection = sectionByHeading("Informacion General");
+			final Locator infoSection = sectionByHeading("Información General", "Informacion General");
 			final boolean infoVisible = infoSection != null;
 			final boolean emailVisible = isEmailVisible(infoSection == null ? appPage.locator("body") : infoSection);
 			final boolean businessPlan = isAnyVisibleNormalized(appPage, "BUSINESS PLAN");
 			final boolean cambiarPlan = isAnyVisibleNormalized(appPage, "Cambiar Plan");
 			final boolean userNameLikelyPresent = infoSection != null && infoSection.innerText().replaceAll("\\s+", " ").trim().length() > 20;
 
-			recordResult(report, failures, "Informacion General",
+			recordResult(report, failures, "Información General",
 					infoVisible && userNameLikelyPresent && emailVisible && businessPlan && cambiarPlan,
 					"Informacion General validation failed.");
 		} catch (Exception e) {
-			recordResult(report, failures, "Informacion General", false,
+			recordResult(report, failures, "Información General", false,
 					"Informacion General step failed: " + e.getMessage());
 		}
 
@@ -195,26 +195,26 @@ public class SaleadsMiNegocioFullTest {
 		// 8) Validate Terminos y Condiciones
 		try {
 			final String termsUrl = validateLegalLink(
-					"Terminos y Condiciones",
-					"Terminos y Condiciones",
+					new String[]{"Terminos y Condiciones", "Términos y Condiciones"},
+					new String[]{"Terminos y Condiciones", "Términos y Condiciones"},
 					"08-terminos-y-condiciones.png");
 			legalUrls.put("Terminos y Condiciones", termsUrl);
-			recordResult(report, failures, "Terminos y Condiciones", true, "");
+			recordResult(report, failures, "Términos y Condiciones", true, "");
 		} catch (Exception e) {
-			recordResult(report, failures, "Terminos y Condiciones", false,
+			recordResult(report, failures, "Términos y Condiciones", false,
 					"Terminos y Condiciones step failed: " + e.getMessage());
 		}
 
 		// 9) Validate Politica de Privacidad
 		try {
 			final String privacyUrl = validateLegalLink(
-					"Politica de Privacidad",
-					"Politica de Privacidad",
+					new String[]{"Politica de Privacidad", "Política de Privacidad"},
+					new String[]{"Politica de Privacidad", "Política de Privacidad"},
 					"09-politica-de-privacidad.png");
 			legalUrls.put("Politica de Privacidad", privacyUrl);
-			recordResult(report, failures, "Politica de Privacidad", true, "");
+			recordResult(report, failures, "Política de Privacidad", true, "");
 		} catch (Exception e) {
-			recordResult(report, failures, "Politica de Privacidad", false,
+			recordResult(report, failures, "Política de Privacidad", false,
 					"Politica de Privacidad step failed: " + e.getMessage());
 		}
 
@@ -252,7 +252,12 @@ public class SaleadsMiNegocioFullTest {
 					() -> clickByText(appPage, "Sign in with Google"),
 					new Page.WaitForPopupOptions().setTimeout(SHORT_TIMEOUT_MS));
 		} catch (RuntimeException ex) {
-			clickByAnyText(appPage, "Sign in with Google", "Iniciar sesion con Google", "Continuar con Google", "Google");
+			clickByAnyText(appPage,
+					"Sign in with Google",
+					"Iniciar sesion con Google",
+					"Iniciar sesión con Google",
+					"Continuar con Google",
+					"Google");
 		}
 
 		final Page authPage = googlePage == null ? appPage : googlePage;
@@ -289,24 +294,32 @@ public class SaleadsMiNegocioFullTest {
 		}
 	}
 
-	private String validateLegalLink(final String linkText, final String headingText, final String screenshotName) {
+	private String validateLegalLink(final String[] linkTexts, final String[] headingTexts, final String screenshotName) {
 		final String beforeUrl = appPage.url();
 		Page legalPage = null;
 		try {
 			legalPage = appPage.waitForPopup(
-					() -> clickByText(appPage, linkText),
+					() -> clickByAnyText(appPage, linkTexts),
 					new Page.WaitForPopupOptions().setTimeout(SHORT_TIMEOUT_MS));
 		} catch (TimeoutError e) {
-			clickByText(appPage, linkText);
+			clickByAnyText(appPage, linkTexts);
 		}
 
 		final Page targetPage = legalPage != null ? legalPage : appPage;
 		waitForUiSettle(targetPage);
-		waitForVisibleText(targetPage, headingText, UI_TIMEOUT_MS);
+		waitForAnyVisibleText(targetPage, UI_TIMEOUT_MS, headingTexts);
 
-		final boolean headingVisible = isAnyVisibleNormalized(targetPage, headingText);
-		final boolean legalContentVisible = targetPage.locator("p, article, main").first().innerText().trim().length() > 30;
-		Assert.assertTrue("Legal heading/content not visible for " + linkText, headingVisible && legalContentVisible);
+		boolean headingVisible = false;
+		for (String headingText : headingTexts) {
+			headingVisible = headingVisible || isAnyVisibleNormalized(targetPage, headingText);
+		}
+		boolean legalContentVisible = false;
+		final Locator legalContent = targetPage.locator("p, article, main").first();
+		if (legalContent.count() > 0) {
+			legalContentVisible = legalContent.innerText().trim().length() > 30;
+		}
+		Assert.assertTrue("Legal heading/content not visible for " + String.join(" / ", linkTexts),
+				headingVisible && legalContentVisible);
 
 		takeScreenshot(targetPage, screenshotName, true);
 		final String finalUrl = targetPage.url();
@@ -321,16 +334,20 @@ public class SaleadsMiNegocioFullTest {
 		return finalUrl;
 	}
 
-	private Locator sectionByHeading(final String heading) {
-		final String headingRegex = "(?i)" + Pattern.quote(heading);
-		Locator headingLocator = appPage.locator("h1, h2, h3, h4").filter(new Locator.FilterOptions().setHasText(Pattern.compile(headingRegex))).first();
-		if (headingLocator.count() == 0) {
-			headingLocator = appPage.getByText(Pattern.compile(headingRegex)).first();
+	private Locator sectionByHeading(final String... headings) {
+		for (String heading : headings) {
+			final String headingRegex = "(?i)" + Pattern.quote(heading);
+			Locator headingLocator = appPage.locator("h1, h2, h3, h4")
+					.filter(new Locator.FilterOptions().setHasText(Pattern.compile(headingRegex)))
+					.first();
+			if (headingLocator.count() == 0) {
+				headingLocator = appPage.getByText(Pattern.compile(headingRegex)).first();
+			}
+			if (headingLocator.count() > 0) {
+				return headingLocator.locator("xpath=ancestor::section[1] | ancestor::div[1]");
+			}
 		}
-		if (headingLocator.count() == 0) {
-			return null;
-		}
-		return headingLocator.locator("xpath=ancestor::section[1] | ancestor::div[1]");
+		return null;
 	}
 
 	private void fillFirstVisibleInput(final String labelOrPlaceholder, final String value) {
@@ -389,22 +406,23 @@ public class SaleadsMiNegocioFullTest {
 			return;
 		}
 
-		throw new AssertionError("Could not click element by text: " + text);
+		throw new IllegalStateException("Could not click element by text: " + text);
 	}
 
 	private void clickByAnyText(final Page page, final String... texts) {
-		RuntimeException lastException = null;
+		Exception lastException = null;
 		for (String text : texts) {
 			try {
 				clickByText(page, text);
 				return;
-			} catch (RuntimeException e) {
+			} catch (Exception e) {
 				lastException = e;
 			}
 		}
 		if (lastException != null) {
-			throw lastException;
+			throw new IllegalStateException(lastException.getMessage(), lastException);
 		}
+		throw new IllegalStateException("Could not click any candidate text.");
 	}
 
 	private void clickIfVisible(final Page page, final String text) {
@@ -419,6 +437,19 @@ public class SaleadsMiNegocioFullTest {
 	private void waitForVisibleText(final Page page, final String text, final int timeoutMs) {
 		final Pattern textPattern = Pattern.compile("(?i)" + Pattern.quote(text));
 		page.getByText(textPattern).first().waitFor(new Locator.WaitForOptions().setTimeout(timeoutMs));
+	}
+
+	private void waitForAnyVisibleText(final Page page, final int timeoutMs, final String... texts) {
+		final int perTextTimeoutMs = Math.max(1000, timeoutMs / Math.max(1, texts.length));
+		for (String text : texts) {
+			try {
+				waitForVisibleText(page, text, perTextTimeoutMs);
+				return;
+			} catch (RuntimeException ignored) {
+				// Continue trying additional text variants.
+			}
+		}
+		throw new IllegalStateException("None of the expected texts became visible within timeout: " + String.join(", ", texts));
 	}
 
 	private boolean isEmailVisible(final Locator scope) {
