@@ -1,0 +1,14 @@
+{
+  "name": "saleads-e2e",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Cross-environment E2E tests for SaleADS workflows",
+  "scripts": {
+    "test:mi-negocio": "playwright test tests/saleads-mi-negocio.spec.ts",
+    "test:mi-negocio:headed": "playwright test tests/saleads-mi-negocio.spec.ts --headed"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.53.0",
+    "@types/node": "^22.15.21"
+  }
+}
