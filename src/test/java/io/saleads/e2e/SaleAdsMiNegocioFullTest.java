@@ -152,7 +152,7 @@ public class SaleAdsMiNegocioFullTest {
 			final Browser browser = playwright.chromium().connect(wsEndpoint);
 			final BrowserContext context = browser.contexts().isEmpty() ? browser.newContext() : browser.contexts().get(0);
 			final Page page = context.pages().isEmpty() ? context.newPage() : context.pages().get(0);
-			if (!isBlank(loginUrl) && isBlank(page.url())) {
+			if (!isBlank(loginUrl) && (isBlank(page.url()) || "about:blank".equalsIgnoreCase(page.url()))) {
 				page.navigate(loginUrl);
 			}
 			waitForUi(page);
@@ -381,7 +381,6 @@ public class SaleAdsMiNegocioFullTest {
 				waitForUi(page);
 			}, new BrowserContext.WaitForPageOptions().setTimeout(popupTimeoutMs));
 		} catch (PlaywrightException ignored) {
-			locator.first().click();
 			waitForUi(page);
 			return null;
 		}
