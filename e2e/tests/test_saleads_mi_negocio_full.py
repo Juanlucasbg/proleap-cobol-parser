@@ -95,6 +95,14 @@ def _first_visible(candidates: list, timeout_ms: int = 5000):
     raise AssertionError("No visible element found from expected candidates.")
 
 
+def _visible_or_none(candidates: list, timeout_ms: int = 3000):
+    for locator in candidates:
+        with suppress(Exception):
+            locator.first.wait_for(state="visible", timeout=timeout_ms)
+            return locator.first
+    return None
+
+
 def _click_and_wait(locator, page: Page) -> None:
     locator.click()
     _wait_ui(page)
@@ -214,11 +222,11 @@ def test_saleads_mi_negocio_full_workflow(page: Page) -> None:
                 r"(sign in with google|iniciar sesión con google|continuar con google|google)",
                 re.IGNORECASE,
             )
-            sidebar_candidate = _first_visible(
+            sidebar_candidate = _visible_or_none(
                 [page.locator("aside"), page.get_by_role("navigation")], timeout_ms=4000
             )
 
-            if sidebar_candidate.is_visible():
+            if sidebar_candidate:
                 _mark_pass(report, "Login")
             else:
                 login_button = _first_visible(
@@ -300,9 +308,14 @@ def test_saleads_mi_negocio_full_workflow(page: Page) -> None:
             expect(
                 _first_visible([page.get_by_role("heading", name=re.compile("Crear Nuevo Negocio", re.IGNORECASE))])
             ).to_be_visible(timeout=15000)
-            expect(_first_visible([page.get_by_label(re.compile("Nombre del Negocio", re.IGNORECASE))])).to_be_visible(
-                timeout=10000
+            nombre_input = _first_visible(
+                [
+                    page.get_by_label(re.compile("Nombre del Negocio", re.IGNORECASE)),
+                    page.get_by_placeholder(re.compile("Nombre del Negocio|Nombre", re.IGNORECASE)),
+                    page.get_by_role("textbox", name=re.compile("Nombre del Negocio", re.IGNORECASE)),
+                ]
             )
+            expect(nombre_input).to_be_visible(timeout=10000)
             expect(_first_visible([page.get_by_text(re.compile(r"Tienes 2 de 3 negocios", re.IGNORECASE))])).to_be_visible(
                 timeout=10000
             )
@@ -314,11 +327,11 @@ def test_saleads_mi_negocio_full_workflow(page: Page) -> None:
             ).to_be_visible(timeout=10000)
 
             with suppress(Exception):
-                nombre_input = _first_visible(
+                nombre_input_optional = _first_visible(
                     [page.get_by_label(re.compile("Nombre del Negocio", re.IGNORECASE)), page.get_by_placeholder(re.compile("Nombre", re.IGNORECASE))]
                 )
-                nombre_input.click()
-                nombre_input.fill("Negocio Prueba Automatización")
+                nombre_input_optional.click()
+                nombre_input_optional.fill("Negocio Prueba Automatización")
                 _wait_ui(page)
 
             modal_shot = _screenshot(page, "step3_agregar_negocio_modal")
