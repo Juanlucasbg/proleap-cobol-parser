@@ -35,6 +35,7 @@ import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.WindowType;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.interactions.Actions;
@@ -166,7 +167,7 @@ public class SaleadsMiNegocioFullTest {
 			assertVisible("Detalles de la Cuenta section", "Detalles de la Cuenta");
 			assertVisible("Tus Negocios section", "Tus Negocios");
 			assertVisible("Sección Legal section", "Sección Legal");
-			takeScreenshot("step-4-administrar-negocios");
+			takeFullPageScreenshot("step-4-administrar-negocios-full");
 		});
 
 		runStep("Información General", () -> {
@@ -429,6 +430,25 @@ public class SaleadsMiNegocioFullTest {
 		final Path destination = evidenceDirectory.resolve(sanitizeFileName(name) + ".png");
 		final byte[] screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES);
 		Files.write(destination, screenshot);
+	}
+
+	private void takeFullPageScreenshot(final String name) throws IOException {
+		final int currentWidth = driver.manage().window().getSize().getWidth();
+		final int currentHeight = driver.manage().window().getSize().getHeight();
+
+		final long pageHeight = ((Number) ((JavascriptExecutor) driver)
+				.executeScript("return Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);"))
+				.longValue();
+		final int clampedHeight = (int) Math.min(Math.max(pageHeight + 120L, 1080L), 8000L);
+
+		try {
+			driver.manage().window().setSize(new org.openqa.selenium.Dimension(currentWidth, clampedHeight));
+			waitForUiToLoad();
+			takeScreenshot(name);
+		} finally {
+			driver.manage().window().setSize(new org.openqa.selenium.Dimension(currentWidth, currentHeight));
+			waitForUiToLoad();
+		}
 	}
 
 	private String writeFinalReport() throws IOException {
