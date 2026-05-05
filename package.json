@@ -1,0 +1,12 @@
+{
+  "name": "saleads-mi-negocio-e2e",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Cross-environment SaleADS Mi Negocio workflow tests",
+  "scripts": {
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:ui": "playwright test --ui"
+  },
+  "devDependencies": {}
+}

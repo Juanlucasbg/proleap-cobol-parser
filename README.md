@@ -194,6 +194,36 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+End-to-end UI automation (SaleADS Mi Negocio workflow)
+------------------------------------------------------
+
+This repository includes a standalone Playwright test for validating the full
+SaleADS "Mi Negocio" workflow, including:
+
+* Google login flow
+* Sidebar and Mi Negocio menu checks
+* "Agregar Negocio" modal validation
+* "Administrar Negocios" page sections
+* Legal links ("Terminos y Condiciones", "Politica de Privacidad"), including
+  popup/new-tab handling and URL capture
+* Checkpoint screenshots and a final PASS/FAIL report per required step
+
+Setup and run:
+
+```bash
+npm install
+npx playwright install --with-deps chromium
+SALEADS_URL="https://your-saleads-environment.example" npm run test:e2e
+```
+
+Optional environment variables:
+
+* `SALEADS_URL` (or `BASE_URL` / `APP_URL`): target login/app URL.
+* `SALEADS_GOOGLE_ACCOUNT`: Google account to select in the account chooser
+  (default: `juanlucasbarbiergarzon@gmail.com`).
+* `SALEADS_SCREENSHOT_DIR`: output folder for checkpoint screenshots
+  (default: `test-results/saleads-mi-negocio`).
+
 
 Release process
 ---------------
