@@ -43,3 +43,4 @@ target/
 out/
 automation/.venv/
 automation/saleads/artifacts/
+automation/saleads/__pycache__/

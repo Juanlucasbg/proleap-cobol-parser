@@ -11,9 +11,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
-import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -136,6 +136,13 @@ def save_screenshot(page: Page, reporter: Reporter, field_name: str, screenshot_
     reporter.add_screenshot(field_name, screenshot_name)
 
 
+def safe_capture(page: Page, reporter: Reporter, field_name: str, screenshot_name: str, full_page: bool = False) -> None:
+    try:
+        save_screenshot(page, reporter, field_name, screenshot_name, full_page=full_page)
+    except Exception:
+        reporter.add_detail(field_name, f"FAIL: Could not capture screenshot '{screenshot_name}'")
+
+
 def validate_any(page: Page, checks: list[str]) -> tuple[bool, list[str]]:
     details: list[str] = []
     ok = True
@@ -190,11 +197,20 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Validate SaleADS Mi Negocio workflow end-to-end.")
     parser.add_argument(
         "--url",
-        default="",
+        default=os.getenv("SALEADS_LOGIN_URL", ""),
         help="SaleADS login URL for the current environment. Optional, but required for unattended runs.",
     )
-    parser.add_argument("--email", default=DEFAULT_EMAIL, help="Google account email to select if chooser appears.")
-    parser.add_argument("--headless", action="store_true", help="Run browser in headless mode.")
+    parser.add_argument(
+        "--email",
+        default=os.getenv("SALEADS_GOOGLE_EMAIL", DEFAULT_EMAIL),
+        help="Google account email to select if chooser appears.",
+    )
+    parser.add_argument(
+        "--headless",
+        action="store_true",
+        default=os.getenv("SALEADS_HEADLESS", "").lower() in {"1", "true", "yes"},
+        help="Run browser in headless mode.",
+    )
     parser.add_argument(
         "--output-dir",
         default="automation/saleads/artifacts/latest",
@@ -266,8 +282,21 @@ def main() -> int:
                 login_ok = login_ok and sidebar_visible
 
             if login_ok:
-                save_screenshot(page, reporter, "Login", "01_dashboard_loaded.png")
+                safe_capture(page, reporter, "Login", "01_dashboard_loaded.png")
             reporter.set_status("Login", login_ok)
+
+            if not login_ok:
+                for field in reporter.results:
+                    if field == "Login":
+                        continue
+                    reporter.add_detail(field, "FAIL: Skipped because login did not complete successfully.")
+                    reporter.set_status(field, False)
+                browser.close()
+                metadata["finished_at"] = now_iso()
+                report_path = reporter.write(metadata)
+                print(f"Report written to: {report_path}")
+                print(json.dumps({k: v.status for k, v in reporter.results.items()}, ensure_ascii=False, indent=2))
+                return 1
 
             # Step 2: Open Mi Negocio menu.
             menu_ok = True
@@ -284,8 +313,7 @@ def main() -> int:
                 reporter.add_detail("Mi Negocio menu", detail)
             menu_ok = menu_ok and submenu_ok
 
-            if menu_ok:
-                save_screenshot(page, reporter, "Mi Negocio menu", "02_mi_negocio_menu_expanded.png")
+            safe_capture(page, reporter, "Mi Negocio menu", "02_mi_negocio_menu_expanded.png")
             reporter.set_status("Mi Negocio menu", menu_ok)
 
             # Step 3: Validate Agregar Negocio modal.
@@ -306,8 +334,7 @@ def main() -> int:
                 reporter.add_detail("Agregar Negocio modal", detail)
             modal_ok = modal_ok and check_ok
 
-            if modal_ok:
-                save_screenshot(page, reporter, "Agregar Negocio modal", "03_agregar_negocio_modal.png")
+            safe_capture(page, reporter, "Agregar Negocio modal", "03_agregar_negocio_modal.png")
 
             # Optional actions requested in prompt.
             try:
@@ -343,8 +370,7 @@ def main() -> int:
                 reporter.add_detail("Administrar Negocios view", detail)
             admin_ok = admin_ok and sections_ok
 
-            if admin_ok:
-                save_screenshot(page, reporter, "Administrar Negocios view", "04_administrar_negocios_page.png", full_page=True)
+            safe_capture(page, reporter, "Administrar Negocios view", "04_administrar_negocios_page.png", full_page=True)
             reporter.set_status("Administrar Negocios view", admin_ok)
 
             # Step 5: Información General.
@@ -353,9 +379,22 @@ def main() -> int:
                 reporter.add_detail("Información General", detail)
 
             # Generic checks for user name and email visibility.
-            email_visible = bool(re.search(r"@", page.inner_text("body")))
-            reporter.add_detail("Información General", f"{'PASS' if email_visible else 'FAIL'}: User email-like text visible")
+            name_visible = (
+                text_visible(page, "Nombre", timeout_ms=2_500)
+                or text_visible(page, "Usuario", timeout_ms=2_500)
+                or text_visible(page, "Name", timeout_ms=2_500)
+                or text_visible(page, "Perfil", timeout_ms=2_500)
+            )
+            reporter.add_detail(
+                "Información General",
+                f"{'PASS' if name_visible else 'FAIL'}: User name or profile label visible",
+            )
+
+            body_text = page.inner_text("body")
+            email_visible = text_visible(page, args.email, timeout_ms=2_500) or bool(re.search(r"\b\S+@\S+\.\S+\b", body_text))
+            reporter.add_detail("Información General", f"{'PASS' if email_visible else 'FAIL'}: User email visible")
             info_ok = info_ok and email_visible
+            info_ok = info_ok and name_visible
             reporter.set_status("Información General", info_ok)
 
             # Step 6: Detalles de la Cuenta.
@@ -408,7 +447,7 @@ def main() -> int:
                 )
                 terms_ok = terms_ok and legal_text_visible
 
-                save_screenshot(terms_page, reporter, "Términos y Condiciones", "05_terminos_y_condiciones.png")
+                safe_capture(terms_page, reporter, "Términos y Condiciones", "05_terminos_y_condiciones.png")
                 reporter.set_final_url("Términos y Condiciones", terms_page.url)
 
             if opened_new_tab_terms and terms_page is not app_page:
@@ -458,7 +497,7 @@ def main() -> int:
                 )
                 privacy_ok = privacy_ok and legal_text_visible
 
-                save_screenshot(privacy_page, reporter, "Política de Privacidad", "06_politica_de_privacidad.png")
+                safe_capture(privacy_page, reporter, "Política de Privacidad", "06_politica_de_privacidad.png")
                 reporter.set_final_url("Política de Privacidad", privacy_page.url)
 
             if opened_new_tab_privacy and privacy_page is not app_page:

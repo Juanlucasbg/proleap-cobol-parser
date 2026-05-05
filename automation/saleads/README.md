@@ -51,6 +51,15 @@ automation/.venv/bin/python automation/saleads/mi_negocio_workflow_test.py \
   --output-dir "automation/saleads/artifacts/run-$(date +%Y%m%d-%H%M%S)"
 ```
 
+You can also use environment variables for automation/cron runs:
+
+```bash
+export SALEADS_LOGIN_URL="https://<current-saleads-environment>/login"
+export SALEADS_GOOGLE_EMAIL="juanlucasbarbiergarzon@gmail.com"
+export SALEADS_HEADLESS="true"
+automation/.venv/bin/python automation/saleads/mi_negocio_workflow_test.py
+```
+
 ## Artifacts
 
 By default:
