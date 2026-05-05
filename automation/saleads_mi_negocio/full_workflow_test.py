@@ -19,9 +19,27 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Dict, List, Sequence, Tuple
 
-from playwright.sync_api import Browser, BrowserContext, Error, Page, TimeoutError, sync_playwright
+try:
+    from playwright.sync_api import Browser, BrowserContext, Error, Page, TimeoutError, sync_playwright
+    PLAYWRIGHT_IMPORT_ERROR: Exception | None = None
+except ModuleNotFoundError as exc:
+    PLAYWRIGHT_IMPORT_ERROR = exc
+    Browser = object  # type: ignore[assignment,misc]
+    BrowserContext = object  # type: ignore[assignment,misc]
+    Page = object  # type: ignore[assignment,misc]
+
+    class TimeoutError(Exception):
+        pass
+
+    class Error(Exception):
+        pass
+
+    def sync_playwright():
+        raise RuntimeError(
+            "Playwright is not installed. Install with: pip3 install playwright && python3 -m playwright install chromium"
+        )
 
 
 DEFAULT_EMAIL = "juanlucasbarbiergarzon@gmail.com"
@@ -490,6 +508,14 @@ def create_browser_and_page(playwright) -> Tuple[Browser, BrowserContext, Page]:
 def run() -> int:
     artifacts_dir = make_artifacts_dir()
     reports = collect_report_field_defaults()
+    if PLAYWRIGHT_IMPORT_ERROR is not None:
+        install_hint = "Playwright is not installed. Install with: pip3 install playwright && python3 -m playwright install chromium"
+        for field in REPORT_FIELDS:
+            reports[field].notes.append(install_hint)
+            reports[field].status = "FAIL"
+        report_path = write_report(reports, artifacts_dir)
+        print_console_summary(reports, report_path)
+        return 1
 
     try:
         with sync_playwright() as p:
