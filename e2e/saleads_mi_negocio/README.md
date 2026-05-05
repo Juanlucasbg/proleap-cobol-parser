@@ -42,6 +42,9 @@ Optional:
 SALEADS_BASE_URL="https://your-environment.example" pytest test_saleads_mi_negocio_full_workflow.py
 ```
 
+If no URL is provided, the test expects the browser to already be on a SaleADS login page.
+When launched on a blank page without `SALEADS_BASE_URL`, it fails fast with a precondition error.
+
 ## Artifacts
 
 - Screenshots: `artifacts/screenshots/*.png`

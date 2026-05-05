@@ -201,6 +201,11 @@ def test_saleads_mi_negocio_full_workflow(page: Page, context: BrowserContext) -
     report = WorkflowReport()
 
     base_url = os.getenv("SALEADS_BASE_URL", "").strip()
+    if not base_url and page.url in {"about:blank", "data:,"}:
+        pytest.fail(
+            "Precondition not met: browser started on a blank page and SALEADS_BASE_URL was not provided. "
+            "Set SALEADS_BASE_URL to any SaleADS environment URL or pre-open the login page."
+        )
     if base_url:
         page.goto(base_url)
         _wait_for_idle_ui(page)
