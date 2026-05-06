@@ -132,6 +132,10 @@ test(TEST_NAME, async ({ page, context }) => {
   // Step 2: Open Mi Negocio menu
   try {
     await expect(page.getByRole("navigation").first()).toBeVisible({ timeout: 30000 });
+    const negocioSection = await isAnyVisible(/^negocio$/i);
+    if (negocioSection) {
+      await clickAndWait(negocioSection, page);
+    }
     await clickByVisibleText(/mi negocio/i);
     await expect(page.getByText(/agregar negocio/i).first()).toBeVisible({ timeout: 20000 });
     await expect(page.getByText(/administrar negocios/i).first()).toBeVisible({ timeout: 20000 });
@@ -181,10 +185,10 @@ test(TEST_NAME, async ({ page, context }) => {
   try {
     await ensureMiNegocioExpanded();
     await clickByVisibleText(/administrar negocios/i);
-    await expect(page.getByText(/informacion general/i)).toBeVisible({ timeout: 30000 });
+    await expect(page.getByText(/informaci[oó]n general|informacion general/i)).toBeVisible({ timeout: 30000 });
     await expect(page.getByText(/detalles de la cuenta/i)).toBeVisible({ timeout: 30000 });
     await expect(page.getByText(/tus negocios/i)).toBeVisible({ timeout: 30000 });
-    await expect(page.getByText(/seccion legal/i)).toBeVisible({ timeout: 30000 });
+    await expect(page.getByText(/secci[oó]n legal|seccion legal/i)).toBeVisible({ timeout: 30000 });
     await screenshot("04_administrar_negocios_view.png", page, true);
     mark("Administrar Negocios view", "PASS", "Account page with all required sections is visible.");
   } catch (error) {
@@ -194,9 +198,31 @@ test(TEST_NAME, async ({ page, context }) => {
 
   // Step 5: Validate Informacion General
   try {
+    const infoSection = page
+      .locator("section, div")
+      .filter({ hasText: /informaci[oó]n general|informacion general/i })
+      .first();
+    await expect(infoSection).toBeVisible({ timeout: 15000 });
+
+    const infoText = (await infoSection.innerText()).toLowerCase();
+    if (!infoText.includes("@")) {
+      throw new Error("User email was not found in Informacion General section.");
+    }
+    const nonEmailIdentityLine = infoText
+      .split("\n")
+      .map((line) => line.trim())
+      .find(
+        (line) =>
+          line &&
+          !line.includes("@") &&
+          !/informaci[oó]n general|business plan|cambiar plan/.test(line)
+      );
+    if (!nonEmailIdentityLine) {
+      throw new Error("User name was not found in Informacion General section.");
+    }
+
     await expect(page.getByText(/business plan/i)).toBeVisible({ timeout: 15000 });
     await expect(page.getByRole("button", { name: /cambiar plan/i })).toBeVisible({ timeout: 15000 });
-    await expect(page.getByText(/@/).first()).toBeVisible({ timeout: 15000 });
     mark("Informacion General", "PASS", "User identity, plan and Cambiar Plan button are visible.");
   } catch (error) {
     mark("Informacion General", "FAIL", String(error.message || error));
@@ -205,8 +231,8 @@ test(TEST_NAME, async ({ page, context }) => {
   // Step 6: Validate Detalles de la Cuenta
   try {
     await expect(page.getByText(/cuenta creada/i)).toBeVisible({ timeout: 15000 });
-    await expect(page.getByText(/estado activo/i)).toBeVisible({ timeout: 15000 });
-    await expect(page.getByText(/idioma seleccionado/i)).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText(/estado.*activo|estado activo/i)).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText(/idioma.*seleccionado|idioma seleccionado/i)).toBeVisible({ timeout: 15000 });
     mark("Detalles de la Cuenta", "PASS", "All account details labels are visible.");
   } catch (error) {
     mark("Detalles de la Cuenta", "FAIL", String(error.message || error));
@@ -236,6 +262,7 @@ test(TEST_NAME, async ({ page, context }) => {
 
     await waitForUiToSettle(targetPage);
     await expect(targetPage.getByText(headingRegex).first()).toBeVisible({ timeout: 30000 });
+    await expect(targetPage.locator("p, li, h2, h3").first()).toBeVisible({ timeout: 30000 });
     await screenshot(screenshotName, targetPage, true);
     const finalUrl = targetPage.url();
 
