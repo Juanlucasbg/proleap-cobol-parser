@@ -41,3 +41,5 @@ target/
 
 ## Additional for IntelliJ
 out/
+__pycache__/
+*.py[cod]
