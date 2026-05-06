@@ -3,6 +3,7 @@ package io.proleap.saleads.e2e;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.IOException;
@@ -51,11 +52,11 @@ public class SaleAdsMiNegocioFullWorkflowTest {
 			"Mi Negocio menu",
 			"Agregar Negocio modal",
 			"Administrar Negocios view",
-			"Informacion General",
+			"Información General",
 			"Detalles de la Cuenta",
 			"Tus Negocios",
-			"Terminos y Condiciones",
-			"Politica de Privacidad");
+			"Términos y Condiciones",
+			"Política de Privacidad");
 
 	private final AtomicInteger screenshotCounter = new AtomicInteger(1);
 	private final Map<String, String> results = new LinkedHashMap<>();
@@ -111,23 +112,36 @@ public class SaleAdsMiNegocioFullWorkflowTest {
 
 	@Test
 	public void saleadsMiNegocioFullTest() throws Exception {
-		executeStep("Login", this::stepLoginWithGoogle);
-		executeStep("Mi Negocio menu", this::stepOpenMiNegocioMenu);
-		executeStep("Agregar Negocio modal", this::stepValidateAgregarNegocioModal);
-		executeStep("Administrar Negocios view", this::stepOpenAdministrarNegocios);
-		executeStep("Informacion General", this::stepValidateInformacionGeneral);
-		executeStep("Detalles de la Cuenta", this::stepValidateDetallesCuenta);
-		executeStep("Tus Negocios", this::stepValidateTusNegocios);
-		executeStep("Terminos y Condiciones", () -> stepOpenLegalPage(
+		boolean continueFlow = true;
+		continueFlow = executeStep("Login", continueFlow, this::stepLoginWithGoogle);
+		continueFlow = executeStep("Mi Negocio menu", continueFlow, this::stepOpenMiNegocioMenu);
+		continueFlow = executeStep("Agregar Negocio modal", continueFlow, this::stepValidateAgregarNegocioModal);
+		continueFlow = executeStep("Administrar Negocios view", continueFlow, this::stepOpenAdministrarNegocios);
+		continueFlow = executeStep("Información General", continueFlow, this::stepValidateInformacionGeneral);
+		continueFlow = executeStep("Detalles de la Cuenta", continueFlow, this::stepValidateDetallesCuenta);
+		continueFlow = executeStep("Tus Negocios", continueFlow, this::stepValidateTusNegocios);
+		continueFlow = executeStep("Términos y Condiciones", continueFlow, () -> stepOpenLegalPage(
 				Arrays.asList("T\u00e9rminos y Condiciones", "Terminos y Condiciones"),
 				Arrays.asList("T\u00e9rminos y Condiciones", "Terminos y Condiciones"),
-				"Terminos y Condiciones",
+				"Términos y Condiciones",
 				"08-terminos-y-condiciones"));
-		executeStep("Politica de Privacidad", () -> stepOpenLegalPage(
+		continueFlow = executeStep("Política de Privacidad", continueFlow, () -> stepOpenLegalPage(
 				Arrays.asList("Pol\u00edtica de Privacidad", "Politica de Privacidad"),
 				Arrays.asList("Pol\u00edtica de Privacidad", "Politica de Privacidad"),
-				"Politica de Privacidad",
+				"Política de Privacidad",
 				"09-politica-de-privacidad"));
+
+		final List<String> failingSteps = new ArrayList<>();
+		for (final String reportField : REPORT_FIELDS) {
+			final String status = results.getOrDefault(reportField, "NOT RUN");
+			if (!status.startsWith("PASS")) {
+				failingSteps.add(reportField + " -> " + status);
+			}
+		}
+
+		if (!failingSteps.isEmpty()) {
+			fail("One or more Mi Negocio workflow validations failed:\n" + String.join("\n", failingSteps));
+		}
 	}
 
 	private void stepLoginWithGoogle() throws Exception {
@@ -318,14 +332,37 @@ public class SaleAdsMiNegocioFullWorkflowTest {
 		return driver.getWindowHandle();
 	}
 
-	private void executeStep(final String reportField, final ThrowingRunnable action) throws Exception {
+	private boolean executeStep(final String reportField, final boolean canRun, final ThrowingRunnable action) {
+		if (!canRun) {
+			results.put(reportField, "FAIL - blocked by previous step failure");
+			return false;
+		}
+
 		try {
 			action.run();
 			results.put(reportField, "PASS");
+			return true;
+		} catch (final AssertionError e) {
+			results.put(reportField, "FAIL - " + safeMessage(e));
+			return false;
 		} catch (final Exception e) {
-			results.put(reportField, "FAIL - " + e.getMessage());
-			throw e;
+			results.put(reportField, "FAIL - " + safeMessage(e));
+			return false;
 		}
+	}
+
+	private String safeMessage(final Throwable error) {
+		final String message = error.getMessage();
+		if (message == null || message.isBlank()) {
+			return error.getClass().getSimpleName();
+		}
+
+		final String singleLine = message.replace('\n', ' ').replace('\r', ' ').trim();
+		if (singleLine.length() > 240) {
+			return singleLine.substring(0, 240) + "...";
+		}
+
+		return singleLine;
 	}
 
 	private void clickByVisibleText(final List<String> candidateTexts) {
