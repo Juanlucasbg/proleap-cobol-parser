@@ -75,6 +75,14 @@ async function captureCheckpoint(page: Page, fileName: string, fullPage = true):
   return screenshotPath;
 }
 
+async function captureCheckpointSafe(page: Page, fileName: string, fullPage = true): Promise<string | undefined> {
+  try {
+    return await captureCheckpoint(page, fileName, fullPage);
+  } catch {
+    return undefined;
+  }
+}
+
 function addPass(report: StepReport, key: ReportKey, details: string, evidence: string[] = []): void {
   report[key] = {
     status: "PASS",
@@ -207,6 +215,7 @@ async function openLegalPageAndValidate(
 
 test.describe("SaleADS Mi Negocio workflow", () => {
   test("saleads_mi_negocio_full_test", async ({ page, context }) => {
+    test.setTimeout(300000);
     const report = createInitialReport();
     await mkdir(ARTIFACTS_DIR, { recursive: true });
     let appUrl = "";
@@ -239,11 +248,23 @@ test.describe("SaleADS Mi Negocio workflow", () => {
       addPass(report, "Login", "Main interface and left sidebar were visible after login.", [dashboardScreenshot]);
       appUrl = page.url();
     } catch (error) {
-      const screenshot = await captureCheckpoint(page, "step-1-login-failure.png");
-      addFailure(report, "Login", `Login validation failed: ${String(error)}`, [screenshot]);
+      const screenshot = await captureCheckpointSafe(page, "step-1-login-failure.png");
+      addFailure(report, "Login", `Login validation failed: ${String(error)}`, screenshot ? [screenshot] : []);
     }
 
-    try {
+    if (report.Login.status !== "PASS") {
+      for (const key of reportKeys) {
+        if (key === "Login") {
+          continue;
+        }
+        addFailure(
+          report,
+          key,
+          "Skipped because login failed. Resolve step 1 before executing the remaining workflow.",
+        );
+      }
+    } else {
+      try {
       // Step 2: Open Mi Negocio menu
       const negocioSection = await firstVisibleLocator(
         [
@@ -274,11 +295,11 @@ test.describe("SaleADS Mi Negocio workflow", () => {
         menuScreenshot,
       ]);
     } catch (error) {
-      const screenshot = await captureCheckpoint(page, "step-2-mi-negocio-menu-failure.png");
-      addFailure(report, "Mi Negocio menu", `Mi Negocio menu validation failed: ${String(error)}`, [screenshot]);
+      const screenshot = await captureCheckpointSafe(page, "step-2-mi-negocio-menu-failure.png");
+      addFailure(report, "Mi Negocio menu", `Mi Negocio menu validation failed: ${String(error)}`, screenshot ? [screenshot] : []);
     }
 
-    try {
+      try {
       // Step 3: Validate Agregar Negocio modal
       await clickAny(
         page,
@@ -317,13 +338,13 @@ test.describe("SaleADS Mi Negocio workflow", () => {
         modalScreenshot,
       ]);
     } catch (error) {
-      const screenshot = await captureCheckpoint(page, "step-3-agregar-negocio-modal-failure.png");
+      const screenshot = await captureCheckpointSafe(page, "step-3-agregar-negocio-modal-failure.png");
       addFailure(report, "Agregar Negocio modal", `Agregar Negocio modal validation failed: ${String(error)}`, [
-        screenshot,
+        ...(screenshot ? [screenshot] : []),
       ]);
     }
 
-    try {
+      try {
       // Step 4: Open Administrar Negocios
       const adminVisible = await firstVisibleLocator(
         [page.getByRole("button", { name: /Administrar Negocios/i }), page.getByRole("link", { name: /Administrar Negocios/i })],
@@ -364,13 +385,13 @@ test.describe("SaleADS Mi Negocio workflow", () => {
       ]);
       appUrl = page.url();
     } catch (error) {
-      const screenshot = await captureCheckpoint(page, "step-4-administrar-negocios-failure.png");
+      const screenshot = await captureCheckpointSafe(page, "step-4-administrar-negocios-failure.png");
       addFailure(report, "Administrar Negocios view", `Administrar Negocios view validation failed: ${String(error)}`, [
-        screenshot,
+        ...(screenshot ? [screenshot] : []),
       ]);
     }
 
-    try {
+      try {
       // Step 5: Validate Información General
       await verifyTextVisible(page, [/BUSINESS PLAN/i, /Cambiar Plan/i]);
       const infoSection = page.getByText(/Informaci[oó]n General/i, { exact: false }).first();
@@ -397,7 +418,7 @@ test.describe("SaleADS Mi Negocio workflow", () => {
       addFailure(report, "Información General", `Información General validation failed: ${String(error)}`);
     }
 
-    try {
+      try {
       // Step 6: Validate Detalles de la Cuenta
       await verifyTextVisible(page, [/Cuenta creada/i, /Estado activo/i, /Idioma seleccionado/i]);
       addPass(report, "Detalles de la Cuenta", "Detalles de la Cuenta shows creation, status, and language information.");
@@ -405,7 +426,7 @@ test.describe("SaleADS Mi Negocio workflow", () => {
       addFailure(report, "Detalles de la Cuenta", `Detalles de la Cuenta validation failed: ${String(error)}`);
     }
 
-    try {
+      try {
       // Step 7: Validate Tus Negocios
       await verifyTextVisible(page, [/Tus Negocios/i, /Tienes 2 de 3 negocios/i]);
       const addBusinessButton = await firstVisibleLocator(
@@ -421,7 +442,7 @@ test.describe("SaleADS Mi Negocio workflow", () => {
       addFailure(report, "Tus Negocios", `Tus Negocios validation failed: ${String(error)}`);
     }
 
-    try {
+      try {
       // Step 8: Validate Términos y Condiciones
       const terms = await openLegalPageAndValidate(
         page,
@@ -434,11 +455,16 @@ test.describe("SaleADS Mi Negocio workflow", () => {
       report["Términos y Condiciones"].finalUrl = terms.finalUrl;
       addPass(report, "Términos y Condiciones", "Legal page opened and heading/content were validated.", [terms.screenshotPath]);
     } catch (error) {
-      const screenshot = await captureCheckpoint(page, "step-8-terminos-y-condiciones-failure.png");
-      addFailure(report, "Términos y Condiciones", `Términos y Condiciones validation failed: ${String(error)}`, [screenshot]);
+      const screenshot = await captureCheckpointSafe(page, "step-8-terminos-y-condiciones-failure.png");
+      addFailure(
+        report,
+        "Términos y Condiciones",
+        `Términos y Condiciones validation failed: ${String(error)}`,
+        screenshot ? [screenshot] : [],
+      );
     }
 
-    try {
+      try {
       // Step 9: Validate Política de Privacidad
       const privacy = await openLegalPageAndValidate(
         page,
@@ -453,10 +479,11 @@ test.describe("SaleADS Mi Negocio workflow", () => {
         privacy.screenshotPath,
       ]);
     } catch (error) {
-      const screenshot = await captureCheckpoint(page, "step-9-politica-de-privacidad-failure.png");
+      const screenshot = await captureCheckpointSafe(page, "step-9-politica-de-privacidad-failure.png");
       addFailure(report, "Política de Privacidad", `Política de Privacidad validation failed: ${String(error)}`, [
-        screenshot,
+        ...(screenshot ? [screenshot] : []),
       ]);
+    }
     }
 
     // Step 10: Final report
