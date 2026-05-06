@@ -121,7 +121,8 @@ public class SaleadsMiNegocioFullWorkflowTest {
 
 		Page oauthPage = null;
 		try {
-			oauthPage = context.waitForPage(() -> loginButton.first().click(), new BrowserContext.WaitForPageOptions().setTimeout(7000));
+			oauthPage = context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(7000),
+					() -> loginButton.first().click());
 			waitForUi(oauthPage);
 		} catch (TimeoutError ignored) {
 			clickAndWait(appPage, loginButton, "Google login button");
@@ -261,7 +262,8 @@ public class SaleadsMiNegocioFullWorkflowTest {
 
 		Page openedPage = null;
 		try {
-			openedPage = context.waitForPage(() -> legalLink.first().click(), new BrowserContext.WaitForPageOptions().setTimeout(7000));
+			openedPage = context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(7000),
+					() -> legalLink.first().click());
 			waitForUi(openedPage);
 		} catch (TimeoutError ignored) {
 			clickAndWait(appPage, legalLink, linkText);
