@@ -45,6 +45,17 @@ DEFAULT_GOOGLE_EMAIL = os.getenv(
 )
 TEXT_TRANSLATE_FROM = "ABCDEFGHIJKLMNOPQRSTUVWXYZÁÉÍÓÚÜÑáéíóúüñ"
 TEXT_TRANSLATE_TO = "abcdefghijklmnopqrstuvwxyzaeiouunaeiouun"
+REPORT_FIELDS = [
+    "Login",
+    "Mi Negocio menu",
+    "Agregar Negocio modal",
+    "Administrar Negocios view",
+    "Información General",
+    "Detalles de la Cuenta",
+    "Tus Negocios",
+    "Términos y Condiciones",
+    "Política de Privacidad",
+]
 
 
 def env_flag(name: str, default: bool) -> bool:
@@ -94,13 +105,29 @@ class SaleadsMiNegocioWorkflow:
         self.app_window_handle: str | None = None
 
     def run(self) -> int:
+        execution_error: Exception | None = None
         try:
             self.open_login_page_if_configured()
             self.run_all_steps()
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            execution_error = exc
+            failure_shot = self.take_screenshot("workflow_bootstrap_failed")
+            self.results.append(
+                StepResult(
+                    name="Login",
+                    passed=False,
+                    details=f"Workflow aborted before completion: {exc}",
+                    screenshots=[failure_shot],
+                    url=self.safe_current_url(),
+                )
+            )
         finally:
             self.write_report()
             self.driver.quit()
 
+        if execution_error is not None:
+            print(f"[FAIL] Workflow aborted: {execution_error}")
+            return 1
         return 0 if all(result.passed for result in self.results) else 1
 
     # ---------------------------- core flow ----------------------------
@@ -601,7 +628,7 @@ class SaleadsMiNegocioWorkflow:
             "Politica de Privacidad": "Política de Privacidad",
         }
 
-        summary: dict[str, str] = {}
+        summary: dict[str, str] = {field_name: "FAIL" for field_name in REPORT_FIELDS}
         for result in self.results:
             report_name = key_to_report_name.get(result.name, result.name)
             summary[report_name] = "PASS" if result.passed else "FAIL"
