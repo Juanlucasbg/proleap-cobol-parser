@@ -275,7 +275,7 @@ public class SaleadsMiNegocioFullWorkflowTest {
 
 		Page legalPage = null;
 		try {
-			legalPage = appPage.waitForPopup(() -> legalLink.click(), new Page.WaitForPopupOptions().setTimeout(5000));
+			legalPage = appPage.waitForPopup(new Page.WaitForPopupOptions().setTimeout(5000), () -> legalLink.click());
 			waitForUi(legalPage);
 		} catch (TimeoutError timeoutError) {
 			clickAndWait(appPage, legalLink);
