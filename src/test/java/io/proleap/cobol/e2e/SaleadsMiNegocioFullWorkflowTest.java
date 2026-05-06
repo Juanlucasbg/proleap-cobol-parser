@@ -126,8 +126,8 @@ public class SaleadsMiNegocioFullWorkflowTest {
       final Locator loginTrigger = findLoginTrigger(appPage);
       Page popup = null;
       try {
-        popup = context.waitForPage(() -> clickLocator(loginTrigger), new BrowserContext.WaitForPageOptions()
-            .setTimeout(SHORT_TIMEOUT_MS));
+        popup = context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(SHORT_TIMEOUT_MS),
+            () -> clickLocator(loginTrigger));
       } catch (final PlaywrightException noPopupExpected) {
         clickLocator(loginTrigger);
       }
@@ -136,11 +136,7 @@ public class SaleadsMiNegocioFullWorkflowTest {
       if (popup != null) {
         waitForUi(popup);
         maybeSelectGoogleAccount(popup, googleAccount);
-        try {
-          popup.waitForClose(new Page.WaitForCloseOptions().setTimeout(DEFAULT_TIMEOUT_MS));
-        } catch (final PlaywrightException ignored) {
-          // Popup may stay open in some auth flows.
-        }
+        waitForUi(popup);
       } else {
         maybeSelectGoogleAccount(appPage, googleAccount);
       }
@@ -354,8 +350,8 @@ public class SaleadsMiNegocioFullWorkflowTest {
       }
 
       try {
-        legalPage = context.waitForPage(() -> clickVisibleText(appPage, linkTextPattern), new BrowserContext.WaitForPageOptions()
-            .setTimeout(SHORT_TIMEOUT_MS));
+        legalPage = context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(SHORT_TIMEOUT_MS),
+            () -> clickVisibleText(appPage, linkTextPattern));
         openedNewTab = true;
       } catch (final PlaywrightException noPopupExpected) {
         clickVisibleText(appPage, linkTextPattern);
