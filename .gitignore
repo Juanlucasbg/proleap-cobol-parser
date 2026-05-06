@@ -41,3 +41,7 @@ target/
 
 ## Additional for IntelliJ
 out/
+
+# Playwright E2E artifacts
+automation/playwright/artifacts/
+node_modules/
