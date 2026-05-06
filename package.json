@@ -1,0 +1,15 @@
+{
+  "name": "saleads-e2e-automation",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Environment-agnostic SaleADS UI automation checks",
+  "scripts": {
+    "test:e2e": "playwright test",
+    "test:saleads-mi-negocio": "playwright test e2e/saleads_mi_negocio_full_test.spec.ts",
+    "pw:install": "playwright install --with-deps chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "latest",
+    "@types/node": "latest"
+  }
+}
