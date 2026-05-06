@@ -23,6 +23,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.openqa.selenium.By;
+import org.openqa.selenium.Dimension;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.NoSuchElementException;
@@ -199,7 +200,7 @@ public class SaleadsMiNegocioFullTest {
 		waitForVisibleText("Detalles de la Cuenta");
 		waitForVisibleText("Tus Negocios");
 		waitForVisibleText("Sección Legal");
-		takeScreenshot("04-administrar-negocios");
+		takeFullPageScreenshot("04-administrar-negocios-full");
 	}
 
 	private void executeInformacionGeneralValidation() {
@@ -431,7 +432,7 @@ public class SaleadsMiNegocioFullTest {
 
 	private String waitForNewHandleOrSameTab(final Set<String> oldHandles) {
 		try {
-			return wait.withTimeout(QUICK_TIMEOUT)
+			return new WebDriverWait(driver, QUICK_TIMEOUT)
 					.until(driverRef -> getNewHandle(oldHandles, driverRef.getWindowHandles()));
 		} catch (final TimeoutException ignored) {
 			return null;
@@ -451,6 +452,21 @@ public class SaleadsMiNegocioFullTest {
 		final File source = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
 		final Path target = evidenceDirectory.resolve(name + ".png");
 		Files.copy(source.toPath(), target, StandardCopyOption.REPLACE_EXISTING);
+	}
+
+	private void takeFullPageScreenshot(final String name) throws IOException {
+		final org.openqa.selenium.Dimension originalSize = driver.manage().window().getSize();
+		try {
+			final Long docHeight = (Long) ((JavascriptExecutor) driver)
+					.executeScript("return Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);");
+			final int targetHeight = Math.max(1080, Math.min(docHeight == null ? 1080 : docHeight.intValue(), 8000));
+			driver.manage().window().setSize(new Dimension(originalSize.getWidth(), targetHeight));
+			waitForUiLoad();
+			takeScreenshot(name);
+		} finally {
+			driver.manage().window().setSize(originalSize);
+			waitForUiLoad();
+		}
 	}
 
 	private String firstNonBlank(final String... values) {
