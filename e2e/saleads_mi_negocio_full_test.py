@@ -25,7 +25,7 @@ import re
 import sys
 import time
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable, Sequence
 
@@ -65,7 +65,7 @@ def env_flag(name: str, default: bool) -> bool:
     return raw.strip().lower() in {"1", "true", "yes", "on"}
 
 
-TIMESTAMP = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+TIMESTAMP = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
 RUN_ROOT = Path(
     os.getenv(
         "SALEADS_ARTIFACTS_DIR",
@@ -635,7 +635,7 @@ class SaleadsMiNegocioWorkflow:
 
         payload = {
             "test_name": "saleads_mi_negocio_full_test",
-            "timestamp_utc": datetime.utcnow().isoformat() + "Z",
+            "timestamp_utc": datetime.now(timezone.utc).isoformat(),
             "summary": summary,
             "results": [
                 {
