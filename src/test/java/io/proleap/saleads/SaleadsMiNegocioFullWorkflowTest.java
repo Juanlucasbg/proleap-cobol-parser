@@ -10,6 +10,7 @@ import com.microsoft.playwright.PlaywrightException;
 import com.microsoft.playwright.TimeoutError;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.LoadState;
+import com.microsoft.playwright.options.WaitUntilState;
 import com.microsoft.playwright.options.WaitForSelectorState;
 import org.junit.After;
 import org.junit.Assert;
@@ -71,13 +72,15 @@ public class SaleadsMiNegocioFullWorkflowTest {
 		browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(headless));
 		context = browser.newContext(new Browser.NewContextOptions().setViewportSize(1440, 900));
 		appPage = context.newPage();
-		appPage.navigate(loginUrl, new Page.NavigateOptions().setWaitUntil(LoadState.DOMCONTENTLOADED));
+		appPage.navigate(loginUrl, new Page.NavigateOptions().setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
 		waitForUi(appPage);
 	}
 
 	@After
 	public void tearDown() throws IOException {
-		writeFinalReport();
+		if (reportPath != null) {
+			writeFinalReport();
+		}
 
 		if (context != null) {
 			context.close();

@@ -194,6 +194,32 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+### SaleADS Mi Negocio end-to-end workflow test
+
+A dedicated, opt-in end-to-end test was added at:
+
+`src/test/java/io/proleap/saleads/SaleadsMiNegocioFullWorkflowTest.java`
+
+Run it explicitly (it is skipped by default) with:
+
+```
+$ mvn -Dtest=io.proleap.saleads.SaleadsMiNegocioFullWorkflowTest \
+      -Dsaleads.e2e=true \
+      -Dsaleads.loginUrl=https://<your-saleads-login-page> \
+      -Dsaleads.google.email=juanlucasbarbiergarzon@gmail.com \
+      test
+```
+
+Optional execution switches:
+
+- `-Dsaleads.headless=false` to run with a visible browser window.
+- `SALEADS_LOGIN_URL` and `SALEADS_GOOGLE_EMAIL` environment variables can be used instead of system properties.
+
+Evidence artifacts are written under `target/saleads-mi-negocio/`:
+
+- Screenshots: `target/saleads-mi-negocio/screenshots/`
+- Final PASS/FAIL report: `target/saleads-mi-negocio/saleads-mi-negocio-report.txt`
+
 
 Release process
 ---------------
