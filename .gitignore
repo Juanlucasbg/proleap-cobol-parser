@@ -41,3 +41,8 @@ target/
 
 ## Additional for IntelliJ
 out/
+
+# UI automation artifacts
+automation/artifacts/screenshots/
+automation/artifacts/reports/
+automation/.venv/
