@@ -239,7 +239,7 @@ public class SaleadsMiNegocioWorkflowTest {
     try {
       popup =
           page.waitForPopup(
-              () -> click(loginButton, page), new Page.WaitForPopupOptions().setTimeout(8_000));
+              new Page.WaitForPopupOptions().setTimeout(8_000), () -> click(loginButton, page));
     } catch (PlaywrightException ignored) {
       // Popup did not open; login likely continues in current page.
     }
@@ -293,8 +293,8 @@ public class SaleadsMiNegocioWorkflowTest {
     try {
       newPage =
           appPage.waitForPopup(
-              () -> clickByText(appPage, linkText),
-              new Page.WaitForPopupOptions().setTimeout(8_000));
+              new Page.WaitForPopupOptions().setTimeout(8_000),
+              () -> clickByText(appPage, linkText));
     } catch (PlaywrightException ignored) {
       // No popup: link probably navigated in the same tab after the click.
     }
