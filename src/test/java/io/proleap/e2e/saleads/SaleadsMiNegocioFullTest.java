@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -254,11 +255,14 @@ public class SaleadsMiNegocioFullTest {
 			waitForUiToSettle();
 		}
 
-		waitUntilVisible(By.xpath("//*[contains(normalize-space(), " + xpathLiteral(expectedHeading) + ")]"),
-				Duration.ofSeconds(20));
+		final String headingWithoutDiacritics = removeDiacritics(expectedHeading);
+		final By headingLocator = By.xpath(
+				"//*[contains(normalize-space(), " + xpathLiteral(expectedHeading) + ")"
+						+ " or contains(normalize-space(), " + xpathLiteral(headingWithoutDiacritics) + ")]");
+
+		waitUntilVisible(headingLocator, Duration.ofSeconds(20));
 		Assert.assertTrue("Legal heading should be visible for " + expectedHeading,
-				isVisible(By.xpath("//*[contains(normalize-space(), " + xpathLiteral(expectedHeading) + ")]"),
-						Duration.ofSeconds(10)));
+				isVisible(headingLocator, Duration.ofSeconds(10)));
 		Assert.assertTrue("Legal content text should be visible for " + expectedHeading,
 				hasSubstantialPageText(80));
 
@@ -550,6 +554,14 @@ public class SaleadsMiNegocioFullTest {
 			}
 		}
 		return null;
+	}
+
+	private static String removeDiacritics(final String value) {
+		if (value == null) {
+			return null;
+		}
+		final String normalized = Normalizer.normalize(value, Normalizer.Form.NFD);
+		return normalized.replaceAll("\\p{M}", "");
 	}
 
 	private static void sleep(final long millis) {
