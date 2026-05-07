@@ -36,8 +36,10 @@ const report: Record<(typeof REPORT_FIELDS)[number], StepResult> = {
   'Política de Privacidad': { status: 'FAIL', details: 'Not executed.' },
 };
 
-const toErrorMessage = (error: unknown) =>
-  error instanceof Error ? error.message : `Unknown error: ${String(error)}`;
+const toErrorMessage = (error: unknown) => {
+  const message = error instanceof Error ? error.message : `Unknown error: ${String(error)}`;
+  return message.replace(/\u001b\[[0-9;]*m/g, '');
+};
 
 const settleUi = async (page: Page) => {
   await page.waitForLoadState('domcontentloaded');
@@ -52,7 +54,7 @@ const clickAndWait = async (page: Page, locator: Locator) => {
   await settleUi(page);
 };
 
-const waitForAnyVisible = async (page: Page, locators: Locator[], timeoutMs = 20_000) => {
+const waitForAnyVisible = async (page: Page, locators: Locator[], timeoutMs = 12_000) => {
   const deadline = Date.now() + timeoutMs;
 
   while (Date.now() < deadline) {
@@ -156,6 +158,7 @@ test('saleads_mi_negocio_full_test', async ({ page }) => {
 
   await page.goto(loginUrl, { waitUntil: 'domcontentloaded' });
   await settleUi(page);
+  let loginSucceeded = false;
 
   await executeStep('Login', async () => {
     const sidebarAlreadyVisible = await page
@@ -187,7 +190,7 @@ test('saleads_mi_negocio_full_test', async ({ page }) => {
       }
     }
 
-    await expect(page.getByText(/Mi Negocio|Negocio/i).first()).toBeVisible({ timeout: 60_000 });
+    await expect(page.getByText(/Mi Negocio|Negocio/i).first()).toBeVisible({ timeout: 30_000 });
     const dashboardScreenshot = await takeEvidence(
       page,
       'saleads-mi-negocio-full',
@@ -199,8 +202,12 @@ test('saleads_mi_negocio_full_test', async ({ page }) => {
       evidence: [dashboardScreenshot],
     };
   });
+  loginSucceeded = report.Login.status === 'PASS';
 
   await executeStep('Mi Negocio menu', async () => {
+    if (!loginSucceeded) {
+      throw new Error('Login step failed; cannot validate Mi Negocio menu.');
+    }
     const negocioSection = await waitForAnyVisible(page, [
       page.getByRole('button', { name: /^Negocio$/i }),
       page.getByRole('link', { name: /^Negocio$/i }),
@@ -231,6 +238,9 @@ test('saleads_mi_negocio_full_test', async ({ page }) => {
   });
 
   await executeStep('Agregar Negocio modal', async () => {
+    if (!loginSucceeded) {
+      throw new Error('Login step failed; cannot validate Agregar Negocio modal.');
+    }
     const addBusinessOption = await waitForAnyVisible(page, [
       page.getByRole('button', { name: /^Agregar Negocio$/i }),
       page.getByRole('link', { name: /^Agregar Negocio$/i }),
@@ -263,6 +273,9 @@ test('saleads_mi_negocio_full_test', async ({ page }) => {
   });
 
   await executeStep('Administrar Negocios view', async () => {
+    if (!loginSucceeded) {
+      throw new Error('Login step failed; cannot validate Administrar Negocios view.');
+    }
     const administrarVisible = await page
       .getByText(/Administrar Negocios/i)
       .first()
@@ -303,6 +316,9 @@ test('saleads_mi_negocio_full_test', async ({ page }) => {
   });
 
   await executeStep('Información General', async () => {
+    if (!loginSucceeded) {
+      throw new Error('Login step failed; cannot validate Información General.');
+    }
     await expect(page.getByText(/BUSINESS PLAN/i).first()).toBeVisible();
     await expect(page.getByRole('button', { name: /Cambiar Plan/i }).first()).toBeVisible();
 
@@ -321,6 +337,9 @@ test('saleads_mi_negocio_full_test', async ({ page }) => {
   });
 
   await executeStep('Detalles de la Cuenta', async () => {
+    if (!loginSucceeded) {
+      throw new Error('Login step failed; cannot validate Detalles de la Cuenta.');
+    }
     await expect(page.getByText(/Cuenta creada/i).first()).toBeVisible();
     await expect(page.getByText(/Estado activo/i).first()).toBeVisible();
     await expect(page.getByText(/Idioma seleccionado/i).first()).toBeVisible();
@@ -331,6 +350,9 @@ test('saleads_mi_negocio_full_test', async ({ page }) => {
   });
 
   await executeStep('Tus Negocios', async () => {
+    if (!loginSucceeded) {
+      throw new Error('Login step failed; cannot validate Tus Negocios.');
+    }
     await expect(page.getByText(/Tus Negocios/i).first()).toBeVisible();
     await expect(page.getByRole('button', { name: /Agregar Negocio/i }).first()).toBeVisible();
     await expect(page.getByText(/Tienes 2 de 3 negocios/i).first()).toBeVisible();
@@ -341,6 +363,9 @@ test('saleads_mi_negocio_full_test', async ({ page }) => {
   });
 
   await executeStep('Términos y Condiciones', async () => {
+    if (!loginSucceeded) {
+      throw new Error('Login step failed; cannot validate Términos y Condiciones.');
+    }
     const { evidencePath, finalUrl } = await openLegalPage(
       page,
       /Términos y Condiciones/i,
@@ -356,6 +381,9 @@ test('saleads_mi_negocio_full_test', async ({ page }) => {
   });
 
   await executeStep('Política de Privacidad', async () => {
+    if (!loginSucceeded) {
+      throw new Error('Login step failed; cannot validate Política de Privacidad.');
+    }
     const { evidencePath, finalUrl } = await openLegalPage(
       page,
       /Política de Privacidad/i,
