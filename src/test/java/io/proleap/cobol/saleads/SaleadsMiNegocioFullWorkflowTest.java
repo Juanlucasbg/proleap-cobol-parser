@@ -125,10 +125,10 @@ public class SaleadsMiNegocioFullWorkflowTest {
           assertVisible(page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Crear Negocio")),
               "Crear Negocio button should be visible.");
 
+          captureScreenshot(page, evidenceDir.resolve("03-agregar-negocio-modal.png"), false);
           nombreInput.first().fill("Negocio Prueba Automatización");
           clickByVisibleText(page, "Cancelar");
           waitForUi(page);
-          captureScreenshot(page, evidenceDir.resolve("03-agregar-negocio-modal.png"), false);
           report.put(STEP_MODAL, "PASS");
         } catch (Exception e) {
           report.put(STEP_MODAL, "FAIL - " + e.getMessage());
