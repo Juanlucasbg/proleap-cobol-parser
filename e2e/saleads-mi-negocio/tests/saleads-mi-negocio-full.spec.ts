@@ -168,9 +168,24 @@ test('saleads_mi_negocio_full_test', async ({ page }) => {
       .catch(() => false);
 
     if (!sidebarAlreadyVisible) {
+      const googleButtonNowVisible = await page
+        .getByRole('link', { name: /Google/i })
+        .first()
+        .isVisible()
+        .catch(() => false);
+
+      if (!googleButtonNowVisible) {
+        const loginEntryPoint = await waitForAnyVisible(page, [
+          page.getByRole('button', { name: /Inicia sesi[oó]n|Iniciar sesi[oó]n|Sign in|Login/i }),
+          page.getByRole('link', { name: /Inicia sesi[oó]n|Iniciar sesi[oó]n|Sign in|Login/i }),
+          page.getByText(/Inicia sesi[oó]n|Iniciar sesi[oó]n|Sign in|Login/i),
+        ]);
+        await clickAndWait(page, loginEntryPoint);
+      }
+
       const googleLoginButton = await waitForAnyVisible(page, [
-        page.getByRole('button', { name: /Google|Iniciar sesi[oó]n|Sign in/i }),
-        page.getByRole('link', { name: /Google|Iniciar sesi[oó]n|Sign in/i }),
+        page.getByRole('button', { name: /Google/i }),
+        page.getByRole('link', { name: /Google/i }),
         page.getByText(/Google/i),
       ]);
 
