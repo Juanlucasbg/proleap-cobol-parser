@@ -41,3 +41,9 @@ target/
 
 ## Additional for IntelliJ
 out/
+
+# Node/Playwright UI test artifacts
+ui-tests/node_modules/
+ui-tests/artifacts/
+ui-tests/test-results/
+ui-tests/playwright-report/
