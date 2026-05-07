@@ -148,12 +148,14 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
 
   await runStep("Login", async () => {
     const loginUrl = process.env.SALEADS_LOGIN_URL ?? process.env.BASE_URL;
-    if (!loginUrl) {
-      throw new Error("Set SALEADS_LOGIN_URL (or BASE_URL) for the target SaleADS environment.");
+    if (loginUrl) {
+      await page.goto(loginUrl, { waitUntil: "domcontentloaded" });
+      await waitForUiToSettle(page);
+    } else if (page.url() === "about:blank") {
+      throw new Error(
+        "No login URL was provided and browser started on about:blank. Set SALEADS_LOGIN_URL or open the login page before test execution."
+      );
     }
-
-    await page.goto(loginUrl, { waitUntil: "domcontentloaded" });
-    await waitForUiToSettle(page);
 
     const loginButton = await pickVisible(page, [
       page.getByRole("button", { name: /google/i }),
