@@ -197,153 +197,161 @@ test("saleads_mi_negocio_full_test", async ({ context, page }, testInfo) => {
     await captureCheckpoint(page, testInfo.outputDir, "01-dashboard-loaded");
   });
 
-  await runValidation("Mi Negocio menu", async () => {
-    const negocioSection = await getFirstVisible([
-      page.getByRole("button", { name: /^Negocio$/i }),
-      page.getByRole("link", { name: /^Negocio$/i }),
-      page.getByText(/^Negocio$/i),
-    ]);
-    expect(negocioSection, "No se encontró la sección 'Negocio'.").not.toBeNull();
-    await negocioSection!.click();
-    await waitForUi(page);
+  if (results.Login) {
+    await runValidation("Mi Negocio menu", async () => {
+      const negocioSection = await getFirstVisible([
+        page.getByRole("button", { name: /^Negocio$/i }),
+        page.getByRole("link", { name: /^Negocio$/i }),
+        page.getByText(/^Negocio$/i),
+      ]);
+      expect(negocioSection, "No se encontró la sección 'Negocio'.").not.toBeNull();
+      await negocioSection!.click();
+      await waitForUi(page);
 
-    const miNegocioOption = await getFirstVisible([
-      page.getByRole("button", { name: /Mi Negocio/i }),
-      page.getByRole("link", { name: /Mi Negocio/i }),
-      page.getByText(/^Mi Negocio$/i),
-    ]);
-    expect(miNegocioOption, "No se encontró la opción 'Mi Negocio'.").not.toBeNull();
-    await miNegocioOption!.click();
-    await waitForUi(page);
-
-    await expect(page.getByText(/^Agregar Negocio$/i).first()).toBeVisible();
-    await expect(page.getByText(/^Administrar Negocios$/i).first()).toBeVisible();
-
-    await captureCheckpoint(page, testInfo.outputDir, "02-mi-negocio-expanded");
-  });
-
-  await runValidation("Agregar Negocio modal", async () => {
-    const agregarNegocioOption = await getFirstVisible([
-      page.getByRole("button", { name: /^Agregar Negocio$/i }),
-      page.getByRole("link", { name: /^Agregar Negocio$/i }),
-      page.getByText(/^Agregar Negocio$/i),
-    ]);
-    expect(agregarNegocioOption, "No se encontró 'Agregar Negocio'.").not.toBeNull();
-    await agregarNegocioOption!.click();
-    await waitForUi(page);
-
-    const modalTitle = page.getByText(/^Crear Nuevo Negocio$/i).first();
-    await expect(modalTitle).toBeVisible();
-
-    await expect(page.getByLabel(/Nombre del Negocio/i).or(page.getByPlaceholder(/Nombre del Negocio/i)).first()).toBeVisible();
-    await expect(page.getByText(/Tienes 2 de 3 negocios/i).first()).toBeVisible();
-    await expect(page.getByRole("button", { name: /^Cancelar$/i }).first()).toBeVisible();
-    await expect(page.getByRole("button", { name: /^Crear Negocio$/i }).first()).toBeVisible();
-
-    const businessNameField = page.getByLabel(/Nombre del Negocio/i).or(page.getByPlaceholder(/Nombre del Negocio/i)).first();
-    await businessNameField.click();
-    await businessNameField.fill("Negocio Prueba Automatización");
-    await waitForUi(page);
-
-    await captureCheckpoint(page, testInfo.outputDir, "03-agregar-negocio-modal");
-
-    await page.getByRole("button", { name: /^Cancelar$/i }).first().click();
-    await waitForUi(page);
-  });
-
-  await runValidation("Administrar Negocios view", async () => {
-    const administrarNegociosOption = await getFirstVisible([
-      page.getByRole("button", { name: /^Administrar Negocios$/i }),
-      page.getByRole("link", { name: /^Administrar Negocios$/i }),
-      page.getByText(/^Administrar Negocios$/i),
-    ]);
-    if (!administrarNegociosOption) {
       const miNegocioOption = await getFirstVisible([
         page.getByRole("button", { name: /Mi Negocio/i }),
         page.getByRole("link", { name: /Mi Negocio/i }),
         page.getByText(/^Mi Negocio$/i),
       ]);
-      if (miNegocioOption) {
-        await miNegocioOption.click();
-        await waitForUi(page);
+      expect(miNegocioOption, "No se encontró la opción 'Mi Negocio'.").not.toBeNull();
+      await miNegocioOption!.click();
+      await waitForUi(page);
+
+      await expect(page.getByText(/^Agregar Negocio$/i).first()).toBeVisible();
+      await expect(page.getByText(/^Administrar Negocios$/i).first()).toBeVisible();
+
+      await captureCheckpoint(page, testInfo.outputDir, "02-mi-negocio-expanded");
+    });
+
+    await runValidation("Agregar Negocio modal", async () => {
+      const agregarNegocioOption = await getFirstVisible([
+        page.getByRole("button", { name: /^Agregar Negocio$/i }),
+        page.getByRole("link", { name: /^Agregar Negocio$/i }),
+        page.getByText(/^Agregar Negocio$/i),
+      ]);
+      expect(agregarNegocioOption, "No se encontró 'Agregar Negocio'.").not.toBeNull();
+      await agregarNegocioOption!.click();
+      await waitForUi(page);
+
+      const modalTitle = page.getByText(/^Crear Nuevo Negocio$/i).first();
+      await expect(modalTitle).toBeVisible();
+
+      await expect(page.getByLabel(/Nombre del Negocio/i).or(page.getByPlaceholder(/Nombre del Negocio/i)).first()).toBeVisible();
+      await expect(page.getByText(/Tienes 2 de 3 negocios/i).first()).toBeVisible();
+      await expect(page.getByRole("button", { name: /^Cancelar$/i }).first()).toBeVisible();
+      await expect(page.getByRole("button", { name: /^Crear Negocio$/i }).first()).toBeVisible();
+
+      const businessNameField = page.getByLabel(/Nombre del Negocio/i).or(page.getByPlaceholder(/Nombre del Negocio/i)).first();
+      await businessNameField.click();
+      await businessNameField.fill("Negocio Prueba Automatización");
+      await waitForUi(page);
+
+      await captureCheckpoint(page, testInfo.outputDir, "03-agregar-negocio-modal");
+
+      await page.getByRole("button", { name: /^Cancelar$/i }).first().click();
+      await waitForUi(page);
+    });
+
+    await runValidation("Administrar Negocios view", async () => {
+      const administrarNegociosOption = await getFirstVisible([
+        page.getByRole("button", { name: /^Administrar Negocios$/i }),
+        page.getByRole("link", { name: /^Administrar Negocios$/i }),
+        page.getByText(/^Administrar Negocios$/i),
+      ]);
+      if (!administrarNegociosOption) {
+        const miNegocioOption = await getFirstVisible([
+          page.getByRole("button", { name: /Mi Negocio/i }),
+          page.getByRole("link", { name: /Mi Negocio/i }),
+          page.getByText(/^Mi Negocio$/i),
+        ]);
+        if (miNegocioOption) {
+          await miNegocioOption.click();
+          await waitForUi(page);
+        }
+      }
+
+      const administrarNegociosVisible = await getFirstVisible([
+        page.getByRole("button", { name: /^Administrar Negocios$/i }),
+        page.getByRole("link", { name: /^Administrar Negocios$/i }),
+        page.getByText(/^Administrar Negocios$/i),
+      ]);
+      expect(administrarNegociosVisible, "No se encontró 'Administrar Negocios'.").not.toBeNull();
+      await administrarNegociosVisible!.click();
+      await waitForUi(page);
+
+      await expect(page.getByText(/^Información General$/i).first()).toBeVisible();
+      await expect(page.getByText(/^Detalles de la Cuenta$/i).first()).toBeVisible();
+      await expect(page.getByText(/^Tus Negocios$/i).first()).toBeVisible();
+      await expect(page.getByText(/^Sección Legal$/i).first()).toBeVisible();
+
+      await captureCheckpoint(page, testInfo.outputDir, "04-administrar-negocios-page", true);
+    });
+
+    await runValidation("Información General", async () => {
+      const infoGeneralSection = page.locator("section,article,div").filter({ hasText: "Información General" }).first();
+      await expect(infoGeneralSection).toBeVisible();
+
+      const hasUserNameIndicator = await getFirstVisible([
+        infoGeneralSection.getByText(/nombre|usuario/i),
+        infoGeneralSection.locator("p,span,div").filter({ hasText: /^[A-Za-zÁÉÍÓÚÑáéíóúñ]{2,}\s+[A-Za-zÁÉÍÓÚÑáéíóúñ]{2,}/ }),
+      ]);
+      expect(hasUserNameIndicator, "No se detectó el nombre de usuario en 'Información General'.").not.toBeNull();
+
+      await expect(infoGeneralSection.getByText(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i).first()).toBeVisible();
+      await expect(infoGeneralSection.getByText(/BUSINESS PLAN/i).first()).toBeVisible();
+      await expect(infoGeneralSection.getByRole("button", { name: /Cambiar Plan/i }).first()).toBeVisible();
+    });
+
+    await runValidation("Detalles de la Cuenta", async () => {
+      const detailsSection = page.locator("section,article,div").filter({ hasText: "Detalles de la Cuenta" }).first();
+      await expect(detailsSection).toBeVisible();
+      await expect(detailsSection.getByText(/Cuenta creada/i).first()).toBeVisible();
+      await expect(detailsSection.getByText(/Estado activo/i).first()).toBeVisible();
+      await expect(detailsSection.getByText(/Idioma seleccionado/i).first()).toBeVisible();
+    });
+
+    await runValidation("Tus Negocios", async () => {
+      const businessesSection = page.locator("section,article,div").filter({ hasText: "Tus Negocios" }).first();
+      await expect(businessesSection).toBeVisible();
+
+      const businessList = await getFirstVisible([
+        businessesSection.getByRole("list").first(),
+        businessesSection.locator('[class*="list"], [class*="card"], table').first(),
+      ]);
+      expect(businessList, "No se detectó la lista de negocios.").not.toBeNull();
+
+      await expect(businessesSection.getByRole("button", { name: /^Agregar Negocio$/i }).first()).toBeVisible();
+      await expect(businessesSection.getByText(/Tienes 2 de 3 negocios/i).first()).toBeVisible();
+    });
+
+    await runValidation("Términos y Condiciones", async () => {
+      legalUrls["Términos y Condiciones"] = await openLegalPageAndReturn({
+        appPage: page,
+        context,
+        outputDir: testInfo.outputDir,
+        linkText: "Términos y Condiciones",
+        expectedHeading: "Términos y Condiciones",
+        screenshotName: "05-terminos-y-condiciones",
+      });
+    });
+
+    await runValidation("Política de Privacidad", async () => {
+      legalUrls["Política de Privacidad"] = await openLegalPageAndReturn({
+        appPage: page,
+        context,
+        outputDir: testInfo.outputDir,
+        linkText: "Política de Privacidad",
+        expectedHeading: "Política de Privacidad",
+        screenshotName: "06-politica-de-privacidad",
+      });
+    });
+  } else {
+    for (const field of REPORT_FIELDS) {
+      if (field !== "Login") {
+        errors[field] = "Omitido porque el login inicial no fue exitoso.";
       }
     }
-
-    const administrarNegociosVisible = await getFirstVisible([
-      page.getByRole("button", { name: /^Administrar Negocios$/i }),
-      page.getByRole("link", { name: /^Administrar Negocios$/i }),
-      page.getByText(/^Administrar Negocios$/i),
-    ]);
-    expect(administrarNegociosVisible, "No se encontró 'Administrar Negocios'.").not.toBeNull();
-    await administrarNegociosVisible!.click();
-    await waitForUi(page);
-
-    await expect(page.getByText(/^Información General$/i).first()).toBeVisible();
-    await expect(page.getByText(/^Detalles de la Cuenta$/i).first()).toBeVisible();
-    await expect(page.getByText(/^Tus Negocios$/i).first()).toBeVisible();
-    await expect(page.getByText(/^Sección Legal$/i).first()).toBeVisible();
-
-    await captureCheckpoint(page, testInfo.outputDir, "04-administrar-negocios-page", true);
-  });
-
-  await runValidation("Información General", async () => {
-    const infoGeneralSection = page.locator("section,article,div").filter({ hasText: "Información General" }).first();
-    await expect(infoGeneralSection).toBeVisible();
-
-    const hasUserNameIndicator = await getFirstVisible([
-      infoGeneralSection.getByText(/nombre|usuario/i),
-      infoGeneralSection.locator("p,span,div").filter({ hasText: /^[A-Za-zÁÉÍÓÚÑáéíóúñ]{2,}\s+[A-Za-zÁÉÍÓÚÑáéíóúñ]{2,}/ }),
-    ]);
-    expect(hasUserNameIndicator, "No se detectó el nombre de usuario en 'Información General'.").not.toBeNull();
-
-    await expect(infoGeneralSection.getByText(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i).first()).toBeVisible();
-    await expect(infoGeneralSection.getByText(/BUSINESS PLAN/i).first()).toBeVisible();
-    await expect(infoGeneralSection.getByRole("button", { name: /Cambiar Plan/i }).first()).toBeVisible();
-  });
-
-  await runValidation("Detalles de la Cuenta", async () => {
-    const detailsSection = page.locator("section,article,div").filter({ hasText: "Detalles de la Cuenta" }).first();
-    await expect(detailsSection).toBeVisible();
-    await expect(detailsSection.getByText(/Cuenta creada/i).first()).toBeVisible();
-    await expect(detailsSection.getByText(/Estado activo/i).first()).toBeVisible();
-    await expect(detailsSection.getByText(/Idioma seleccionado/i).first()).toBeVisible();
-  });
-
-  await runValidation("Tus Negocios", async () => {
-    const businessesSection = page.locator("section,article,div").filter({ hasText: "Tus Negocios" }).first();
-    await expect(businessesSection).toBeVisible();
-
-    const businessList = await getFirstVisible([
-      businessesSection.getByRole("list").first(),
-      businessesSection.locator('[class*="list"], [class*="card"], table').first(),
-    ]);
-    expect(businessList, "No se detectó la lista de negocios.").not.toBeNull();
-
-    await expect(businessesSection.getByRole("button", { name: /^Agregar Negocio$/i }).first()).toBeVisible();
-    await expect(businessesSection.getByText(/Tienes 2 de 3 negocios/i).first()).toBeVisible();
-  });
-
-  await runValidation("Términos y Condiciones", async () => {
-    legalUrls["Términos y Condiciones"] = await openLegalPageAndReturn({
-      appPage: page,
-      context,
-      outputDir: testInfo.outputDir,
-      linkText: "Términos y Condiciones",
-      expectedHeading: "Términos y Condiciones",
-      screenshotName: "05-terminos-y-condiciones",
-    });
-  });
-
-  await runValidation("Política de Privacidad", async () => {
-    legalUrls["Política de Privacidad"] = await openLegalPageAndReturn({
-      appPage: page,
-      context,
-      outputDir: testInfo.outputDir,
-      linkText: "Política de Privacidad",
-      expectedHeading: "Política de Privacidad",
-      screenshotName: "06-politica-de-privacidad",
-    });
-  });
+  }
 
   const report = REPORT_FIELDS.reduce<Record<ReportField, "PASS" | "FAIL">>((accumulator, field) => {
     accumulator[field] = results[field] ? "PASS" : "FAIL";
@@ -359,6 +367,7 @@ test("saleads_mi_negocio_full_test", async ({ context, page }, testInfo) => {
   };
 
   const reportFilePath = path.join(testInfo.outputDir, "final-report.json");
+  mkdirSync(path.dirname(reportFilePath), { recursive: true });
   writeFileSync(reportFilePath, JSON.stringify(reportPayload, null, 2), "utf-8");
   await testInfo.attach("final-report", {
     path: reportFilePath,
