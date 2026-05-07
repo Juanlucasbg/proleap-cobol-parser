@@ -250,9 +250,9 @@ public class SaleadsMiNegocioFullWorkflowTest {
 
     Page googleOrSamePage;
     try {
-      googleOrSamePage = context.waitForPage(() -> {
+      googleOrSamePage = context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(12000), () -> {
         signInButton.first().click();
-      }, new BrowserContext.WaitForPageOptions().setTimeout(12000));
+      });
       googleOrSamePage.waitForLoadState(LoadState.DOMCONTENTLOADED);
     } catch (TimeoutError timeoutError) {
       signInButton.first().click();
@@ -300,9 +300,9 @@ public class SaleadsMiNegocioFullWorkflowTest {
     Page legalPage;
     boolean openedInNewTab = false;
     try {
-      legalPage = context.waitForPage(() -> {
+      legalPage = context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(8000), () -> {
         link.first().click();
-      }, new BrowserContext.WaitForPageOptions().setTimeout(8000));
+      });
       legalPage.waitForLoadState(LoadState.DOMCONTENTLOADED);
       openedInNewTab = true;
     } catch (TimeoutError timeoutError) {
