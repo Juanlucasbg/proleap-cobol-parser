@@ -1,0 +1,15 @@
+{
+  "name": "browser-tests",
+  "version": "1.0.0",
+  "description": "SaleADS browser automation tests",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "test:mi-negocio": "playwright test tests/saleads-mi-negocio-full.spec.js",
+    "install:browsers": "playwright install chromium"
+  },
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.59.1"
+  }
+}

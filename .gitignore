@@ -41,3 +41,10 @@ target/
 
 ## Additional for IntelliJ
 out/
+
+# Browser test artifacts
+browser-tests/node_modules/
+browser-tests/playwright-report/
+browser-tests/test-results/
+browser-tests/screenshots/*.png
+browser-tests/screenshots/*.json
