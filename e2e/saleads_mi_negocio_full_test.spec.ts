@@ -158,10 +158,6 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
   if (loginUrl) {
     await page.goto(loginUrl, { waitUntil: "domcontentloaded" });
     await waitForUi(page);
-  } else if (page.url() === "about:blank") {
-    throw new Error(
-      "Set SALEADS_LOGIN_URL to the current environment login page, or preload the login page before running the test."
-    );
   }
 
   await runStep("Login", async () => {
