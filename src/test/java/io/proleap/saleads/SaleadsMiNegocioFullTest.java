@@ -20,6 +20,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.openqa.selenium.By;
@@ -39,8 +40,10 @@ import org.openqa.selenium.support.ui.WebDriverWait;
  * Environment-agnostic end-to-end validation for SaleADS "Mi Negocio" workflow.
  *
  * Required runtime configuration:
+ * - SALEADS_E2E_ENABLED=true (or -Dsaleads.e2e.enabled=true).
  * - SALEADS_URL (or -Dsaleads.url): login URL for the current environment.
  * - SALEADS_HEADLESS (optional, default true): run browser headless.
+ * - SALEADS_ASSUME_CURRENT_PAGE=true (optional): skip navigation and assume the browser is already on login page.
  */
 public class SaleadsMiNegocioFullTest {
 
@@ -56,6 +59,9 @@ public class SaleadsMiNegocioFullTest {
 	@Before
 	public void setUp() throws IOException {
 		final ChromeOptions options = new ChromeOptions();
+		final boolean e2eEnabled = Boolean.parseBoolean(readConfig("saleads.e2e.enabled", "SALEADS_E2E_ENABLED", "false"));
+		Assume.assumeTrue("SaleADS E2E test disabled. Set SALEADS_E2E_ENABLED=true to run.", e2eEnabled);
+
 		if (Boolean.parseBoolean(readConfig("saleads.headless", "SALEADS_HEADLESS", "true"))) {
 			options.addArguments("--headless=new");
 		}
@@ -68,9 +74,14 @@ public class SaleadsMiNegocioFullTest {
 		evidenceDir = Paths.get("target", "saleads-evidence", runId);
 		Files.createDirectories(evidenceDir);
 
+		final boolean assumeCurrentPage = Boolean
+				.parseBoolean(readConfig("saleads.assume.current.page", "SALEADS_ASSUME_CURRENT_PAGE", "false"));
 		final String loginUrl = readConfig("saleads.url", "SALEADS_URL", "").trim();
 		if (!loginUrl.isEmpty()) {
 			driver.get(loginUrl);
+		} else if (!assumeCurrentPage) {
+			throw new IllegalStateException(
+					"Missing SaleADS login page. Set SALEADS_URL (or -Dsaleads.url), or set SALEADS_ASSUME_CURRENT_PAGE=true.");
 		}
 		waitForUiToLoad();
 	}
