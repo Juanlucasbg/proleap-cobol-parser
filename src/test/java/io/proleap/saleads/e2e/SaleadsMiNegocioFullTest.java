@@ -92,6 +92,13 @@ public class SaleadsMiNegocioFullTest {
 
 	private StepResult loginWithGoogleAndValidateShell(final Page page, final String email) {
 		final List<String> failures = new ArrayList<>();
+		if ("about:blank".equals(page.url()) && (System.getenv("SALEADS_START_URL") == null
+				|| System.getenv("SALEADS_START_URL").isBlank())) {
+			failures.add(
+					"No login page available. Set SALEADS_START_URL or preload the browser on a SaleADS login page.");
+			return StepResult.fromFailures(failures);
+		}
+
 		clickFirstVisible(page, "login with Google", List.of(
 				page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions()
 						.setName(Pattern.compile("(?i)(sign in|iniciar sesi[oó]n|continuar).*google"))),
@@ -188,7 +195,7 @@ public class SaleadsMiNegocioFullTest {
 
 	private StepResult openAdministrarNegociosAndValidateSections(final Page page) {
 		final List<String> failures = new ArrayList<>();
-		clickIfVisible(List.of(page.getByText("Mi Negocio"), page.getByRole(AriaRole.BUTTON,
+		clickIfVisible(page, List.of(page.getByText("Mi Negocio"), page.getByRole(AriaRole.BUTTON,
 				new Page.GetByRoleOptions().setName("Mi Negocio")), page.getByRole(AriaRole.LINK,
 						new Page.GetByRoleOptions().setName("Mi Negocio"))));
 
@@ -356,10 +363,11 @@ public class SaleadsMiNegocioFullTest {
 		}
 	}
 
-	private void clickIfVisible(final List<Locator> candidates) {
+	private void clickIfVisible(final Page page, final List<Locator> candidates) {
 		final Locator locator = firstVisible(candidates);
 		if (locator != null) {
 			locator.click(new Locator.ClickOptions().setTimeout(SHORT_WAIT_MS));
+			waitForUi(page);
 		}
 	}
 
