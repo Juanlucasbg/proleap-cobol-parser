@@ -129,6 +129,13 @@ async function runValidation(report, name, action) {
   }
 }
 
+function markFailedAsSkipped(report, names, reason) {
+  for (const name of names) {
+    report.validations[name].status = "FAIL";
+    report.validations[name].details.push(reason);
+  }
+}
+
 async function validateLegalPage({
   page,
   context,
@@ -217,121 +224,143 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
     await captureCheckpoint(page, report, "Login", "01-dashboard-loaded", true);
   });
 
-  await runValidation(report, "Mi Negocio menu", async () => {
-    await maybeClickByText(page, /^negocio$/i);
-    await clickByText(page, /mi negocio/i);
-    await resolveVisibleLocator(page, /agregar negocio/i, false);
-    await resolveVisibleLocator(page, /administrar negocios/i, false);
-    await captureCheckpoint(page, report, "Mi Negocio menu", "02-mi-negocio-menu-expanded");
-  });
-
-  await runValidation(report, "Agregar Negocio modal", async () => {
-    await clickByText(page, /agregar negocio/i);
-    await resolveVisibleLocator(page, /crear nuevo negocio/i, false);
-
-    let input = page.getByLabel(/nombre del negocio/i).first();
-    if (!(await waitForVisible(input, 3000))) {
-      input = page.getByPlaceholder(/nombre del negocio/i).first();
-    }
-    if (!(await waitForVisible(input, 3000))) {
-      throw new Error("Input field 'Nombre del Negocio' is not visible.");
-    }
-
-    await resolveVisibleLocator(page, /tienes 2 de 3 negocios/i, false);
-    await resolveVisibleLocator(page, /^cancelar$/i, false);
-    await resolveVisibleLocator(page, /crear negocio/i, false);
-    await captureCheckpoint(page, report, "Agregar Negocio modal", "03-agregar-negocio-modal");
-
-    await input.click();
-    await input.fill("Negocio Prueba Automatización");
-    await clickByText(page, /^cancelar$/i);
-  });
-
-  await runValidation(report, "Administrar Negocios view", async () => {
-    const adminVisible = await waitForVisible(page.getByText(/administrar negocios/i).first(), 2000);
-    if (!adminVisible) {
-      await maybeClickByText(page, /mi negocio/i);
-    }
-
-    await clickByText(page, /administrar negocios/i);
-    await resolveVisibleLocator(page, /informaci[oó]n general/i, false);
-    await resolveVisibleLocator(page, /detalles de la cuenta/i, false);
-    await resolveVisibleLocator(page, /tus negocios/i, false);
-    await resolveVisibleLocator(page, /secci[oó]n legal/i, false);
-    await captureCheckpoint(
-      page,
+  if (report.validations["Login"].status !== "PASS") {
+    markFailedAsSkipped(
       report,
-      "Administrar Negocios view",
-      "04-administrar-negocios-view",
-      true
+      REPORT_FIELDS.filter((field) => field !== "Login"),
+      "Skipped due to Login validation failure."
     );
-  });
-
-  await runValidation(report, "Información General", async () => {
-    const pageText = await page.locator("body").innerText();
-
-    const emailMatch = pageText.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
-    if (!emailMatch) {
-      throw new Error("User email is not visible.");
-    }
-
-    const nameLinePattern = /^[A-Za-zÀ-ÿ]{2,}(?:\s+[A-Za-zÀ-ÿ]{2,})+$/;
-    const hasLikelyName = pageText
-      .split("\n")
-      .map((line) => line.trim())
-      .some((line) => line.length <= 60 && nameLinePattern.test(line));
-    if (!hasLikelyName) {
-      throw new Error("User name is not clearly visible.");
-    }
-
-    await resolveVisibleLocator(page, /business plan/i, false);
-    await resolveVisibleLocator(page, /cambiar plan/i, false);
-  });
-
-  await runValidation(report, "Detalles de la Cuenta", async () => {
-    await resolveVisibleLocator(page, /cuenta creada/i, false);
-    await resolveVisibleLocator(page, /estado activo/i, false);
-    await resolveVisibleLocator(page, /idioma seleccionado/i, false);
-  });
-
-  await runValidation(report, "Tus Negocios", async () => {
-    await resolveVisibleLocator(page, /tus negocios/i, false);
-
-    const hasList = await waitForVisible(
-      page.locator("ul, table, [role='list'], [role='table'], [data-testid*='business']").first(),
-      5000
-    );
-    if (!hasList) {
-      throw new Error("Business list is not visible.");
-    }
-
-    await resolveVisibleLocator(page, /agregar negocio/i, false);
-    await resolveVisibleLocator(page, /tienes 2 de 3 negocios/i, false);
-  });
-
-  await runValidation(report, "Términos y Condiciones", async () => {
-    await validateLegalPage({
-      page,
-      context,
-      report,
-      validationName: "Términos y Condiciones",
-      linkRegex: /t[ée]rminos y condiciones/i,
-      headingRegex: /t[ée]rminos y condiciones/i,
-      screenshotName: "05-terminos-y-condiciones",
+  } else {
+    await runValidation(report, "Mi Negocio menu", async () => {
+      await maybeClickByText(page, /^negocio$/i);
+      await clickByText(page, /mi negocio/i);
+      await resolveVisibleLocator(page, /agregar negocio/i, false);
+      await resolveVisibleLocator(page, /administrar negocios/i, false);
+      await captureCheckpoint(page, report, "Mi Negocio menu", "02-mi-negocio-menu-expanded");
     });
-  });
 
-  await runValidation(report, "Política de Privacidad", async () => {
-    await validateLegalPage({
-      page,
-      context,
-      report,
-      validationName: "Política de Privacidad",
-      linkRegex: /pol[ií]tica de privacidad/i,
-      headingRegex: /pol[ií]tica de privacidad/i,
-      screenshotName: "06-politica-de-privacidad",
+    await runValidation(report, "Agregar Negocio modal", async () => {
+      await clickByText(page, /agregar negocio/i);
+      await resolveVisibleLocator(page, /crear nuevo negocio/i, false);
+
+      let input = page.getByLabel(/nombre del negocio/i).first();
+      if (!(await waitForVisible(input, 3000))) {
+        input = page.getByPlaceholder(/nombre del negocio/i).first();
+      }
+      if (!(await waitForVisible(input, 3000))) {
+        throw new Error("Input field 'Nombre del Negocio' is not visible.");
+      }
+
+      await resolveVisibleLocator(page, /tienes 2 de 3 negocios/i, false);
+      await resolveVisibleLocator(page, /^cancelar$/i, false);
+      await resolveVisibleLocator(page, /crear negocio/i, false);
+      await captureCheckpoint(page, report, "Agregar Negocio modal", "03-agregar-negocio-modal");
+
+      await input.click();
+      await input.fill("Negocio Prueba Automatización");
+      await clickByText(page, /^cancelar$/i);
     });
-  });
+
+    await runValidation(report, "Administrar Negocios view", async () => {
+      const adminVisible = await waitForVisible(page.getByText(/administrar negocios/i).first(), 2000);
+      if (!adminVisible) {
+        await maybeClickByText(page, /mi negocio/i);
+      }
+
+      await clickByText(page, /administrar negocios/i);
+      await resolveVisibleLocator(page, /informaci[oó]n general/i, false);
+      await resolveVisibleLocator(page, /detalles de la cuenta/i, false);
+      await resolveVisibleLocator(page, /tus negocios/i, false);
+      await resolveVisibleLocator(page, /secci[oó]n legal/i, false);
+      await captureCheckpoint(
+        page,
+        report,
+        "Administrar Negocios view",
+        "04-administrar-negocios-view",
+        true
+      );
+    });
+
+    if (report.validations["Administrar Negocios view"].status !== "PASS") {
+      markFailedAsSkipped(
+        report,
+        [
+          "Información General",
+          "Detalles de la Cuenta",
+          "Tus Negocios",
+          "Términos y Condiciones",
+          "Política de Privacidad",
+        ],
+        "Skipped due to Administrar Negocios view validation failure."
+      );
+    } else {
+      await runValidation(report, "Información General", async () => {
+        const pageText = await page.locator("body").innerText();
+
+        const emailMatch = pageText.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
+        if (!emailMatch) {
+          throw new Error("User email is not visible.");
+        }
+
+        const nameLinePattern = /^[A-Za-zÀ-ÿ]{2,}(?:\s+[A-Za-zÀ-ÿ]{2,})+$/;
+        const hasLikelyName = pageText
+          .split("\n")
+          .map((line) => line.trim())
+          .some((line) => line.length <= 60 && nameLinePattern.test(line));
+        if (!hasLikelyName) {
+          throw new Error("User name is not clearly visible.");
+        }
+
+        await resolveVisibleLocator(page, /business plan/i, false);
+        await resolveVisibleLocator(page, /cambiar plan/i, false);
+      });
+
+      await runValidation(report, "Detalles de la Cuenta", async () => {
+        await resolveVisibleLocator(page, /cuenta creada/i, false);
+        await resolveVisibleLocator(page, /estado activo/i, false);
+        await resolveVisibleLocator(page, /idioma seleccionado/i, false);
+      });
+
+      await runValidation(report, "Tus Negocios", async () => {
+        await resolveVisibleLocator(page, /tus negocios/i, false);
+
+        const hasList = await waitForVisible(
+          page.locator("ul, table, [role='list'], [role='table'], [data-testid*='business']").first(),
+          5000
+        );
+        if (!hasList) {
+          throw new Error("Business list is not visible.");
+        }
+
+        await resolveVisibleLocator(page, /agregar negocio/i, false);
+        await resolveVisibleLocator(page, /tienes 2 de 3 negocios/i, false);
+      });
+
+      await runValidation(report, "Términos y Condiciones", async () => {
+        await validateLegalPage({
+          page,
+          context,
+          report,
+          validationName: "Términos y Condiciones",
+          linkRegex: /t[ée]rminos y condiciones/i,
+          headingRegex: /t[ée]rminos y condiciones/i,
+          screenshotName: "05-terminos-y-condiciones",
+        });
+      });
+
+      await runValidation(report, "Política de Privacidad", async () => {
+        await validateLegalPage({
+          page,
+          context,
+          report,
+          validationName: "Política de Privacidad",
+          linkRegex: /pol[ií]tica de privacidad/i,
+          headingRegex: /pol[ií]tica de privacidad/i,
+          screenshotName: "06-politica-de-privacidad",
+        });
+      });
+    }
+  }
 
   const failures = Object.entries(report.validations)
     .filter(([, value]) => value.status === "FAIL")
