@@ -1,0 +1,13 @@
+{
+  "name": "saleads-ui-tests",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Environment-agnostic Playwright tests for SaleADS.ai",
+  "scripts": {
+    "test": "playwright test",
+    "test:saleads-mi-negocio": "playwright test tests/saleads_mi_negocio_full_test.spec.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "latest"
+  }
+}
