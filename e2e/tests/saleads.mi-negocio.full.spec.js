@@ -96,6 +96,13 @@ async function navigateToLoginIfConfigured(page) {
   if (configuredUrl) {
     await page.goto(configuredUrl, { waitUntil: "domcontentloaded" });
     await waitForUi(page);
+    return;
+  }
+
+  if (page.url() === "about:blank") {
+    throw new Error(
+      "No login URL was provided. Set SALEADS_LOGIN_URL (or SALEADS_BASE_URL/BASE_URL) to the SaleADS login page."
+    );
   }
 }
 
