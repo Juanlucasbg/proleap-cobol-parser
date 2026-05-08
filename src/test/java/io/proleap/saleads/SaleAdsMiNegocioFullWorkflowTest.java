@@ -302,7 +302,7 @@ public class SaleAdsMiNegocioFullWorkflowTest {
 
   private Page clickAndCapturePotentialPopup(Locator locator) {
     try {
-      return context.waitForPage(locator::click, new BrowserContext.WaitForPageOptions().setTimeout(6_000));
+      return context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(6_000), locator::click);
     } catch (PlaywrightException ignored) {
       waitForUiSettled(page);
       return null;
