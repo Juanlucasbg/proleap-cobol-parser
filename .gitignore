@@ -41,3 +41,7 @@ target/
 
 ## Additional for IntelliJ
 out/
+
+# Node-based E2E assets
+node_modules/
+e2e/saleads-mi-negocio/artifacts/
