@@ -201,6 +201,30 @@ Release process
 * Milestones of the grammar are published in the [ANTLR grammars repo](https://github.com/antlr/grammars-v4).
 
 
+SaleADS Mi Negocio E2E workflow test
+------------------------------------
+
+This repository now includes an environment-agnostic browser E2E test for the SaleADS "Mi Negocio" workflow:
+
+* Test class: `io.proleap.saleads.e2e.SaleadsMiNegocioFullTest`
+* Purpose: login with Google and validate the full Mi Negocio flow (menu, modal, account sections, legal links).
+* Artifacts: screenshots + final PASS/FAIL report under `target/saleads-artifacts/<timestamp>/`.
+
+Runtime configuration (environment variables):
+
+* `RUN_SALEADS_E2E=true` (required to execute this test; otherwise it is skipped)
+* `SALEADS_START_URL=<current-environment-login-url>` (recommended; no hardcoded domain required)
+* `SALEADS_EMAIL=<google-account-email>` (optional, defaults to `juanlucasbarbiergarzon@gmail.com`)
+* `SALEADS_HEADLESS=true|false` (optional, defaults to `true`)
+* `SALEADS_E2E_ARTIFACTS_DIR=<custom-output-dir>` (optional)
+
+Run only this test:
+
+```
+mvn -Dtest=io.proleap.saleads.e2e.SaleadsMiNegocioFullTest test
+```
+
+
 License
 -------
 
