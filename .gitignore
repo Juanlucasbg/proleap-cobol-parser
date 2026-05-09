@@ -44,3 +44,7 @@ out/
 
 # QA E2E artifacts
 qa/artifacts/
+
+# Python cache files (for standalone QA scripts)
+__pycache__/
+*.pyc
