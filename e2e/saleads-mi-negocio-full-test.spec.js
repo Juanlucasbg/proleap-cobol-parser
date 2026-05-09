@@ -158,17 +158,17 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   let appPage = page;
 
   try {
-    const loginUrl = process.env.SALEADS_LOGIN_URL;
-    if (loginUrl) {
-      await page.goto(loginUrl, { waitUntil: "domcontentloaded" });
-      await waitForUi(page);
-    } else if (page.url() === "about:blank") {
-      throw new Error(
-        "SALEADS_LOGIN_URL is required when starting from a blank page. Set SALEADS_LOGIN_URL to the current environment login page URL.",
-      );
-    }
-
     try {
+      const loginUrl = process.env.SALEADS_LOGIN_URL;
+      if (loginUrl) {
+        await page.goto(loginUrl, { waitUntil: "domcontentloaded" });
+        await waitForUi(page);
+      } else if (page.url() === "about:blank") {
+        throw new Error(
+          "SALEADS_LOGIN_URL is required when starting from a blank page. Set SALEADS_LOGIN_URL to the current environment login page URL.",
+        );
+      }
+
       const loginButton = await findFirstVisible(
         page,
         [
