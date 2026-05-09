@@ -20,6 +20,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.openqa.selenium.By;
@@ -100,6 +101,9 @@ public class SaleadsMiNegocioFullWorkflowTest {
 
 	@Test
 	public void saleadsMiNegocioFullWorkflow() throws IOException {
+		Assume.assumeTrue(
+				"Enable this E2E flow with -Dsaleads.e2e.enabled=true or SALEADS_E2E_ENABLED=true.",
+				Boolean.parseBoolean(readConfig("saleads.e2e.enabled", "SALEADS_E2E_ENABLED", "false")));
 		openConfiguredEnvironment();
 
 		runStep("Login", this::validateLoginWithGoogle);
