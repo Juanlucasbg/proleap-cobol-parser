@@ -1,0 +1,15 @@
+{
+  "name": "saleads-mi-negocio-ui-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Playwright test suite for the SaleADS Mi Negocio workflow.",
+  "scripts": {
+    "test": "playwright test",
+    "test:saleads-mi-negocio": "playwright test tests/saleads-mi-negocio-full.spec.js",
+    "test:headed": "playwright test tests/saleads-mi-negocio-full.spec.js --headed",
+    "codegen": "playwright codegen"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.1"
+  }
+}

@@ -41,3 +41,7 @@ target/
 
 ## Additional for IntelliJ
 out/
+
+# Node artifacts for SaleADS UI tests
+ui-tests/saleads-mi-negocio/node_modules/
+ui-tests/saleads-mi-negocio/artifacts/
