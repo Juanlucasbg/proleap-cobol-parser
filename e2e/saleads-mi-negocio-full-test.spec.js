@@ -8,11 +8,11 @@ const REPORT_FIELDS = [
   "Mi Negocio menu",
   "Agregar Negocio modal",
   "Administrar Negocios view",
-  "Informacion General",
+  "Informaci\u00f3n General",
   "Detalles de la Cuenta",
   "Tus Negocios",
-  "Terminos y Condiciones",
-  "Politica de Privacidad",
+  "T\u00e9rminos y Condiciones",
+  "Pol\u00edtica de Privacidad",
 ];
 
 async function waitForUi(page) {
@@ -155,19 +155,19 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   const report = buildReport();
   const evidence = {};
 
-  const loginUrl = process.env.SALEADS_LOGIN_URL;
-  if (loginUrl) {
-    await page.goto(loginUrl, { waitUntil: "domcontentloaded" });
-    await waitForUi(page);
-  } else if (page.url() === "about:blank") {
-    throw new Error(
-      "SALEADS_LOGIN_URL is required when starting from a blank page. Set SALEADS_LOGIN_URL to the current environment login page URL.",
-    );
-  }
-
   let appPage = page;
 
   try {
+    const loginUrl = process.env.SALEADS_LOGIN_URL;
+    if (loginUrl) {
+      await page.goto(loginUrl, { waitUntil: "domcontentloaded" });
+      await waitForUi(page);
+    } else if (page.url() === "about:blank") {
+      throw new Error(
+        "SALEADS_LOGIN_URL is required when starting from a blank page. Set SALEADS_LOGIN_URL to the current environment login page URL.",
+      );
+    }
+
     try {
       const loginButton = await findFirstVisible(
         page,
@@ -364,9 +364,9 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
         throw new Error("A likely user name was not found in the visible account content.");
       }
 
-      markPass(report, "Informacion General", "User name, user email, BUSINESS PLAN, and Cambiar Plan were validated.");
+      markPass(report, "Informaci\u00f3n General", "User name, user email, BUSINESS PLAN, and Cambiar Plan were validated.");
     } catch (error) {
-      markFail(report, "Informacion General", error);
+      markFail(report, "Informaci\u00f3n General", error);
       throw error;
     }
 
@@ -410,11 +410,11 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
       });
       markPass(
         report,
-        "Terminos y Condiciones",
+        "T\u00e9rminos y Condiciones",
         `Legal page validated. Final URL: ${evidence.terminosFinalUrl}`,
       );
     } catch (error) {
-      markFail(report, "Terminos y Condiciones", error);
+      markFail(report, "T\u00e9rminos y Condiciones", error);
       throw error;
     }
 
@@ -427,9 +427,9 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
         headingRegex: /Pol[i\u00ed]tica de Privacidad/i,
         screenshotName: "06-politica-de-privacidad.png",
       });
-      markPass(report, "Politica de Privacidad", `Legal page validated. Final URL: ${evidence.politicaFinalUrl}`);
+      markPass(report, "Pol\u00edtica de Privacidad", `Legal page validated. Final URL: ${evidence.politicaFinalUrl}`);
     } catch (error) {
-      markFail(report, "Politica de Privacidad", error);
+      markFail(report, "Pol\u00edtica de Privacidad", error);
       throw error;
     }
   } catch {
