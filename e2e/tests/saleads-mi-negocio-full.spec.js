@@ -104,13 +104,9 @@ test.describe("SaleADS Mi Negocio full workflow", () => {
     await fs.mkdir(checkpointDir, { recursive: true });
 
     const configuredUrl = process.env.SALEADS_URL || process.env.BASE_URL;
-    if (!configuredUrl) {
-      throw new Error(
-        "Set SALEADS_URL (or BASE_URL) to the current SaleADS login page URL. The test never hardcodes a domain."
-      );
+    if (configuredUrl) {
+      await page.goto(configuredUrl, { waitUntil: "domcontentloaded" });
     }
-
-    await page.goto(configuredUrl, { waitUntil: "domcontentloaded" });
     await waitForUi(page);
 
     await runStep("Login", report, failures, async () => {
