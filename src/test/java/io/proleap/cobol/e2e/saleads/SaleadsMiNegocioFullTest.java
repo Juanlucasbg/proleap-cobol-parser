@@ -179,12 +179,20 @@ public class SaleadsMiNegocioFullTest {
 	private void navigateToLoginPage() {
 		final String loginUrl = firstNonBlank(System.getenv("SALEADS_LOGIN_URL"), System.getProperty("saleads.login.url"));
 
-		Assert.assertNotNull(
-				"Set SALEADS_LOGIN_URL (or -Dsaleads.login.url) to the current environment login URL. "
-						+ "The test is environment-agnostic and does not hardcode domains.",
-				loginUrl);
+		if (loginUrl != null) {
+			driver.get(loginUrl);
+			waitForUiToLoad();
+			return;
+		}
 
-		driver.get(loginUrl);
+		final String currentUrl = driver.getCurrentUrl();
+		final boolean alreadyOnPage = currentUrl != null && !currentUrl.trim().isEmpty() && !"about:blank".equals(currentUrl)
+				&& !currentUrl.startsWith("data:");
+
+		Assert.assertTrue(
+				"No login URL configured and browser is not on an existing page. "
+						+ "Set SALEADS_LOGIN_URL (or -Dsaleads.login.url) or start from a browser session already on the login page.",
+				alreadyOnPage);
 		waitForUiToLoad();
 	}
 
@@ -419,7 +427,7 @@ public class SaleadsMiNegocioFullTest {
 			step.run();
 			report.put(stepName, Boolean.TRUE);
 			return true;
-		} catch (final Exception e) {
+		} catch (final Throwable e) {
 			report.put(stepName, Boolean.FALSE);
 			failures.add(stepName + ": " + rootMessage(e));
 			return false;
@@ -581,8 +589,8 @@ public class SaleadsMiNegocioFullTest {
 		return value == null ? "" : value.replace('\u00A0', ' ').trim();
 	}
 
-	private String rootMessage(final Exception exception) {
-		Throwable current = exception;
+	private String rootMessage(final Throwable throwable) {
+		Throwable current = throwable;
 		while (current.getCause() != null) {
 			current = current.getCause();
 		}
