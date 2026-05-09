@@ -14,7 +14,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Supplier;
 
 import org.junit.After;
 import org.junit.Before;
@@ -287,9 +286,9 @@ public class SaleadsMiNegocioFullTest {
 				"Expected legal page heading and content for " + linkText + ".");
 	}
 
-	private void executeStep(final String name, final Supplier<StepResult> stepSupplier) {
+	private void executeStep(final String name, final StepExecutor stepSupplier) {
 		try {
-			report.put(name, stepSupplier.get());
+			report.put(name, stepSupplier.execute());
 		} catch (final Exception e) {
 			final List<String> notes = new ArrayList<>();
 			notes.add("Unexpected error: " + e.getClass().getSimpleName() + " - " + e.getMessage());
@@ -506,5 +505,10 @@ public class SaleadsMiNegocioFullTest {
 		private static StepResult from(final boolean passed, final List<String> notes, final String failureReason) {
 			return new StepResult(passed, notes, failureReason);
 		}
+	}
+
+	@FunctionalInterface
+	private interface StepExecutor {
+		StepResult execute() throws Exception;
 	}
 }
