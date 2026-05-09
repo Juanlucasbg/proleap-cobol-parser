@@ -3,6 +3,7 @@ package io.proleap.cobol.e2e;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -64,6 +65,8 @@ public class SaleadsMiNegocioFullTest {
 			driver.get(loginUrl);
 			waitForUiToLoad();
 		}
+
+		ensureOnLoginPage(loginUrl);
 	}
 
 	@After
@@ -359,11 +362,22 @@ public class SaleadsMiNegocioFullTest {
 		Exception latestError = null;
 		for (final String text : texts) {
 			try {
-				final By locator = byButtonOrLinkText(text);
-				final WebElement element = wait.until(ExpectedConditions.elementToBeClickable(locator));
-				element.click();
-				waitForUiToLoad();
-				return;
+				final List<WebElement> elements = findVisibleElements(byButtonOrLinkText(text));
+				for (final WebElement element : elements) {
+					try {
+						wait.until(ExpectedConditions.elementToBeClickable(element)).click();
+						waitForUiToLoad();
+						return;
+					} catch (final Exception clickException) {
+						try {
+							((JavascriptExecutor) driver).executeScript("arguments[0].click();", element);
+							waitForUiToLoad();
+							return;
+						} catch (final Exception jsClickException) {
+							latestError = jsClickException;
+						}
+					}
+				}
 			} catch (final Exception e) {
 				latestError = e;
 			}
@@ -427,7 +441,8 @@ public class SaleadsMiNegocioFullTest {
 
 	private By byButtonOrLinkText(final String text) {
 		return By.xpath("//button[contains(normalize-space(),'" + text + "')] | //a[contains(normalize-space(),'" + text
-				+ "')] | //*[@role='button' and contains(normalize-space(),'" + text + "')]");
+				+ "')] | //*[@role='button' and contains(normalize-space(),'" + text
+				+ "')] | //*[self::div or self::span or self::li][contains(normalize-space(),'" + text + "')]");
 	}
 
 	private Path captureScreenshot(final String fileName) throws IOException {
@@ -438,7 +453,7 @@ public class SaleadsMiNegocioFullTest {
 
 	private String switchToNewestWindowIfNeeded(final Set<String> previousHandles) {
 		try {
-			wait.until(driver -> driver.getWindowHandles().size() >= previousHandles.size());
+			wait.until(driver -> driver.getWindowHandles().size() > previousHandles.size());
 		} catch (final TimeoutException ignored) {
 			// Continue with current handle if no additional handle was detected.
 		}
@@ -475,6 +490,61 @@ public class SaleadsMiNegocioFullTest {
 			if (isSidebarVisible() || isAnyVisible(byTextContains("Mi Negocio"), byTextContains("Negocio"))) {
 				waitForUiToLoad();
 				return;
+			}
+		}
+	}
+
+	private void ensureOnLoginPage(final String configuredLoginUrl) {
+		if (isSidebarVisible() || isGoogleLoginVisible()) {
+			return;
+		}
+
+		tryOpenLoginFromLanding();
+		if (isSidebarVisible() || isGoogleLoginVisible()) {
+			return;
+		}
+
+		tryCommonLoginPaths(configuredLoginUrl);
+	}
+
+	private boolean isGoogleLoginVisible() {
+		return isAnyVisible(byTextContains("Google"), byButtonOrLinkText("Sign in with Google"),
+				byButtonOrLinkText("Iniciar sesión con Google"), byButtonOrLinkText("Continuar con Google"));
+	}
+
+	private void tryOpenLoginFromLanding() {
+		for (final String ctaText : new String[] { "Get started", "Start now", "Empezar", "Comenzar", "Iniciar sesión",
+				"Login", "Log in", "Acceder", "Ingresar" }) {
+			try {
+				clickIfVisible(ctaText);
+				if (isGoogleLoginVisible() || isSidebarVisible()) {
+					return;
+				}
+			} catch (final Exception ignored) {
+				// Best effort.
+			}
+		}
+	}
+
+	private void tryCommonLoginPaths(final String configuredLoginUrl) {
+		final String currentUrl = driver.getCurrentUrl();
+		final String sourceUrl = (configuredLoginUrl != null && !configuredLoginUrl.isBlank()) ? configuredLoginUrl : currentUrl;
+		if (sourceUrl == null || sourceUrl.isBlank() || sourceUrl.startsWith("data:") || sourceUrl.startsWith("about:")) {
+			return;
+		}
+
+		final URI uri = URI.create(sourceUrl);
+		final String origin = uri.getScheme() + "://" + uri.getHost();
+
+		for (final String candidatePath : new String[] { "/login", "/auth/login", "/signin", "/sign-in", "/auth/signin" }) {
+			try {
+				driver.get(origin + candidatePath);
+				waitForUiToLoad();
+				if (isGoogleLoginVisible() || isSidebarVisible()) {
+					return;
+				}
+			} catch (final Exception ignored) {
+				// Keep trying common paths.
 			}
 		}
 	}
