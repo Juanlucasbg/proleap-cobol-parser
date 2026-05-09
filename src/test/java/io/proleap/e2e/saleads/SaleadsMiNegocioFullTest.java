@@ -237,8 +237,9 @@ public class SaleadsMiNegocioFullTest {
 	private NavigationOutcome clickAndTrackNewTab(final Page currentPage, final BrowserContext context,
 			final Locator locator) {
 		try {
-			final Page popup = context.waitForPage(() -> locator.click(new Locator.ClickOptions().setTimeout(DEFAULT_TIMEOUT_MS)),
-					new BrowserContext.WaitForPageOptions().setTimeout(6000));
+			final Page popup = context.waitForPage(
+					new BrowserContext.WaitForPageOptions().setTimeout(6000),
+					() -> locator.click(new Locator.ClickOptions().setTimeout(DEFAULT_TIMEOUT_MS)));
 			waitForUiToSettle(popup);
 			return new NavigationOutcome(popup, true);
 		} catch (PlaywrightException noPopup) {
