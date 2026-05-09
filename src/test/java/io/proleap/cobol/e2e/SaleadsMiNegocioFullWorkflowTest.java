@@ -24,6 +24,7 @@ import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.openqa.selenium.By;
+import org.openqa.selenium.Dimension;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.OutputType;
@@ -235,7 +236,7 @@ public class SaleadsMiNegocioFullWorkflowTest {
 		final boolean detalles = isTextVisible(DETALLES_CUENTA);
 		final boolean negocios = isTextVisible("Tus Negocios");
 		final boolean legal = isTextVisible(SECCION_LEGAL);
-		takeScreenshot("04-administrar-negocios.png");
+		takeFullPageScreenshot("04-administrar-negocios-full.png");
 
 		if (info && detalles && negocios && legal) {
 			return StepResult.passed("Account page sections are visible.");
@@ -479,6 +480,21 @@ public class SaleadsMiNegocioFullWorkflowTest {
 	private void takeScreenshot(final String fileName) throws IOException {
 		final byte[] data = ((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES);
 		Files.write(evidenceDir.resolve(fileName), data);
+	}
+
+	private void takeFullPageScreenshot(final String fileName) throws IOException {
+		final Dimension originalSize = driver.manage().window().getSize();
+		try {
+			final Object scrollHeight = ((JavascriptExecutor) driver).executeScript(
+					"return Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);");
+			final int targetHeight = Math.max(originalSize.getHeight(), Math.min(Integer.parseInt(scrollHeight.toString()), 8000));
+			driver.manage().window().setSize(new Dimension(originalSize.getWidth(), targetHeight));
+			waitForUiToLoad();
+			takeScreenshot(fileName);
+		} finally {
+			driver.manage().window().setSize(originalSize);
+			waitForUiToLoad();
+		}
 	}
 
 	private void writeReport() throws IOException {
