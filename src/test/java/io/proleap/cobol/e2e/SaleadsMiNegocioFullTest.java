@@ -251,9 +251,8 @@ public class SaleadsMiNegocioFullTest {
 		link.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(DEFAULT_TIMEOUT_MS));
 
 		try {
-			final Page popup = context.waitForPage(
-					() -> link.click(new Locator.ClickOptions().setTimeout(DEFAULT_TIMEOUT_MS)),
-					new BrowserContext.WaitForPageOptions().setTimeout(8000));
+			final Page popup = context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(8000),
+					() -> link.click(new Locator.ClickOptions().setTimeout(DEFAULT_TIMEOUT_MS)));
 			waitForUi(popup);
 			return popup;
 		} catch (final PlaywrightException e) {
@@ -266,9 +265,8 @@ public class SaleadsMiNegocioFullTest {
 		locator.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(DEFAULT_TIMEOUT_MS));
 
 		try {
-			final Page popup = context.waitForPage(
-					() -> locator.click(new Locator.ClickOptions().setTimeout(DEFAULT_TIMEOUT_MS)),
-					new BrowserContext.WaitForPageOptions().setTimeout(8000));
+			final Page popup = context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(8000),
+					() -> locator.click(new Locator.ClickOptions().setTimeout(DEFAULT_TIMEOUT_MS)));
 			waitForUi(popup);
 			return popup;
 		} catch (final PlaywrightException e) {
