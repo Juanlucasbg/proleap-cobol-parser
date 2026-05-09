@@ -290,12 +290,16 @@ public class SaleadsMiNegocioFullTest {
 	}
 
 	private void executeStep(final String name, final StepExecutor stepSupplier) {
+		final String stepScreenshotName = "step-" + (report.size() + 1) + "-" + sanitizeFileName(name) + ".png";
 		try {
 			report.put(name, stepSupplier.execute());
+			captureScreenshotQuietly(stepScreenshotName);
 		} catch (final Exception e) {
 			final List<String> notes = new ArrayList<>();
 			notes.add("Unexpected error: " + e.getClass().getSimpleName() + " - " + e.getMessage());
+			notes.add("Captured failure screenshot: " + stepScreenshotName);
 			report.put(name, new StepResult(false, notes, "Step execution threw an exception."));
+			captureScreenshotQuietly(stepScreenshotName);
 		}
 	}
 
@@ -449,6 +453,18 @@ public class SaleadsMiNegocioFullTest {
 		final byte[] screenshotData = ((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES);
 		final Path destination = evidenceDir.resolve(fileName);
 		return Files.write(destination, screenshotData);
+	}
+
+	private void captureScreenshotQuietly(final String fileName) {
+		try {
+			captureScreenshot(fileName);
+		} catch (final Exception ignored) {
+			// Best effort for evidence capture.
+		}
+	}
+
+	private String sanitizeFileName(final String value) {
+		return value.toLowerCase().replaceAll("[^a-z0-9]+", "-").replaceAll("(^-|-$)", "");
 	}
 
 	private String switchToNewestWindowIfNeeded(final Set<String> previousHandles) {
