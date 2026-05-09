@@ -194,6 +194,32 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+### Optional SaleADS end-to-end test (Mi Negocio workflow)
+
+An opt-in Selenium E2E test is available at:
+
+`src/test/java/io/proleap/cobol/e2e/SaleadsMiNegocioFullWorkflowE2ETest.java`
+
+The test is disabled by default and only runs when explicitly enabled.
+It validates Google login plus the full "Mi Negocio" flow and captures
+screenshots in `target/saleads-evidence/<timestamp>/`.
+
+Example:
+
+```
+$ mvn -Dtest=SaleadsMiNegocioFullWorkflowE2ETest \
+  -Dsaleads.e2e.enabled=true \
+  -Dsaleads.login.url="https://<your-saleads-environment>/login" \
+  test
+```
+
+Optional flags:
+
+* `-Dsaleads.headless=false` to run headed.
+* `-Dsaleads.remote.url=http://<grid-host>:4444/wd/hub` for Selenium Grid.
+* `-Dsaleads.assume.on.login.page=true` if attaching to a pre-opened login page/session.
+* `-Dsaleads.expected.user.name="<expected name>"` to enforce an exact user-name check.
+
 
 Release process
 ---------------
