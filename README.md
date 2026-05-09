@@ -205,3 +205,38 @@ License
 -------
 
 Licensed under the MIT License. See LICENSE for details.
+
+
+SaleADS Mi Negocio workflow test (opt-in)
+-----------------------------------------
+
+This repository now includes an opt-in Selenium workflow test at:
+
+`src/test/java/io/proleap/saleads/SaleadsMiNegocioWorkflowTest.java`
+
+The test automates the full `Mi Negocio` flow (Google login, menu, modal, account sections, legal links), captures screenshots at key checkpoints, and prints a final PASS/FAIL report for:
+
+- Login
+- Mi Negocio menu
+- Agregar Negocio modal
+- Administrar Negocios view
+- Información General
+- Detalles de la Cuenta
+- Tus Negocios
+- Términos y Condiciones
+- Política de Privacidad
+
+It is environment-agnostic and does not hardcode a domain. Pass the target login URL at runtime:
+
+```bash
+mvn -Dtest=SaleadsMiNegocioWorkflowTest \
+    -Dsaleads.e2e.enabled=true \
+    -Dsaleads.baseUrl="https://<current-saleads-environment>/login" \
+    -Dsaleads.browser=chrome \
+    -Dsaleads.headless=true \
+    test
+```
+
+Screenshots are written to:
+
+`target/saleads-e2e-screenshots/<timestamp>/`
