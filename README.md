@@ -205,3 +205,35 @@ License
 -------
 
 Licensed under the MIT License. See LICENSE for details.
+
+SaleADS UI workflow test (Mi Negocio)
+-------------------------------------
+
+This repository now includes a standalone Playwright E2E test for validating the SaleADS
+"Mi Negocio" module workflow:
+
+- Test file: `e2e/saleads-mi-negocio-full-test.spec.js`
+- Config: `playwright.config.js`
+- Evidence output: `artifacts/saleads_mi_negocio_full_test/`
+
+Run it with an environment-specific login URL (no hardcoded domain):
+
+```bash
+SALEADS_LOGIN_URL="https://<current-environment>/login" npm run test:saleads-mi-negocio
+```
+
+The test captures screenshots at key checkpoints and writes:
+
+- `artifacts/saleads_mi_negocio_full_test/final-report.json`
+
+The final report includes PASS/FAIL results for:
+
+- Login
+- Mi Negocio menu
+- Agregar Negocio modal
+- Administrar Negocios view
+- Informacion General
+- Detalles de la Cuenta
+- Tus Negocios
+- Terminos y Condiciones
+- Politica de Privacidad
