@@ -49,22 +49,36 @@ public class SaleadsMiNegocioFullTest {
 				"true".equalsIgnoreCase(enabled));
 
 		final String loginUrl = System.getenv("SALEADS_LOGIN_URL");
-		assumeTrue(
-				"Set SALEADS_LOGIN_URL to the SaleADS login page for the current environment (dev/staging/prod).",
-				loginUrl != null && !loginUrl.isBlank());
+		final String cdpUrl = System.getenv("SALEADS_CDP_URL");
 
 		evidenceDir = Paths.get("target", "saleads-evidence", String.valueOf(Instant.now().toEpochMilli()));
 		Files.createDirectories(evidenceDir);
 
 		try (Playwright playwright = Playwright.create()) {
 			final boolean headless = !"false".equalsIgnoreCase(System.getenv("SALEADS_HEADLESS"));
-			final Browser browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(headless));
-			final BrowserContext context = browser
-					.newContext(new Browser.NewContextOptions().setViewportSize(1600, 1000));
-			final Page appPage = context.newPage();
+			final Browser browser;
+			final BrowserContext context;
+			final Page appPage;
 
-			appPage.navigate(loginUrl, new Page.NavigateOptions().setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
-			waitForUi(appPage);
+			if (cdpUrl != null && !cdpUrl.isBlank()) {
+				browser = playwright.chromium().connectOverCDP(cdpUrl);
+				context = browser.contexts().isEmpty() ? browser.newContext() : browser.contexts().get(0);
+				appPage = context.pages().isEmpty() ? context.newPage() : context.pages().get(0);
+			} else {
+				browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(headless));
+				context = browser.newContext(new Browser.NewContextOptions().setViewportSize(1600, 1000));
+				appPage = context.newPage();
+			}
+
+			if (loginUrl != null && !loginUrl.isBlank()) {
+				appPage.navigate(loginUrl, new Page.NavigateOptions().setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
+				waitForUi(appPage);
+			} else {
+				assumeTrue(
+						"Provide SALEADS_LOGIN_URL or SALEADS_CDP_URL with an already-open login page.",
+						!appPage.url().startsWith("about:blank"));
+				waitForUi(appPage);
+			}
 
 			runStep("Login", () -> {
 				loginWithGoogle(context, appPage);
