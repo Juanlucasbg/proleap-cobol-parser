@@ -178,15 +178,7 @@ public class SaleadsMiNegocioWorkflowTest {
 		clickVisibleText(linkText);
 		waitForUiToLoad();
 
-		final Set<String> currentWindows = driver.getWindowHandles();
-		if (currentWindows.size() > existingWindows.size()) {
-			for (final String window : currentWindows) {
-				if (!existingWindows.contains(window)) {
-					driver.switchTo().window(window);
-					break;
-				}
-			}
-		}
+		waitForLegalNavigation(existingWindows, headingText);
 
 		requireVisible(byContainsVisibleText(headingText),
 				"Expected legal heading '" + headingText + "' was not visible after clicking '" + linkText + "'.");
@@ -206,6 +198,25 @@ public class SaleadsMiNegocioWorkflowTest {
 		}
 
 		return finalUrl;
+	}
+
+	private void waitForLegalNavigation(final Set<String> existingWindows, final String headingText) {
+		final long timeoutAt = System.nanoTime() + Duration.ofSeconds(15).toNanos();
+		while (System.nanoTime() < timeoutAt) {
+			final Set<String> currentWindows = driver.getWindowHandles();
+			if (currentWindows.size() > existingWindows.size()) {
+				for (final String window : currentWindows) {
+					if (!existingWindows.contains(window)) {
+						driver.switchTo().window(window);
+						break;
+					}
+				}
+			}
+			if (isVisible(byContainsVisibleText(headingText), Duration.ofSeconds(1))) {
+				return;
+			}
+			sleep(Duration.ofMillis(250));
+		}
 	}
 
 	private void runStep(final String stepName, final StepAction action) {
@@ -269,6 +280,7 @@ public class SaleadsMiNegocioWorkflowTest {
 	}
 
 	private void selectGoogleAccountIfVisible(final String email) {
+		final String startingWindow = driver.getWindowHandle();
 		final By accountLocator = byContainsVisibleText(email);
 		if (isVisible(accountLocator, Duration.ofSeconds(8))) {
 			wait.until(ExpectedConditions.elementToBeClickable(accountLocator)).click();
@@ -283,6 +295,10 @@ public class SaleadsMiNegocioWorkflowTest {
 				waitForUiToLoad();
 				break;
 			}
+		}
+
+		if (!driver.getWindowHandle().equals(startingWindow) && driver.getWindowHandles().contains(startingWindow)) {
+			driver.switchTo().window(startingWindow);
 		}
 	}
 
