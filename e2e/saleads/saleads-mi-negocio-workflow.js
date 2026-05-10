@@ -145,12 +145,6 @@ async function openLegalAndReturn({
 }
 
 async function run() {
-  if (!LOGIN_URL) {
-    throw new Error(
-      "Missing SALEADS_LOGIN_URL (or SALEADS_URL). Provide the environment login page URL.",
-    );
-  }
-
   const outputDir = path.join(__dirname, "artifacts", stamp());
   await ensureDir(outputDir);
 
@@ -174,6 +168,46 @@ async function run() {
       evidence,
     };
   };
+
+  if (!LOGIN_URL) {
+    const missingUrlError =
+      "Missing SALEADS_LOGIN_URL (or SALEADS_URL). Provide the environment login page URL.";
+    report["Login"] = {
+      status: "FAIL",
+      details: [missingUrlError],
+      evidence: [],
+    };
+    for (const field of REPORT_FIELDS) {
+      if (field === "Login") {
+        continue;
+      }
+      report[field] = {
+        status: "FAIL",
+        details: ["Not executed because login URL was not provided."],
+        evidence: [],
+      };
+    }
+
+    const finalReport = {
+      generatedAt: new Date().toISOString(),
+      loginUrl: LOGIN_URL,
+      rulesApplied: [
+        "No fixed domain in code. URL is environment-provided.",
+        "Visible-text selectors are preferred.",
+        "UI wait is applied after each click.",
+        "New-tab legal flows are handled and returned to app.",
+        "Screenshots are captured at required checkpoints.",
+      ],
+      steps: report,
+    };
+
+    const reportPath = path.join(outputDir, "final-report.json");
+    await fs.writeFile(reportPath, JSON.stringify(finalReport, null, 2), "utf8");
+    console.log("SALEADS_LOGIN_URL is required to execute UI validation.");
+    console.log(`Report: ${reportPath}`);
+    process.exitCode = 1;
+    return;
+  }
 
   try {
     browser = await chromium.launch({ headless: HEADLESS, slowMo: SLOW_MO });
