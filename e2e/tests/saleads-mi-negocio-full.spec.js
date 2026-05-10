@@ -7,11 +7,11 @@ const REPORT_FIELDS = [
   'Mi Negocio menu',
   'Agregar Negocio modal',
   'Administrar Negocios view',
-  'Informacion General',
+  'Información General',
   'Detalles de la Cuenta',
   'Tus Negocios',
-  'Terminos y Condiciones',
-  'Politica de Privacidad'
+  'Términos y Condiciones',
+  'Política de Privacidad'
 ];
 
 test('saleads_mi_negocio_full_test', async ({ page, context }, testInfo) => {
@@ -101,7 +101,7 @@ test('saleads_mi_negocio_full_test', async ({ page, context }, testInfo) => {
     await expectVisibleByRoleOrText(legalPage, headingRegex);
 
     const legalContent = legalPage.locator('main, article, body').first();
-    await expect(legalContent).toContainText(/terminos|condiciones|politica|privacidad/i);
+    await expect(legalContent).toContainText(/t[eé]rminos|condiciones|pol[ií]tica|privacidad/i);
 
     legalUrls[reportKey] = legalPage.url();
     await checkpoint(screenshotName, legalPage, true);
@@ -122,7 +122,7 @@ test('saleads_mi_negocio_full_test', async ({ page, context }, testInfo) => {
     const loginButton = await firstVisible([
       page.getByRole('button', { name: /sign in with google|continuar con google|iniciar con google|google/i }),
       page.getByText(/sign in with google|continuar con google|iniciar con google/i),
-      page.getByRole('button', { name: /iniciar sesion|ingresar|login|acceder/i })
+      page.getByRole('button', { name: /iniciar sesi[oó]n|ingresar|login|acceder/i })
     ]);
     expect(loginButton, 'Login button is not visible').not.toBeNull();
 
@@ -232,15 +232,15 @@ test('saleads_mi_negocio_full_test', async ({ page, context }, testInfo) => {
     expect(adminTarget, 'Administrar Negocios option was not visible').not.toBeNull();
     await clickAndWait(adminTarget);
 
-    await expectVisibleByRoleOrText(page, /informacion general/i);
+    await expectVisibleByRoleOrText(page, /informaci[oó]n general/i);
     await expectVisibleByRoleOrText(page, /detalles de la cuenta/i);
     await expectVisibleByRoleOrText(page, /tus negocios/i);
-    await expectVisibleByRoleOrText(page, /seccion legal/i);
+    await expectVisibleByRoleOrText(page, /secci[oó]n legal/i);
 
     await checkpoint('04-administrar-negocios-view.png', page, true);
   });
 
-  await runValidation('Informacion General', async () => {
+  await runValidation('Información General', async () => {
     await expect(page.locator('body')).toContainText(/@/);
     await expect(page.locator('body')).toContainText(/business plan/i);
     await expect(page.getByRole('button', { name: /cambiar plan/i }).first()).toBeVisible();
@@ -258,19 +258,19 @@ test('saleads_mi_negocio_full_test', async ({ page, context }, testInfo) => {
     await expect(page.getByText(/tienes 2 de 3 negocios/i).first()).toBeVisible();
   });
 
-  await runValidation('Terminos y Condiciones', async () => {
+  await runValidation('Términos y Condiciones', async () => {
     await openLegalPage(
-      /terminos y condiciones/i,
-      /terminos y condiciones/i,
+      /t[eé]rminos y condiciones/i,
+      /t[eé]rminos y condiciones/i,
       '05-terminos-y-condiciones.png',
       'terminosYCondicionesUrl'
     );
   });
 
-  await runValidation('Politica de Privacidad', async () => {
+  await runValidation('Política de Privacidad', async () => {
     await openLegalPage(
-      /politica de privacidad/i,
-      /politica de privacidad/i,
+      /pol[ií]tica de privacidad/i,
+      /pol[ií]tica de privacidad/i,
       '06-politica-de-privacidad.png',
       'politicaDePrivacidadUrl'
     );
