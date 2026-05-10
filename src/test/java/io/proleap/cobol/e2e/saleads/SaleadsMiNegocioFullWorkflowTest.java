@@ -77,7 +77,8 @@ public class SaleadsMiNegocioFullWorkflowTest {
 
 				if (popup != null) {
 					try {
-						popup.waitForClose(new Page.WaitForCloseOptions().setTimeout((double) timeoutMs));
+						popup.waitForLoadState(LoadState.NETWORKIDLE,
+								new Page.WaitForLoadStateOptions().setTimeout((double) timeoutMs));
 					} catch (final PlaywrightException ignored) {
 						// Some environments keep auth in same popup tab; we only need app to complete login.
 					}
@@ -201,8 +202,8 @@ public class SaleadsMiNegocioFullWorkflowTest {
 
 		Page legalPage = appPage;
 		try {
-			legalPage = context.waitForPage(() -> linkLocator.click(new Locator.ClickOptions().setTimeout((double) timeoutMs)),
-					new BrowserContext.WaitForPageOptions().setTimeout(8000));
+			legalPage = context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(8000),
+					() -> linkLocator.click(new Locator.ClickOptions().setTimeout((double) timeoutMs)));
 		} catch (final PlaywrightException ex) {
 			if (!isTimeout(ex)) {
 				throw ex;
@@ -232,8 +233,8 @@ public class SaleadsMiNegocioFullWorkflowTest {
 		assertNotNull("Could not find a Google login button on the login page.", locator);
 
 		try {
-			return context.waitForPage(() -> locator.click(new Locator.ClickOptions().setTimeout((double) timeoutMs)),
-					new BrowserContext.WaitForPageOptions().setTimeout(10000));
+			return context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(10000),
+					() -> locator.click(new Locator.ClickOptions().setTimeout((double) timeoutMs)));
 		} catch (final PlaywrightException ex) {
 			if (!isTimeout(ex)) {
 				throw ex;
