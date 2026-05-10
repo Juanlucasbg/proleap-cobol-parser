@@ -41,3 +41,9 @@ target/
 
 ## Additional for IntelliJ
 out/
+
+# JavaScript E2E tooling
+node_modules/
+playwright-report/
+test-results/
+evidence/

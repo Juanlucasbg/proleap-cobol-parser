@@ -195,6 +195,26 @@ $ mvn clean test
 ```
 
 
+SaleADS E2E automation (Playwright)
+-----------------------------------
+
+This repository also includes an optional Playwright E2E test for validating the
+SaleADS "Mi Negocio" workflow:
+
+```
+$ SALEADS_LOGIN_URL="https://<current-environment-login-page>" npm run test:e2e:saleads
+```
+
+Environment variables:
+
+* `SALEADS_LOGIN_URL` (required unless a preloaded page is already available)
+* `SALEADS_GOOGLE_EMAIL` (optional, default: `juanlucasbarbiergarzon@gmail.com`)
+
+Evidence artifacts:
+
+* Checkpoint screenshots and JSON report are written to `evidence/saleads_mi_negocio_full_test/`.
+
+
 Release process
 ---------------
 
