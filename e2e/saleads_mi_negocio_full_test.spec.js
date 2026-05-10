@@ -12,11 +12,11 @@ const REPORT_FIELDS = [
   "Mi Negocio menu",
   "Agregar Negocio modal",
   "Administrar Negocios view",
-  "Informacion General",
+  "Información General",
   "Detalles de la Cuenta",
   "Tus Negocios",
-  "Terminos y Condiciones",
-  "Politica de Privacidad"
+  "Términos y Condiciones",
+  "Política de Privacidad"
 ];
 
 function createStepReport() {
@@ -391,7 +391,7 @@ test(TEST_NAME, async ({ page, context }) => {
     screenshots.accountPage = await takeCheckpoint(page, "administrar_negocios_view", true);
   });
 
-  await runStep("Informacion General", async () => {
+  await runStep("Información General", async () => {
     const section = await getSectionContainer(page, /Informacion General|Información General/i);
     const sectionText = (await section.innerText()).trim();
     const lines = sectionText
@@ -473,7 +473,7 @@ test(TEST_NAME, async ({ page, context }) => {
     }
   });
 
-  await runStep("Terminos y Condiciones", async () => {
+  await runStep("Términos y Condiciones", async () => {
     const legalSection = await getSectionContainer(page, /Seccion Legal|Sección Legal/i);
     const result = await openLegalDocument({
       context,
@@ -487,7 +487,7 @@ test(TEST_NAME, async ({ page, context }) => {
     legalUrls.termsAndConditions = result.finalUrl;
   });
 
-  await runStep("Politica de Privacidad", async () => {
+  await runStep("Política de Privacidad", async () => {
     const legalSection = await getSectionContainer(page, /Seccion Legal|Sección Legal/i);
     const result = await openLegalDocument({
       context,
