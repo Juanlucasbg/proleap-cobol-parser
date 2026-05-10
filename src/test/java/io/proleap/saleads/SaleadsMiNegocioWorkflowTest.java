@@ -138,7 +138,8 @@ public class SaleadsMiNegocioWorkflowTest {
 
 	private boolean openMiNegocioMenu(final Map<String, String> failures) {
 		try {
-			clickByVisibleText("Mi Negocio");
+			assertTextVisible("Negocio");
+			clickByVisibleText("Mi Negocio", "Negocio");
 			waitForUiToLoad();
 
 			assertTextVisible("Agregar Negocio");
@@ -204,6 +205,8 @@ public class SaleadsMiNegocioWorkflowTest {
 
 	private boolean validateInformacionGeneral(final Map<String, String> failures) {
 		try {
+			assertAnyVisible(By.xpath("//*[contains(normalize-space(),'Nombre')]"),
+					By.xpath("//*[contains(@class,'name') and string-length(normalize-space()) > 2]"));
 			assertAnyVisible(By.xpath("//section//*[contains(normalize-space(),'@')]"),
 					By.xpath("//*[contains(normalize-space(),'@')]"));
 			assertAnyVisible(By.xpath("//section//*[contains(normalize-space(),'BUSINESS PLAN')]"),
@@ -255,7 +258,10 @@ public class SaleadsMiNegocioWorkflowTest {
 			driver.switchTo().window(resolvedHandle);
 			waitForUiToLoad();
 
-			assertAnyVisible(byText(linkText), By.xpath("//h1"), By.xpath("//h2"));
+			final String legalTitle = asXPathLiteral(linkText);
+			assertAnyVisible(By.xpath("//h1[contains(normalize-space()," + legalTitle + ")]"),
+					By.xpath("//h2[contains(normalize-space()," + legalTitle + ")]"),
+					byText(linkText));
 			assertAnyVisible(By.xpath("//p[string-length(normalize-space()) > 30]"), By.xpath("//main//*"));
 
 			takeScreenshot(screenshotPrefix);
@@ -406,9 +412,12 @@ public class SaleadsMiNegocioWorkflowTest {
 	}
 
 	private By byText(final String text) {
-		final String literal = asXPathLiteral(text);
+		final String lowerLiteral = asXPathLiteral(text.toLowerCase(Locale.ROOT));
 		final String xpath = "//*[self::button or self::a or self::span or self::div or self::p or self::h1 or self::h2 or self::h3 or self::li or self::label]"
-				+ "[normalize-space() = " + literal + " or contains(normalize-space(), " + literal + ")]";
+				+ "[translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZÁÉÍÓÚÜÑ','abcdefghijklmnopqrstuvwxyzáéíóúüñ') = "
+				+ lowerLiteral
+				+ " or contains(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZÁÉÍÓÚÜÑ','abcdefghijklmnopqrstuvwxyzáéíóúüñ'), "
+				+ lowerLiteral + ")]";
 		return By.xpath(xpath);
 	}
 
