@@ -132,8 +132,8 @@ public class SaleadsMiNegocioFullWorkflowTest {
 				assertTextVisible(page, "Información General");
 				assertTrue("User name was not visible in Información General.",
 						isAnyTextVisible(page, "Nombre", "Usuario", "Name"));
-				assertTrue("User email was not visible in Información General.", hasVisible(page,
-						page.locator("text=/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}/")));
+				assertTrue("User email was not visible in Información General.",
+						hasVisible(page.locator("text=/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}/")));
 				assertTextVisible(page, "BUSINESS PLAN");
 				assertButtonVisible(page, "Cambiar Plan");
 			}, administrarOk);
@@ -194,6 +194,7 @@ public class SaleadsMiNegocioFullWorkflowTest {
 			final String linkText, final String expectedHeading, final String screenshotName) {
 		appPage.bringToFront();
 		waitForUiLoad(appPage, timeoutMs);
+		final String appUrlBeforeClick = appPage.url();
 
 		final Locator linkLocator = firstVisible(findCandidatesByText(appPage, linkText));
 		assertNotNull("Could not find legal link: " + linkText, linkLocator);
@@ -217,6 +218,9 @@ public class SaleadsMiNegocioFullWorkflowTest {
 		if (legalPage != appPage) {
 			legalPage.close();
 			appPage.bringToFront();
+			waitForUiLoad(appPage, timeoutMs);
+		} else if (!appUrlBeforeClick.equals(finalUrl)) {
+			appPage.goBack(new Page.GoBackOptions().setTimeout((double) timeoutMs));
 			waitForUiLoad(appPage, timeoutMs);
 		}
 
