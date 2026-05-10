@@ -208,11 +208,18 @@ class SaleadsMiNegocioWorkflow:
             ],
             timeout_ms=10000,
         )
+        mi_negocio_hint = self._first_visible(
+            [
+                self.page.get_by_text(re.compile(r"(mi negocio|negocio)", re.IGNORECASE), exact=False),
+            ],
+            timeout_ms=8000,
+        )
 
-        if app_loaded and sidebar_visible:
+        if app_loaded and sidebar_visible and mi_negocio_hint:
             shot = self.screenshot("01_dashboard_loaded")
             return True, "Main application and left sidebar are visible.", shot
-        return False, "Could not confirm post-login dashboard or sidebar.", None
+        shot = self.screenshot("01_login_validation_failed")
+        return False, "Could not confirm authenticated app state with Mi Negocio navigation.", shot
 
     def _open_mi_negocio(self) -> Tuple[bool, str, Optional[Path]]:
         open_ok = self._click_by_visible_text(self.page, "Mi Negocio", timeout_ms=9000)
@@ -408,32 +415,46 @@ class SaleadsMiNegocioWorkflow:
         self.record("Tus Negocios", "PASS" if business_ok else "FAIL", business_details)
 
         # Step 8
-        terms_ok, terms_details, terms_shot, terms_url = self._validate_legal_link(
-            link_text="Términos y Condiciones",
-            heading_text="Términos y Condiciones",
-            screenshot_name="08_terminos_condiciones",
-        )
-        self.record(
-            "Términos y Condiciones",
-            "PASS" if terms_ok else "FAIL",
-            terms_details,
-            screenshot=terms_shot,
-            final_url=terms_url,
-        )
+        if admin_ok:
+            terms_ok, terms_details, terms_shot, terms_url = self._validate_legal_link(
+                link_text="Términos y Condiciones",
+                heading_text="Términos y Condiciones",
+                screenshot_name="08_terminos_condiciones",
+            )
+            self.record(
+                "Términos y Condiciones",
+                "PASS" if terms_ok else "FAIL",
+                terms_details,
+                screenshot=terms_shot,
+                final_url=terms_url,
+            )
+        else:
+            self.record(
+                "Términos y Condiciones",
+                "FAIL",
+                "Prerequisite not met: Administrar Negocios view was not available.",
+            )
 
         # Step 9
-        privacy_ok, privacy_details, privacy_shot, privacy_url = self._validate_legal_link(
-            link_text="Política de Privacidad",
-            heading_text="Política de Privacidad",
-            screenshot_name="09_politica_privacidad",
-        )
-        self.record(
-            "Política de Privacidad",
-            "PASS" if privacy_ok else "FAIL",
-            privacy_details,
-            screenshot=privacy_shot,
-            final_url=privacy_url,
-        )
+        if admin_ok:
+            privacy_ok, privacy_details, privacy_shot, privacy_url = self._validate_legal_link(
+                link_text="Política de Privacidad",
+                heading_text="Política de Privacidad",
+                screenshot_name="09_politica_privacidad",
+            )
+            self.record(
+                "Política de Privacidad",
+                "PASS" if privacy_ok else "FAIL",
+                privacy_details,
+                screenshot=privacy_shot,
+                final_url=privacy_url,
+            )
+        else:
+            self.record(
+                "Política de Privacidad",
+                "FAIL",
+                "Prerequisite not met: Administrar Negocios view was not available.",
+            )
 
         report_payload = {
             "test_name": "saleads_mi_negocio_full_test",
