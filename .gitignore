@@ -45,3 +45,4 @@ out/
 # SaleADS E2E automation artifacts
 e2e/node_modules/
 e2e/artifacts/
+e2e/test-results/
