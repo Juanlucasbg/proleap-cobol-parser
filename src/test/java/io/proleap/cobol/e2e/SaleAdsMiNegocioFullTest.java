@@ -20,6 +20,7 @@ import org.junit.Test;
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.Browser.NewContextOptions;
 import com.microsoft.playwright.BrowserContext;
+import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Locator.WaitForOptions;
 import com.microsoft.playwright.Page;
@@ -70,7 +71,7 @@ public class SaleAdsMiNegocioFullTest {
 
 		try (Playwright playwright = Playwright.create()) {
 			final Browser browser = playwright.chromium()
-					.launch(new Browser.LaunchOptions().setHeadless(readHeadlessFlag()));
+					.launch(new BrowserType.LaunchOptions().setHeadless(readHeadlessFlag()));
 			final BrowserContext context = browser.newContext(new NewContextOptions().setViewportSize(1600, 1000));
 			final Page page = context.newPage();
 
@@ -134,11 +135,6 @@ public class SaleAdsMiNegocioFullTest {
 			if (popup != null) {
 				waitForUi(popup);
 				selectGoogleAccountIfVisible(popup);
-				try {
-					popup.waitForClose(new Page.WaitForCloseOptions().setTimeout(30_000));
-				} catch (PlaywrightException ignored) {
-					// Popup may stay open in some flows; app page validation below determines success.
-				}
 			} else {
 				selectGoogleAccountIfVisible(page);
 			}
