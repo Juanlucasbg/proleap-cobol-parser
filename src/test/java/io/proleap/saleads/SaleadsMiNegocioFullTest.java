@@ -202,10 +202,10 @@ public class SaleadsMiNegocioFullTest {
     try {
       googlePage =
           context.waitForPage(
+              new BrowserContext.WaitForPageOptions().setTimeout(8_000),
               () -> {
                 loginButton.click();
-              },
-              new BrowserContext.WaitForPageOptions().setTimeout(8_000));
+              });
     } catch (PlaywrightException ignored) {
       loginButton.click();
     }
@@ -334,10 +334,10 @@ public class SaleadsMiNegocioFullTest {
     try {
       targetPage =
           context.waitForPage(
+              new BrowserContext.WaitForPageOptions().setTimeout(6_000),
               () -> {
                 clickVisibleText(appPage, linkLabel, withAccents(linkLabel));
-              },
-              new BrowserContext.WaitForPageOptions().setTimeout(6_000));
+              });
       openedNewTab = true;
     } catch (PlaywrightException ignored) {
       clickVisibleText(appPage, linkLabel, withAccents(linkLabel));
