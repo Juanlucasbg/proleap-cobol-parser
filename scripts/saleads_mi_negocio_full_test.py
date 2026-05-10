@@ -393,6 +393,13 @@ class SaleadsMiNegocioWorkflow:
         # Step 2
         menu_ok, menu_details, menu_shot = self._open_mi_negocio()
         self.record("Mi Negocio menu", "PASS" if menu_ok else "FAIL", menu_details, screenshot=menu_shot)
+        if self.results["Login"].status == "PASS" and not menu_ok:
+            self.record(
+                "Login",
+                "FAIL",
+                "Authenticated sidebar could not be confirmed because Mi Negocio navigation was unavailable.",
+                screenshot=login_shot,
+            )
 
         # Step 3
         modal_ok, modal_details, modal_shot = self._validate_agregar_modal()
