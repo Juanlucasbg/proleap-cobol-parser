@@ -1,0 +1,16 @@
+{
+  "name": "saleads",
+  "version": "1.0.0",
+  "description": "SaleADS Mi Negocio end-to-end workflow automation",
+  "main": "saleads-mi-negocio-workflow.js",
+  "scripts": {
+    "test": "node saleads-mi-negocio-workflow.js",
+    "test:headed": "HEADLESS=false node saleads-mi-negocio-workflow.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "playwright": "^1.59.1"
+  }
+}
