@@ -254,11 +254,12 @@ public class SaleadsMiNegocioWorkflowIT {
 		}
 
 		waitForUi(targetPage);
-		assertVisible("Legal heading should be visible", firstVisible("legal heading",
-				Arrays.asList(targetPage.locator(headingLocator), targetPage.getByRole(AriaRole.HEADING))));
+		assertVisible("Legal heading should be visible",
+				firstVisible("legal heading", Arrays.asList(targetPage.locator(headingLocator))));
 		assertVisible("Legal content should be visible",
-				firstVisible("legal content", Arrays.asList(targetPage.locator("article"), targetPage.locator("main"),
-						targetPage.locator("section"), targetPage.locator("p"), targetPage.locator("text=/./"))));
+				firstVisible("legal content", Arrays.asList(targetPage.locator("article p"), targetPage.locator("main p"),
+						targetPage.locator("section p"), targetPage.locator("p"), targetPage.locator("text=Pol\u00edtica"),
+						targetPage.locator("text=T\u00e9rminos"), targetPage.locator("text=privacidad"))));
 		takeScreenshot(targetPage, evidenceDir, screenshotName, true);
 		final String finalUrl = targetPage.url();
 
