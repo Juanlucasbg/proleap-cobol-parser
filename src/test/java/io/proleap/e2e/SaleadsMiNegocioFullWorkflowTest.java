@@ -328,7 +328,7 @@ public class SaleadsMiNegocioFullWorkflowTest {
 			final boolean isTerms) {
 		final Locator link = firstVisible(
 				appPage.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName(linkPattern)),
-				appPage.getByText(linkPattern, new Page.GetByTextOptions().setExact(false)));
+				appPage.getByText(headingText, new Page.GetByTextOptions().setExact(false)));
 		if (link == null) {
 			throw new IllegalStateException("Legal link was not found: " + headingText);
 		}
