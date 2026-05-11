@@ -16,7 +16,6 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.junit.After;
-import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -39,11 +38,11 @@ public class SaleadsMiNegocioFullTest {
 	private static final String STEP_MENU = "Mi Negocio menu";
 	private static final String STEP_MODAL = "Agregar Negocio modal";
 	private static final String STEP_ADMIN_VIEW = "Administrar Negocios view";
-	private static final String STEP_GENERAL = "Informacion General";
+	private static final String STEP_GENERAL = "Informaci\u00f3n General";
 	private static final String STEP_ACCOUNT = "Detalles de la Cuenta";
 	private static final String STEP_BUSINESSES = "Tus Negocios";
-	private static final String STEP_TERMS = "Terminos y Condiciones";
-	private static final String STEP_PRIVACY = "Politica de Privacidad";
+	private static final String STEP_TERMS = "T\u00e9rminos y Condiciones";
+	private static final String STEP_PRIVACY = "Pol\u00edtica de Privacidad";
 
 	private final Map<String, StepResult> report = new LinkedHashMap<>();
 
@@ -52,14 +51,17 @@ public class SaleadsMiNegocioFullTest {
 	private BrowserContext context;
 	private Page page;
 	private Path evidenceDir;
+	private String setupFailureReason;
 
 	@Before
 	public void setUp() throws IOException {
 		final var loginUrl = System.getenv(LOGIN_URL_ENV);
-		Assume.assumeTrue("Set " + LOGIN_URL_ENV + " to run this E2E workflow.", loginUrl != null && !loginUrl.isBlank());
-
 		evidenceDir = Path.of("target", "evidence", "saleads_mi_negocio_full_test");
 		Files.createDirectories(evidenceDir);
+		if (loginUrl == null || loginUrl.isBlank()) {
+			setupFailureReason = "Missing " + LOGIN_URL_ENV + " environment variable.";
+			return;
+		}
 
 		playwright = Playwright.create();
 		browser = playwright.chromium()
@@ -105,6 +107,7 @@ public class SaleadsMiNegocioFullTest {
 	}
 
 	private String stepLoginWithGoogle() throws IOException {
+		ensureReady();
 		clickFirstVisibleText(page,
 				List.of("Sign in with Google", "Iniciar sesion con Google", "Continuar con Google", "Google"));
 
@@ -118,6 +121,7 @@ public class SaleadsMiNegocioFullTest {
 	}
 
 	private String stepOpenMiNegocioMenu() throws IOException {
+		ensureReady();
 		assertSidebarVisible();
 		clickIfVisible(page, List.of("Negocio"), 2_500);
 		clickFirstVisibleText(page, List.of("Mi Negocio"));
@@ -128,6 +132,7 @@ public class SaleadsMiNegocioFullTest {
 	}
 
 	private String stepValidateAgregarNegocioModal() throws IOException {
+		ensureReady();
 		clickFirstVisibleText(page, List.of("Agregar Negocio"));
 		assertAnyTextVisible(page, List.of("Crear Nuevo Negocio"));
 
@@ -149,19 +154,24 @@ public class SaleadsMiNegocioFullTest {
 	}
 
 	private String stepOpenAdministrarNegocios() throws IOException {
+		ensureReady();
 		clickIfVisible(page, List.of("Mi Negocio"), 2_500);
 		clickFirstVisibleText(page, List.of("Administrar Negocios"));
 
-		assertAnyTextVisible(page, List.of("Informacion General", "Informacion general"));
+		assertAnyTextVisible(page, List.of("Informacion General", "Informacion general", "Informaci\u00f3n General"));
 		assertAnyTextVisible(page, List.of("Detalles de la Cuenta"));
 		assertAnyTextVisible(page, List.of("Tus Negocios"));
-		assertAnyTextVisible(page, List.of("Seccion Legal", "Seccion legal"));
+		assertAnyTextVisible(page, List.of("Seccion Legal", "Seccion legal", "Secci\u00f3n Legal"));
 
 		takeScreenshot(page, "04-administrar-negocios-full-page.png", true);
 		return "Administrar Negocios page loaded";
 	}
 
 	private String stepValidateInformacionGeneral() {
+		ensureReady();
+		final var hasUserName = isLocatorVisible(page.locator("text=/[A-Za-z]{2,}\\s+[A-Za-z]{2,}/"), 4_000)
+				|| isLocatorVisible(page.locator("[data-testid*='user-name'], [class*='user-name']"), 4_000);
+		assertTrue("User name is not visible.", hasUserName);
 		final var hasEmail = isLocatorVisible(page.locator("text=/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}/"), 4_000);
 		assertTrue("User email is not visible.", hasEmail);
 		assertAnyTextVisible(page, List.of("BUSINESS PLAN"));
@@ -170,6 +180,7 @@ public class SaleadsMiNegocioFullTest {
 	}
 
 	private String stepValidateDetallesCuenta() {
+		ensureReady();
 		assertAnyTextVisible(page, List.of("Cuenta creada"));
 		assertAnyTextVisible(page, List.of("Estado activo", "Activo"));
 		assertAnyTextVisible(page, List.of("Idioma seleccionado", "Idioma"));
@@ -177,19 +188,25 @@ public class SaleadsMiNegocioFullTest {
 	}
 
 	private String stepValidateTusNegocios() {
+		ensureReady();
 		assertAnyTextVisible(page, List.of("Tus Negocios"));
+		final var businessListVisible = isLocatorVisible(
+				page.locator("[data-testid*='business'], .business-card, table tbody tr, ul li"), 4_000);
+		assertTrue("Business list is not visible.", businessListVisible);
 		assertAnyTextVisible(page, List.of("Agregar Negocio"));
 		assertAnyTextVisible(page, List.of("Tienes 2 de 3 negocios"));
 		return "Tus Negocios validated";
 	}
 
 	private String stepValidateTerminosYCondiciones() throws IOException {
+		ensureReady();
 		final var url = openAndValidateLegalLink(List.of("Terminos y Condiciones", "T\u00e9rminos y Condiciones"),
 				List.of("Terminos y Condiciones", "T\u00e9rminos y Condiciones"), "08-terminos-y-condiciones.png");
 		return "Validated URL: " + url;
 	}
 
 	private String stepValidatePoliticaPrivacidad() throws IOException {
+		ensureReady();
 		final var url = openAndValidateLegalLink(List.of("Politica de Privacidad", "Pol\u00edtica de Privacidad"),
 				List.of("Politica de Privacidad", "Pol\u00edtica de Privacidad"), "09-politica-de-privacidad.png");
 		return "Validated URL: " + url;
@@ -324,6 +341,15 @@ public class SaleadsMiNegocioFullTest {
 			report.put(stepName, StepResult.pass(details));
 		} catch (final Throwable throwable) {
 			report.put(stepName, StepResult.fail(throwable.getClass().getSimpleName() + ": " + throwable.getMessage()));
+		}
+	}
+
+	private void ensureReady() {
+		if (setupFailureReason != null) {
+			throw new IllegalStateException(setupFailureReason);
+		}
+		if (page == null) {
+			throw new IllegalStateException("Browser page is not initialized.");
 		}
 	}
 
