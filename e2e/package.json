@@ -1,0 +1,16 @@
+{
+  "name": "e2e",
+  "version": "1.0.0",
+  "description": "SaleADS Mi Negocio E2E test suite",
+  "scripts": {
+    "install:browsers": "playwright install chromium",
+    "test": "playwright test",
+    "test:saleads-mi-negocio": "playwright test saleads_mi_negocio_full_test.spec.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.59.1"
+  }
+}
