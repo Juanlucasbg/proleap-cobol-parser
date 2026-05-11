@@ -63,11 +63,12 @@ async function firstVisible(candidates: Locator[], timeoutMs = 15_000): Promise<
 
   for (const locator of candidates) {
     const remaining = Math.max(deadline - Date.now(), 250);
-    const isVisible = await locator
+    const becameVisible = await locator
       .first()
-      .isVisible({ timeout: remaining })
+      .waitFor({ state: "visible", timeout: remaining })
+      .then(() => true)
       .catch(() => false);
-    if (isVisible) {
+    if (becameVisible) {
       return locator.first();
     }
   }
@@ -274,12 +275,11 @@ test.describe("saleads_mi_negocio_full_test", () => {
       await expect(modal.getByText(/Tienes 2 de 3 negocios/i)).toBeVisible();
       await expect(modal.getByRole("button", { name: /Cancelar/i })).toBeVisible();
       await expect(modal.getByRole("button", { name: /Crear Negocio/i })).toBeVisible();
+      await takeCheckpoint(page, testInfo, "03-crear-nuevo-negocio-modal");
 
       await modal.getByLabel(/Nombre del Negocio/i).fill("Negocio Prueba Automatización");
       await modal.getByRole("button", { name: /Cancelar/i }).click();
       await waitForUi(page);
-
-      await takeCheckpoint(page, testInfo, "03-crear-nuevo-negocio-modal");
 
       report["Agregar Negocio modal"] = { status: "PASS" };
     } catch (error) {
