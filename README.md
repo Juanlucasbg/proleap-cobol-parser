@@ -205,3 +205,30 @@ License
 -------
 
 Licensed under the MIT License. See LICENSE for details.
+
+
+SaleADS E2E workflow test (Playwright)
+--------------------------------------
+
+This repository also includes a standalone Playwright E2E test for the SaleADS "Mi Negocio" workflow:
+
+* Test file: `e2e/saleads-mi-negocio.spec.js`
+* Config file: `playwright.config.js`
+
+### Install browser and run
+
+```bash
+npm install
+npm run playwright:install
+npm run test:e2e
+```
+
+### Environment-agnostic execution
+
+The test does not hardcode any SaleADS domain. Use one of the following environment variables to point to the active environment login page:
+
+* `SALEADS_BASE_URL`
+* `BASE_URL`
+* `SALEADS_LOGIN_URL`
+
+If no URL env var is provided, the test expects the browser to already be on the SaleADS login page.
