@@ -286,7 +286,7 @@ public class SaleadsMiNegocioFullWorkflowTest {
     try {
       stepAction.run();
       finalReport.put(stepName, true);
-    } catch (final Exception e) {
+    } catch (final Throwable e) {
       finalReport.put(stepName, false);
       failures.add(stepName + ": " + e.getMessage());
       takeScreenshot("fail-" + slug(stepName));
