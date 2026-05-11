@@ -139,6 +139,43 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
     }
   };
 
+  const finishAndAssert = async () => {
+    const finalPayload = {
+      name: "saleads_mi_negocio_full_test",
+      executedAt: new Date().toISOString(),
+      startUrl: startUrl || "NOT_PROVIDED",
+      report: stepReport,
+      legalEvidence: legalUrls,
+    };
+
+    const reportPath = path.join(testInfo.outputDir, "saleads_mi_negocio_full_test_report.json");
+    await fs.writeFile(reportPath, `${JSON.stringify(finalPayload, null, 2)}\n`, "utf8");
+    await testInfo.attach("saleads-mi-negocio-final-report", {
+      path: reportPath,
+      contentType: "application/json",
+    });
+
+    // Final Report: PASS or FAIL for each required section.
+    // eslint-disable-next-line no-console
+    console.log("----- SaleADS Mi Negocio Workflow Final Report -----");
+    for (const field of REPORT_FIELDS) {
+      const { status, details } = stepReport[field];
+      const detailsText = details ? ` | ${details}` : "";
+      // eslint-disable-next-line no-console
+      console.log(`${field}: ${status}${detailsText}`);
+    }
+    // eslint-disable-next-line no-console
+    console.log(`Términos y Condiciones URL: ${legalUrls.termsAndConditionsUrl || "N/A"}`);
+    // eslint-disable-next-line no-console
+    console.log(`Política de Privacidad URL: ${legalUrls.privacyPolicyUrl || "N/A"}`);
+
+    const failedSteps = REPORT_FIELDS.filter((field) => stepReport[field].status !== "PASS");
+    expect(
+      failedSteps,
+      `Workflow has failing steps. See JSON report at: ${reportPath}`,
+    ).toEqual([]);
+  };
+
   if (!startUrl) {
     for (const field of REPORT_FIELDS) {
       setFail(
@@ -146,6 +183,8 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
         "Missing SALEADS_START_URL (or SALEADS_URL / BASE_URL). Provide the environment login URL to run this workflow.",
       );
     }
+    await finishAndAssert();
+    return;
   } else {
     await page.goto(startUrl, { waitUntil: "domcontentloaded" });
     await waitForUi(page);
@@ -154,20 +193,33 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   let sidebar = page.locator("aside, nav, [class*='sidebar']").first();
 
   await runStep("Login", async () => {
+    const googlePopupPromise = context.waitForEvent("page", { timeout: 10000 }).catch(() => null);
     await clickVisibleText(page, [
       "Sign in with Google",
       "Iniciar sesión con Google",
       "Iniciar con Google",
       "Continuar con Google",
     ]);
+    const googlePopup = await googlePopupPromise;
+    const authPage = googlePopup || page;
+
+    if (googlePopup) {
+      await authPage.waitForLoadState("domcontentloaded");
+      await waitForUi(authPage);
+    }
 
     // If Google account chooser appears, select the expected account.
-    const googleAccountOption = page
+    const googleAccountOption = authPage
       .getByText("juanlucasbarbiergarzon@gmail.com", { exact: false })
       .first();
     if (await googleAccountOption.isVisible().catch(() => false)) {
       await googleAccountOption.click({ timeout: 10000 });
-      await waitForUi(page);
+      await waitForUi(authPage);
+    }
+
+    if (googlePopup) {
+      await googlePopup.waitForClose({ timeout: 60000 }).catch(() => {});
+      await page.bringToFront();
     }
 
     await waitForUi(page);
@@ -333,39 +385,5 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
       urlKey: "privacyPolicyUrl",
     });
   });
-
-  const finalPayload = {
-    name: "saleads_mi_negocio_full_test",
-    executedAt: new Date().toISOString(),
-    startUrl: startUrl || "NOT_PROVIDED",
-    report: stepReport,
-    legalEvidence: legalUrls,
-  };
-
-  const reportPath = path.join(testInfo.outputDir, "saleads_mi_negocio_full_test_report.json");
-  await fs.writeFile(reportPath, `${JSON.stringify(finalPayload, null, 2)}\n`, "utf8");
-  await testInfo.attach("saleads-mi-negocio-final-report", {
-    path: reportPath,
-    contentType: "application/json",
-  });
-
-  // Final Report: PASS or FAIL for each required section.
-  // eslint-disable-next-line no-console
-  console.log("----- SaleADS Mi Negocio Workflow Final Report -----");
-  for (const field of REPORT_FIELDS) {
-    const { status, details } = stepReport[field];
-    const detailsText = details ? ` | ${details}` : "";
-    // eslint-disable-next-line no-console
-    console.log(`${field}: ${status}${detailsText}`);
-  }
-  // eslint-disable-next-line no-console
-  console.log(`Términos y Condiciones URL: ${legalUrls.termsAndConditionsUrl || "N/A"}`);
-  // eslint-disable-next-line no-console
-  console.log(`Política de Privacidad URL: ${legalUrls.privacyPolicyUrl || "N/A"}`);
-
-  const failedSteps = REPORT_FIELDS.filter((field) => stepReport[field].status !== "PASS");
-  expect(
-    failedSteps,
-    `Workflow has failing steps. See JSON report at: ${reportPath}`,
-  ).toEqual([]);
+  await finishAndAssert();
 });
