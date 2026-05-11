@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -91,6 +92,8 @@ public class SaleadsMiNegocioFullTest {
 
 	@Test
 	public void saleadsMiNegocioFullWorkflow() {
+		Assume.assumeTrue("Set " + LOGIN_URL_ENV + " to execute this E2E workflow.", setupFailureReason == null);
+
 		runStep(STEP_LOGIN, this::stepLoginWithGoogle);
 		runStep(STEP_MENU, this::stepOpenMiNegocioMenu);
 		runStep(STEP_MODAL, this::stepValidateAgregarNegocioModal);
@@ -359,6 +362,12 @@ public class SaleadsMiNegocioFullTest {
 		}
 
 		Files.createDirectories(evidenceDir);
+		if (setupFailureReason != null && report.isEmpty()) {
+			for (final var stepName : orderedStepNames()) {
+				report.put(stepName, StepResult.fail("NOT_EXECUTED: " + setupFailureReason));
+			}
+		}
+
 		final var now = DateTimeFormatter.ISO_INSTANT.withZone(ZoneOffset.UTC).format(Instant.now());
 		final var lines = new StringBuilder();
 		lines.append("saleads_mi_negocio_full_test").append('\n');
