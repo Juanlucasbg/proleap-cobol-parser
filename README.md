@@ -194,6 +194,32 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+### E2E: SaleADS Mi Negocio workflow
+
+An end-to-end automation test is available at:
+
+`src/test/java/io/proleap/cobol/e2e/SaleadsMiNegocioFullWorkflowTest.java`
+
+This test validates:
+
+- Login with Google
+- Mi Negocio menu expansion
+- Agregar Negocio modal
+- Administrar Negocios sections
+- Informacion General, Detalles de la Cuenta, Tus Negocios
+- Terminos y Condiciones and Politica de Privacidad (same tab or new tab)
+- Screenshot evidence and final PASS/FAIL report per section
+
+Run it in any SaleADS environment by providing only the login page URL for that environment:
+
+```
+$ SALEADS_START_URL="https://<your-saleads-login-page>" mvn -Dtest=SaleadsMiNegocioFullWorkflowTest test
+```
+
+Optional:
+
+- `SALEADS_HEADLESS=true|false` (default: `true`)
+
 
 Release process
 ---------------
