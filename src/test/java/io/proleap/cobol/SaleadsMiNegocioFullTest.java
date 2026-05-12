@@ -51,7 +51,7 @@ public class SaleadsMiNegocioFullTest {
 			driver.get(loginUrl);
 			waitForUiToLoad(driver, wait);
 
-			stepStatus.put("Login", executeStep(driver, wait, evidenceDir, "login-dashboard", () -> {
+			stepStatus.put("Login", executeStep(driver, evidenceDir, "login-dashboard", () -> {
 				clickByVisibleText(driver, wait, "Sign in with Google", "Iniciar sesión con Google", "Google");
 				waitForUiToLoad(driver, wait);
 				selectGoogleAccountIfPrompted(driver, wait);
@@ -65,7 +65,7 @@ public class SaleadsMiNegocioFullTest {
 				captureScreenshot(driver, evidenceDir, "01-dashboard-loaded");
 			}));
 
-			stepStatus.put("Mi Negocio menu", executeStep(driver, wait, evidenceDir, "mi-negocio-menu", () -> {
+			stepStatus.put("Mi Negocio menu", executeStep(driver, evidenceDir, "mi-negocio-menu", () -> {
 				clickByVisibleText(driver, wait, "Mi Negocio");
 				assertVisibleByText(driver, wait, "Agregar Negocio");
 				assertVisibleByText(driver, wait, "Administrar Negocios");
@@ -73,7 +73,7 @@ public class SaleadsMiNegocioFullTest {
 			}));
 
 			stepStatus.put("Agregar Negocio modal",
-					executeStep(driver, wait, evidenceDir, "agregar-negocio-modal", () -> {
+					executeStep(driver, evidenceDir, "agregar-negocio-modal", () -> {
 						clickByVisibleText(driver, wait, "Agregar Negocio");
 						assertVisibleByText(driver, wait, "Crear Nuevo Negocio");
 						assertVisibleByText(driver, wait, "Nombre del Negocio");
@@ -93,7 +93,7 @@ public class SaleadsMiNegocioFullTest {
 					}));
 
 			stepStatus.put("Administrar Negocios view",
-					executeStep(driver, wait, evidenceDir, "administrar-negocios-view", () -> {
+					executeStep(driver, evidenceDir, "administrar-negocios-view", () -> {
 						if (!isVisibleByText(driver, "Administrar Negocios")) {
 							clickByVisibleText(driver, wait, "Mi Negocio");
 						}
@@ -107,7 +107,7 @@ public class SaleadsMiNegocioFullTest {
 					}));
 
 			stepStatus.put("Información General",
-					executeStep(driver, wait, evidenceDir, "informacion-general", () -> {
+					executeStep(driver, evidenceDir, "informacion-general", () -> {
 						assertVisible(driver, wait, By.xpath("//*[contains(@class, 'name') or contains(@class, 'user')]"),
 								"user name");
 						assertVisible(driver, wait, By.xpath("//*[contains(text(), '@')]"), "user email");
@@ -116,27 +116,27 @@ public class SaleadsMiNegocioFullTest {
 					}));
 
 			stepStatus.put("Detalles de la Cuenta",
-					executeStep(driver, wait, evidenceDir, "detalles-cuenta", () -> {
+					executeStep(driver, evidenceDir, "detalles-cuenta", () -> {
 						assertVisibleByText(driver, wait, "Cuenta creada");
 						assertVisibleByText(driver, wait, "Estado activo");
 						assertVisibleByText(driver, wait, "Idioma seleccionado");
 					}));
 
-			stepStatus.put("Tus Negocios", executeStep(driver, wait, evidenceDir, "tus-negocios", () -> {
+			stepStatus.put("Tus Negocios", executeStep(driver, evidenceDir, "tus-negocios", () -> {
 				assertVisibleByText(driver, wait, "Tus Negocios");
 				assertVisibleByText(driver, wait, "Agregar Negocio");
 				assertVisibleByText(driver, wait, "Tienes 2 de 3 negocios");
 			}));
 
 			stepStatus.put("Términos y Condiciones",
-					executeStep(driver, wait, evidenceDir, "terminos-y-condiciones", () -> {
+					executeStep(driver, evidenceDir, "terminos-y-condiciones", () -> {
 						final String finalUrl = validateLegalPage(driver, wait, evidenceDir, "Términos y Condiciones",
 								"Términos y Condiciones", "05-terminos-y-condiciones");
 						legalUrls.put("Términos y Condiciones", finalUrl);
 					}));
 
 			stepStatus.put("Política de Privacidad",
-					executeStep(driver, wait, evidenceDir, "politica-de-privacidad", () -> {
+					executeStep(driver, evidenceDir, "politica-de-privacidad", () -> {
 						final String finalUrl = validateLegalPage(driver, wait, evidenceDir, "Política de Privacidad",
 								"Política de Privacidad", "06-politica-de-privacidad");
 						legalUrls.put("Política de Privacidad", finalUrl);
@@ -150,12 +150,12 @@ public class SaleadsMiNegocioFullTest {
 				stepStatus.containsValue(Boolean.FALSE));
 	}
 
-	private boolean executeStep(final WebDriver driver, final WebDriverWait wait, final Path evidenceDir,
-			final String failureScreenshotName, final Step step) {
+	private boolean executeStep(final WebDriver driver, final Path evidenceDir, final String failureScreenshotName,
+			final Step step) {
 		try {
 			step.run();
 			return true;
-		} catch (final Exception ex) {
+		} catch (final Throwable ex) {
 			captureScreenshot(driver, evidenceDir, "error-" + failureScreenshotName);
 			return false;
 		}
