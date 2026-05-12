@@ -100,7 +100,16 @@ async function writeReport(report) {
   await fs.writeFile(REPORT_PATH, JSON.stringify(report, null, 2), "utf8");
 }
 
-async function runStep(report, key, fn) {
+function sanitizeFileName(value) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .toLowerCase();
+}
+
+async function runStep(report, key, fn, page = null) {
   try {
     const details = await fn();
     report[key] = {
@@ -108,9 +117,17 @@ async function runStep(report, key, fn) {
       details: details || ""
     };
   } catch (error) {
+    let detailMessage = error.message;
+    if (page) {
+      const failedStepScreenshot = await screenshot(page, `fail_${sanitizeFileName(key)}.png`, true).catch(() => null);
+      if (failedStepScreenshot) {
+        detailMessage = `${detailMessage} (screenshot: ${failedStepScreenshot})`;
+      }
+    }
+
     report[key] = {
       status: "FAIL",
-      details: error.message
+      details: detailMessage
     };
   }
 }
@@ -204,7 +221,10 @@ test(TEST_NAME, async ({ page }) => {
       "No login URL provided. Set SALEADS_LOGIN_URL (or SALEADS_URL) or run against a preloaded browser page.";
   }
 
-  await runStep(report, "Login", async () => {
+  await runStep(
+    report,
+    "Login",
+    async () => {
     if (preconditionError) {
       throw new Error(preconditionError);
     }
@@ -272,9 +292,14 @@ test(TEST_NAME, async ({ page }) => {
 
     const screenshotPath = await screenshot(page, "01_dashboard_loaded.png", true);
     return statusLine("Dashboard loaded", `Screenshot: ${screenshotPath}`);
-  });
+    },
+    page
+  );
 
-  await runStep(report, "Mi Negocio menu", async () => {
+  await runStep(
+    report,
+    "Mi Negocio menu",
+    async () => {
     if (preconditionError) {
       throw new Error(preconditionError);
     }
@@ -303,9 +328,14 @@ test(TEST_NAME, async ({ page }) => {
     await validateTextVisible(page, /^Administrar Negocios$/i, "submenu Administrar Negocios");
     const screenshotPath = await screenshot(page, "02_mi_negocio_menu_expanded.png");
     return statusLine("Submenu expanded", `Screenshot: ${screenshotPath}`);
-  });
+    },
+    page
+  );
 
-  await runStep(report, "Agregar Negocio modal", async () => {
+  await runStep(
+    report,
+    "Agregar Negocio modal",
+    async () => {
     if (preconditionError) {
       throw new Error(preconditionError);
     }
@@ -347,9 +377,14 @@ test(TEST_NAME, async ({ page }) => {
     );
 
     return statusLine("Modal validated", `Screenshot: ${screenshotPath}`);
-  });
+    },
+    page
+  );
 
-  await runStep(report, "Administrar Negocios view", async () => {
+  await runStep(
+    report,
+    "Administrar Negocios view",
+    async () => {
     if (preconditionError) {
       throw new Error(preconditionError);
     }
@@ -380,9 +415,14 @@ test(TEST_NAME, async ({ page }) => {
     await validateTextVisible(page, /Sección Legal/i, "Sección Legal section");
     const screenshotPath = await screenshot(page, "04_administrar_negocios_page.png", true);
     return statusLine("Account page validated", `Screenshot: ${screenshotPath}`);
-  });
+    },
+    page
+  );
 
-  await runStep(report, "Información General", async () => {
+  await runStep(
+    report,
+    "Información General",
+    async () => {
     if (preconditionError) {
       throw new Error(preconditionError);
     }
@@ -400,9 +440,14 @@ test(TEST_NAME, async ({ page }) => {
     await validateTextVisible(page, /BUSINESS PLAN/i, "BUSINESS PLAN text");
     await validateTextVisible(page, /^Cambiar Plan$/i, "Cambiar Plan button");
     return "User profile and plan info visible";
-  });
+    },
+    page
+  );
 
-  await runStep(report, "Detalles de la Cuenta", async () => {
+  await runStep(
+    report,
+    "Detalles de la Cuenta",
+    async () => {
     if (preconditionError) {
       throw new Error(preconditionError);
     }
@@ -411,9 +456,14 @@ test(TEST_NAME, async ({ page }) => {
     await validateTextVisible(page, /Estado activo/i, "Estado activo text");
     await validateTextVisible(page, /Idioma seleccionado/i, "Idioma seleccionado text");
     return "Account details fields visible";
-  });
+    },
+    page
+  );
 
-  await runStep(report, "Tus Negocios", async () => {
+  await runStep(
+    report,
+    "Tus Negocios",
+    async () => {
     if (preconditionError) {
       throw new Error(preconditionError);
     }
@@ -422,11 +472,16 @@ test(TEST_NAME, async ({ page }) => {
     await validateTextVisible(page, /^Agregar Negocio$/i, "Agregar Negocio button");
     await validateTextVisible(page, /Tienes 2 de 3 negocios/i, "Tienes 2 de 3 negocios text");
     return "Business list and capacity text visible";
-  });
+    },
+    page
+  );
 
   const appReturnUrl = page.url();
 
-  await runStep(report, "Términos y Condiciones", async () => {
+  await runStep(
+    report,
+    "Términos y Condiciones",
+    async () => {
     if (preconditionError) {
       throw new Error(preconditionError);
     }
@@ -443,9 +498,14 @@ test(TEST_NAME, async ({ page }) => {
       "Legal page validated",
       `Screenshot: ${legalResult.screenshotPath}, URL: ${legalResult.finalUrl}`
     );
-  });
+    },
+    page
+  );
 
-  await runStep(report, "Política de Privacidad", async () => {
+  await runStep(
+    report,
+    "Política de Privacidad",
+    async () => {
     if (preconditionError) {
       throw new Error(preconditionError);
     }
@@ -462,7 +522,9 @@ test(TEST_NAME, async ({ page }) => {
       "Privacy page validated",
       `Screenshot: ${legalResult.screenshotPath}, URL: ${legalResult.finalUrl}`
     );
-  });
+    },
+    page
+  );
 
   await writeReport(report);
   // eslint-disable-next-line no-console
