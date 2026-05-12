@@ -225,12 +225,12 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
       timeout: 20000,
     });
 
+    await saveCheckpoint(page, "03-agregar-negocio-modal.png");
+
     const businessNameInput = page.getByLabel("Nombre del Negocio");
     await businessNameInput.click();
     await businessNameInput.fill("Negocio Prueba Automatización");
     await clickAndWait(page.getByRole("button", { name: "Cancelar", exact: true }), page);
-
-    await saveCheckpoint(page, "03-agregar-negocio-modal.png");
   });
 
   await runStep("Administrar Negocios view", async () => {
@@ -254,6 +254,15 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
   });
 
   await runStep("Información General", async () => {
+    const infoGeneralSection = page
+      .locator("section, div")
+      .filter({ has: page.getByText("Información General", { exact: true }) })
+      .first();
+    const userNamePattern = infoGeneralSection.getByText(
+      /\b[A-Za-zÁÉÍÓÚÑáéíóúñ]{2,}\s+[A-Za-zÁÉÍÓÚÑáéíóúñ]{2,}\b/,
+    );
+
+    await expect(userNamePattern.first()).toBeVisible({ timeout: 20000 });
     await expect(page.getByText(/@/).first()).toBeVisible({ timeout: 20000 });
     await expect(page.getByText("BUSINESS PLAN", { exact: false })).toBeVisible({ timeout: 20000 });
     await expect(page.getByRole("button", { name: "Cambiar Plan", exact: true })).toBeVisible({
