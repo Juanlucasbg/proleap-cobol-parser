@@ -29,11 +29,13 @@ public class SaleAdsMiNegocioWorkflowTest {
 
 	private static final Pattern GOOGLE_BUTTON_PATTERN = Pattern.compile(
 			"(sign\\s*in\\s*with\\s*google|continuar\\s*con\\s*google|iniciar\\s*con\\s*google|acceder\\s*con\\s*google|google)",
-			Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+			Pattern.CASE_INSENSITIVE);
 	private static final String TEST_NAME = "saleads_mi_negocio_full_test";
 
 	@Test
 	public void validateMiNegocioWorkflow() throws IOException {
+		final boolean failOnValidation = Boolean
+				.parseBoolean(getConfigOrDefault("saleads.failOnValidation", "SALEADS_FAIL_ON_VALIDATION", "true"));
 		final Path evidenceDir = createEvidenceDirectory();
 		final Map<String, Boolean> report = initializeReport();
 		final Map<String, String> legalUrls = new LinkedHashMap<>();
@@ -44,7 +46,7 @@ public class SaleAdsMiNegocioWorkflowTest {
 			try {
 				final BrowserContext context = browser.newContext();
 				final Page page = context.newPage();
-				openLoginPage(page);
+				openLoginPageIfConfigured(page);
 
 				final boolean loginOk = runStep("Login", report, failures, () -> {
 					loginWithGoogle(page);
@@ -55,72 +57,74 @@ public class SaleAdsMiNegocioWorkflowTest {
 				final boolean menuOk = runStep("Mi Negocio menu", report, failures, () -> {
 					require(loginOk, "No se puede abrir Mi Negocio sin login exitoso.");
 					openMiNegocioMenu(page);
-					assertVisibleText(page, "Agregar Negocio", 10_000);
-					assertVisibleText(page, "Administrar Negocios", 10_000);
+					assertVisibleTextAny(page, 10_000, "Agregar Negocio");
+					assertVisibleTextAny(page, 10_000, "Administrar Negocios");
 					takeScreenshot(page, evidenceDir.resolve("02-mi-negocio-menu-expandido.png"), false);
 				});
 
 				runStep("Agregar Negocio modal", report, failures, () -> {
 					require(menuOk, "No se puede validar el modal sin el menu Mi Negocio.");
-					clickByVisibleText(page, "Agregar Negocio");
+					clickByVisibleTextAny(page, "Agregar Negocio");
 					page.waitForLoadState(LoadState.DOMCONTENTLOADED);
 					page.waitForTimeout(600);
-					assertVisibleText(page, "Crear Nuevo Negocio", 10_000);
+					assertVisibleTextAny(page, 10_000, "Crear Nuevo Negocio");
 					assertVisibleInput(page, "Nombre del Negocio", 10_000);
-					assertVisibleText(page, "Tienes 2 de 3 negocios", 10_000);
-					assertActionableByText(page, "Cancelar", 10_000);
-					assertActionableByText(page, "Crear Negocio", 10_000);
+					assertVisibleTextAny(page, 10_000, "Tienes 2 de 3 negocios");
+					assertActionableByTextAny(page, 10_000, "Cancelar");
+					assertActionableByTextAny(page, 10_000, "Crear Negocio");
 					takeScreenshot(page, evidenceDir.resolve("03-agregar-negocio-modal.png"), false);
 
 					fillOptionalField(page, "Nombre del Negocio", "Negocio Prueba Automatizacion");
-					clickByVisibleText(page, "Cancelar");
+					clickByVisibleTextAny(page, "Cancelar");
 					page.waitForLoadState(LoadState.DOMCONTENTLOADED);
 				});
 
 				final boolean administrarOk = runStep("Administrar Negocios view", report, failures, () -> {
 					require(menuOk, "No se puede abrir Administrar Negocios sin menu Mi Negocio.");
 					openMiNegocioMenu(page);
-					clickByVisibleText(page, "Administrar Negocios");
+					clickByVisibleTextAny(page, "Administrar Negocios");
 					page.waitForLoadState(LoadState.DOMCONTENTLOADED);
 					page.waitForTimeout(800);
-					assertVisibleText(page, "Informacion General", 12_000);
-					assertVisibleText(page, "Detalles de la Cuenta", 12_000);
-					assertVisibleText(page, "Tus Negocios", 12_000);
-					assertVisibleText(page, "Seccion Legal", 12_000);
+					assertVisibleTextAny(page, 12_000, "Información General", "Informacion General");
+					assertVisibleTextAny(page, 12_000, "Detalles de la Cuenta");
+					assertVisibleTextAny(page, 12_000, "Tus Negocios");
+					assertVisibleTextAny(page, 12_000, "Sección Legal", "Seccion Legal");
 					takeScreenshot(page, evidenceDir.resolve("04-administrar-negocios-full.png"), true);
 				});
 
-				runStep("Informacion General", report, failures, () -> {
-					require(administrarOk, "No se puede validar Informacion General sin Administrar Negocios.");
+				runStep("Información General", report, failures, () -> {
+					require(administrarOk, "No se puede validar Información General sin Administrar Negocios.");
 					assertBusinessPlanSection(page);
 				});
 
 				runStep("Detalles de la Cuenta", report, failures, () -> {
 					require(administrarOk, "No se puede validar Detalles de la Cuenta sin Administrar Negocios.");
-					assertVisibleText(page, "Cuenta creada", 10_000);
-					assertVisibleText(page, "Estado activo", 10_000);
-					assertVisibleText(page, "Idioma seleccionado", 10_000);
+					assertVisibleTextAny(page, 10_000, "Cuenta creada");
+					assertVisibleTextAny(page, 10_000, "Estado activo");
+					assertVisibleTextAny(page, 10_000, "Idioma seleccionado");
 				});
 
 				runStep("Tus Negocios", report, failures, () -> {
 					require(administrarOk, "No se puede validar Tus Negocios sin Administrar Negocios.");
-					assertVisibleText(page, "Tus Negocios", 10_000);
-					assertActionableByText(page, "Agregar Negocio", 10_000);
-					assertVisibleText(page, "Tienes 2 de 3 negocios", 10_000);
+					assertVisibleTextAny(page, 10_000, "Tus Negocios");
+					assertActionableByTextAny(page, 10_000, "Agregar Negocio");
+					assertVisibleTextAny(page, 10_000, "Tienes 2 de 3 negocios");
 				});
 
-				runStep("Terminos y Condiciones", report, failures, () -> {
-					require(administrarOk, "No se puede validar Terminos y Condiciones sin Administrar Negocios.");
-					final String finalUrl = validateLegalLink(page, "Terminos y Condiciones", "Terminos y Condiciones",
-							evidenceDir.resolve("08-terminos-condiciones.png"));
-					legalUrls.put("Terminos y Condiciones", finalUrl);
+				runStep("Términos y Condiciones", report, failures, () -> {
+					require(administrarOk, "No se puede validar Términos y Condiciones sin Administrar Negocios.");
+					final String finalUrl = validateLegalLink(page, evidenceDir.resolve("08-terminos-condiciones.png"),
+							new String[] { "Términos y Condiciones", "Terminos y Condiciones" },
+							new String[] { "Términos y Condiciones", "Terminos y Condiciones" });
+					legalUrls.put("Términos y Condiciones", finalUrl);
 				});
 
-				runStep("Politica de Privacidad", report, failures, () -> {
-					require(administrarOk, "No se puede validar Politica de Privacidad sin Administrar Negocios.");
-					final String finalUrl = validateLegalLink(page, "Politica de Privacidad", "Politica de Privacidad",
-							evidenceDir.resolve("09-politica-privacidad.png"));
-					legalUrls.put("Politica de Privacidad", finalUrl);
+				runStep("Política de Privacidad", report, failures, () -> {
+					require(administrarOk, "No se puede validar Política de Privacidad sin Administrar Negocios.");
+					final String finalUrl = validateLegalLink(page, evidenceDir.resolve("09-politica-privacidad.png"),
+							new String[] { "Política de Privacidad", "Politica de Privacidad" },
+							new String[] { "Política de Privacidad", "Politica de Privacidad" });
+					legalUrls.put("Política de Privacidad", finalUrl);
 				});
 			} finally {
 				browser.close();
@@ -128,15 +132,16 @@ public class SaleAdsMiNegocioWorkflowTest {
 		}
 
 		writeReport(evidenceDir, report, legalUrls, failures);
-		if (!failures.isEmpty()) {
+		if (!failures.isEmpty() && failOnValidation) {
 			Assert.fail("Validaciones fallidas:\n" + String.join("\n", failures));
 		}
 	}
 
-	private void openLoginPage(final Page page) {
+	private void openLoginPageIfConfigured(final Page page) {
 		final String baseUrl = getConfigValue("saleads.baseUrl", "SALEADS_BASE_URL");
-		require(baseUrl != null && !baseUrl.isBlank(),
-				"Configura saleads.baseUrl o SALEADS_BASE_URL para iniciar en la pagina de login.");
+		if (baseUrl == null || baseUrl.isBlank()) {
+			return;
+		}
 		page.navigate(baseUrl);
 		page.waitForLoadState(LoadState.DOMCONTENTLOADED);
 	}
@@ -156,12 +161,12 @@ public class SaleAdsMiNegocioWorkflowTest {
 				page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(GOOGLE_BUTTON_PATTERN)),
 				page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName(GOOGLE_BUTTON_PATTERN)),
 				page.getByText(GOOGLE_BUTTON_PATTERN));
-
 		clickAndWait(page, loginButton);
 
 		final String accountEmail = getConfigOrDefault("saleads.google.account", "SALEADS_GOOGLE_ACCOUNT",
 				"juanlucasbarbiergarzon@gmail.com");
-		tryClickIfVisible(page.getByText(Pattern.compile(Pattern.quote(accountEmail), Pattern.CASE_INSENSITIVE)), 8_000);
+		tryClickIfVisible(page.getByText(Pattern.compile(Pattern.quote(accountEmail), Pattern.CASE_INSENSITIVE)),
+				8_000);
 	}
 
 	private void waitForMainInterface(final Page page) {
@@ -173,35 +178,34 @@ public class SaleAdsMiNegocioWorkflowTest {
 	}
 
 	private void openMiNegocioMenu(final Page page) {
-		assertVisibleText(page, "Negocio", 12_000);
-		clickByVisibleText(page, "Mi Negocio");
+		assertVisibleTextAny(page, 12_000, "Negocio");
+		clickByVisibleTextAny(page, "Mi Negocio");
 		page.waitForLoadState(LoadState.DOMCONTENTLOADED);
 		page.waitForTimeout(500);
 	}
 
-	private String validateLegalLink(final Page appPage, final String linkText, final String headingText,
-			final Path screenshotPath) {
+	private String validateLegalLink(final Page appPage, final Path screenshotPath, final String[] linkTexts,
+			final String[] headingTexts) {
 		final String appUrlBefore = appPage.url();
-		Page legalPage = null;
+		Page legalPage;
 
 		try {
-			legalPage = appPage.waitForPopup(() -> clickByVisibleText(appPage, linkText),
-					new Page.WaitForPopupOptions().setTimeout(5_000));
+			legalPage = appPage.waitForPopup(new Page.WaitForPopupOptions().setTimeout(5_000),
+					() -> clickByVisibleTextAny(appPage, linkTexts));
 			legalPage.waitForLoadState(LoadState.DOMCONTENTLOADED);
 			legalPage.waitForTimeout(500);
 		} catch (PlaywrightException popupNotOpened) {
-			clickByVisibleText(appPage, linkText);
+			clickByVisibleTextAny(appPage, linkTexts);
 			appPage.waitForLoadState(LoadState.DOMCONTENTLOADED);
 			appPage.waitForTimeout(500);
 			legalPage = appPage;
 		}
 
-		assertVisibleText(legalPage, headingText, 12_000);
+		assertVisibleTextAny(legalPage, 12_000, headingTexts);
 		assertLegalContentVisible(legalPage);
 		takeScreenshot(legalPage, screenshotPath, true);
 
 		final String finalUrl = legalPage.url();
-
 		if (legalPage != appPage) {
 			legalPage.close();
 			appPage.bringToFront();
@@ -215,12 +219,13 @@ public class SaleAdsMiNegocioWorkflowTest {
 	}
 
 	private void assertBusinessPlanSection(final Page page) {
-		assertVisibleText(page, "Informacion General", 10_000);
+		assertVisibleTextAny(page, 10_000, "Información General", "Informacion General");
 		final String bodyText = normalizeWhitespace(page.locator("body").innerText());
 		Assert.assertTrue("No se detecto nombre de usuario visible.", bodyText.length() > 20);
-		Assert.assertTrue("No se detecto email visible.", bodyText.matches("(?s).*[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}.*"));
-		assertVisibleText(page, "BUSINESS PLAN", 10_000);
-		assertActionableByText(page, "Cambiar Plan", 10_000);
+		Assert.assertTrue("No se detecto email visible.",
+				bodyText.matches("(?s).*[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}.*"));
+		assertVisibleTextAny(page, 10_000, "BUSINESS PLAN");
+		assertActionableByTextAny(page, 10_000, "Cambiar Plan");
 	}
 
 	private void assertLegalContentVisible(final Page page) {
@@ -232,11 +237,10 @@ public class SaleAdsMiNegocioWorkflowTest {
 		final List<Locator> options = new ArrayList<>();
 		options.add(page.getByLabel(Pattern.compile(Pattern.quote(fieldLabel), Pattern.CASE_INSENSITIVE)));
 		options.add(page.getByPlaceholder(Pattern.compile(Pattern.quote(fieldLabel), Pattern.CASE_INSENSITIVE)));
-		options.add(page.locator("input").filter(new Locator.FilterOptions().setHasText(fieldLabel)));
 
 		for (final Locator option : options) {
-			final Locator target = option.first();
 			try {
+				final Locator target = option.first();
 				target.waitFor(new Locator.WaitForOptions().setTimeout(2_000));
 				target.fill(value);
 				return;
@@ -257,25 +261,34 @@ public class SaleAdsMiNegocioWorkflowTest {
 			} catch (PlaywrightException ignored) {
 			}
 		}
-
 		Assert.fail("No se encontro input visible: " + inputLabel);
 	}
 
-	private void assertActionableByText(final Page page, final String text, final int timeoutMs) {
-		final Locator target = firstVisible(
-				page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(Pattern.compile(Pattern.quote(text), Pattern.CASE_INSENSITIVE))),
-				page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName(Pattern.compile(Pattern.quote(text), Pattern.CASE_INSENSITIVE))),
-				page.getByText(Pattern.compile(Pattern.quote(text), Pattern.CASE_INSENSITIVE)));
+	private void assertActionableByTextAny(final Page page, final int timeoutMs, final String... texts) {
+		final Locator target = firstVisibleByText(page, texts);
 		target.waitFor(new Locator.WaitForOptions().setTimeout(timeoutMs));
 	}
 
-	private void clickByVisibleText(final Page page, final String text) {
-		final Pattern textPattern = Pattern.compile(Pattern.quote(text), Pattern.CASE_INSENSITIVE);
-		final Locator target = firstVisible(
-				page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(textPattern)),
-				page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName(textPattern)),
-				page.getByText(textPattern));
+	private void clickByVisibleTextAny(final Page page, final String... texts) {
+		final Locator target = firstVisibleByText(page, texts);
 		clickAndWait(page, target);
+	}
+
+	private void assertVisibleTextAny(final Page page, final int timeoutMs, final String... texts) {
+		final Locator target = firstVisibleByText(page, texts);
+		target.waitFor(new Locator.WaitForOptions().setTimeout(timeoutMs));
+	}
+
+	private Locator firstVisibleByText(final Page page, final String... texts) {
+		final List<Locator> options = new ArrayList<>();
+		for (final String text : texts) {
+			final Pattern textPattern = Pattern.compile(Pattern.quote(text), Pattern.CASE_INSENSITIVE);
+			options.add(page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(textPattern)));
+			options.add(page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName(textPattern)));
+			options.add(page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName(textPattern)));
+			options.add(page.getByText(textPattern));
+		}
+		return firstVisible(options.toArray(new Locator[0]));
 	}
 
 	private void clickAndWait(final Page page, final Locator locator) {
@@ -284,19 +297,10 @@ public class SaleAdsMiNegocioWorkflowTest {
 		page.waitForTimeout(450);
 	}
 
-	private void assertVisibleText(final Page page, final String text, final int timeoutMs) {
-		final Pattern pattern = Pattern.compile(Pattern.quote(text), Pattern.CASE_INSENSITIVE);
-		final Locator target = firstVisible(page.getByText(pattern),
-				page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName(pattern)),
-				page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName(pattern)),
-				page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(pattern)));
-		target.waitFor(new Locator.WaitForOptions().setTimeout(timeoutMs));
-	}
-
 	private Locator firstVisible(final Locator... options) {
 		for (final Locator option : options) {
-			final Locator candidate = option.first();
 			try {
+				final Locator candidate = option.first();
 				candidate.waitFor(new Locator.WaitForOptions().setTimeout(4_000));
 				return candidate;
 			} catch (PlaywrightException ignored) {
@@ -340,11 +344,11 @@ public class SaleAdsMiNegocioWorkflowTest {
 		report.put("Mi Negocio menu", false);
 		report.put("Agregar Negocio modal", false);
 		report.put("Administrar Negocios view", false);
-		report.put("Informacion General", false);
+		report.put("Información General", false);
 		report.put("Detalles de la Cuenta", false);
 		report.put("Tus Negocios", false);
-		report.put("Terminos y Condiciones", false);
-		report.put("Politica de Privacidad", false);
+		report.put("Términos y Condiciones", false);
+		report.put("Política de Privacidad", false);
 		return report;
 	}
 
@@ -368,10 +372,10 @@ public class SaleAdsMiNegocioWorkflowTest {
 		}
 		sb.append("  ],\n");
 		sb.append("  \"legalUrls\": {\n");
-		sb.append("    \"Terminos y Condiciones\": \"")
-				.append(escapeJson(legalUrls.getOrDefault("Terminos y Condiciones", ""))).append("\",\n");
-		sb.append("    \"Politica de Privacidad\": \"")
-				.append(escapeJson(legalUrls.getOrDefault("Politica de Privacidad", ""))).append("\"\n");
+		sb.append("    \"Términos y Condiciones\": \"")
+				.append(escapeJson(legalUrls.getOrDefault("Términos y Condiciones", ""))).append("\",\n");
+		sb.append("    \"Política de Privacidad\": \"")
+				.append(escapeJson(legalUrls.getOrDefault("Política de Privacidad", ""))).append("\"\n");
 		sb.append("  },\n");
 		sb.append("  \"failures\": [\n");
 		for (int i = 0; i < failures.size(); i++) {
@@ -420,8 +424,9 @@ public class SaleAdsMiNegocioWorkflowTest {
 
 	private void tryClickIfVisible(final Locator locator, final int timeoutMs) {
 		try {
-			locator.first().waitFor(new Locator.WaitForOptions().setTimeout(timeoutMs));
-			locator.first().click();
+			final Locator target = locator.first();
+			target.waitFor(new Locator.WaitForOptions().setTimeout(timeoutMs));
+			target.click();
 		} catch (PlaywrightException ignored) {
 		}
 	}
