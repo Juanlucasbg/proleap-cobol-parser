@@ -59,6 +59,18 @@ async function screenshot(page, name, fullPage = false) {
   return targetPath;
 }
 
+async function dismissBlockingDialogs(page) {
+  const closeButton = await firstVisibleLocator([
+    page.getByRole("button", { name: /close message|cerrar|close|x/i }),
+    page.locator("[role='dialog'] button").first()
+  ]);
+
+  if (closeButton) {
+    await closeButton.click().catch(() => {});
+    await waitForUi(page);
+  }
+}
+
 async function writeReport(report) {
   await fs.writeFile(REPORT_PATH, JSON.stringify(report, null, 2), "utf8");
 }
@@ -170,6 +182,19 @@ test(TEST_NAME, async ({ page }) => {
   await runStep(report, "Login", async () => {
     if (preconditionError) {
       throw new Error(preconditionError);
+    }
+
+    await dismissBlockingDialogs(page);
+    const preLoginButton = await firstVisibleLocator([
+      page.getByRole("button", { name: /^sign in$/i }),
+      page.getByRole("button", { name: /^iniciar sesi[oó]n$/i }),
+      page.getByRole("link", { name: /^sign in$/i }),
+      page.getByRole("link", { name: /^iniciar sesi[oó]n$/i })
+    ]);
+    if (preLoginButton) {
+      await preLoginButton.click();
+      await waitForUi(page);
+      await dismissBlockingDialogs(page);
     }
 
     const popupPromise = page.context().waitForEvent("page", { timeout: 15000 }).catch(() => null);
