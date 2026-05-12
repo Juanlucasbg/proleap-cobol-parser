@@ -1,7 +1,6 @@
 package io.proleap.e2e.saleads;
 
 import com.microsoft.playwright.Browser;
-import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -51,7 +50,7 @@ public class SaleadsMiNegocioFullTest {
 			page.navigate(startUrl);
 			waitForUiToLoad(page);
 
-			runStep(report, reportErrors, "Login", () -> validateLoginWithGoogle(page, context, artifactsDir));
+			runStep(report, reportErrors, "Login", () -> validateLoginWithGoogle(page, artifactsDir));
 			runStep(report, reportErrors, "Mi Negocio menu", () -> validateMiNegocioMenu(page, artifactsDir));
 			runStep(report, reportErrors, "Agregar Negocio modal", () -> validateAgregarNegocioModal(page, artifactsDir));
 			runStep(report, reportErrors, "Administrar Negocios view", () -> validateAdministrarNegocios(page, artifactsDir));
@@ -77,7 +76,7 @@ public class SaleadsMiNegocioFullTest {
 		Assert.assertTrue("saleads_mi_negocio_full_test failed. Check report in test logs.", allPassed(report));
 	}
 
-	private static void validateLoginWithGoogle(final Page page, final BrowserContext context, final Path artifactsDir) {
+	private static void validateLoginWithGoogle(final Page page, final Path artifactsDir) {
 		final Locator loginButton = findByVisibleText(page, "Sign in with Google", "Iniciar sesión con Google",
 				"Iniciar Sesión con Google", "Continuar con Google", "Google");
 
@@ -128,6 +127,7 @@ public class SaleadsMiNegocioFullTest {
 
 		final Locator nombreNegocioInput = page.getByLabel(Pattern.compile("(?i)Nombre\\s+del\\s+Negocio")).first();
 		nombreNegocioInput.click();
+		waitForUiToLoad(page);
 		nombreNegocioInput.fill("Negocio Prueba Automatización");
 		takeScreenshot(page, artifactsDir.resolve("03-agregar-negocio-modal.png"), false);
 		clickAndWait(page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Cancelar")).first(), page);
