@@ -5,6 +5,7 @@ const { chromium } = require("playwright");
 const TEST_NAME = "saleads_mi_negocio_full_test";
 const ACCOUNT_EMAIL = "juanlucasbarbiergarzon@gmail.com";
 const WAIT_TIMEOUT_MS = 20000;
+const NOT_EXECUTED_STATUS = "FAIL - Not executed";
 
 const REPORT_FIELDS = [
   "Login",
@@ -18,7 +19,7 @@ const REPORT_FIELDS = [
   "Política de Privacidad",
 ];
 
-const report = Object.fromEntries(REPORT_FIELDS.map((field) => [field, "FAIL"]));
+const report = Object.fromEntries(REPORT_FIELDS.map((field) => [field, NOT_EXECUTED_STATUS]));
 const evidence = {
   screenshots: [],
   termsAndConditionsUrl: null,
@@ -140,6 +141,7 @@ async function run() {
   let browser;
   let context;
   let page;
+  let fatalErrorMessage = null;
 
   try {
     if (wsEndpoint) {
@@ -422,6 +424,10 @@ async function run() {
       throw error;
     }
   } catch (fatalError) {
+    fatalErrorMessage = fatalError?.message || String(fatalError);
+    if (report["Login"] === NOT_EXECUTED_STATUS) {
+      report["Login"] = `FAIL - ${fatalErrorMessage}`;
+    }
     // Keep final reporting logic alive even if one step fails.
   } finally {
     const finalReport = {
