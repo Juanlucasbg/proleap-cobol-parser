@@ -99,6 +99,23 @@ async function ensureMiNegocioExpanded(page: Page): Promise<void> {
   await clickByVisibleText(page, /Mi Negocio/i);
 }
 
+async function findBusinessNameInput(page: Page): Promise<Locator> {
+  const candidates = [
+    page.getByLabel(/Nombre del Negocio/i).first(),
+    page.getByPlaceholder(/Nombre del Negocio/i).first(),
+    page.locator("input[name*='negocio' i]").first(),
+    page.locator("input[id*='negocio' i]").first()
+  ];
+
+  for (const candidate of candidates) {
+    if (await isVisible(candidate, 4000)) {
+      return candidate;
+    }
+  }
+
+  throw new Error("Could not locate 'Nombre del Negocio' input field.");
+}
+
 async function validateLegalLink(
   page: Page,
   testInfo: TestInfo,
@@ -178,7 +195,6 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     if (popup) {
       await waitForUiToLoad(popup);
       await chooseGoogleAccountIfPrompted(popup);
-      await popup.close().catch(() => undefined);
       await page.bringToFront();
       await waitForUiToLoad(page);
     } else {
@@ -206,13 +222,13 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     await clickByVisibleText(page, /Agregar Negocio/i);
 
     await expect(page.getByText(/Crear Nuevo Negocio/i).first()).toBeVisible({ timeout: 15000 });
-    await expect(page.getByLabel(/Nombre del Negocio/i).first()).toBeVisible({ timeout: 15000 });
+    const nameField = await findBusinessNameInput(page);
+    await expect(nameField).toBeVisible({ timeout: 15000 });
     await expect(page.getByText(/Tienes 2 de 3 negocios/i).first()).toBeVisible({ timeout: 15000 });
     await expect(page.getByRole("button", { name: /Cancelar/i }).first()).toBeVisible();
     await expect(page.getByRole("button", { name: /Crear Negocio/i }).first()).toBeVisible();
     await saveScreenshot(page, testInfo, "agregar-negocio-modal");
 
-    const nameField = page.getByLabel(/Nombre del Negocio/i).first();
     await nameField.click();
     await nameField.fill("Negocio Prueba Automatización");
     await clickByVisibleText(page, /Cancelar/i);
