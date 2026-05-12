@@ -23,6 +23,8 @@ The test is cross-environment by design: it does not hardcode any SaleADS domain
 npm install
 ```
 
+`npm install` automatically downloads the required Playwright Chromium browser.
+
 ## Run
 
 ```bash

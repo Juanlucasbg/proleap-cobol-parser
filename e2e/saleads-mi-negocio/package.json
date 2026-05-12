@@ -4,6 +4,8 @@
   "description": "Cross-environment SaleADS Mi Negocio workflow E2E validation",
   "type": "module",
   "scripts": {
+    "install:browsers": "playwright install chromium",
+    "postinstall": "npm run install:browsers",
     "test": "node saleads_mi_negocio_full_test.mjs",
     "test:headed": "HEADLESS=false node saleads_mi_negocio_full_test.mjs"
   },
