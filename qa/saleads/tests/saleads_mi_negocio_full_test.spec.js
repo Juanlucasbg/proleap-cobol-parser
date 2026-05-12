@@ -42,6 +42,21 @@ async function firstVisibleLocator(candidates) {
   return null;
 }
 
+function scopeList(page) {
+  return [page, ...page.frames().filter((frame) => frame !== page.mainFrame())];
+}
+
+async function firstVisibleAcrossScopes(page, candidateFactories) {
+  for (const scope of scopeList(page)) {
+    const target = await firstVisibleLocator(candidateFactories.map((build) => build(scope)));
+    if (target) {
+      return target;
+    }
+  }
+
+  return null;
+}
+
 async function clickFirstVisible(page, candidates, description) {
   const target = await firstVisibleLocator(candidates);
   if (!target) {
@@ -69,6 +84,16 @@ async function dismissBlockingDialogs(page) {
     await closeButton.click().catch(() => {});
     await waitForUi(page);
   }
+}
+
+async function clickFirstVisibleAcrossScopes(page, candidateFactories, description) {
+  const target = await firstVisibleAcrossScopes(page, candidateFactories);
+  if (!target) {
+    throw new Error(`Unable to find clickable element for "${description}"`);
+  }
+
+  await target.click();
+  await waitForUi(page);
 }
 
 async function writeReport(report) {
@@ -199,12 +224,12 @@ test(TEST_NAME, async ({ page }) => {
 
     const popupPromise = page.context().waitForEvent("page", { timeout: 15000 }).catch(() => null);
 
-    await clickFirstVisible(
+    await clickFirstVisibleAcrossScopes(
       page,
       [
-        page.getByRole("button", { name: /sign in with google|iniciar sesi[oó]n con google|google/i }),
-        page.getByRole("link", { name: /sign in with google|iniciar sesi[oó]n con google|google/i }),
-        page.getByText(/sign in with google|iniciar sesi[oó]n con google/i)
+        (scope) => scope.getByRole("button", { name: /sign in with google|iniciar sesi[oó]n con google|google/i }),
+        (scope) => scope.getByRole("link", { name: /sign in with google|iniciar sesi[oó]n con google|google/i }),
+        (scope) => scope.getByText(/sign in with google|iniciar sesi[oó]n con google|google/i)
       ],
       "login with Google"
     );
@@ -212,10 +237,10 @@ test(TEST_NAME, async ({ page }) => {
     const maybePopup = await popupPromise;
     if (maybePopup) {
       await waitForUi(maybePopup);
-      const accountSelector = await firstVisibleLocator([
-        maybePopup.getByText(EXPECTED_EMAIL, { exact: true }),
-        maybePopup.getByRole("button", { name: EXPECTED_EMAIL }),
-        maybePopup.getByRole("link", { name: EXPECTED_EMAIL })
+      const accountSelector = await firstVisibleAcrossScopes(maybePopup, [
+        (scope) => scope.getByText(EXPECTED_EMAIL, { exact: true }),
+        (scope) => scope.getByRole("button", { name: EXPECTED_EMAIL }),
+        (scope) => scope.getByRole("link", { name: EXPECTED_EMAIL })
       ]);
 
       if (accountSelector) {
@@ -223,10 +248,10 @@ test(TEST_NAME, async ({ page }) => {
         await waitForUi(maybePopup);
       }
     } else {
-      const accountSelector = await firstVisibleLocator([
-        page.getByText(EXPECTED_EMAIL, { exact: true }),
-        page.getByRole("button", { name: EXPECTED_EMAIL }),
-        page.getByRole("link", { name: EXPECTED_EMAIL })
+      const accountSelector = await firstVisibleAcrossScopes(page, [
+        (scope) => scope.getByText(EXPECTED_EMAIL, { exact: true }),
+        (scope) => scope.getByRole("button", { name: EXPECTED_EMAIL }),
+        (scope) => scope.getByRole("link", { name: EXPECTED_EMAIL })
       ]);
 
       if (accountSelector) {
