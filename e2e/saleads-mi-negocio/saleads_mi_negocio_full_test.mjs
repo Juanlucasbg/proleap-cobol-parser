@@ -11,11 +11,11 @@ const REPORT_FIELDS = [
   "Mi Negocio menu",
   "Agregar Negocio modal",
   "Administrar Negocios view",
-  "Informacion General",
+  "Información General",
   "Detalles de la Cuenta",
   "Tus Negocios",
-  "Terminos y Condiciones",
-  "Politica de Privacidad",
+  "Términos y Condiciones",
+  "Política de Privacidad",
 ];
 
 const SECTION_RESULTS = Object.fromEntries(
@@ -29,8 +29,8 @@ const SECTION_RESULTS = Object.fromEntries(
 );
 
 const LEGAL_URLS = {
-  "Terminos y Condiciones": "",
-  "Politica de Privacidad": "",
+  "Términos y Condiciones": "",
+  "Política de Privacidad": "",
 };
 
 const SCREENSHOTS = [];
@@ -156,14 +156,48 @@ async function openAndValidateLegalDocument({
   expectedHeading,
   reportField,
   screenshotName,
+  contentPattern,
 }) {
   const originalUrl = page.url();
   const popupPromise = page.waitForEvent("popup", { timeout: 6000 }).catch(() => null);
   const navigationPromise = page.waitForNavigation({ timeout: 12000 }).catch(() => null);
 
-  await evaluate(reportField, `Click "${linkText}"`, async () => {
+  const clickOk = await evaluate(reportField, `Click "${linkText}"`, async () => {
     await clickByVisibleText(page, [linkText], `legal link "${linkText}"`);
   });
+  if (!clickOk) {
+    markCheck(
+      reportField,
+      `Heading "${expectedHeading}" is visible`,
+      false,
+      `Blocked because "${linkText}" could not be opened.`,
+    );
+    markCheck(
+      reportField,
+      "Legal content text is visible",
+      false,
+      `Blocked because "${linkText}" could not be opened.`,
+    );
+    markCheck(
+      reportField,
+      "Capture screenshot",
+      false,
+      `Blocked because "${linkText}" could not be opened.`,
+    );
+    markCheck(
+      reportField,
+      "Capture final URL",
+      false,
+      `Blocked because "${linkText}" could not be opened.`,
+    );
+    markCheck(
+      reportField,
+      "Return to application tab",
+      false,
+      `Blocked because "${linkText}" could not be opened.`,
+    );
+    return;
+  }
 
   const popup = await popupPromise;
   let legalPage = page;
@@ -183,18 +217,11 @@ async function openAndValidateLegalDocument({
   );
 
   await evaluate(reportField, "Legal content text is visible", async () => {
-    const contentCandidates = [
-      legalPage.locator("article p").first(),
-      legalPage.locator("main p").first(),
-      legalPage.locator("p").first(),
-      legalPage.getByText(/(servicio|datos|privacidad|terminos|condiciones|uso)/i).first(),
-    ];
-    for (const candidate of contentCandidates) {
-      if (await isVisible(candidate)) {
-        return;
-      }
+    const bodyText = await legalPage.locator("body").innerText();
+    if (contentPattern.test(bodyText)) {
+      return;
     }
-    throw new Error("No legal paragraph content could be validated.");
+    throw new Error("Expected legal content keywords were not found.");
   });
 
   await evaluate(reportField, "Capture screenshot", async () => {
@@ -491,7 +518,7 @@ async function run() {
       await takeCheckpointScreenshot(page, artifactsDir, "04-administrar-negocios-page", true);
     });
 
-    await evaluate("Informacion General", "User name is visible", async () => {
+    await evaluate("Información General", "User name is visible", async () => {
       if (GOOGLE_ACCOUNT_NAME) {
         const expectedName = page.getByText(GOOGLE_ACCOUNT_NAME, { exact: false }).first();
         if (!(await isVisible(expectedName))) {
@@ -508,7 +535,7 @@ async function run() {
       }
     });
 
-    await evaluate("Informacion General", "User email is visible", async () => {
+    await evaluate("Información General", "User email is visible", async () => {
       const emailPattern = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i;
       const emailByKnownAccount = page.getByText(GOOGLE_ACCOUNT_EMAIL, { exact: false }).first();
       if (await isVisible(emailByKnownAccount)) {
@@ -523,14 +550,14 @@ async function run() {
     await expectVisibleText(
       page,
       ["BUSINESS PLAN"],
-      "Informacion General",
+      "Información General",
       'Text "BUSINESS PLAN" is visible',
     );
 
     await expectVisibleText(
       page,
       ["Cambiar Plan"],
-      "Informacion General",
+      "Información General",
       'Button "Cambiar Plan" is visible',
     );
 
@@ -587,8 +614,9 @@ async function run() {
       artifactsDir,
       linkText: "Términos y Condiciones",
       expectedHeading: "Términos y Condiciones",
-      reportField: "Terminos y Condiciones",
+      reportField: "Términos y Condiciones",
       screenshotName: "05-terminos-y-condiciones",
+      contentPattern: /(terminos|términos|condiciones|servicio|uso)/i,
     });
 
     await openAndValidateLegalDocument({
@@ -596,8 +624,9 @@ async function run() {
       artifactsDir,
       linkText: "Política de Privacidad",
       expectedHeading: "Política de Privacidad",
-      reportField: "Politica de Privacidad",
+      reportField: "Política de Privacidad",
       screenshotName: "06-politica-de-privacidad",
+      contentPattern: /(privacidad|datos personales|datos|informacion|información)/i,
     });
   } finally {
     await context.close();
