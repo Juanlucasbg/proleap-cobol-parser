@@ -135,11 +135,7 @@ public class SaleadsMiNegocioWorkflowTest {
 		if (popup != null) {
 			popup.waitForLoadState(LoadState.DOMCONTENTLOADED);
 			selectGoogleAccountIfVisible(popup, GOOGLE_ACCOUNT_EMAIL);
-			try {
-				popup.waitForClose(new Page.WaitForCloseOptions().setTimeout(25_000));
-			} catch (final PlaywrightException ignored) {
-				// In some flows, popup stays open after auth.
-			}
+			popup.waitForTimeout(1_200);
 		} else {
 			selectGoogleAccountIfVisible(appPage, GOOGLE_ACCOUNT_EMAIL);
 		}
