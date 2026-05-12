@@ -9,7 +9,6 @@ import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.TimeoutError;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.LoadState;
-import com.microsoft.playwright.options.WaitUntilState;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -49,7 +48,7 @@ public class SaleadsMiNegocioFullTest {
 			final Page page = context.newPage();
 			page.setDefaultTimeout(20000);
 
-			page.navigate(startUrl, new Page.NavigateOptions().setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
+			page.navigate(startUrl);
 			waitForUiToLoad(page);
 
 			runStep(report, reportErrors, "Login", () -> validateLoginWithGoogle(page, context, artifactsDir));
@@ -84,7 +83,7 @@ public class SaleadsMiNegocioFullTest {
 
 		Page googlePopup = null;
 		try {
-			googlePopup = page.waitForPopup(() -> loginButton.click(), new Page.WaitForPopupOptions().setTimeout(9000));
+			googlePopup = page.waitForPopup(() -> loginButton.click());
 		} catch (RuntimeException popupNotOpened) {
 			loginButton.click();
 		}
@@ -93,11 +92,6 @@ public class SaleadsMiNegocioFullTest {
 		if (googlePopup != null) {
 			waitForUiToLoad(googlePopup);
 			selectGoogleAccountIfPresent(googlePopup);
-			try {
-				googlePopup.waitForClose(new Page.WaitForCloseOptions().setTimeout(20000));
-			} catch (RuntimeException ignore) {
-				// If popup stays open due to provider behavior, the app may still be logged in on the original page.
-			}
 		} else if (page.url().contains("accounts.google")) {
 			selectGoogleAccountIfPresent(page);
 		}
@@ -178,8 +172,8 @@ public class SaleadsMiNegocioFullTest {
 	private static void validateTusNegocios(final Page page) {
 		final Locator section = sectionContaining(page, "Tus Negocios");
 		assertVisible(section, "Tus Negocios section");
-		assertVisible(section.getByRole(AriaRole.BUTTON,
-				new Locator.GetByRoleOptions().setName(Pattern.compile("(?i)^\\s*Agregar\\s+Negocio\\s*$"))).first(),
+		assertVisible(page.getByRole(AriaRole.BUTTON,
+				new Page.GetByRoleOptions().setName(Pattern.compile("(?i)^\\s*Agregar\\s+Negocio\\s*$"))).first(),
 				"Button 'Agregar Negocio'");
 		assertVisible(section.getByText(Pattern.compile("(?i)Tienes\\s+2\\s+de\\s+3\\s+negocios")).first(),
 				"Text 'Tienes 2 de 3 negocios'");
@@ -197,7 +191,7 @@ public class SaleadsMiNegocioFullTest {
 		Page legalPage = null;
 
 		try {
-			legalPage = appPage.waitForPopup(() -> link.click(), new Page.WaitForPopupOptions().setTimeout(9000));
+			legalPage = appPage.waitForPopup(() -> link.click());
 		} catch (RuntimeException popupNotOpened) {
 			clickAndWait(link, appPage);
 		}
