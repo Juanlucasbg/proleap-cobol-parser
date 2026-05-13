@@ -53,7 +53,7 @@ public class SaleadsMiNegocioFullWorkflowTest {
 	private final Map<String, String> legalUrls = new LinkedHashMap<>();
 
 	@Before
-	public void setUp() throws IOException {
+	public void setUp() throws IOException, InterruptedException {
 		final boolean enabled = getBooleanConfig("saleads.e2e.enabled", "SALEADS_E2E_ENABLED", false);
 		Assume.assumeTrue(
 				"Set SALEADS_E2E_ENABLED=true to execute this test in a valid SaleADS environment with credentials.",
