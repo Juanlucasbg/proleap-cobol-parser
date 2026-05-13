@@ -22,6 +22,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.openqa.selenium.By;
@@ -67,7 +68,9 @@ public class SaleadsMiNegocioFullTest {
 
 	@Before
 	public void setUp() throws IOException {
-		loginUrl = requiredEnv("SALEADS_LOGIN_URL");
+		loginUrl = optionalEnv("SALEADS_LOGIN_URL", "");
+		Assume.assumeTrue("Skipping SaleADS E2E: SALEADS_LOGIN_URL is not configured.",
+				loginUrl != null && !loginUrl.trim().isEmpty());
 		googleAccount = optionalEnv("SALEADS_GOOGLE_ACCOUNT", "juanlucasbarbiergarzon@gmail.com");
 
 		final ChromeOptions options = new ChromeOptions();
@@ -420,14 +423,6 @@ public class SaleadsMiNegocioFullTest {
 		final Path path = Path.of("target", "saleads-evidence", timestamp);
 		Files.createDirectories(path);
 		return path;
-	}
-
-	private String requiredEnv(final String key) {
-		final String value = System.getenv(key);
-		if (value == null || value.trim().isEmpty()) {
-			throw new IllegalStateException("Missing required environment variable: " + key);
-		}
-		return value.trim();
 	}
 
 	private String optionalEnv(final String key, final String defaultValue) {
