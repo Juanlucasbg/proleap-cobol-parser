@@ -47,6 +47,10 @@ public class SaleAdsMiNegocioFullWorkflowTest {
 
 	@Before
 	public void setUp() throws Exception {
+		Assume.assumeTrue(
+				"Set RUN_SALEADS_E2E=true to execute this external-environment E2E workflow test.",
+				"true".equalsIgnoreCase(envOrDefault("RUN_SALEADS_E2E", "false")));
+
 		final ChromeOptions options = new ChromeOptions();
 		options.addArguments("--window-size=1920,1080");
 		options.addArguments("--disable-dev-shm-usage");
