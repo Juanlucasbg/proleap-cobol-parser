@@ -61,7 +61,7 @@ public class SaleadsMiNegocioFullTest {
 		options.addArguments("--no-sandbox");
 		options.addArguments("--disable-dev-shm-usage");
 
-		if (Boolean.parseBoolean(getConfig("SALEADS_HEADLESS", "saleads.headless", "true"))) {
+		if (Boolean.parseBoolean(getConfig("SALEADS_HEADLESS", "saleads.headless", "false"))) {
 			options.addArguments("--headless=new");
 		}
 
