@@ -1,0 +1,19 @@
+{
+  "name": "saleads-mi-negocio",
+  "version": "1.0.0",
+  "description": "SaleADS Mi Negocio full workflow E2E",
+  "type": "module",
+  "scripts": {
+    "test:mi-negocio": "node scripts/saleads-mi-negocio-full-test.mjs"
+  },
+  "keywords": [
+    "saleads",
+    "playwright",
+    "e2e"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "playwright": "^1.60.0"
+  }
+}
