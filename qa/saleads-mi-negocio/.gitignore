@@ -1,0 +1,4 @@
+node_modules/
+playwright-report/
+test-results/
+artifacts/saleads_mi_negocio_full_test/
