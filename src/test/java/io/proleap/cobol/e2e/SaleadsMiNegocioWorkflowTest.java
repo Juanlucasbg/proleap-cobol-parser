@@ -114,7 +114,7 @@ public class SaleadsMiNegocioWorkflowTest {
 
 		Page authPage = null;
 		try {
-			authPage = context.waitForPage(loginButton::click, new BrowserContext.WaitForPageOptions().setTimeout(7_000));
+			authPage = context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(7_000), loginButton::click);
 		} catch (TimeoutError ignored) {
 			loginButton.click();
 		}
@@ -234,7 +234,7 @@ public class SaleadsMiNegocioWorkflowTest {
 		boolean openedNewTab = false;
 
 		try {
-			legalPage = context.waitForPage(link::click, new BrowserContext.WaitForPageOptions().setTimeout(7_000));
+			legalPage = context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(7_000), link::click);
 			openedNewTab = true;
 		} catch (TimeoutError ignored) {
 			link.click();
