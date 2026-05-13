@@ -25,6 +25,8 @@ import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.LoadState;
+import com.microsoft.playwright.options.WaitForSelectorState;
+import com.microsoft.playwright.options.WaitUntilState;
 
 public class SaleadsMiNegocioWorkflowTest {
 
@@ -58,7 +60,7 @@ public class SaleadsMiNegocioWorkflowTest {
 		context = browser.newContext(new Browser.NewContextOptions().setViewportSize(1600, 900));
 		page = context.newPage();
 
-		page.navigate(loginUrl, new Page.NavigateOptions().setWaitUntil(LoadState.DOMCONTENTLOADED));
+		page.navigate(loginUrl, new Page.NavigateOptions().setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
 		page.waitForLoadState(LoadState.NETWORKIDLE);
 	}
 
@@ -199,7 +201,7 @@ public class SaleadsMiNegocioWorkflowTest {
 			appPage.bringToFront();
 			appPage.waitForLoadState(LoadState.DOMCONTENTLOADED);
 		} else {
-			appPage.goBack(new Page.GoBackOptions().setWaitUntil(LoadState.DOMCONTENTLOADED));
+			appPage.goBack(new Page.GoBackOptions().setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
 			appPage.waitForLoadState(LoadState.NETWORKIDLE);
 		}
 	}
@@ -270,7 +272,7 @@ public class SaleadsMiNegocioWorkflowTest {
 
 	private void assertVisible(final Locator locator, final String message) {
 		try {
-			locator.first().waitFor(new Locator.WaitForOptions().setState(Locator.WaitForOptions.State.VISIBLE).setTimeout(15000));
+			locator.first().waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(15000));
 			Assert.assertTrue(message, locator.first().isVisible());
 		} catch (final RuntimeException ex) {
 			throw new AssertionError(message + " Details: " + ex.getMessage(), ex);
