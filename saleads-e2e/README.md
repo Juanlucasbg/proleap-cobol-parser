@@ -23,6 +23,7 @@ From this directory:
 
 ```bash
 npm install
+npx playwright install chromium
 ```
 
 Then run one of:

@@ -145,8 +145,18 @@ async function main() {
     const startUrl = process.env.SALEADS_START_URL;
     const headless = process.env.HEADLESS !== "false";
 
+    if (!wsEndpoint && !startUrl) {
+      throw new Error(
+        "No starting page available. Provide SALEADS_START_URL or PLAYWRIGHT_WS_ENDPOINT with an existing SaleADS login tab.",
+      );
+    }
+
     if (wsEndpoint) {
-      browser = await chromium.connectOverCDP(wsEndpoint);
+      try {
+        browser = await chromium.connectOverCDP(wsEndpoint);
+      } catch (_cdpError) {
+        browser = await chromium.connect(wsEndpoint);
+      }
       context = browser.contexts()[0] || (await browser.newContext());
       page = context.pages()[0] || (await context.newPage());
     } else {
@@ -158,9 +168,9 @@ async function main() {
       }
     }
 
-    if (page.url() === "about:blank" && !startUrl) {
+    if (page.url() === "about:blank" && wsEndpoint) {
       throw new Error(
-        "No starting page available. Provide SALEADS_START_URL or PLAYWRIGHT_WS_ENDPOINT with an existing SaleADS login tab.",
+        "Connected browser has no active SaleADS tab. Open the login page first, then re-run.",
       );
     }
 
