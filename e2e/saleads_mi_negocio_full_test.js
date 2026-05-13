@@ -29,6 +29,16 @@ async function firstVisible(locators) {
   return null;
 }
 
+async function firstVisibleInput(page, locators) {
+  for (const locator of locators) {
+    if (await locator.isVisible().catch(() => false)) {
+      return locator;
+    }
+  }
+
+  return null;
+}
+
 async function clickVisible(page, labelOrRegex, options = {}) {
   const exact = typeof labelOrRegex === "string";
   const textLocator = page.getByText(labelOrRegex, { exact }).first();
@@ -263,21 +273,20 @@ async function main() {
     try {
       await clickVisible(page, /Agregar Negocio/i);
       const titleVisible = await isAnyVisible(page, [/Crear Nuevo Negocio/i]);
-      const nameInputVisible =
-        (await page.getByLabel(/Nombre del Negocio/i).first().isVisible().catch(() => false)) ||
-        (await page.locator("input[placeholder*='Nombre']").first().isVisible().catch(() => false));
+      const nameInput = await firstVisibleInput(page, [
+        page.getByLabel(/Nombre del Negocio/i).first(),
+        page.locator("input[placeholder*='Nombre']").first()
+      ]);
+      const nameInputVisible = Boolean(nameInput);
       const quotaVisible = await isAnyVisible(page, [/Tienes 2 de 3 negocios/i]);
       const cancelVisible = await isAnyVisible(page, [/Cancelar/i]);
       const createVisible = await isAnyVisible(page, [/Crear Negocio/i]);
 
       const modalShot = await capture(page, artifactDir, "03_agregar_negocio_modal");
 
-      if (nameInputVisible) {
-        const input =
-          page.getByLabel(/Nombre del Negocio/i).first() ||
-          page.locator("input[placeholder*='Nombre']").first();
-        await input.click();
-        await input.fill("Negocio Prueba Automatización");
+      if (nameInput) {
+        await nameInput.click();
+        await nameInput.fill("Negocio Prueba Automatización");
         await waitForUi(page);
       }
 
@@ -365,7 +374,9 @@ async function main() {
         report.results,
         "Información General",
         emailVisible && nameVisible && planVisible && changePlanVisible,
-        "Información General card validated.",
+        emailVisible && nameVisible && planVisible && changePlanVisible
+          ? "Información General card validated."
+          : "Información General card is visible but one or more required fields are missing.",
         { checks: { nameVisible, emailVisible, planVisible, changePlanVisible } }
       );
     } catch (error) {
@@ -389,7 +400,9 @@ async function main() {
         report.results,
         "Detalles de la Cuenta",
         createdVisible && activeVisible && langVisible,
-        "Detalles de la Cuenta validated.",
+        createdVisible && activeVisible && langVisible
+          ? "Detalles de la Cuenta validated."
+          : "Detalles de la Cuenta section is visible but one or more required fields are missing.",
         { checks: { createdVisible, activeVisible, langVisible } }
       );
     } catch (error) {
@@ -413,7 +426,9 @@ async function main() {
         report.results,
         "Tus Negocios",
         listVisible && addButtonVisible && quotaVisible,
-        "Tus Negocios section validated.",
+        listVisible && addButtonVisible && quotaVisible
+          ? "Tus Negocios section validated."
+          : "Tus Negocios section is visible but one or more required fields are missing.",
         { checks: { listVisible, addButtonVisible, quotaVisible } }
       );
     } catch (error) {
