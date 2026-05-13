@@ -184,6 +184,10 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   });
 
   await runStep("Mi Negocio menu", async () => {
+    if (results.Login.status === "FAIL") {
+      throw new Error("Blocked because Login step failed.");
+    }
+
     const miNegocioToggle = await findActionByText(page, /mi negocio|negocio/i);
 
     if (!miNegocioToggle) {
@@ -200,6 +204,10 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   });
 
   await runStep("Agregar Negocio modal", async () => {
+    if (results["Mi Negocio menu"].status === "FAIL") {
+      throw new Error("Blocked because Mi Negocio menu step failed.");
+    }
+
     const addBusinessAction = await findActionByText(page, /agregar negocio/i);
 
     if (!addBusinessAction) {
@@ -241,6 +249,10 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   });
 
   await runStep("Administrar Negocios view", async () => {
+    if (results["Mi Negocio menu"].status === "FAIL") {
+      throw new Error("Blocked because Mi Negocio menu step failed.");
+    }
+
     const manageBusinessOptionVisible = await findActionByText(page, /administrar negocios/i);
 
     if (!manageBusinessOptionVisible) {
@@ -271,6 +283,10 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   });
 
   await runStep("Información General", async () => {
+    if (results["Administrar Negocios view"].status === "FAIL") {
+      throw new Error("Blocked because Administrar Negocios view step failed.");
+    }
+
     const section = await getSectionContainer(page, /información general/i);
     const sectionText = (await section.innerText()).replace(/\s+/g, " ").trim();
 
@@ -298,6 +314,10 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   });
 
   await runStep("Detalles de la Cuenta", async () => {
+    if (results["Administrar Negocios view"].status === "FAIL") {
+      throw new Error("Blocked because Administrar Negocios view step failed.");
+    }
+
     const section = await getSectionContainer(page, /detalles de la cuenta/i);
     const sectionText = await section.innerText();
 
@@ -315,6 +335,10 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   });
 
   await runStep("Tus Negocios", async () => {
+    if (results["Administrar Negocios view"].status === "FAIL") {
+      throw new Error("Blocked because Administrar Negocios view step failed.");
+    }
+
     const section = await getSectionContainer(page, /tus negocios/i);
     const sectionText = await section.innerText();
 
@@ -349,6 +373,10 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
     screenshotName: string,
   ): Promise<void> {
     await runStep(field, async () => {
+      if (results["Administrar Negocios view"].status === "FAIL") {
+        throw new Error("Blocked because Administrar Negocios view step failed.");
+      }
+
       const link = await findActionByText(page, linkText);
 
       if (!link) {
