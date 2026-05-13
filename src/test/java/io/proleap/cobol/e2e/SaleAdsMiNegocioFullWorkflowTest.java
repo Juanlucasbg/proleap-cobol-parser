@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.openqa.selenium.By;
@@ -71,6 +72,13 @@ public class SaleAdsMiNegocioFullWorkflowTest {
 			driver.get(saleAdsLoginUrl);
 		}
 		waitForUiLoad();
+
+		final String currentUrl = driver.getCurrentUrl();
+		final boolean looksUninitialized = currentUrl == null || currentUrl.isBlank()
+				|| "about:blank".equalsIgnoreCase(currentUrl);
+		Assume.assumeTrue(
+				"Provide SALEADS_LOGIN_URL (or pre-initialize the browser session on SaleADS login page) before running this E2E test.",
+				!looksUninitialized);
 	}
 
 	@After
