@@ -194,6 +194,30 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+### Run SaleADS Mi Negocio E2E workflow test
+
+The repository now includes an end-to-end test that validates the SaleADS "Mi Negocio" workflow with Google login and legal links.
+
+The test is environment-agnostic and does not hardcode any domain. Provide the login URL for the target environment using an environment variable or JVM property:
+
+```
+$ SALEADS_LOGIN_URL="https://<your-saleads-environment>/login" mvn -Dtest=SaleadsMiNegocioWorkflowTest test
+```
+
+or
+
+```
+$ mvn -Dtest=SaleadsMiNegocioWorkflowTest -Dsaleads.login.url="https://<your-saleads-environment>/login" test
+```
+
+Optional settings:
+
+* `SALEADS_HEADLESS` or `-Dsaleads.headless` (default: `true`)
+
+Evidence artifacts:
+
+* Screenshots and final step report output are stored under `target/saleads-evidence/<timestamp>/`.
+
 
 Release process
 ---------------
