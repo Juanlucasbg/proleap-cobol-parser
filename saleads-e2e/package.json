@@ -1,0 +1,16 @@
+{
+  "name": "saleads-e2e",
+  "version": "1.0.0",
+  "description": "Environment-agnostic Playwright workflow for SaleADS Mi Negocio module",
+  "main": "run-saleads-mi-negocio-workflow.js",
+  "scripts": {
+    "test": "node run-saleads-mi-negocio-workflow.js",
+    "test:mi-negocio": "node run-saleads-mi-negocio-workflow.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "playwright": "^1.60.0"
+  }
+}
