@@ -1,0 +1,13 @@
+{
+  "name": "saleads-e2e-tests",
+  "private": true,
+  "version": "1.0.0",
+  "description": "SaleADS end-to-end UI tests",
+  "scripts": {
+    "test:mi-negocio": "playwright test saleads-mi-negocio.spec.js --config=playwright.config.js",
+    "test": "playwright test --config=playwright.config.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.53.0"
+  }
+}
