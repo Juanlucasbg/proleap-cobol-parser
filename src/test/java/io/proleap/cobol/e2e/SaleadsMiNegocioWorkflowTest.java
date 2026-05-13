@@ -45,11 +45,11 @@ public class SaleadsMiNegocioWorkflowTest {
 	private static final String REPORT_MENU = "Mi Negocio menu";
 	private static final String REPORT_AGREGAR_MODAL = "Agregar Negocio modal";
 	private static final String REPORT_ADMIN_VIEW = "Administrar Negocios view";
-	private static final String REPORT_INFO_GENERAL = "Informacion General";
+	private static final String REPORT_INFO_GENERAL = "Informaci\u00f3n General";
 	private static final String REPORT_DETALLES = "Detalles de la Cuenta";
 	private static final String REPORT_TUS_NEGOCIOS = "Tus Negocios";
-	private static final String REPORT_TERMINOS = "Terminos y Condiciones";
-	private static final String REPORT_PRIVACIDAD = "Politica de Privacidad";
+	private static final String REPORT_TERMINOS = "T\u00e9rminos y Condiciones";
+	private static final String REPORT_PRIVACIDAD = "Pol\u00edtica de Privacidad";
 
 	private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(30);
 	private static final Duration SHORT_TIMEOUT = Duration.ofSeconds(8);
@@ -500,8 +500,8 @@ public class SaleadsMiNegocioWorkflowTest {
 			reportBuilder.append('\n');
 		}
 		reportBuilder.append('\n');
-		reportBuilder.append("Terminos URL: ").append(termsUrl.isBlank() ? "N/A" : termsUrl).append('\n');
-		reportBuilder.append("Politica URL: ").append(privacyUrl.isBlank() ? "N/A" : privacyUrl).append('\n');
+		reportBuilder.append("T\u00e9rminos URL: ").append(termsUrl.isBlank() ? "N/A" : termsUrl).append('\n');
+		reportBuilder.append("Pol\u00edtica URL: ").append(privacyUrl.isBlank() ? "N/A" : privacyUrl).append('\n');
 		reportBuilder.append("Screenshots directory: ").append(screenshotsDirectory.toAbsolutePath()).append('\n');
 
 		final Path reportPath = screenshotsDirectory.resolve("final-report.txt");
