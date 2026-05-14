@@ -22,11 +22,11 @@ const FINAL_FIELDS = [
   { key: "miNegocioMenu", label: "Mi Negocio menu" },
   { key: "agregarNegocioModal", label: "Agregar Negocio modal" },
   { key: "administrarNegociosView", label: "Administrar Negocios view" },
-  { key: "informacionGeneral", label: "Informacion General" },
+  { key: "informacionGeneral", label: "Información General" },
   { key: "detallesCuenta", label: "Detalles de la Cuenta" },
   { key: "tusNegocios", label: "Tus Negocios" },
-  { key: "terminosCondiciones", label: "Terminos y Condiciones" },
-  { key: "politicaPrivacidad", label: "Politica de Privacidad" },
+  { key: "terminosCondiciones", label: "Términos y Condiciones" },
+  { key: "politicaPrivacidad", label: "Política de Privacidad" },
 ];
 
 function mkdirp(dirPath) {
@@ -422,7 +422,7 @@ async function run() {
     logValidation(step5, "Text 'BUSINESS PLAN' is visible", businessPlanVisible);
     logValidation(step5, "Button 'Cambiar Plan' is visible", cambiarPlanVisible);
     finishStep(step5);
-    report.finalReport["Informacion General"] = step5.status;
+    report.finalReport["Información General"] = step5.status;
 
     const step6 = createStep(6, "Validate Detalles de la Cuenta");
     report.steps.push(step6);
@@ -518,7 +518,7 @@ async function run() {
     }
 
     finishStep(step8);
-    report.finalReport["Terminos y Condiciones"] = step8.status;
+    report.finalReport["Términos y Condiciones"] = step8.status;
 
     const step9 = createStep(9, "Validate Politica de Privacidad");
     report.steps.push(step9);
@@ -573,7 +573,7 @@ async function run() {
     }
 
     finishStep(step9);
-    report.finalReport["Politica de Privacidad"] = step9.status;
+    report.finalReport["Política de Privacidad"] = step9.status;
   } catch (error) {
     report.status = "FAIL";
     report.error = normalizeWhitespace(error && error.stack ? error.stack : String(error));
