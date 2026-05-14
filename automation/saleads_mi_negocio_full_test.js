@@ -184,9 +184,11 @@ async function run() {
     }
 
     const appSurfaceVisible = await isVisible(
-      page.locator("aside, nav").filter({ hasText: /negocio|dashboard|inicio|campa/i })
+      page
+        .locator("aside, nav")
+        .filter({ hasText: /mi negocio|administrar negocios|negocio|campa[ñn]a|dashboard|inicio/i })
     );
-    const sidebarVisible = await isVisible(page.locator("aside, nav"));
+    const sidebarVisible = appSurfaceVisible;
     addValidation(steps.login, "Main application interface appears", appSurfaceVisible);
     addValidation(steps.login, "Left sidebar navigation is visible", sidebarVisible);
     steps.login.evidence.dashboardScreenshot = await saveCheckpoint(page, runDir, 1, "dashboard-loaded");
@@ -342,78 +344,94 @@ async function run() {
     finalizeStep(steps.businessList);
 
     // Step 8: Validate Términos y Condiciones.
-    const termsLink = await firstVisibleLocator([
-      page.getByRole("link", { name: /Términos y Condiciones/i }),
-      page.getByText(/Términos y Condiciones/i)
-    ]);
-    addValidation(steps.terms, "Términos y Condiciones link is visible", !!termsLink);
-    let termsPage = page;
-    if (termsLink) {
-      const popupPromise = context.waitForEvent("page", { timeout: 8000 }).catch(() => null);
-      await termsLink.click();
-      const maybePopup = await popupPromise;
-      if (maybePopup) {
-        termsPage = maybePopup;
-        await termsPage.waitForLoadState("domcontentloaded", { timeout: 15000 }).catch(() => {});
-      } else {
-        await waitForUi(page);
+    if (steps.manageView.status !== "PASS") {
+      addValidation(steps.terms, "Términos y Condiciones link is visible", false, "Prerequisite not met: Administrar Negocios view did not load.");
+      addValidation(steps.terms, "Page contains heading Términos y Condiciones", false, "Prerequisite not met.");
+      addValidation(steps.terms, "Legal content text is visible", false, "Prerequisite not met.");
+    } else {
+      const termsLink = await firstVisibleLocator([
+        page.getByRole("link", { name: /Términos y Condiciones/i }),
+        page.getByText(/Términos y Condiciones/i)
+      ]);
+      addValidation(steps.terms, "Términos y Condiciones link is visible", !!termsLink);
+      let termsPage = page;
+      if (termsLink) {
+        const popupPromise = context.waitForEvent("page", { timeout: 8000 }).catch(() => null);
+        await termsLink.click();
+        const maybePopup = await popupPromise;
+        if (maybePopup) {
+          termsPage = maybePopup;
+          await termsPage.waitForLoadState("domcontentloaded", { timeout: 15000 }).catch(() => {});
+        } else {
+          await waitForUi(page);
+        }
       }
-    }
-    addValidation(
-      steps.terms,
-      "Page contains heading Términos y Condiciones",
-      await isVisible(
+
+      const termsHeadingVisible = await isVisible(
         termsPage
           .getByRole("heading", { name: /Términos y Condiciones/i })
           .or(termsPage.getByText(/Términos y Condiciones/i))
-      )
-    );
-    const termsText = await termsPage.locator("body").innerText().catch(() => "");
-    addValidation(steps.terms, "Legal content text is visible", termsText.replace(/\s+/g, " ").trim().length > 200);
-    steps.terms.evidence.screenshot = await saveCheckpoint(termsPage, runDir, 8, "terminos-y-condiciones", true);
-    steps.terms.evidence.finalUrl = termsPage.url();
-    if (termsPage !== page) {
-      await termsPage.close().catch(() => {});
-      await page.bringToFront();
-      await waitForUi(page);
+      );
+      addValidation(steps.terms, "Page contains heading Términos y Condiciones", termsHeadingVisible);
+      const termsText = await termsPage.locator("body").innerText().catch(() => "");
+      addValidation(
+        steps.terms,
+        "Legal content text is visible",
+        termsHeadingVisible && termsText.replace(/\s+/g, " ").trim().length > 200
+      );
+      steps.terms.evidence.screenshot = await saveCheckpoint(termsPage, runDir, 8, "terminos-y-condiciones", true);
+      steps.terms.evidence.finalUrl = termsPage.url();
+      if (termsPage !== page) {
+        await termsPage.close().catch(() => {});
+        await page.bringToFront();
+        await waitForUi(page);
+      }
     }
     finalizeStep(steps.terms);
 
     // Step 9: Validate Política de Privacidad.
-    const privacyLink = await firstVisibleLocator([
-      page.getByRole("link", { name: /Política de Privacidad/i }),
-      page.getByText(/Política de Privacidad/i)
-    ]);
-    addValidation(steps.privacy, "Política de Privacidad link is visible", !!privacyLink);
-    let privacyPage = page;
-    if (privacyLink) {
-      const popupPromise = context.waitForEvent("page", { timeout: 8000 }).catch(() => null);
-      await privacyLink.click();
-      const maybePopup = await popupPromise;
-      if (maybePopup) {
-        privacyPage = maybePopup;
-        await privacyPage.waitForLoadState("domcontentloaded", { timeout: 15000 }).catch(() => {});
-      } else {
-        await waitForUi(page);
+    if (steps.manageView.status !== "PASS") {
+      addValidation(steps.privacy, "Política de Privacidad link is visible", false, "Prerequisite not met: Administrar Negocios view did not load.");
+      addValidation(steps.privacy, "Page contains heading Política de Privacidad", false, "Prerequisite not met.");
+      addValidation(steps.privacy, "Legal content text is visible", false, "Prerequisite not met.");
+    } else {
+      const privacyLink = await firstVisibleLocator([
+        page.getByRole("link", { name: /Política de Privacidad/i }),
+        page.getByText(/Política de Privacidad/i)
+      ]);
+      addValidation(steps.privacy, "Política de Privacidad link is visible", !!privacyLink);
+      let privacyPage = page;
+      if (privacyLink) {
+        const popupPromise = context.waitForEvent("page", { timeout: 8000 }).catch(() => null);
+        await privacyLink.click();
+        const maybePopup = await popupPromise;
+        if (maybePopup) {
+          privacyPage = maybePopup;
+          await privacyPage.waitForLoadState("domcontentloaded", { timeout: 15000 }).catch(() => {});
+        } else {
+          await waitForUi(page);
+        }
       }
-    }
-    addValidation(
-      steps.privacy,
-      "Page contains heading Política de Privacidad",
-      await isVisible(
+
+      const privacyHeadingVisible = await isVisible(
         privacyPage
           .getByRole("heading", { name: /Política de Privacidad/i })
           .or(privacyPage.getByText(/Política de Privacidad/i))
-      )
-    );
-    const privacyText = await privacyPage.locator("body").innerText().catch(() => "");
-    addValidation(steps.privacy, "Legal content text is visible", privacyText.replace(/\s+/g, " ").trim().length > 200);
-    steps.privacy.evidence.screenshot = await saveCheckpoint(privacyPage, runDir, 9, "politica-de-privacidad", true);
-    steps.privacy.evidence.finalUrl = privacyPage.url();
-    if (privacyPage !== page) {
-      await privacyPage.close().catch(() => {});
-      await page.bringToFront();
-      await waitForUi(page);
+      );
+      addValidation(steps.privacy, "Page contains heading Política de Privacidad", privacyHeadingVisible);
+      const privacyText = await privacyPage.locator("body").innerText().catch(() => "");
+      addValidation(
+        steps.privacy,
+        "Legal content text is visible",
+        privacyHeadingVisible && privacyText.replace(/\s+/g, " ").trim().length > 200
+      );
+      steps.privacy.evidence.screenshot = await saveCheckpoint(privacyPage, runDir, 9, "politica-de-privacidad", true);
+      steps.privacy.evidence.finalUrl = privacyPage.url();
+      if (privacyPage !== page) {
+        await privacyPage.close().catch(() => {});
+        await page.bringToFront();
+        await waitForUi(page);
+      }
     }
     finalizeStep(steps.privacy);
   } catch (error) {
