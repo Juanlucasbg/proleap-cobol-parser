@@ -548,6 +548,26 @@ public class SaleadsMiNegocioFullTest {
 		return text.replace("\u00e9", "e").replace("\u00ed", "i").replace("\u00f3", "o").replace("\u00e1", "a").replace("\u00fa", "u");
 	}
 
+	private String xpathLiteral(final String text) {
+		if (!text.contains("'")) {
+			return "'" + text + "'";
+		}
+		if (!text.contains("\"")) {
+			return "\"" + text + "\"";
+		}
+
+		final String[] parts = text.split("'");
+		final StringBuilder xpath = new StringBuilder("concat(");
+		for (int index = 0; index < parts.length; index++) {
+			if (index > 0) {
+				xpath.append(", \"'\", ");
+			}
+			xpath.append("'").append(parts[index]).append("'");
+		}
+		xpath.append(")");
+		return xpath.toString();
+	}
+
 	private boolean getBooleanConfig(final String propertyKey, final String envKey, final boolean defaultValue) {
 		final String value = getStringConfig(propertyKey, envKey, null);
 		if (value == null) {
