@@ -194,6 +194,29 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+SaleADS Mi Negocio automation
+-----------------------------
+
+This repository also includes a standalone Playwright workflow script for validating the SaleADS.ai "Mi Negocio" module end-to-end, including Google login, menu expansion, modal checks, account sections, legal links, screenshots, and a final PASS/FAIL report.
+
+Install dependencies:
+
+```
+$ npm install
+```
+
+Run the workflow against any environment:
+
+```
+$ SALEADS_START_URL="https://your-environment-login-url" npm run saleads:mi-negocio:test
+```
+
+Notes:
+
+* The script does not hardcode any SaleADS domain and can run against dev/staging/prod by changing `SALEADS_START_URL`.
+* If legal links open in a new tab, the script validates the new tab and returns to the app tab.
+* Evidence and JSON report are generated under `artifacts/saleads-mi-negocio/<run-id>/`.
+
 
 Release process
 ---------------
