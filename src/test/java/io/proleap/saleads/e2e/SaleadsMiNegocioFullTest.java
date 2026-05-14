@@ -27,6 +27,7 @@ import org.openqa.selenium.Dimension;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.OutputType;
+import org.openqa.selenium.SearchContext;
 import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.TimeoutException;
@@ -415,7 +416,7 @@ public class SaleadsMiNegocioFullTest {
 	}
 
 	private void captureScreenshot(final String checkpointName) {
-		if (!(driver instanceof TakesScreenshot)) {
+		if (screenshotDirectory == null || !(driver instanceof TakesScreenshot)) {
 			return;
 		}
 		try {
