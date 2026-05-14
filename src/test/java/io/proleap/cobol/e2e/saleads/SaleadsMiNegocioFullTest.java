@@ -55,7 +55,7 @@ public class SaleadsMiNegocioFullTest {
 	private String privacyUrl = "N/A";
 
 	@Before
-	public void setUp() throws IOException {
+	public void setUp() throws Exception {
 		final boolean enabled = Boolean.parseBoolean(config("saleads.e2e.enabled", "SALEADS_E2E_ENABLED", "false"));
 		Assume.assumeTrue(
 				"Set SALEADS_E2E_ENABLED=true (or -Dsaleads.e2e.enabled=true) to run the SaleADS E2E workflow test.",
