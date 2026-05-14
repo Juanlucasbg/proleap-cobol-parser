@@ -194,6 +194,21 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+* To run the SaleADS "Mi Negocio" end-to-end workflow test (Google login + module validations):
+
+```
+$ mvn -Dtest=io.proleap.saleads.e2e.SaleadsMiNegocioFullTest \
+      -Dsaleads.e2e.enabled=true \
+      -Dsaleads.login.url=<saleads-login-url> \
+      test
+```
+
+  - The URL is injected at runtime so the same test can run against dev, staging, or production.
+  - Optional overrides:
+    - `-Dsaleads.google.account.email=<email>` (default: `juanlucasbarbiergarzon@gmail.com`)
+    - `-Dsaleads.headless=false` to run with a visible browser
+  - Screenshots and final step report are written under `target/saleads-e2e-evidence/<timestamp>/`.
+
 
 Release process
 ---------------
