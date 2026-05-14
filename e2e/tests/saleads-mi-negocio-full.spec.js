@@ -119,18 +119,21 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
   test.slow();
 
   const report = createReport();
+  const startupBlockerMessage =
+    "The browser opened on about:blank. Set SALEADS_LOGIN_URL (or SALEADS_BASE_URL / BASE_URL) to the current environment login page.";
 
   const loginUrl = process.env.SALEADS_LOGIN_URL || process.env.SALEADS_BASE_URL || process.env.BASE_URL;
   if (loginUrl) {
     await page.goto(loginUrl, { waitUntil: "domcontentloaded" });
-  } else if (page.url() === "about:blank") {
-    throw new Error(
-      "The browser opened on about:blank. Set SALEADS_LOGIN_URL (or SALEADS_BASE_URL / BASE_URL) to the current environment login page."
-    );
   }
+  const startupBlocked = !loginUrl && page.url() === "about:blank";
 
   await test.step("1) Login with Google", async () => {
     try {
+      if (startupBlocked) {
+        throw new Error(startupBlockerMessage);
+      }
+
       const signInWithGoogle = await resolveVisibleLocator([
         page.getByRole("button", { name: /google/i }),
         page.getByRole("link", { name: /google/i }),
@@ -168,6 +171,10 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
 
   await test.step("2) Open Mi Negocio menu", async () => {
     try {
+      if (startupBlocked) {
+        throw new Error(startupBlockerMessage);
+      }
+
       const negocioSection = await resolveVisibleLocator([
         page.getByRole("button", { name: /^Negocio$/i }),
         page.getByRole("link", { name: /^Negocio$/i }),
@@ -198,6 +205,10 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
 
   await test.step("3) Validate Agregar Negocio modal", async () => {
     try {
+      if (startupBlocked) {
+        throw new Error(startupBlockerMessage);
+      }
+
       const agregarNegocio = await resolveVisibleLocator([
         page.getByRole("button", { name: /Agregar Negocio/i }),
         page.getByRole("link", { name: /Agregar Negocio/i }),
@@ -228,6 +239,10 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
 
   await test.step("4) Open Administrar Negocios", async () => {
     try {
+      if (startupBlocked) {
+        throw new Error(startupBlockerMessage);
+      }
+
       const administrarVisible = await page
         .getByText(/Administrar Negocios/i)
         .first()
@@ -268,6 +283,10 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
 
   await test.step("5) Validate Información General", async () => {
     try {
+      if (startupBlocked) {
+        throw new Error(startupBlockerMessage);
+      }
+
       await expect(page.getByText(/Informacion General|Información General/i).first()).toBeVisible();
 
       const userNameHint = await resolveVisibleLocator([
@@ -289,6 +308,10 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
 
   await test.step("6) Validate Detalles de la Cuenta", async () => {
     try {
+      if (startupBlocked) {
+        throw new Error(startupBlockerMessage);
+      }
+
       await expect(page.getByText(/Detalles de la Cuenta/i).first()).toBeVisible();
       await expect(page.getByText(/Cuenta creada/i).first()).toBeVisible();
       await expect(page.getByText(/Estado activo/i).first()).toBeVisible();
@@ -302,6 +325,10 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
 
   await test.step("7) Validate Tus Negocios", async () => {
     try {
+      if (startupBlocked) {
+        throw new Error(startupBlockerMessage);
+      }
+
       await expect(page.getByText(/Tus Negocios/i).first()).toBeVisible();
       await expect(page.getByRole("button", { name: /Agregar Negocio/i }).first()).toBeVisible();
       await expect(page.getByText(/Tienes 2 de 3 negocios/i).first()).toBeVisible();
@@ -317,6 +344,10 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
 
   await test.step("8) Validate Términos y Condiciones", async () => {
     try {
+      if (startupBlocked) {
+        throw new Error(startupBlockerMessage);
+      }
+
       await validateLegalLink({
         page,
         testInfo,
@@ -333,6 +364,10 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
 
   await test.step("9) Validate Política de Privacidad", async () => {
     try {
+      if (startupBlocked) {
+        throw new Error(startupBlockerMessage);
+      }
+
       await validateLegalLink({
         page,
         testInfo,
