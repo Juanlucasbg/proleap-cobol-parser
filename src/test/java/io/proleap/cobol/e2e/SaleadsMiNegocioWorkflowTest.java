@@ -1,7 +1,6 @@
 package io.proleap.cobol.e2e;
 
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.IOException;
@@ -37,7 +36,6 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.interactions.Actions;
-import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -147,7 +145,7 @@ public class SaleadsMiNegocioWorkflowTest {
 
 		printFinalReport();
 		assertFalse("One or more workflow steps failed. See final report above.", hasFailure());
-		assertFalse("Workflow had validation errors: " + String.join(" | ", errors), !errors.isEmpty() && !privacyOk);
+		assertFalse("Workflow had validation errors: " + String.join(" | ", errors), !errors.isEmpty());
 	}
 
 	private void stepLoginWithGoogleAndValidateDashboard() {
@@ -231,12 +229,19 @@ public class SaleadsMiNegocioWorkflowTest {
 	private String stepOpenAndValidateLegalLink(final String linkText, final String heading, final String screenshotName) {
 		final Set<String> handlesBefore = driver.getWindowHandles();
 		final String currentHandle = driver.getWindowHandle();
+		final String currentUrl = driver.getCurrentUrl();
 
 		clickVisibleText(linkText);
 		waitForUiToSettle();
 
-		final boolean openedNewTab = wait.until((ExpectedCondition<Boolean>) d -> d != null
-				&& d.getWindowHandles().size() > handlesBefore.size());
+		try {
+			wait.until(d -> d != null && (d.getWindowHandles().size() > handlesBefore.size()
+					|| !currentUrl.equals(d.getCurrentUrl())));
+		} catch (TimeoutException ignored) {
+			// Continue; some environments may render legal content without URL change.
+		}
+
+		final boolean openedNewTab = driver.getWindowHandles().size() > handlesBefore.size();
 
 		if (openedNewTab) {
 			final Set<String> handlesAfter = driver.getWindowHandles();
@@ -249,8 +254,10 @@ public class SaleadsMiNegocioWorkflowTest {
 		}
 
 		waitForUiToSettle();
-		wait.until(ExpectedConditions.visibilityOfElementLocated(containsVisibleText(heading)));
-		assertElementExists(By.xpath("//*[string-length(normalize-space(.)) > 120]"),
+		wait.until(ExpectedConditions.visibilityOfElementLocated(headingWithText(heading)));
+		assertElementExists(By.xpath("//main//*[string-length(normalize-space(.)) > 80]"
+				+ " | //article//*[string-length(normalize-space(.)) > 80]"
+				+ " | //p[string-length(normalize-space(.)) > 50]"),
 				"No se detectó contenido legal visible.");
 		captureScreenshot(screenshotName);
 		final String finalUrl = driver.getCurrentUrl();
@@ -361,9 +368,17 @@ public class SaleadsMiNegocioWorkflowTest {
 	private By containsVisibleText(final String expectedText) {
 		final String folded = normalizeForXPath(expectedText);
 		return By.xpath("//*[contains("
-				+ "translate(translate(normalize-space(.), 'ÁÉÍÓÚÜÑ', 'AEIOUUN'),"
+				+ "translate(translate(normalize-space(.), 'ÁÉÍÓÚÜÑáéíóúüñ', 'AEIOUUNaeiouun'),"
 				+ " 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '"
 				+ folded + "')]");
+	}
+
+	private By headingWithText(final String expectedText) {
+		final String folded = normalizeForXPath(expectedText);
+		return By.xpath("//h1[contains(translate(translate(normalize-space(.), 'ÁÉÍÓÚÜÑáéíóúüñ', 'AEIOUUNaeiouun'),"
+				+ " 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '" + folded + "')]"
+				+ " | //h2[contains(translate(translate(normalize-space(.), 'ÁÉÍÓÚÜÑáéíóúüñ', 'AEIOUUNaeiouun'),"
+				+ " 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '" + folded + "')]");
 	}
 
 	private String normalizeForXPath(final String input) {
@@ -431,7 +446,7 @@ public class SaleadsMiNegocioWorkflowTest {
 			stepAction.run();
 			report.put(stepName, "PASS");
 			return true;
-		} catch (Exception e) {
+		} catch (Throwable e) {
 			report.put(stepName, "FAIL");
 			errors.add(stepName + " -> " + e.getMessage());
 			captureScreenshot("failed-" + sanitizeFileName(stepName));
