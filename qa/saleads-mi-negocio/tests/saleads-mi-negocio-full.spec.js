@@ -44,6 +44,24 @@ async function clickByVisibleText(page, candidates) {
   await waitForUi(page);
 }
 
+async function hasVisibleByText(page, candidates) {
+  for (const candidate of candidates) {
+    const locator =
+      candidate instanceof RegExp
+        ? page.getByText(candidate)
+        : page.getByText(candidate, { exact: true });
+
+    const count = await locator.count();
+    for (let i = 0; i < count; i += 1) {
+      if (await locator.nth(i).isVisible()) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
 function formatFailure(error) {
   const raw = (error && error.message ? error.message : String(error)) || "Unknown failure";
   const withoutAnsi = raw.replace(/\u001b\[[0-9;]*m/g, "");
@@ -138,12 +156,35 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
       );
     }
 
-    const popupPromise = context.waitForEvent("page", { timeout: 10000 }).catch(() => null);
-    await clickByVisibleText(page, [
+    const googleLoginCandidates = [
       /Sign in with Google/i,
       /Iniciar sesi[óo]n con Google/i,
       /Continuar con Google/i
-    ]);
+    ];
+
+    if (!(await hasVisibleByText(page, googleLoginCandidates))) {
+      const entryLoginCandidates = [
+        /Iniciar sesi[óo]n/i,
+        /Iniciar sesión/i,
+        /Sign in/i,
+        /Log in/i,
+        /^Login$/i,
+        /Acceder/i
+      ];
+
+      if (await hasVisibleByText(page, entryLoginCandidates)) {
+        await clickByVisibleText(page, entryLoginCandidates);
+      }
+    }
+
+    if (!(await hasVisibleByText(page, googleLoginCandidates))) {
+      const loginUrl = new URL("/login", page.url()).toString();
+      await page.goto(loginUrl, { waitUntil: "domcontentloaded" });
+      await waitForUi(page);
+    }
+
+    const popupPromise = context.waitForEvent("page", { timeout: 10000 }).catch(() => null);
+    await clickByVisibleText(page, googleLoginCandidates);
 
     const popup = await popupPromise;
     const authPage = popup || page;
