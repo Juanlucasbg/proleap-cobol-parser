@@ -303,7 +303,7 @@ public class SaleAdsMiNegocioWorkflowTest {
               () -> loginButton.click(),
               new BrowserContext.WaitForPageOptions().setTimeout(5000));
     } catch (PlaywrightException ignored) {
-      loginButton.click();
+      // Login click may navigate in the same tab when no popup is created.
     }
 
     if (popup != null) {
@@ -353,13 +353,7 @@ public class SaleAdsMiNegocioWorkflowTest {
                           "text=" + linkText)),
               new BrowserContext.WaitForPageOptions().setTimeout(5000));
     } catch (PlaywrightException ignored) {
-      clickByVisibleText(
-          appPage,
-          Arrays.asList(
-              "a:has-text(\"" + linkText + "\")",
-              "button:has-text(\"" + linkText + "\")",
-              "[role='link']:has-text(\"" + linkText + "\")",
-              "text=" + linkText));
+      // Click callback already executed; this branch means navigation stayed in current tab.
     }
 
     Page activePage = legalPage != null ? legalPage : appPage;
