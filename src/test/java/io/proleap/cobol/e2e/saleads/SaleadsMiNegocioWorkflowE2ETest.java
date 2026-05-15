@@ -43,6 +43,7 @@ public class SaleadsMiNegocioWorkflowE2ETest {
 	private final List<String> failures = new ArrayList<>();
 
 	private Path evidenceDir;
+	private boolean environmentReady;
 	private WebDriver driver;
 	private WebDriverWait wait;
 
@@ -69,9 +70,12 @@ public class SaleadsMiNegocioWorkflowE2ETest {
 		if (!loginUrl.isEmpty()) {
 			driver.navigate().to(loginUrl);
 			waitForUiReady();
+			environmentReady = true;
 		} else {
+			environmentReady = false;
 			failures.add(
 					"No SALEADS_LOGIN_URL/SALEADS_BASE_URL configured. Selenium cannot attach to a pre-opened browser tab.");
+			captureScreenshot("00-missing-login-url");
 		}
 	}
 
@@ -104,6 +108,7 @@ public class SaleadsMiNegocioWorkflowE2ETest {
 			if (!clickFirstVisibleText("Sign in with Google", "Iniciar sesión con Google", "Ingresar con Google",
 					"Continuar con Google", "Login with Google", "Google")) {
 				failures.add("Login button with Google text was not found.");
+				captureScreenshot("01-login-button-not-found");
 				return false;
 			}
 			waitForUiReady();
@@ -137,6 +142,7 @@ public class SaleadsMiNegocioWorkflowE2ETest {
 
 		if (!clickFirstVisibleText("Agregar Negocio")) {
 			failures.add("Could not click 'Agregar Negocio'.");
+			captureScreenshot("03-agregar-negocio-click-failed");
 			return false;
 		}
 		waitForUiReady();
@@ -174,6 +180,7 @@ public class SaleadsMiNegocioWorkflowE2ETest {
 
 		if (!clickFirstVisibleText("Administrar Negocios")) {
 			failures.add("Could not click 'Administrar Negocios'.");
+			captureScreenshot("04-administrar-negocios-click-failed");
 			return false;
 		}
 		waitForUiReady();
@@ -296,6 +303,12 @@ public class SaleadsMiNegocioWorkflowE2ETest {
 	}
 
 	private void runStep(final String fieldName, final CheckedStep step) {
+		if (!environmentReady) {
+			report.put(fieldName, false);
+			failures.add(fieldName + " validation failed because environment is not initialized.");
+			return;
+		}
+
 		try {
 			final boolean passed = step.run();
 			report.put(fieldName, passed);
