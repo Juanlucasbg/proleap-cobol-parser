@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.openqa.selenium.By;
@@ -47,6 +48,9 @@ public class SaleAdsMiNegocioWorkflowTest {
 
 	@Before
 	public void setUp() throws IOException {
+		Assume.assumeTrue("Set SALEADS_E2E_ENABLED=true to execute this live workflow test.",
+				Boolean.parseBoolean(readEnvOrDefault("SALEADS_E2E_ENABLED", "false")));
+
 		driver = buildDriver();
 		wait = new WebDriverWait(driver, Duration.ofSeconds(readLongEnv("SALEADS_TIMEOUT_SECONDS", 30)));
 		screenshotDir = createScreenshotDirectory();
