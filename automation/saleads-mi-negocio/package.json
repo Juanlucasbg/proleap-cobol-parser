@@ -1,0 +1,22 @@
+{
+  "name": "saleads-mi-negocio",
+  "version": "1.0.0",
+  "description": "SaleADS Mi Negocio workflow end-to-end test",
+  "type": "module",
+  "scripts": {
+    "pw:install": "playwright install --with-deps",
+    "test": "playwright test",
+    "test:mi-negocio": "playwright test tests/saleads_mi_negocio_full_test.spec.js",
+    "test:mi-negocio:headed": "playwright test tests/saleads_mi_negocio_full_test.spec.js --headed"
+  },
+  "keywords": [
+    "playwright",
+    "saleads",
+    "e2e"
+  ],
+  "author": "Cursor Automation",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.60.0"
+  }
+}
