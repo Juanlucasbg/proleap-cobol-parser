@@ -176,18 +176,20 @@ test.describe("saleads_mi_negocio_full_test", () => {
       }
     };
 
-    if (!loginUrl) {
-      throw new Error(
-        "Set SALEADS_LOGIN_URL, SALEADS_BASE_URL, or TARGET_URL so the test can open the current environment login page.",
-      );
+    if (loginUrl) {
+      await page.goto(loginUrl, { waitUntil: "domcontentloaded" });
+      await waitForUiLoad(page);
     }
-
-    await page.goto(loginUrl, { waitUntil: "domcontentloaded" });
-    await waitForUiLoad(page);
 
     await runStep(
       "Login",
       async () => {
+        if (!loginUrl) {
+          throw new Error(
+            "Missing environment URL. Set SALEADS_LOGIN_URL, SALEADS_BASE_URL, or TARGET_URL.",
+          );
+        }
+
         const sidebarLocators = [
           () => page.locator("aside"),
           () => page.getByRole("navigation"),
