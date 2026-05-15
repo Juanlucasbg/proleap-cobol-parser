@@ -145,6 +145,22 @@ async function getBodyText(page) {
   }
 }
 
+async function assertAppShellReady(page) {
+  const hasSidebar = await anyVisible(
+    [
+      () => page.locator("aside").first(),
+      () => page.locator("nav").first(),
+      () => page.getByText(/Mi\s*Negocio/i).first(),
+      () => page.getByText(/Negocio/i).first(),
+    ],
+    3000,
+  );
+
+  if (!hasSidebar) {
+    throw new Error("Application shell is not ready (sidebar/navigation missing).");
+  }
+}
+
 function record(report, field, status, note) {
   report[field].status = status;
   if (note) {
@@ -207,6 +223,7 @@ async function main() {
 
   const page = await context.newPage();
   let hasFailures = false;
+  let loginConfirmed = false;
 
   try {
     // Step 1 - Login with Google
@@ -220,13 +237,63 @@ async function main() {
       }
 
       await waitForUi(page);
+      let clickedGoogle = await clickByVisibleText(
+        page,
+        [
+          "Sign in with Google",
+          "Iniciar sesión con Google",
+          "Continuar con Google",
+          "Acceder con Google",
+        ],
+        { throwOnNotFound: false },
+      );
+
+      if (!clickedGoogle) {
+        await clickByVisibleText(
+          page,
+          [
+            "Iniciar sesión",
+            "Iniciar Sesión",
+            "Sign in",
+            "Login",
+            "Acceder",
+            "Get started",
+            "Start now",
+            "Comenzar",
+            "Comienza",
+          ],
+          { throwOnNotFound: false, exact: false },
+        );
+        await waitForUi(page);
+
+        clickedGoogle = await clickByVisibleText(
+          page,
+          [
+            "Sign in with Google",
+            "Iniciar sesión con Google",
+            "Continuar con Google",
+            "Acceder con Google",
+            "Google",
+          ],
+          { throwOnNotFound: true, exact: false },
+        );
+      }
+
       const loginPopupPromise = context.waitForEvent("page", { timeout: 7000 }).catch(() => null);
-      await clickByVisibleText(page, [
-        "Sign in with Google",
-        "Iniciar sesión con Google",
-        "Continuar con Google",
-        "Acceder con Google",
-      ]);
+      if (clickedGoogle) {
+        // Re-click for popup-driven login flows after listeners are attached.
+        await clickByVisibleText(
+          page,
+          [
+            "Sign in with Google",
+            "Iniciar sesión con Google",
+            "Continuar con Google",
+            "Acceder con Google",
+            "Google",
+          ],
+          { throwOnNotFound: false, exact: false },
+        );
+      }
 
       const loginPopup = await loginPopupPromise;
       const loginPage = loginPopup || page;
@@ -244,29 +311,28 @@ async function main() {
       }
 
       await waitForUi(page);
-      await assertVisibleByText(page, ["Negocio"], "Main app interface");
-
-      const sidebarVisible = await anyVisible(
-        [
-          () => page.locator("aside").first(),
-          () => page.locator("nav").first(),
-          () => page.getByText(/Mi Negocio/i).first(),
-        ],
-        3000,
-      );
-      if (!sidebarVisible) {
-        throw new Error("Left sidebar navigation is not visible.");
-      }
+      await assertVisibleByText(page, ["Negocio", "Mi Negocio"], "Main app interface");
+      await assertAppShellReady(page);
 
       const dashboardShot = await takeScreenshot(page, outputDir, "01_dashboard_loaded", { fullPage: true });
       record(report, "Login", "PASS", `Screenshot: ${dashboardShot}`);
+      loginConfirmed = true;
     } catch (error) {
       hasFailures = true;
       record(report, "Login", "FAIL", String(error.message || error));
+      const failShot = await takeScreenshot(page, outputDir, "01_login_failed", { fullPage: true }).catch(() => null);
+      if (failShot) {
+        record(report, "Login", "FAIL", `Screenshot: ${failShot}`);
+      }
     }
 
     // Step 2 - Open Mi Negocio menu
     try {
+      if (!loginConfirmed) {
+        throw new Error("Cannot validate Mi Negocio menu because login was not confirmed.");
+      }
+
+      await assertAppShellReady(page);
       await clickByVisibleText(page, ["Negocio"], { throwOnNotFound: false });
       await clickByVisibleText(page, ["Mi Negocio"], { throwOnNotFound: false });
 
@@ -278,10 +344,18 @@ async function main() {
     } catch (error) {
       hasFailures = true;
       record(report, "Mi Negocio menu", "FAIL", String(error.message || error));
+      const failShot = await takeScreenshot(page, outputDir, "02_mi_negocio_menu_failed", { fullPage: true }).catch(() => null);
+      if (failShot) {
+        record(report, "Mi Negocio menu", "FAIL", `Screenshot: ${failShot}`);
+      }
     }
 
     // Step 3 - Validate Agregar Negocio modal
     try {
+      if (!loginConfirmed) {
+        throw new Error("Cannot validate Agregar Negocio modal because login was not confirmed.");
+      }
+
       await clickByVisibleText(page, ["Agregar Negocio"]);
 
       await assertVisibleByText(page, ["Crear Nuevo Negocio"], "Crear Nuevo Negocio modal title");
@@ -315,10 +389,18 @@ async function main() {
     } catch (error) {
       hasFailures = true;
       record(report, "Agregar Negocio modal", "FAIL", String(error.message || error));
+      const failShot = await takeScreenshot(page, outputDir, "03_agregar_negocio_modal_failed", { fullPage: true }).catch(() => null);
+      if (failShot) {
+        record(report, "Agregar Negocio modal", "FAIL", `Screenshot: ${failShot}`);
+      }
     }
 
     // Step 4 - Open Administrar Negocios view
     try {
+      if (!loginConfirmed) {
+        throw new Error("Cannot open Administrar Negocios because login was not confirmed.");
+      }
+
       const adminVisible = await anyVisible([() => page.getByText(/Administrar Negocios/i).first()], 1200);
       if (!adminVisible) {
         await clickByVisibleText(page, ["Mi Negocio"], { throwOnNotFound: false });
@@ -335,10 +417,18 @@ async function main() {
     } catch (error) {
       hasFailures = true;
       record(report, "Administrar Negocios view", "FAIL", String(error.message || error));
+      const failShot = await takeScreenshot(page, outputDir, "04_administrar_negocios_failed", { fullPage: true }).catch(() => null);
+      if (failShot) {
+        record(report, "Administrar Negocios view", "FAIL", `Screenshot: ${failShot}`);
+      }
     }
 
     // Step 5 - Validate Información General
     try {
+      if (!loginConfirmed) {
+        throw new Error("Cannot validate Información General because login was not confirmed.");
+      }
+
       const bodyText = await getBodyText(page);
       const hasEmail = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i.test(bodyText);
       const hasNameClue = /Nombre|Usuario|User\s*Name|Perfil|Cuenta/i.test(bodyText);
@@ -357,10 +447,18 @@ async function main() {
     } catch (error) {
       hasFailures = true;
       record(report, "Información General", "FAIL", String(error.message || error));
+      const failShot = await takeScreenshot(page, outputDir, "05_informacion_general_failed", { fullPage: true }).catch(() => null);
+      if (failShot) {
+        record(report, "Información General", "FAIL", `Screenshot: ${failShot}`);
+      }
     }
 
     // Step 6 - Validate Detalles de la Cuenta
     try {
+      if (!loginConfirmed) {
+        throw new Error("Cannot validate Detalles de la Cuenta because login was not confirmed.");
+      }
+
       await assertVisibleByText(page, ["Cuenta creada"], "Cuenta creada label");
       await assertVisibleByText(page, ["Estado activo"], "Estado activo label");
       await assertVisibleByText(page, ["Idioma seleccionado"], "Idioma seleccionado label");
@@ -368,10 +466,18 @@ async function main() {
     } catch (error) {
       hasFailures = true;
       record(report, "Detalles de la Cuenta", "FAIL", String(error.message || error));
+      const failShot = await takeScreenshot(page, outputDir, "06_detalles_cuenta_failed", { fullPage: true }).catch(() => null);
+      if (failShot) {
+        record(report, "Detalles de la Cuenta", "FAIL", `Screenshot: ${failShot}`);
+      }
     }
 
     // Step 7 - Validate Tus Negocios
     try {
+      if (!loginConfirmed) {
+        throw new Error("Cannot validate Tus Negocios because login was not confirmed.");
+      }
+
       await assertVisibleByText(page, ["Tus Negocios"], "Tus Negocios section");
       await assertVisibleByText(page, ["Agregar Negocio"], "Agregar Negocio button");
       await assertVisibleByText(page, ["Tienes 2 de 3 negocios"], "Business quota text");
@@ -385,10 +491,18 @@ async function main() {
     } catch (error) {
       hasFailures = true;
       record(report, "Tus Negocios", "FAIL", String(error.message || error));
+      const failShot = await takeScreenshot(page, outputDir, "07_tus_negocios_failed", { fullPage: true }).catch(() => null);
+      if (failShot) {
+        record(report, "Tus Negocios", "FAIL", `Screenshot: ${failShot}`);
+      }
     }
 
     // Step 8 - Validate Términos y Condiciones
     try {
+      if (!loginConfirmed) {
+        throw new Error("Cannot validate Términos y Condiciones because login was not confirmed.");
+      }
+
       await validateLegalDocument({
         appPage: page,
         context,
@@ -402,10 +516,18 @@ async function main() {
     } catch (error) {
       hasFailures = true;
       record(report, "Términos y Condiciones", "FAIL", String(error.message || error));
+      const failShot = await takeScreenshot(page, outputDir, "08_terminos_failed", { fullPage: true }).catch(() => null);
+      if (failShot) {
+        record(report, "Términos y Condiciones", "FAIL", `Screenshot: ${failShot}`);
+      }
     }
 
     // Step 9 - Validate Política de Privacidad
     try {
+      if (!loginConfirmed) {
+        throw new Error("Cannot validate Política de Privacidad because login was not confirmed.");
+      }
+
       await validateLegalDocument({
         appPage: page,
         context,
@@ -419,6 +541,10 @@ async function main() {
     } catch (error) {
       hasFailures = true;
       record(report, "Política de Privacidad", "FAIL", String(error.message || error));
+      const failShot = await takeScreenshot(page, outputDir, "09_politica_failed", { fullPage: true }).catch(() => null);
+      if (failShot) {
+        record(report, "Política de Privacidad", "FAIL", `Screenshot: ${failShot}`);
+      }
     }
   } finally {
     const reportPath = path.join(outputDir, `final_report_${slugify(runId)}.json`);
