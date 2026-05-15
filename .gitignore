@@ -41,3 +41,7 @@ target/
 
 ## Additional for IntelliJ
 out/
+
+# Node artifacts used by SaleADS workflow automation
+automation/saleads-mi-negocio/node_modules/
+automation/saleads-mi-negocio/artifacts/

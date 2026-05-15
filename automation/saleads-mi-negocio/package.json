@@ -1,0 +1,16 @@
+{
+  "name": "saleads-mi-negocio",
+  "version": "1.0.0",
+  "description": "",
+  "main": "run-mi-negocio-workflow.js",
+  "scripts": {
+    "test": "node run-mi-negocio-workflow.js",
+    "run": "node run-mi-negocio-workflow.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "playwright": "^1.60.0"
+  }
+}
