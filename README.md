@@ -194,6 +194,19 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+* Optional SaleADS Mi Negocio workflow E2E test:
+
+```
+$ mvn -Dtest=io.proleap.cobol.e2e.SaleadsMiNegocioFullTest test \
+      -Dsaleads.e2e.enabled=true \
+      -Dsaleads.baseUrl=<saleads-login-url> \
+      -Dsaleads.headless=true
+```
+
+  * Uses a configurable `saleads.baseUrl`, so the same test can run against dev, staging, or production environments.
+  * Captures checkpoint screenshots under `target/saleads-evidence/saleads_mi_negocio_full_test/`.
+  * Writes step-by-step PASS/FAIL output to `target/saleads-reports/`.
+
 
 Release process
 ---------------
