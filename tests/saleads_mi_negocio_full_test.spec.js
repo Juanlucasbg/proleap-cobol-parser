@@ -133,6 +133,7 @@ async function returnToApplicationTab(appPage, legalPage, openedNewTab, appUrlBe
 
 test.describe("saleads_mi_negocio_full_test", () => {
   test("Login with Google and validate Mi Negocio workflow", async ({ page, context }) => {
+    test.setTimeout(8 * 60 * 1000);
     ensureArtifactsDir();
 
     const report = {
@@ -175,6 +176,42 @@ test.describe("saleads_mi_negocio_full_test", () => {
         }
       }
     };
+
+    const writeFinalReport = () => {
+      fs.writeFileSync(
+        REPORT_PATH,
+        JSON.stringify(
+          {
+            testName: "saleads_mi_negocio_full_test",
+            generatedAt: new Date().toISOString(),
+            environmentUrl: loginUrl,
+            accountUsed: googleEmail,
+            report,
+            evidence,
+          },
+          null,
+          2,
+        ),
+      );
+
+      // eslint-disable-next-line no-console
+      console.log(`Final report written to: ${REPORT_PATH}`);
+      // eslint-disable-next-line no-console
+      console.log(JSON.stringify(report, null, 2));
+    };
+
+    if (!loginUrl) {
+      const missingUrlReason =
+        "Missing environment URL. Set SALEADS_LOGIN_URL, SALEADS_BASE_URL, or TARGET_URL.";
+
+      for (const fieldName of Object.keys(report)) {
+        report[fieldName] = { status: "FAIL", details: missingUrlReason };
+      }
+
+      failures.push(`Login: ${missingUrlReason}`);
+      writeFinalReport();
+      throw new Error(missingUrlReason);
+    }
 
     if (loginUrl) {
       await page.goto(loginUrl, { waitUntil: "domcontentloaded" });
@@ -471,26 +508,7 @@ test.describe("saleads_mi_negocio_full_test", () => {
       "09_politica_failure.png",
     );
 
-    fs.writeFileSync(
-      REPORT_PATH,
-      JSON.stringify(
-        {
-          testName: "saleads_mi_negocio_full_test",
-          generatedAt: new Date().toISOString(),
-          environmentUrl: loginUrl,
-          accountUsed: googleEmail,
-          report,
-          evidence,
-        },
-        null,
-        2,
-      ),
-    );
-
-    // eslint-disable-next-line no-console
-    console.log(`Final report written to: ${REPORT_PATH}`);
-    // eslint-disable-next-line no-console
-    console.log(JSON.stringify(report, null, 2));
+    writeFinalReport();
 
     expect(
       failures,
