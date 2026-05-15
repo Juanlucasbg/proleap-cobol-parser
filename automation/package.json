@@ -1,0 +1,13 @@
+{
+  "name": "saleads-mi-negocio-automation",
+  "private": true,
+  "version": "1.0.0",
+  "description": "SaleADS Mi Negocio full workflow Playwright automation",
+  "scripts": {
+    "test": "playwright test -c playwright.config.js",
+    "test:headed": "HEADLESS=false playwright test -c playwright.config.js --headed"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0"
+  }
+}
