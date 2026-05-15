@@ -3,7 +3,6 @@ package io.proleap.saleads;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.junit.After;
 import org.junit.Assert;
-import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.openqa.selenium.By;
@@ -87,49 +86,55 @@ public class SaleadsMiNegocioWorkflowTest {
 		try {
 			final String loginUrl = firstNonBlank(System.getenv("SALEADS_LOGIN_URL"), System.getenv("SALEADS_URL"),
 					System.getProperty("saleads.url"));
-			Assume.assumeTrue(
-					"Set SALEADS_LOGIN_URL (or SALEADS_URL/saleads.url) to run this cross-environment UI workflow.",
-					loginUrl != null && !loginUrl.isBlank());
-
-			driver.get(loginUrl);
-			waitForUiToLoad();
-
-			final boolean loginOk = executeStep("Login", this::loginWithGoogleAndValidate, "Dashboard and sidebar visible.");
-			final boolean menuOk = loginOk ? executeStep("Mi Negocio menu", this::openMiNegocioMenuAndValidate,
-					"Mi Negocio menu expanded with both submenu entries.")
-					: markBlocked("Mi Negocio menu", "Login failed; cannot open left navigation.");
-
-			final boolean agregarModalOk = menuOk ? executeStep("Agregar Negocio modal", this::validateAgregarNegocioModal,
-					"Crear Nuevo Negocio modal validated.")
-					: markBlocked("Agregar Negocio modal", "Mi Negocio menu validation failed.");
-
-			final boolean administrarOk = (menuOk || agregarModalOk)
-					? executeStep("Administrar Negocios view", this::openAdministrarNegociosAndValidate,
-							"Account sections are visible.")
-					: markBlocked("Administrar Negocios view", "Navigation prerequisites were not completed.");
-
-			final boolean infoGeneralOk = administrarOk ? executeStep("Información General", this::validateInformacionGeneral,
-					"User data and plan controls are visible.")
-					: markBlocked("Información General", "Administrar Negocios view not available.");
-
-			final boolean detallesOk = administrarOk ? executeStep("Detalles de la Cuenta", this::validateDetallesCuenta,
-					"Cuenta creada, Estado activo, and Idioma seleccionado are visible.")
-					: markBlocked("Detalles de la Cuenta", "Administrar Negocios view not available.");
-
-			final boolean tusNegociosOk = administrarOk ? executeStep("Tus Negocios", this::validateTusNegocios,
-					"Business list plus limits and add action are visible.")
-					: markBlocked("Tus Negocios", "Administrar Negocios view not available.");
-
-			if (administrarOk || infoGeneralOk || detallesOk || tusNegociosOk) {
-				executeStep("Términos y Condiciones",
-						() -> validateLegalLink("Términos y Condiciones", "08-terminos-y-condiciones.png", true),
-						"Legal page validated.");
-				executeStep("Política de Privacidad",
-						() -> validateLegalLink("Política de Privacidad", "09-politica-de-privacidad.png", false),
-						"Privacy page validated.");
+			if (loginUrl == null || loginUrl.isBlank()) {
+				markAllBlocked(
+						"Missing SALEADS_LOGIN_URL (or SALEADS_URL/saleads.url). Configure target environment URL.");
 			} else {
-				markBlocked("Términos y Condiciones", "Legal section is unavailable because account page was not reached.");
-				markBlocked("Política de Privacidad", "Legal section is unavailable because account page was not reached.");
+				driver.get(loginUrl);
+				waitForUiToLoad();
+
+				final boolean loginOk = executeStep("Login", this::loginWithGoogleAndValidate,
+						"Dashboard and sidebar visible.");
+				final boolean menuOk = loginOk ? executeStep("Mi Negocio menu", this::openMiNegocioMenuAndValidate,
+						"Mi Negocio menu expanded with both submenu entries.")
+						: markBlocked("Mi Negocio menu", "Login failed; cannot open left navigation.");
+
+				final boolean agregarModalOk = menuOk ? executeStep("Agregar Negocio modal",
+						this::validateAgregarNegocioModal, "Crear Nuevo Negocio modal validated.")
+						: markBlocked("Agregar Negocio modal", "Mi Negocio menu validation failed.");
+
+				final boolean administrarOk = (menuOk || agregarModalOk)
+						? executeStep("Administrar Negocios view", this::openAdministrarNegociosAndValidate,
+								"Account sections are visible.")
+						: markBlocked("Administrar Negocios view", "Navigation prerequisites were not completed.");
+
+				final boolean infoGeneralOk = administrarOk
+						? executeStep("Información General", this::validateInformacionGeneral,
+								"User data and plan controls are visible.")
+						: markBlocked("Información General", "Administrar Negocios view not available.");
+
+				final boolean detallesOk = administrarOk
+						? executeStep("Detalles de la Cuenta", this::validateDetallesCuenta,
+								"Cuenta creada, Estado activo, and Idioma seleccionado are visible.")
+						: markBlocked("Detalles de la Cuenta", "Administrar Negocios view not available.");
+
+				final boolean tusNegociosOk = administrarOk ? executeStep("Tus Negocios", this::validateTusNegocios,
+						"Business list plus limits and add action are visible.")
+						: markBlocked("Tus Negocios", "Administrar Negocios view not available.");
+
+				if (administrarOk || infoGeneralOk || detallesOk || tusNegociosOk) {
+					executeStep("Términos y Condiciones",
+							() -> validateLegalLink("Términos y Condiciones", "08-terminos-y-condiciones.png", true),
+							"Legal page validated.");
+					executeStep("Política de Privacidad",
+							() -> validateLegalLink("Política de Privacidad", "09-politica-de-privacidad.png", false),
+							"Privacy page validated.");
+				} else {
+					markBlocked("Términos y Condiciones",
+							"Legal section is unavailable because account page was not reached.");
+					markBlocked("Política de Privacidad",
+							"Legal section is unavailable because account page was not reached.");
+				}
 			}
 		} finally {
 			writeFinalReport();
@@ -325,6 +330,12 @@ public class SaleadsMiNegocioWorkflowTest {
 		for (final String field : REPORT_FIELDS) {
 			statusByField.put(field, false);
 			detailByField.put(field, "Not executed.");
+		}
+	}
+
+	private void markAllBlocked(final String reason) {
+		for (final String field : REPORT_FIELDS) {
+			markBlocked(field, reason);
 		}
 	}
 
