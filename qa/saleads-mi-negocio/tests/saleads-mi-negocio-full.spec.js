@@ -44,6 +44,17 @@ async function clickByVisibleText(page, candidates) {
   await waitForUi(page);
 }
 
+function formatFailure(error) {
+  const raw = (error && error.message ? error.message : String(error)) || "Unknown failure";
+  const withoutAnsi = raw.replace(/\u001b\[[0-9;]*m/g, "");
+  const lines = withoutAnsi
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  return lines.slice(0, 3).join(" | ");
+}
+
 async function validateLegalDocument({
   page,
   context,
@@ -103,13 +114,15 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   };
 
   let applicationUrl = "";
+  let loginOk = false;
+  let accountViewOk = false;
 
   const runValidation = async (field, fn) => {
     try {
       await fn();
       report[field] = "PASS";
     } catch (error) {
-      report[field] = `FAIL: ${error.message}`;
+      report[field] = `FAIL: ${formatFailure(error)}`;
     }
   };
 
@@ -156,9 +169,14 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
     const screenshotPath = testInfo.outputPath("01-dashboard-loaded.png");
     await page.screenshot({ path: screenshotPath, fullPage: true });
     evidence.screenshots.push(screenshotPath);
+    loginOk = true;
   });
 
   await runValidation("Mi Negocio menu", async () => {
+    if (!loginOk) {
+      throw new Error("Prerequisite failed: Login");
+    }
+
     await expect(page.locator("aside, nav, [role='navigation']").first()).toBeVisible({
       timeout: 15000
     });
@@ -175,6 +193,10 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   });
 
   await runValidation("Agregar Negocio modal", async () => {
+    if (report["Mi Negocio menu"] !== "PASS") {
+      throw new Error("Prerequisite failed: Mi Negocio menu");
+    }
+
     await clickByVisibleText(page, [/^Agregar Negocio$/i, /Agregar Negocio/i]);
 
     await expect(page.getByText(/Crear Nuevo Negocio/i).first()).toBeVisible({ timeout: 15000 });
@@ -208,6 +230,10 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   });
 
   await runValidation("Administrar Negocios view", async () => {
+    if (report["Mi Negocio menu"] !== "PASS") {
+      throw new Error("Prerequisite failed: Mi Negocio menu");
+    }
+
     const adminOption = page.getByText(/Administrar Negocios/i).first();
     if (!(await adminOption.isVisible())) {
       await clickByVisibleText(page, [/^Mi Negocio$/i, /Mi Negocio/i]);
@@ -225,9 +251,14 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
     const screenshotPath = testInfo.outputPath("04-administrar-negocios.png");
     await page.screenshot({ path: screenshotPath, fullPage: true });
     evidence.screenshots.push(screenshotPath);
+    accountViewOk = true;
   });
 
   await runValidation("Información General", async () => {
+    if (!accountViewOk) {
+      throw new Error("Prerequisite failed: Administrar Negocios view");
+    }
+
     await expect(page.getByText(/BUSINESS PLAN/i).first()).toBeVisible({ timeout: 15000 });
     await expect(page.getByRole("button", { name: /Cambiar Plan/i }).first()).toBeVisible({
       timeout: 15000
@@ -241,12 +272,20 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   });
 
   await runValidation("Detalles de la Cuenta", async () => {
+    if (!accountViewOk) {
+      throw new Error("Prerequisite failed: Administrar Negocios view");
+    }
+
     await expect(page.getByText(/Cuenta creada/i).first()).toBeVisible({ timeout: 15000 });
     await expect(page.getByText(/Estado activo/i).first()).toBeVisible({ timeout: 15000 });
     await expect(page.getByText(/Idioma seleccionado/i).first()).toBeVisible({ timeout: 15000 });
   });
 
   await runValidation("Tus Negocios", async () => {
+    if (!accountViewOk) {
+      throw new Error("Prerequisite failed: Administrar Negocios view");
+    }
+
     await expect(page.getByText(/Tus Negocios/i).first()).toBeVisible({ timeout: 15000 });
     await expect(page.getByRole("button", { name: /Agregar Negocio/i }).first()).toBeVisible({
       timeout: 15000
@@ -255,6 +294,10 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   });
 
   await runValidation("Términos y Condiciones", async () => {
+    if (!accountViewOk) {
+      throw new Error("Prerequisite failed: Administrar Negocios view");
+    }
+
     await validateLegalDocument({
       page,
       context,
@@ -268,6 +311,10 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   });
 
   await runValidation("Política de Privacidad", async () => {
+    if (!accountViewOk) {
+      throw new Error("Prerequisite failed: Administrar Negocios view");
+    }
+
     await validateLegalDocument({
       page,
       context,
