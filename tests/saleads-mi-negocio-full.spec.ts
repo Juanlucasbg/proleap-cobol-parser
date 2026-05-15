@@ -16,11 +16,6 @@ type StepResult = "PASS" | "FAIL";
 const GOOGLE_ACCOUNT_EMAIL = "juanlucasbarbiergarzon@gmail.com";
 const NEW_BUSINESS_NAME = "Negocio Prueba Automatizacion";
 
-const toContainsRegex = (text: string): RegExp => {
-  const escaped = text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return new RegExp(escaped, "i");
-};
-
 const isVisible = async (locator: Locator, timeout = 5_000): Promise<boolean> => {
   try {
     await locator.first().waitFor({ state: "visible", timeout });
@@ -70,7 +65,7 @@ const ensureOnLoginPage = async (page: Page): Promise<void> => {
 };
 
 test("saleads mi negocio full workflow", async ({ page }, testInfo) => {
-  test.slow();
+  test.setTimeout(300_000);
 
   const results: Record<ReportField, StepResult> = {
     Login: "FAIL",
@@ -101,12 +96,12 @@ test("saleads mi negocio full workflow", async ({ page }, testInfo) => {
     await ensureOnLoginPage(page);
 
     const negocioSidebarItem = page.getByText(/^Negocio$/i).first();
-    if (!(await isVisible(negocioSidebarItem, 10_000))) {
+    if (!(await isVisible(negocioSidebarItem, 5_000))) {
       const googleButtonByRole = page.getByRole("button", { name: /google/i }).first();
       const googleButtonByText = page.getByText(/sign in with google|iniciar sesion con google|continuar con google/i).first();
-      const googleButton = (await isVisible(googleButtonByRole, 8_000)) ? googleButtonByRole : googleButtonByText;
+      const googleButton = (await isVisible(googleButtonByRole, 4_000)) ? googleButtonByRole : googleButtonByText;
 
-      if (!(await isVisible(googleButton, 8_000))) {
+      if (!(await isVisible(googleButton, 4_000))) {
         throw new Error("Google login button was not visible.");
       }
 
@@ -118,7 +113,7 @@ test("saleads mi negocio full workflow", async ({ page }, testInfo) => {
         await popup.waitForLoadState("domcontentloaded", { timeout: 30_000 }).catch(() => undefined);
 
         const accountSelector = popup.getByText(GOOGLE_ACCOUNT_EMAIL, { exact: false }).first();
-        if (await isVisible(accountSelector, 20_000)) {
+        if (await isVisible(accountSelector, 15_000)) {
           await accountSelector.click();
         }
 
@@ -130,6 +125,39 @@ test("saleads mi negocio full workflow", async ({ page }, testInfo) => {
     await expect(page.locator("aside, nav").first()).toBeVisible({ timeout: 90_000 });
     await screenshotCheckpoint(page, testInfo, "step-1-dashboard-loaded");
   });
+
+  if (results.Login === "FAIL") {
+    const dependentFields: ReportField[] = [
+      "Mi Negocio menu",
+      "Agregar Negocio modal",
+      "Administrar Negocios view",
+      "Informacion General",
+      "Detalles de la Cuenta",
+      "Tus Negocios",
+      "Terminos y Condiciones",
+      "Politica de Privacidad"
+    ];
+
+    for (const field of dependentFields) {
+      failures.push(`${field}: Skipped because Login failed.`);
+    }
+
+    const earlyReport = {
+      name: "saleads_mi_negocio_full_test",
+      results,
+      legalUrls,
+      failures
+    };
+
+    await testInfo.attach("final-mi-negocio-report", {
+      body: Buffer.from(JSON.stringify(earlyReport, null, 2), "utf-8"),
+      contentType: "application/json"
+    });
+
+    console.log("Mi Negocio final report:", JSON.stringify(earlyReport, null, 2));
+    expect(failures, `Validation failures:\n${failures.join("\n")}`).toEqual([]);
+    return;
+  }
 
   await runStep("Mi Negocio menu", async () => {
     const negocioSection = page.getByText(/^Negocio$/i).first();
@@ -207,18 +235,19 @@ test("saleads mi negocio full workflow", async ({ page }, testInfo) => {
   });
 
   const validateLegalLink = async (
-    linkText: string,
-    headingText: string,
+    linkPattern: RegExp,
+    headingPattern: RegExp,
+    urlReportKey: string,
     resultField: ReportField,
     checkpointName: string
   ): Promise<void> => {
     await runStep(resultField, async () => {
-      const linkByRole = page.getByRole("link", { name: toContainsRegex(linkText) }).first();
-      const linkByText = page.getByText(toContainsRegex(linkText)).first();
+      const linkByRole = page.getByRole("link", { name: linkPattern }).first();
+      const linkByText = page.getByText(linkPattern).first();
       const legalLink = (await isVisible(linkByRole, 5_000)) ? linkByRole : linkByText;
 
       if (!(await isVisible(legalLink, 8_000))) {
-        throw new Error(`Legal link "${linkText}" is not visible.`);
+        throw new Error(`Legal link for "${resultField}" is not visible.`);
       }
 
       const popupPromise = page.waitForEvent("popup", { timeout: 10_000 }).catch(() => null);
@@ -230,28 +259,28 @@ test("saleads mi negocio full workflow", async ({ page }, testInfo) => {
       const popup = await popupPromise;
       if (popup) {
         await popup.waitForLoadState("domcontentloaded", { timeout: 40_000 });
-        await expect(popup.getByRole("heading", { name: toContainsRegex(headingText) }).first()).toBeVisible({
+        await expect(popup.getByRole("heading", { name: headingPattern }).first()).toBeVisible({
           timeout: 40_000
         });
 
         const bodyText = (await popup.locator("body").innerText()).trim();
         expect(bodyText.length).toBeGreaterThan(120);
 
-        legalUrls[linkText] = popup.url();
+        legalUrls[urlReportKey] = popup.url();
         await screenshotCheckpoint(popup, testInfo, checkpointName, true);
         await popup.close();
         await page.bringToFront();
       } else {
         await navPromise;
         await waitForUiToLoad(page);
-        await expect(page.getByRole("heading", { name: toContainsRegex(headingText) }).first()).toBeVisible({
+        await expect(page.getByRole("heading", { name: headingPattern }).first()).toBeVisible({
           timeout: 40_000
         });
 
         const bodyText = (await page.locator("body").innerText()).trim();
         expect(bodyText.length).toBeGreaterThan(120);
 
-        legalUrls[linkText] = page.url();
+        legalUrls[urlReportKey] = page.url();
         await screenshotCheckpoint(page, testInfo, checkpointName, true);
 
         await page.goBack({ waitUntil: "domcontentloaded" }).catch(() => undefined);
@@ -261,14 +290,16 @@ test("saleads mi negocio full workflow", async ({ page }, testInfo) => {
   };
 
   await validateLegalLink(
-    "Términos y Condiciones",
-    "Términos y Condiciones",
+    /Terminos y Condiciones|Términos y Condiciones/i,
+    /Terminos y Condiciones|Términos y Condiciones/i,
+    "Terminos y Condiciones",
     "Terminos y Condiciones",
     "step-8-terminos-condiciones"
   );
 
   await validateLegalLink(
-    "Politica de Privacidad",
+    /Politica de Privacidad|Política de Privacidad/i,
+    /Politica de Privacidad|Política de Privacidad/i,
     "Politica de Privacidad",
     "Politica de Privacidad",
     "step-9-politica-privacidad"
@@ -286,9 +317,7 @@ test("saleads mi negocio full workflow", async ({ page }, testInfo) => {
     contentType: "application/json"
   });
 
-  await page.evaluate((reportObject) => {
-    console.log("Mi Negocio final report:", reportObject);
-  }, finalReport);
+  console.log("Mi Negocio final report:", JSON.stringify(finalReport, null, 2));
 
   expect(failures, `Validation failures:\n${failures.join("\n")}`).toEqual([]);
 });
