@@ -1,0 +1,12 @@
+{
+  "name": "saleads-e2e-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cross-environment UI workflow tests for SaleADS",
+  "scripts": {
+    "test:saleads-mi-negocio": "playwright test tests/saleads_mi_negocio_full_test.spec.js --reporter=line"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0"
+  }
+}
