@@ -196,12 +196,7 @@ async function openLegalLinkAndReturn({
 }
 
 test('saleads_mi_negocio_full_test', async ({ page, context }) => {
-  const baseUrl = process.env.SALEADS_URL || process.env.SALEADS_LOGIN_URL || process.env.BASE_URL;
-  if (!baseUrl) {
-    throw new Error(
-      'Set SALEADS_URL (or SALEADS_LOGIN_URL / BASE_URL) to run this workflow without hardcoding a domain.'
-    );
-  }
+  const baseUrl = process.env.SALEADS_URL || process.env.SALEADS_LOGIN_URL || process.env.BASE_URL || '';
 
   const artifactsRoot = path.resolve('target', 'saleads_mi_negocio_full_test');
   const screenshotsDir = path.join(artifactsRoot, 'screenshots');
@@ -211,6 +206,24 @@ test('saleads_mi_negocio_full_test', async ({ page, context }) => {
   let workflowBlocked = false;
 
   try {
+    if (!baseUrl) {
+      setResult(
+        report,
+        'Login',
+        'FAIL',
+        'Set SALEADS_URL (or SALEADS_LOGIN_URL / BASE_URL) to run this workflow without hardcoding a domain.'
+      );
+      markBlocked(report, 'Mi Negocio menu', 'Blocked by missing environment URL.');
+      markBlocked(report, 'Agregar Negocio modal', 'Blocked by missing environment URL.');
+      markBlocked(report, 'Administrar Negocios view', 'Blocked by missing environment URL.');
+      markBlocked(report, 'Informacion General', 'Blocked by missing environment URL.');
+      markBlocked(report, 'Detalles de la Cuenta', 'Blocked by missing environment URL.');
+      markBlocked(report, 'Tus Negocios', 'Blocked by missing environment URL.');
+      markBlocked(report, 'Terminos y Condiciones', 'Blocked by missing environment URL.');
+      markBlocked(report, 'Politica de Privacidad', 'Blocked by missing environment URL.');
+      return;
+    }
+
     await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
     await waitForUi(page);
 
