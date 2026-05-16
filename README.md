@@ -194,6 +194,32 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+SaleADS Mi Negocio E2E (opt-in)
+-------------------------------
+
+An opt-in browser automation test was added at:
+
+`src/test/java/io/proleap/e2e/SaleadsMiNegocioFullTest.java`
+
+This test validates the full "Mi Negocio" workflow and is environment-agnostic.
+It does not hardcode any SaleADS domain.
+
+Execution controls:
+
+* `RUN_SALEADS_E2E=true` enables this test.
+* `SALEADS_BASE_URL=<login-page-url>` points to the current environment login page.
+* `SALEADS_HEADLESS=true|false` controls browser headless mode (default: `true`).
+
+Example:
+
+```
+$ RUN_SALEADS_E2E=true SALEADS_BASE_URL="https://<your-env>/login" mvn -Dtest=SaleadsMiNegocioFullTest test
+```
+
+Evidence (screenshots and legal URLs) is printed in test logs and saved under:
+
+`target/saleads-evidence/<timestamp>/`
+
 
 Release process
 ---------------
