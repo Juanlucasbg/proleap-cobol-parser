@@ -24,7 +24,6 @@ import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.WindowType;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -102,6 +101,7 @@ public class SaleadsMiNegocioWorkflowTest {
 		clickFirstVisibleText("Sign in with Google", "Iniciar sesión con Google", "Continuar con Google", "Google");
 		waitForUiLoad();
 		selectGoogleAccountIfVisible();
+		focusWindowWithTexts("Negocio", "Mi Negocio", "Dashboard", "Inicio");
 
 		waitForAnyVisibleText("Negocio", "Mi Negocio", "Dashboard", "Inicio");
 		assertVisible(By.xpath("//aside | //nav | //*[contains(@class,'sidebar')]"), "Sidebar navigation was not visible");
@@ -249,6 +249,24 @@ public class SaleadsMiNegocioWorkflowTest {
 			}
 			return false;
 		});
+	}
+
+	private void focusWindowWithTexts(final String... texts) {
+		final long timeoutMillis = Duration.ofSeconds(20).toMillis();
+		final long started = System.currentTimeMillis();
+
+		while (System.currentTimeMillis() - started < timeoutMillis) {
+			for (final String handle : driver.getWindowHandles()) {
+				driver.switchTo().window(handle);
+				for (final String text : texts) {
+					if (isTextVisibleQuick(text)) {
+						originalApplicationWindow = handle;
+						return;
+					}
+				}
+			}
+			sleep(250);
+		}
 	}
 
 	private void clickFirstVisibleText(final String... texts) {
