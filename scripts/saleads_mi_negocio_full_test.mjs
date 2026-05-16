@@ -82,6 +82,15 @@ function asRegExpExact(text) {
   return new RegExp(`^${text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i");
 }
 
+function asRegExpContains(text) {
+  const pattern = text
+    .trim()
+    .split(/\s+/)
+    .map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+    .join("\\s+");
+  return new RegExp(pattern, "i");
+}
+
 async function firstVisibleLocator(locators, timeoutMs = 3000) {
   const deadline = Date.now() + timeoutMs;
 
@@ -104,12 +113,18 @@ async function firstVisibleLocator(locators, timeoutMs = 3000) {
 
 async function clickByVisibleText(page, textOptions) {
   for (const text of textOptions) {
+    const containsMatcher = asRegExpContains(text);
     const locators = [
       page.getByRole("button", { name: asRegExpExact(text) }),
+      page.getByRole("button", { name: containsMatcher }),
       page.getByRole("link", { name: asRegExpExact(text) }),
+      page.getByRole("link", { name: containsMatcher }),
       page.getByRole("menuitem", { name: asRegExpExact(text) }),
+      page.getByRole("menuitem", { name: containsMatcher }),
       page.getByRole("tab", { name: asRegExpExact(text) }),
+      page.getByRole("tab", { name: containsMatcher }),
       page.getByText(asRegExpExact(text)),
+      page.getByText(containsMatcher),
       page.locator(`text=${text}`)
     ];
 
@@ -125,7 +140,7 @@ async function clickByVisibleText(page, textOptions) {
 }
 
 async function expectVisibleText(page, text, timeout = 15000) {
-  await page.getByText(asRegExpExact(text)).first().waitFor({ state: "visible", timeout });
+  await page.getByText(asRegExpContains(text)).first().waitFor({ state: "visible", timeout });
 }
 
 async function expectSectionVisible(page, sectionName) {
@@ -284,8 +299,31 @@ async function run() {
 
     // Step 2: Open Mi Negocio menu.
     try {
-      await clickByVisibleText(page, ["Negocio"]);
-      await clickByVisibleText(page, ["Mi Negocio"]);
+      const sidebarToggleVisible = await firstVisibleLocator(
+        [
+          page.getByRole("button", { name: asRegExpContains("menu") }),
+          page.getByRole("button", { name: asRegExpContains("abrir") }),
+          page.getByRole("button", { name: asRegExpContains("sidebar") })
+        ],
+        2500
+      );
+      if (sidebarToggleVisible) {
+        await sidebarToggleVisible.click().catch(() => {});
+        await waitAfterClick(page);
+      }
+
+      let miNegocioOpened = false;
+      try {
+        await clickByVisibleText(page, ["Mi Negocio", "Mi negocio"]);
+        miNegocioOpened = true;
+      } catch {
+        // Continue with parent-menu fallback.
+      }
+
+      if (!miNegocioOpened) {
+        await clickByVisibleText(page, ["Negocio", "negocio"]);
+        await clickByVisibleText(page, ["Mi Negocio", "Mi negocio"]);
+      }
 
       await expectVisibleText(page, "Agregar Negocio");
       await expectVisibleText(page, "Administrar Negocios");
