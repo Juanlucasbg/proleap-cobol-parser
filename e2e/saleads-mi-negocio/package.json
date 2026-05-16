@@ -1,0 +1,16 @@
+{
+  "name": "saleads-mi-negocio",
+  "version": "1.0.0",
+  "description": "SaleADS Mi Negocio workflow automation",
+  "main": "run-saleads-mi-negocio-workflow.js",
+  "scripts": {
+    "run": "node run-saleads-mi-negocio-workflow.js",
+    "test": "npm run run"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "playwright": "^1.60.0"
+  }
+}
