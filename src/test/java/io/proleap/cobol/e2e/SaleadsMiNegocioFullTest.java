@@ -447,8 +447,12 @@ public class SaleadsMiNegocioFullTest {
 		for (final String step : List.of("Login", "Mi Negocio menu", "Agregar Negocio modal", "Administrar Negocios view",
 				"Información General", "Detalles de la Cuenta", "Tus Negocios", "Términos y Condiciones",
 				"Política de Privacidad")) {
-			final boolean passed = report.getOrDefault(step, false);
-			final String status = passed ? "PASS" : "FAIL";
+			final String status;
+			if (!report.containsKey(step)) {
+				status = "NOT RUN";
+			} else {
+				status = report.get(step) ? "PASS" : "FAIL";
+			}
 			final String details = detailReport.get(step);
 			System.out.println(step + ": " + status + (details == null ? "" : " (" + details + ")"));
 		}
