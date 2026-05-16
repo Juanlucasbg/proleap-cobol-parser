@@ -7,7 +7,6 @@ import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
 import org.junit.Assert;
-import org.junit.Assume;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -30,9 +29,6 @@ public class SaleadsMiNegocioFullTest {
 	@Test
 	public void saleads_mi_negocio_full_test() throws IOException {
 		final String loginUrl = firstNonBlank(System.getenv("SALEADS_LOGIN_URL"), System.getProperty("saleads.login.url"));
-		Assume.assumeTrue("Set SALEADS_LOGIN_URL or -Dsaleads.login.url to execute this E2E workflow.",
-				loginUrl != null && !loginUrl.isBlank());
-
 		final boolean headless = Boolean.parseBoolean(
 				firstNonBlank(System.getenv("SALEADS_HEADLESS"), System.getProperty("saleads.headless"), "true"));
 		final Path evidenceDir = createEvidenceDir();
@@ -40,6 +36,13 @@ public class SaleadsMiNegocioFullTest {
 		final Map<String, Boolean> report = initializeReport();
 		final Map<String, String> legalUrls = new LinkedHashMap<>();
 		final List<String> failures = new ArrayList<>();
+
+		if (loginUrl == null || loginUrl.isBlank()) {
+			failures.add("Login -> Missing SALEADS_LOGIN_URL or -Dsaleads.login.url.");
+			addPrerequisiteFailures(failures);
+			writeFinalReport(evidenceDir, report, legalUrls, "N/A", failures);
+			Assert.fail("Missing SALEADS login URL precondition. See final report at " + evidenceDir.resolve("final-report.txt"));
+		}
 
 		try (final Playwright playwright = Playwright.create();
 				final Browser browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(headless));
@@ -401,6 +404,17 @@ public class SaleadsMiNegocioFullTest {
 			report.put(reportField, false);
 			failures.add(reportField + " -> " + throwable.getMessage());
 		}
+	}
+
+	private void addPrerequisiteFailures(final List<String> failures) {
+		failures.add("Mi Negocio menu -> Prerequisite failed: Login step did not run.");
+		failures.add("Agregar Negocio modal -> Prerequisite failed: Login step did not run.");
+		failures.add("Administrar Negocios view -> Prerequisite failed: Login step did not run.");
+		failures.add("Información General -> Prerequisite failed: Login step did not run.");
+		failures.add("Detalles de la Cuenta -> Prerequisite failed: Login step did not run.");
+		failures.add("Tus Negocios -> Prerequisite failed: Login step did not run.");
+		failures.add("Términos y Condiciones -> Prerequisite failed: Login step did not run.");
+		failures.add("Política de Privacidad -> Prerequisite failed: Login step did not run.");
 	}
 
 	private Path createEvidenceDir() throws IOException {
