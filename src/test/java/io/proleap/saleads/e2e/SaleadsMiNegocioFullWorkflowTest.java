@@ -393,8 +393,7 @@ public class SaleadsMiNegocioFullWorkflowTest {
 
 	private Page clickAndCaptureNewPage(final BrowserContext context, final Locator locator) {
 		try {
-			return context.waitForPage(locator::click,
-					new BrowserContext.WaitForPageOptions().setTimeout(7000));
+			return context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(7000), locator::click);
 		} catch (final PlaywrightException ignored) {
 			locator.click();
 			return null;
