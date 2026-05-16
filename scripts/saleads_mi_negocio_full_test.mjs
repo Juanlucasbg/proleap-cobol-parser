@@ -123,9 +123,9 @@ async function clickByVisibleText(page, textOptions) {
       page.getByRole("menuitem", { name: containsMatcher }),
       page.getByRole("tab", { name: asRegExpExact(text) }),
       page.getByRole("tab", { name: containsMatcher }),
-      page.getByText(asRegExpExact(text)),
-      page.getByText(containsMatcher),
-      page.locator(`text=${text}`)
+      page
+        .locator("button, a, [role='button'], [role='menuitem'], [role='tab']")
+        .filter({ hasText: containsMatcher })
     ];
 
     const target = await firstVisibleLocator(locators, 2500);
@@ -269,13 +269,28 @@ async function run() {
     // Step 1: Login with Google.
     try {
       const popupPromise = context.waitForEvent("page", { timeout: 7000 }).catch(() => null);
-      await clickByVisibleText(page, [
-        "Sign in with Google",
-        "Iniciar sesión con Google",
-        "Continuar con Google",
-        "Login with Google",
-        "Google"
-      ]);
+      let clickedGoogle = false;
+      try {
+        await clickByVisibleText(page, [
+          "Sign in with Google",
+          "Iniciar sesión con Google",
+          "Continuar con Google",
+          "Login with Google"
+        ]);
+        clickedGoogle = true;
+      } catch {
+        // Some environments show a login button first, then Google option.
+      }
+
+      if (!clickedGoogle) {
+        await clickByVisibleText(page, ["Iniciar sesión", "Inicia sesión", "Login", "Sign in"]);
+        await clickByVisibleText(page, [
+          "Sign in with Google",
+          "Iniciar sesión con Google",
+          "Continuar con Google",
+          "Login with Google"
+        ]);
+      }
 
       const popup = await popupPromise;
       if (popup) {
@@ -285,9 +300,18 @@ async function run() {
         await maybeSelectGoogleAccount(page);
       }
 
-      const sidebarVisible = await checkAnyVisible(page, ["aside", "nav", "[class*='sidebar']"], 20000);
-      if (!sidebarVisible) {
-        throw new Error("Main app interface / left sidebar not detected after login.");
+      const appNavSignal = await firstVisibleLocator(
+        [
+          page.getByText(asRegExpContains("Mi Negocio")),
+          page.getByText(asRegExpContains("Negocio")),
+          page.getByText(asRegExpContains("Administrar Negocios")),
+          page.getByText(asRegExpContains("Agregar Negocio"))
+        ],
+        20000
+      );
+      const sidebarVisible = await checkAnyVisible(page, ["aside", "[class*='sidebar']"], 8000);
+      if (!appNavSignal || !sidebarVisible) {
+        throw new Error("Authenticated app interface with left sidebar was not detected after login.");
       }
 
       details.screenshots.dashboard = await capture(page, outputDir, "01_dashboard_loaded", false);
