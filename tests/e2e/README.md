@@ -8,6 +8,12 @@ This repository now includes a standalone Playwright script for the full Mi Nego
 npm run saleads:mi-negocio-full-test
 ```
 
+Before first run, install browser binaries:
+
+```bash
+npx playwright install chromium
+```
+
 ### Required environment variable
 
 - `SALEADS_LOGIN_URL`: login URL for the current environment (dev/staging/prod).

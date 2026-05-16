@@ -123,6 +123,11 @@ async function run() {
     }
   };
 
+  const skipStep = (stepName, reason) => {
+    report[stepName] = "FAIL";
+    details[stepName] = reason;
+  };
+
   const ensureMiNegocioExpanded = async () => {
     const agregar = page.getByText(/^Agregar Negocio$/i).first();
     const administrar = page.getByText(/^Administrar Negocios$/i).first();
@@ -255,153 +260,185 @@ async function run() {
       await capture(page, "dashboard-loaded");
     });
 
-    await runStep("Mi Negocio menu", async () => {
-      const negocioSection = await findVisible([
-        page.getByRole("button", { name: /^Negocio$/i }),
-        page.getByRole("link", { name: /^Negocio$/i }),
-        page.getByText(/^Negocio$/i)
-      ], 12000);
+    if (report.Login !== "PASS") {
+      const reason = "Paso omitido porque el login no se completó.";
+      skipStep("Mi Negocio menu", reason);
+      skipStep("Agregar Negocio modal", reason);
+      skipStep("Administrar Negocios view", reason);
+      skipStep("Información General", reason);
+      skipStep("Detalles de la Cuenta", reason);
+      skipStep("Tus Negocios", reason);
+      skipStep("Términos y Condiciones", reason);
+      skipStep("Política de Privacidad", reason);
+    } else {
+      await runStep("Mi Negocio menu", async () => {
+        const negocioSection = await findVisible([
+          page.getByRole("button", { name: /^Negocio$/i }),
+          page.getByRole("link", { name: /^Negocio$/i }),
+          page.getByText(/^Negocio$/i)
+        ], 12000);
 
-      if (negocioSection) {
-        await clickAndWait(page, negocioSection);
-      }
+        if (negocioSection) {
+          await clickAndWait(page, negocioSection);
+        }
 
-      const miNegocio = await findVisible([
-        page.getByRole("button", { name: /^Mi Negocio$/i }),
-        page.getByRole("link", { name: /^Mi Negocio$/i }),
-        page.getByText(/^Mi Negocio$/i)
-      ], 12000);
+        const miNegocio = await findVisible([
+          page.getByRole("button", { name: /^Mi Negocio$/i }),
+          page.getByRole("link", { name: /^Mi Negocio$/i }),
+          page.getByText(/^Mi Negocio$/i)
+        ], 12000);
 
-      if (!miNegocio) {
-        throw new Error("No se encontró el menú 'Mi Negocio'.");
-      }
+        if (!miNegocio) {
+          throw new Error("No se encontró el menú 'Mi Negocio'.");
+        }
 
-      await clickAndWait(page, miNegocio);
-      await expectText(page, /^Agregar Negocio$/i, 10000);
-      await expectText(page, /^Administrar Negocios$/i, 10000);
-      await capture(page, "mi-negocio-menu-expanded");
-    });
-
-    await runStep("Agregar Negocio modal", async () => {
-      await ensureMiNegocioExpanded();
-      const agregar = await findVisible([
-        page.getByRole("link", { name: /^Agregar Negocio$/i }),
-        page.getByRole("button", { name: /^Agregar Negocio$/i }),
-        page.getByText(/^Agregar Negocio$/i)
-      ], 10000);
-
-      if (!agregar) {
-        throw new Error("No se encontró la opción 'Agregar Negocio'.");
-      }
-
-      await clickAndWait(page, agregar);
-
-      const modalTitle = await expectText(page, /Crear Nuevo Negocio/i, 15000);
-      const modal = modalTitle.locator("xpath=ancestor-or-self::*[self::div or self::section][1]");
-
-      await expectText(page, /Nombre del Negocio/i, 10000);
-      await expectText(page, /Tienes\s*2\s*de\s*3\s*negocios/i, 10000);
-      await expectText(page, /^Cancelar$/i, 10000);
-      await expectText(page, /Crear Negocio/i, 10000);
-      await capture(page, "agregar-negocio-modal");
-
-      const nameField = await findVisible([
-        page.getByLabel(/Nombre del Negocio/i),
-        page.getByPlaceholder(/Nombre del Negocio/i),
-        modal.locator("input")
-      ], 5000);
-      if (nameField) {
-        await nameField.fill("Negocio Prueba Automatización");
-      }
-
-      const cancelButton = await findVisible([
-        page.getByRole("button", { name: /^Cancelar$/i }),
-        page.getByText(/^Cancelar$/i)
-      ], 8000);
-      if (cancelButton) {
-        await clickAndWait(page, cancelButton);
-      }
-    });
-
-    await runStep("Administrar Negocios view", async () => {
-      await ensureMiNegocioExpanded();
-      const administrar = await findVisible([
-        page.getByRole("link", { name: /^Administrar Negocios$/i }),
-        page.getByRole("button", { name: /^Administrar Negocios$/i }),
-        page.getByText(/^Administrar Negocios$/i)
-      ], 10000);
-
-      if (!administrar) {
-        throw new Error("No se encontró la opción 'Administrar Negocios'.");
-      }
-
-      await clickAndWait(page, administrar);
-      await expectText(page, /Información General/i, 20000);
-      await expectText(page, /Detalles de la Cuenta/i, 20000);
-      await expectText(page, /Tus Negocios/i, 20000);
-      await expectText(page, /Sección Legal/i, 20000);
-      await capture(page, "administrar-negocios-page", true);
-    });
-
-    await runStep("Información General", async () => {
-      await ensureAccountPage();
-      const section = await getSectionByHeading(page, /Información General/i);
-      const text = await section.innerText();
-
-      if (!/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/.test(text)) {
-        throw new Error("No se detectó email visible en 'Información General'.");
-      }
-
-      const lines = text
-        .split("\n")
-        .map((line) => line.trim())
-        .filter(Boolean);
-      const maybeName = lines.find((line) => {
-        const normalized = line.toLowerCase();
-        return !normalized.includes("información general")
-          && !normalized.includes("business plan")
-          && !normalized.includes("cambiar plan")
-          && !line.includes("@")
-          && line.length >= 3;
+        await clickAndWait(page, miNegocio);
+        await expectText(page, /^Agregar Negocio$/i, 10000);
+        await expectText(page, /^Administrar Negocios$/i, 10000);
+        await capture(page, "mi-negocio-menu-expanded");
       });
-      if (!maybeName) {
-        throw new Error("No se pudo validar un nombre de usuario visible en 'Información General'.");
+
+      if (report["Mi Negocio menu"] !== "PASS") {
+        const reason = "Paso omitido porque 'Mi Negocio menu' falló.";
+        skipStep("Agregar Negocio modal", reason);
+        skipStep("Administrar Negocios view", reason);
+        skipStep("Información General", reason);
+        skipStep("Detalles de la Cuenta", reason);
+        skipStep("Tus Negocios", reason);
+        skipStep("Términos y Condiciones", reason);
+        skipStep("Política de Privacidad", reason);
+      } else {
+        await runStep("Agregar Negocio modal", async () => {
+          await ensureMiNegocioExpanded();
+          const agregar = await findVisible([
+            page.getByRole("link", { name: /^Agregar Negocio$/i }),
+            page.getByRole("button", { name: /^Agregar Negocio$/i }),
+            page.getByText(/^Agregar Negocio$/i)
+          ], 10000);
+
+          if (!agregar) {
+            throw new Error("No se encontró la opción 'Agregar Negocio'.");
+          }
+
+          await clickAndWait(page, agregar);
+
+          const modalTitle = await expectText(page, /Crear Nuevo Negocio/i, 15000);
+          const modal = modalTitle.locator("xpath=ancestor-or-self::*[self::div or self::section][1]");
+
+          await expectText(page, /Nombre del Negocio/i, 10000);
+          await expectText(page, /Tienes\s*2\s*de\s*3\s*negocios/i, 10000);
+          await expectText(page, /^Cancelar$/i, 10000);
+          await expectText(page, /Crear Negocio/i, 10000);
+          await capture(page, "agregar-negocio-modal");
+
+          const nameField = await findVisible([
+            page.getByLabel(/Nombre del Negocio/i),
+            page.getByPlaceholder(/Nombre del Negocio/i),
+            modal.locator("input")
+          ], 5000);
+          if (nameField) {
+            await nameField.fill("Negocio Prueba Automatización");
+          }
+
+          const cancelButton = await findVisible([
+            page.getByRole("button", { name: /^Cancelar$/i }),
+            page.getByText(/^Cancelar$/i)
+          ], 8000);
+          if (cancelButton) {
+            await clickAndWait(page, cancelButton);
+          }
+        });
+
+        await runStep("Administrar Negocios view", async () => {
+          await ensureMiNegocioExpanded();
+          const administrar = await findVisible([
+            page.getByRole("link", { name: /^Administrar Negocios$/i }),
+            page.getByRole("button", { name: /^Administrar Negocios$/i }),
+            page.getByText(/^Administrar Negocios$/i)
+          ], 10000);
+
+          if (!administrar) {
+            throw new Error("No se encontró la opción 'Administrar Negocios'.");
+          }
+
+          await clickAndWait(page, administrar);
+          await expectText(page, /Información General/i, 20000);
+          await expectText(page, /Detalles de la Cuenta/i, 20000);
+          await expectText(page, /Tus Negocios/i, 20000);
+          await expectText(page, /Sección Legal/i, 20000);
+          await capture(page, "administrar-negocios-page", true);
+        });
+
+        if (report["Administrar Negocios view"] !== "PASS") {
+          const reason = "Paso omitido porque 'Administrar Negocios view' falló.";
+          skipStep("Información General", reason);
+          skipStep("Detalles de la Cuenta", reason);
+          skipStep("Tus Negocios", reason);
+          skipStep("Términos y Condiciones", reason);
+          skipStep("Política de Privacidad", reason);
+        } else {
+          await runStep("Información General", async () => {
+            await ensureAccountPage();
+            const section = await getSectionByHeading(page, /Información General/i);
+            const text = await section.innerText();
+
+            if (!/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/.test(text)) {
+              throw new Error("No se detectó email visible en 'Información General'.");
+            }
+
+            const lines = text
+              .split("\n")
+              .map((line) => line.trim())
+              .filter(Boolean);
+            const maybeName = lines.find((line) => {
+              const normalized = line.toLowerCase();
+              return !normalized.includes("información general")
+                && !normalized.includes("business plan")
+                && !normalized.includes("cambiar plan")
+                && !line.includes("@")
+                && line.length >= 3;
+            });
+            if (!maybeName) {
+              throw new Error("No se pudo validar un nombre de usuario visible en 'Información General'.");
+            }
+
+            await expectText(page, /BUSINESS PLAN/i, 10000);
+            await expectText(page, /Cambiar Plan/i, 10000);
+          });
+
+          await runStep("Detalles de la Cuenta", async () => {
+            await ensureAccountPage();
+            await expectText(page, /Cuenta creada/i, 10000);
+            await expectText(page, /Estado activo/i, 10000);
+            await expectText(page, /Idioma seleccionado/i, 10000);
+          });
+
+          await runStep("Tus Negocios", async () => {
+            await ensureAccountPage();
+            const section = await getSectionByHeading(page, /Tus Negocios/i);
+            const sectionText = await section.innerText();
+            await expectText(page, /^Agregar Negocio$/i, 10000);
+            await expectText(page, /Tienes\s*2\s*de\s*3\s*negocios/i, 10000);
+
+            const hasBusinessItem = sectionText
+              .split("\n")
+              .map((line) => line.trim())
+              .some((line) => line.length > 2 && !/tus negocios|agregar negocio|tienes\s*2\s*de\s*3/i.test(line.toLowerCase()));
+            if (!hasBusinessItem) {
+              throw new Error("No se detectaron elementos visibles en la lista de negocios.");
+            }
+          });
+
+          await runStep("Términos y Condiciones", async () => {
+            await validateLegalPage(/Términos y Condiciones/i, /Términos y Condiciones/i, "Términos y Condiciones");
+          });
+
+          await runStep("Política de Privacidad", async () => {
+            await validateLegalPage(/Política de Privacidad/i, /Política de Privacidad/i, "Política de Privacidad");
+          });
+        }
       }
-
-      await expectText(page, /BUSINESS PLAN/i, 10000);
-      await expectText(page, /Cambiar Plan/i, 10000);
-    });
-
-    await runStep("Detalles de la Cuenta", async () => {
-      await ensureAccountPage();
-      await expectText(page, /Cuenta creada/i, 10000);
-      await expectText(page, /Estado activo/i, 10000);
-      await expectText(page, /Idioma seleccionado/i, 10000);
-    });
-
-    await runStep("Tus Negocios", async () => {
-      await ensureAccountPage();
-      const section = await getSectionByHeading(page, /Tus Negocios/i);
-      const sectionText = await section.innerText();
-      await expectText(page, /^Agregar Negocio$/i, 10000);
-      await expectText(page, /Tienes\s*2\s*de\s*3\s*negocios/i, 10000);
-
-      const hasBusinessItem = sectionText
-        .split("\n")
-        .map((line) => line.trim())
-        .some((line) => line.length > 2 && !/tus negocios|agregar negocio|tienes\s*2\s*de\s*3/i.test(line.toLowerCase()));
-      if (!hasBusinessItem) {
-        throw new Error("No se detectaron elementos visibles en la lista de negocios.");
-      }
-    });
-
-    await runStep("Términos y Condiciones", async () => {
-      await validateLegalPage(/Términos y Condiciones/i, /Términos y Condiciones/i, "Términos y Condiciones");
-    });
-
-    await runStep("Política de Privacidad", async () => {
-      await validateLegalPage(/Política de Privacidad/i, /Política de Privacidad/i, "Política de Privacidad");
-    });
+    }
   } finally {
     const output = {
       testName: TEST_NAME,
