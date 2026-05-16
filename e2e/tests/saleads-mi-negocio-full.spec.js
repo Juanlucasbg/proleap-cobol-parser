@@ -17,11 +17,11 @@ const REPORT_FIELDS = [
   "Mi Negocio menu",
   "Agregar Negocio modal",
   "Administrar Negocios view",
-  "Informacion General",
+  "Información General",
   "Detalles de la Cuenta",
   "Tus Negocios",
-  "Terminos y Condiciones",
-  "Politica de Privacidad",
+  "Términos y Condiciones",
+  "Política de Privacidad",
 ];
 
 test.describe.configure({ mode: "serial" });
@@ -103,7 +103,7 @@ test("SaleADS Mi Negocio full workflow", async ({ page, context }, testInfo) => 
     await captureCheckpoint(page, testInfo, screenshotRoot, "04-administrar-negocios-view", true);
   });
 
-  await runStep("Informacion General", async () => {
+  await runStep("Información General", async () => {
     await expect(page.getByText(/Informacion General|Informaci[oó]n General/i).first()).toBeVisible();
     await expect(page.getByText(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/).first()).toBeVisible();
     await expect(page.getByText(/BUSINESS PLAN/i).first()).toBeVisible();
@@ -126,7 +126,7 @@ test("SaleADS Mi Negocio full workflow", async ({ page, context }, testInfo) => 
     await expect(page.getByText(/Tienes\s*2\s*de\s*3\s*negocios/i).first()).toBeVisible();
   });
 
-  await runStep("Terminos y Condiciones", async () => {
+  await runStep("Términos y Condiciones", async () => {
     const url = await openLegalLinkAndReturn({
       page,
       context,
@@ -136,10 +136,10 @@ test("SaleADS Mi Negocio full workflow", async ({ page, context }, testInfo) => 
       expectedHeading: /Terminos y Condiciones|T[eé]rminos y Condiciones/i,
       screenshotName: "08-terminos-y-condiciones",
     });
-    legalUrls["Terminos y Condiciones"] = url;
+    legalUrls["Términos y Condiciones"] = url;
   });
 
-  await runStep("Politica de Privacidad", async () => {
+  await runStep("Política de Privacidad", async () => {
     const url = await openLegalLinkAndReturn({
       page,
       context,
@@ -149,7 +149,7 @@ test("SaleADS Mi Negocio full workflow", async ({ page, context }, testInfo) => 
       expectedHeading: /Politica de Privacidad|Pol[ií]tica de Privacidad/i,
       screenshotName: "09-politica-de-privacidad",
     });
-    legalUrls["Politica de Privacidad"] = url;
+    legalUrls["Política de Privacidad"] = url;
   });
 
   const report = {
