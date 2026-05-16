@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.openqa.selenium.By;
@@ -49,6 +50,10 @@ public class SaleadsMiNegocioFullWorkflowTest {
 
 	@Before
 	public void setUp() throws IOException {
+		Assume.assumeTrue("Set SALEADS_E2E_ENABLED=true to run this test.", envBoolean("SALEADS_E2E_ENABLED", false));
+		Assume.assumeTrue("Set SALEADS_LOGIN_URL with the current environment login page.",
+				env("SALEADS_LOGIN_URL") != null);
+
 		artifactsDir = Paths.get("target", "saleads-e2e-artifacts", LocalDateTime.now().format(TS_FORMAT));
 		Files.createDirectories(artifactsDir);
 
@@ -67,15 +72,15 @@ public class SaleadsMiNegocioFullWorkflowTest {
 		wait = new WebDriverWait(driver, Duration.ofSeconds(envInt("SALEADS_WAIT_SECONDS", 20)));
 
 		final String loginUrl = env("SALEADS_LOGIN_URL");
-		if (loginUrl != null) {
-			driver.get(loginUrl);
-			waitForUiLoad();
-		}
+		driver.get(loginUrl);
+		waitForUiLoad();
 	}
 
 	@After
 	public void tearDown() throws IOException {
-		writeReport();
+		if (artifactsDir != null) {
+			writeReport();
+		}
 
 		if (driver != null) {
 			driver.quit();

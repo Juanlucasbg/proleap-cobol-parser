@@ -207,6 +207,7 @@ through an environment variable.
 
 ### Environment variables
 
+- `SALEADS_E2E_ENABLED` (required): Must be `true` to execute this E2E test.
 - `SALEADS_LOGIN_URL` (required): Login page URL of the current environment.
 - `SALEADS_HEADLESS` (optional, default `true`): Run browser in headless mode.
 - `SALEADS_WAIT_SECONDS` (optional, default `20`): Explicit wait timeout.
@@ -215,7 +216,7 @@ through an environment variable.
 ### Run only this E2E test
 
 ```bash
-SALEADS_LOGIN_URL="https://<current-env>/login" mvn -Dtest=SaleadsMiNegocioFullWorkflowTest test
+SALEADS_E2E_ENABLED=true SALEADS_LOGIN_URL="https://<current-env>/login" mvn -Dtest=SaleadsMiNegocioFullWorkflowTest test
 ```
 
 ### Evidence and report output
