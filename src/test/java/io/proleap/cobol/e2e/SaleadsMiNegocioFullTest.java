@@ -7,7 +7,6 @@ import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.PlaywrightException;
-import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.LoadState;
 import com.microsoft.playwright.options.WaitUntilState;
 import org.junit.Assert;
@@ -263,11 +262,11 @@ public class SaleadsMiNegocioFullTest {
 	}
 
 	private Locator waitForBusinessNameInput() {
-		Pattern nombreNegocioPattern = Pattern.compile("(?i)Nombre\\s+del\\s+Negocio");
 		List<Locator> candidates = new ArrayList<>();
-		candidates.add(appPage.getByLabel(nombreNegocioPattern));
-		candidates.add(appPage.getByPlaceholder(nombreNegocioPattern));
+		candidates.add(appPage.locator("input[placeholder*='Nombre del Negocio' i]"));
+		candidates.add(appPage.locator("input[aria-label*='Nombre del Negocio' i]"));
 		candidates.add(appPage.locator("input[name*='negocio' i], input[id*='negocio' i], input[aria-label*='negocio' i]"));
+		candidates.add(appPage.locator("label:has-text('Nombre del Negocio') + input"));
 
 		return waitForFirstVisible(appPage, candidates, "input 'Nombre del Negocio'", DEFAULT_TIMEOUT_MS);
 	}
@@ -291,10 +290,6 @@ public class SaleadsMiNegocioFullTest {
 
 	private List<Locator> clickableCandidates(final Page page, final Pattern pattern) {
 		List<Locator> candidates = new ArrayList<>();
-		candidates.add(page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(pattern)));
-		candidates.add(page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName(pattern)));
-		candidates.add(page.getByRole(AriaRole.MENUITEM, new Page.GetByRoleOptions().setName(pattern)));
-		candidates.add(page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName(pattern)));
 		candidates.add(page.getByText(pattern));
 		return candidates;
 	}
@@ -335,7 +330,7 @@ public class SaleadsMiNegocioFullTest {
 	private void assertVisibleText(final Page page, final Pattern textPattern, final String description) {
 		Locator visible = waitForFirstVisible(
 				page,
-				Arrays.asList(page.getByText(textPattern), page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName(textPattern))),
+				Arrays.asList(page.getByText(textPattern)),
 				description,
 				DEFAULT_TIMEOUT_MS
 		);
