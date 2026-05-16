@@ -275,7 +275,8 @@ async function run() {
           "Sign in with Google",
           "Iniciar sesión con Google",
           "Continuar con Google",
-          "Login with Google"
+          "Login with Google",
+          "Google"
         ]);
         clickedGoogle = true;
       } catch {
@@ -284,11 +285,13 @@ async function run() {
 
       if (!clickedGoogle) {
         await clickByVisibleText(page, ["Iniciar sesión", "Inicia sesión", "Login", "Sign in"]);
+        await waitAfterClick(page);
         await clickByVisibleText(page, [
           "Sign in with Google",
           "Iniciar sesión con Google",
           "Continuar con Google",
-          "Login with Google"
+          "Login with Google",
+          "Google"
         ]);
       }
 
