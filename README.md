@@ -194,6 +194,41 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+SaleADS Mi Negocio E2E workflow test
+------------------------------------
+
+This repository now includes an environment-agnostic Selenium E2E test for validating
+the SaleADS "Mi Negocio" module workflow:
+
+`src/test/java/io/proleap/saleads/e2e/SaleadsMiNegocioFullWorkflowTest.java`
+
+The test does not hardcode a domain and must receive the login URL of the current environment
+through an environment variable.
+
+### Environment variables
+
+- `SALEADS_LOGIN_URL` (required): Login page URL of the current environment.
+- `SALEADS_HEADLESS` (optional, default `true`): Run browser in headless mode.
+- `SALEADS_WAIT_SECONDS` (optional, default `20`): Explicit wait timeout.
+- `SALEADS_CHROME_PROFILE_DIR` (optional): Chrome user data dir, useful for persisted Google sessions.
+
+### Run only this E2E test
+
+```bash
+SALEADS_LOGIN_URL="https://<current-env>/login" mvn -Dtest=SaleadsMiNegocioFullWorkflowTest test
+```
+
+### Evidence and report output
+
+Artifacts are written to:
+
+`target/saleads-e2e-artifacts/<timestamp>/`
+
+Each run saves:
+
+- Checkpoint screenshots (dashboard, menu, modal, account page, legal pages)
+- `final-report.txt` with PASS/FAIL by required workflow section and captured legal URLs
+
 
 Release process
 ---------------
