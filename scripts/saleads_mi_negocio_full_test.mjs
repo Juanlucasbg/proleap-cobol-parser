@@ -243,6 +243,7 @@ async function run() {
     evidenceDir: outputDir,
     termsAndConditionsUrl: null,
     privacyPolicyUrl: null,
+    finalObservedUrl: null,
     screenshots: {}
   };
 
@@ -486,6 +487,15 @@ async function run() {
       throw error;
     }
   } finally {
+    details.finalObservedUrl = page.url();
+    if (Object.keys(details.screenshots).length === 0) {
+      try {
+        details.screenshots.failureState = await capture(page, outputDir, "00_failure_state", false);
+      } catch {
+        // Ignore screenshot capture issues on teardown.
+      }
+    }
+
     const finalReport = {
       testName: "saleads_mi_negocio_full_test",
       generatedAt: new Date().toISOString(),
