@@ -29,6 +29,8 @@ npx playwright install chromium
 SALEADS_LOGIN_URL="https://<current-environment-login-url>" npm run run
 ```
 
+If you pass the environment homepage instead of a direct login route, the script first tries to click a visible `Inicia sesión` / `Sign in` entry before continuing with `Sign in with Google`.
+
 Optional environment variables:
 
 - `GOOGLE_ACCOUNT_EMAIL` (default: `juanlucasbarbiergarzon@gmail.com`)

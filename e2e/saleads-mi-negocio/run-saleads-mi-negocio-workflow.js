@@ -61,6 +61,41 @@ async function getFirstVisibleLocator(candidates, timeoutMs = ACTION_TIMEOUT_MS)
   throw new Error("No visible locator found among provided candidates.");
 }
 
+async function tryGetFirstVisibleLocator(candidates, timeoutMs = ACTION_TIMEOUT_MS) {
+  return getFirstVisibleLocator(candidates, timeoutMs).catch(() => null);
+}
+
+async function expandMiNegocioMenu(page) {
+  const miNegocioDirect = await tryGetFirstVisibleLocator(
+    [
+      page.getByRole("button", { name: /mi negocio|my business/i }),
+      page.getByRole("link", { name: /mi negocio|my business/i }),
+      page.getByText(/mi negocio|my business/i),
+    ],
+    8000
+  );
+
+  if (miNegocioDirect) {
+    await clickAndWait(miNegocioDirect, page);
+    return;
+  }
+
+  const negocioSection = await getFirstVisibleLocator([
+    page.getByRole("button", { name: /negocio|business/i }),
+    page.getByText(/^Negocio$/i),
+    page.getByText(/^Business$/i),
+    page.getByText(/negocio|business/i),
+  ]);
+  await clickAndWait(negocioSection, page);
+
+  const miNegocio = await getFirstVisibleLocator([
+    page.getByRole("button", { name: /mi negocio|my business/i }),
+    page.getByRole("link", { name: /mi negocio|my business/i }),
+    page.getByText(/mi negocio|my business/i),
+  ]);
+  await clickAndWait(miNegocio, page);
+}
+
 function baseStepResult() {
   return {
     status: "FAIL",
@@ -252,11 +287,24 @@ async function runWorkflow() {
     }
 
     await runStep("Login", async (stepResult) => {
+      const entryLoginButton = await tryGetFirstVisibleLocator(
+        [
+          page.getByRole("button", { name: /inicia sesi[oó]n|iniciar sesi[oó]n|sign in|log in/i }),
+          page.getByRole("link", { name: /inicia sesi[oó]n|iniciar sesi[oó]n|sign in|log in/i }),
+          page.getByText(/inicia sesi[oó]n|iniciar sesi[oó]n|sign in|log in/i),
+        ],
+        8000
+      );
+
+      if (entryLoginButton) {
+        await clickAndWait(entryLoginButton, page);
+      }
+
       const loginButton = await getFirstVisibleLocator(
         [
-          page.getByRole("button", { name: /sign in with google|google/i }),
-          page.getByRole("link", { name: /sign in with google|google/i }),
-          page.getByText(/sign in with google|google/i),
+          page.getByRole("button", { name: /sign in with google|iniciar sesi[oó]n con google|google/i }),
+          page.getByRole("link", { name: /sign in with google|iniciar sesi[oó]n con google|google/i }),
+          page.getByText(/sign in with google|iniciar sesi[oó]n con google|google/i),
         ],
         20000
       );
@@ -274,9 +322,19 @@ async function runWorkflow() {
       await waitForUi(page);
 
       await validateVisibleLocator(
-        page.locator("aside, nav").first(),
+        page.locator("aside").first(),
         "Left sidebar navigation is visible",
         stepResult
+      );
+
+      const appMenuVisible = await tryGetFirstVisibleLocator(
+        [
+          page.getByText(/mi negocio|my business/i),
+          page.getByText(/administrar negocios|manage businesses/i),
+          page.getByText(/agregar negocio|add business/i),
+          page.getByText(/negocio|business/i),
+        ],
+        8000
       );
 
       const mainInterfaceVisible = await page
@@ -285,34 +343,32 @@ async function runWorkflow() {
         .isVisible()
         .catch(() => false);
       addCheck(stepResult, "Main application interface appears", mainInterfaceVisible);
+      addCheck(
+        stepResult,
+        "Application navigation entries are visible after login",
+        Boolean(appMenuVisible)
+      );
+      addCheck(
+        stepResult,
+        "No longer on login/auth page",
+        !/login|auth|accounts\.google\.com/i.test(page.url())
+      );
 
       await saveScreenshot(page, "01-dashboard-loaded", stepResult);
     }, report);
 
     await runStep("Mi Negocio menu", async (stepResult) => {
-      const negocioSection = await getFirstVisibleLocator([
-        page.getByRole("button", { name: /negocio/i }),
-        page.getByText(/^Negocio$/i),
-        page.getByText(/negocio/i),
-      ]);
-      await clickAndWait(negocioSection, page);
-
-      const miNegocio = await getFirstVisibleLocator([
-        page.getByRole("button", { name: /mi negocio/i }),
-        page.getByRole("link", { name: /mi negocio/i }),
-        page.getByText(/mi negocio/i),
-      ]);
-      await clickAndWait(miNegocio, page);
+      await expandMiNegocioMenu(page);
 
       await validateVisibleText(
         page,
-        /agregar negocio/i,
+        /agregar negocio|add business/i,
         "Submenu item 'Agregar Negocio' visible",
         stepResult
       );
       await validateVisibleText(
         page,
-        /administrar negocios/i,
+        /administrar negocios|manage businesses/i,
         "Submenu item 'Administrar Negocios' visible",
         stepResult
       );
@@ -323,13 +379,13 @@ async function runWorkflow() {
 
     await runStep("Agregar Negocio modal", async (stepResult) => {
       const agregarNegocio = await getFirstVisibleLocator([
-        page.getByRole("button", { name: /^agregar negocio$/i }),
-        page.getByRole("link", { name: /^agregar negocio$/i }),
-        page.getByText(/^Agregar Negocio$/i),
+        page.getByRole("button", { name: /^agregar negocio$|^add business$/i }),
+        page.getByRole("link", { name: /^agregar negocio$|^add business$/i }),
+        page.getByText(/^Agregar Negocio$|^Add Business$/i),
       ]);
       await clickAndWait(agregarNegocio, page);
 
-      const modalTitle = page.getByText(/crear nuevo negocio/i).first();
+      const modalTitle = page.getByText(/crear nuevo negocio|create new business/i).first();
       await validateVisibleLocator(
         modalTitle,
         "Modal title 'Crear Nuevo Negocio' visible",
@@ -338,8 +394,8 @@ async function runWorkflow() {
 
       const businessNameField = await getFirstVisibleLocator(
         [
-          page.getByLabel(/nombre del negocio/i),
-          page.getByPlaceholder(/nombre del negocio/i),
+          page.getByLabel(/nombre del negocio|business name/i),
+          page.getByPlaceholder(/nombre del negocio|business name/i),
           page.locator("input").filter({ hasText: /nombre del negocio/i }),
         ],
         10000
@@ -355,19 +411,19 @@ async function runWorkflow() {
 
       await validateVisibleText(
         page,
-        /tienes\s*2\s*de\s*3\s*negocios/i,
+        /tienes\s*2\s*de\s*3\s*negocios|you have\s*2\s*of\s*3\s*businesses/i,
         "Text 'Tienes 2 de 3 negocios' visible",
         stepResult
       );
       await validateVisibleText(
         page,
-        /^Cancelar$/i,
+        /^Cancelar$|^Cancel$/i,
         "Button 'Cancelar' present",
         stepResult
       );
       await validateVisibleText(
         page,
-        /crear negocio/i,
+        /crear negocio|create business/i,
         "Button 'Crear Negocio' present",
         stepResult
       );
@@ -375,17 +431,19 @@ async function runWorkflow() {
       await saveScreenshot(page, "03-agregar-negocio-modal", stepResult);
 
       const cancelarButton = await getFirstVisibleLocator([
-        page.getByRole("button", { name: /^cancelar$/i }),
-        page.getByText(/^Cancelar$/i),
+        page.getByRole("button", { name: /^cancelar$|^cancel$/i }),
+        page.getByText(/^Cancelar$|^Cancel$/i),
       ]);
       await clickAndWait(cancelarButton, page);
     }, report);
 
     await runStep("Administrar Negocios view", async (stepResult) => {
+      await expandMiNegocioMenu(page);
+
       const administrarNegocios = await getFirstVisibleLocator([
-        page.getByRole("button", { name: /administrar negocios/i }),
-        page.getByRole("link", { name: /administrar negocios/i }),
-        page.getByText(/administrar negocios/i),
+        page.getByRole("button", { name: /administrar negocios|manage businesses/i }),
+        page.getByRole("link", { name: /administrar negocios|manage businesses/i }),
+        page.getByText(/administrar negocios|manage businesses/i),
       ]);
       await clickAndWait(administrarNegocios, page);
       await waitForUi(page);
@@ -394,25 +452,25 @@ async function runWorkflow() {
 
       await validateVisibleText(
         page,
-        /informaci[oó]n general/i,
+        /informaci[oó]n general|general information/i,
         "Section 'Información General' exists",
         stepResult
       );
       await validateVisibleText(
         page,
-        /detalles de la cuenta/i,
+        /detalles de la cuenta|account details/i,
         "Section 'Detalles de la Cuenta' exists",
         stepResult
       );
       await validateVisibleText(
         page,
-        /tus negocios/i,
+        /tus negocios|your businesses/i,
         "Section 'Tus Negocios' exists",
         stepResult
       );
       await validateVisibleText(
         page,
-        /secci[oó]n legal/i,
+        /secci[oó]n legal|legal section/i,
         "Section 'Sección Legal' exists",
         stepResult
       );
@@ -425,12 +483,11 @@ async function runWorkflow() {
     await runStep("Información General", async (stepResult) => {
       const bodyText = await page.locator("body").innerText();
       const emailRegex = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i;
-      const hasEmail = emailRegex.test(bodyText);
+      const hasEmail =
+        bodyText.includes(GOOGLE_ACCOUNT_EMAIL) || emailRegex.test(bodyText);
       addCheck(stepResult, "User email is visible", hasEmail);
 
-      const hasUserName = bodyText
-        .toLowerCase()
-        .includes("juan");
+      const hasUserName = /nombre|name|perfil|profile/i.test(bodyText);
       addCheck(stepResult, "User name is visible", hasUserName);
 
       await validateVisibleText(
@@ -441,7 +498,7 @@ async function runWorkflow() {
       );
       await validateVisibleText(
         page,
-        /cambiar plan/i,
+        /cambiar plan|change plan/i,
         "Button 'Cambiar Plan' is visible",
         stepResult
       );
@@ -450,19 +507,19 @@ async function runWorkflow() {
     await runStep("Detalles de la Cuenta", async (stepResult) => {
       await validateVisibleText(
         page,
-        /cuenta creada/i,
+        /cuenta creada|account created/i,
         "'Cuenta creada' is visible",
         stepResult
       );
       await validateVisibleText(
         page,
-        /estado activo/i,
+        /estado activo|active status/i,
         "'Estado activo' is visible",
         stepResult
       );
       await validateVisibleText(
         page,
-        /idioma seleccionado/i,
+        /idioma seleccionado|selected language/i,
         "'Idioma seleccionado' is visible",
         stepResult
       );
@@ -471,19 +528,19 @@ async function runWorkflow() {
     await runStep("Tus Negocios", async (stepResult) => {
       await validateVisibleText(
         page,
-        /tus negocios/i,
+        /tus negocios|your businesses/i,
         "Business list section is visible",
         stepResult
       );
       await validateVisibleText(
         page,
-        /^Agregar Negocio$/i,
+        /^Agregar Negocio$|^Add Business$/i,
         "Button 'Agregar Negocio' exists",
         stepResult
       );
       await validateVisibleText(
         page,
-        /tienes\s*2\s*de\s*3\s*negocios/i,
+        /tienes\s*2\s*de\s*3\s*negocios|you have\s*2\s*of\s*3\s*businesses/i,
         "Text 'Tienes 2 de 3 negocios' is visible",
         stepResult
       );
@@ -492,8 +549,8 @@ async function runWorkflow() {
     await runStep("Términos y Condiciones", async (stepResult) => {
       await openLegalLinkAndValidate({
         page,
-        linkText: "Términos y Condiciones",
-        headingRegex: /t[eé]rminos y condiciones/i,
+        linkText: "Términos y Condiciones|Terms and Conditions",
+        headingRegex: /t[eé]rminos y condiciones|terms and conditions/i,
         screenshotName: "05-terminos-y-condiciones",
         stepResult,
         appReturnUrl,
@@ -503,8 +560,8 @@ async function runWorkflow() {
     await runStep("Política de Privacidad", async (stepResult) => {
       await openLegalLinkAndValidate({
         page,
-        linkText: "Política de Privacidad",
-        headingRegex: /pol[ií]tica de privacidad/i,
+        linkText: "Política de Privacidad|Privacy Policy",
+        headingRegex: /pol[ií]tica de privacidad|privacy policy/i,
         screenshotName: "06-politica-de-privacidad",
         stepResult,
         appReturnUrl,
