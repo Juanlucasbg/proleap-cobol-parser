@@ -54,7 +54,7 @@ public class SaleadsMiNegocioWorkflowTest {
 			.compile("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}");
 	private static final String GOOGLE_ACCOUNT_EMAIL = "juanlucasbarbiergarzon@gmail.com";
 	private static final long DEFAULT_TIMEOUT_MS = 30_000L;
-	private static final int CASE_INSENSITIVE_UNICODE = Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE;
+	private static final int CASE_INSENSITIVE_FLAGS = Pattern.CASE_INSENSITIVE;
 
 	private Playwright playwright;
 	private Browser browser;
@@ -241,7 +241,7 @@ public class SaleadsMiNegocioWorkflowTest {
 	private void validateDetallesCuenta() {
 		assertAnyTextVisible("Expected label not visible: Cuenta creada.", "Cuenta creada");
 		assertPatternVisible("Expected label not visible: Estado activo.",
-				Pattern.compile("Estado\\s+activo", CASE_INSENSITIVE_UNICODE));
+				Pattern.compile("Estado\\s+activo", CASE_INSENSITIVE_FLAGS));
 		assertAnyTextVisible("Expected label not visible: Idioma seleccionado.", "Idioma seleccionado");
 	}
 
@@ -466,7 +466,7 @@ public class SaleadsMiNegocioWorkflowTest {
 	}
 
 	private Pattern caseInsensitiveLiteralPattern(final String value) {
-		return Pattern.compile(Pattern.quote(value), CASE_INSENSITIVE_UNICODE);
+		return Pattern.compile(Pattern.quote(value), CASE_INSENSITIVE_FLAGS);
 	}
 
 	private interface StepExecutable {
