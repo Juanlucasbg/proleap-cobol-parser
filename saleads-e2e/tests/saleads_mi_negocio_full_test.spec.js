@@ -9,11 +9,11 @@ const REPORT_FIELDS = [
   "Mi Negocio menu",
   "Agregar Negocio modal",
   "Administrar Negocios view",
-  "Informacion General",
+  "Informaci\u00f3n General",
   "Detalles de la Cuenta",
   "Tus Negocios",
-  "Terminos y Condiciones",
-  "Politica de Privacidad"
+  "T\u00e9rminos y Condiciones",
+  "Pol\u00edtica de Privacidad"
 ];
 
 function escapeRegExp(value) {
@@ -169,8 +169,20 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
 
   let appPage = page;
   let accountPageUrl = null;
+  const initialUrl = page.url();
 
-  const runStep = async (field, action) => {
+  const runStep = async (field, action, options = {}) => {
+    const required = options.required || [];
+    const missingPrerequisites = required.filter((requiredField) => results[requiredField] !== "PASS");
+    if (missingPrerequisites.length > 0) {
+      const reason = `Skipped because prerequisite validation(s) failed: ${missingPrerequisites.join(
+        ", "
+      )}`;
+      failures[field] = reason;
+      results[field] = "FAIL";
+      return;
+    }
+
     try {
       await action();
       results[field] = "PASS";
@@ -194,7 +206,7 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
 
     const loginButton = await findClickableByText(
       appPage,
-      /google|sign in|iniciar sesi[o\u00f3]n|continuar/i
+      /^Google$|Sign in with Google|Inicia sesi[o\u00f3]n con Google|Continuar con Google/i
     );
     const popupPromise = appPage.waitForEvent("popup", { timeout: 8_000 }).catch(() => null);
 
@@ -226,7 +238,9 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
     throw new Error("Main application interface or left sidebar did not appear after login.");
   });
 
-  await runStep("Mi Negocio menu", async () => {
+  await runStep(
+    "Mi Negocio menu",
+    async () => {
     if (!(await isAppShellVisible(appPage))) {
       throw new Error("Left sidebar navigation is not visible.");
     }
@@ -244,9 +258,13 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
       timeout: 15_000
     });
     await checkpoint(appPage, testInfo, "mi-negocio-menu-expanded");
-  });
+    },
+    { required: ["Login"] }
+  );
 
-  await runStep("Agregar Negocio modal", async () => {
+  await runStep(
+    "Agregar Negocio modal",
+    async () => {
     const agregarNegocioOption = await findClickableByText(appPage, /^Agregar Negocio$/i);
     await agregarNegocioOption.click({ timeout: 10_000 });
     await waitForUi(appPage);
@@ -276,9 +294,13 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
     await businessNameInput.fill(BUSINESS_NAME, { timeout: 10_000 });
     await appPage.getByRole("button", { name: /Cancelar/i }).first().click({ timeout: 10_000 });
     await waitForUi(appPage);
-  });
+    },
+    { required: ["Mi Negocio menu"] }
+  );
 
-  await runStep("Administrar Negocios view", async () => {
+  await runStep(
+    "Administrar Negocios view",
+    async () => {
     const administrarOptionVisible = await appPage
       .getByText(/Administrar Negocios/i)
       .first()
@@ -311,9 +333,13 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
 
     accountPageUrl = appPage.url();
     await checkpoint(appPage, testInfo, "administrar-negocios-account-page", true);
-  });
+    },
+    { required: ["Mi Negocio menu"] }
+  );
 
-  await runStep("Informacion General", async () => {
+  await runStep(
+    "Informaci\u00f3n General",
+    async () => {
     const infoGeneralSection = appPage
       .locator("section, div")
       .filter({ hasText: /Informaci[o\u00f3]n General/i })
@@ -333,17 +359,25 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
     await expect(appPage.getByRole("button", { name: /Cambiar Plan/i }).first()).toBeVisible({
       timeout: 15_000
     });
-  });
+    },
+    { required: ["Administrar Negocios view"] }
+  );
 
-  await runStep("Detalles de la Cuenta", async () => {
+  await runStep(
+    "Detalles de la Cuenta",
+    async () => {
     await expect(appPage.getByText(/Cuenta creada/i).first()).toBeVisible({ timeout: 15_000 });
     await expect(appPage.getByText(/Estado activo/i).first()).toBeVisible({ timeout: 15_000 });
     await expect(appPage.getByText(/Idioma seleccionado/i).first()).toBeVisible({
       timeout: 15_000
     });
-  });
+    },
+    { required: ["Administrar Negocios view"] }
+  );
 
-  await runStep("Tus Negocios", async () => {
+  await runStep(
+    "Tus Negocios",
+    async () => {
     const businessesSection = appPage
       .locator("section, div")
       .filter({ hasText: /Tus Negocios/i })
@@ -361,9 +395,13 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
     if (sectionText.length < 30) {
       throw new Error("Business list content appears empty.");
     }
-  });
+    },
+    { required: ["Administrar Negocios view"] }
+  );
 
-  await runStep("Terminos y Condiciones", async () => {
+  await runStep(
+    "T\u00e9rminos y Condiciones",
+    async () => {
     if (accountPageUrl && appPage.url() !== accountPageUrl) {
       await appPage.goto(accountPageUrl, { waitUntil: "domcontentloaded", timeout: 30_000 });
       await waitForUi(appPage);
@@ -380,9 +418,13 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
 
     legalUrls.terminosYCondiciones = legalResult.finalUrl;
     appPage = legalResult.activePage;
-  });
+    },
+    { required: ["Administrar Negocios view"] }
+  );
 
-  await runStep("Politica de Privacidad", async () => {
+  await runStep(
+    "Pol\u00edtica de Privacidad",
+    async () => {
     if (accountPageUrl && appPage.url() !== accountPageUrl) {
       await appPage.goto(accountPageUrl, { waitUntil: "domcontentloaded", timeout: 30_000 });
       await waitForUi(appPage);
@@ -399,12 +441,14 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
 
     legalUrls.politicaDePrivacidad = legalResult.finalUrl;
     appPage = legalResult.activePage;
-  });
+    },
+    { required: ["Administrar Negocios view"] }
+  );
 
   const finalReport = {
     testName: "saleads_mi_negocio_full_test",
     environment: {
-      initialUrl: page.url(),
+      initialUrl,
       appUrl: accountPageUrl || appPage.url()
     },
     results,
