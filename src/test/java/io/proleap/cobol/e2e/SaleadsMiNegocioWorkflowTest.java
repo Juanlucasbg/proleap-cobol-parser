@@ -104,11 +104,11 @@ public class SaleadsMiNegocioWorkflowTest {
 		runStep("Mi Negocio menu", this::stepOpenMiNegocioMenu);
 		runStep("Agregar Negocio modal", this::stepValidateAgregarNegocioModal);
 		runStep("Administrar Negocios view", this::stepOpenAdministrarNegocios);
-		runStep("Informacion General", this::stepValidateInformacionGeneral);
+		runStep("Información General", this::stepValidateInformacionGeneral);
 		runStep("Detalles de la Cuenta", this::stepValidateDetallesCuenta);
 		runStep("Tus Negocios", this::stepValidateTusNegocios);
-		runStep("Terminos y Condiciones", () -> stepValidateLegalDocument("Términos y Condiciones", "Términos y Condiciones"));
-		runStep("Politica de Privacidad", () -> stepValidateLegalDocument("Política de Privacidad", "Política de Privacidad"));
+		runStep("Términos y Condiciones", () -> stepValidateLegalDocument("Términos y Condiciones", "Términos y Condiciones"));
+		runStep("Política de Privacidad", () -> stepValidateLegalDocument("Política de Privacidad", "Política de Privacidad"));
 
 		printFinalReport();
 		assertTrue("At least one SaleADS workflow section failed. See logs above.", finalReport.values().stream().allMatch(Boolean::booleanValue));
@@ -116,8 +116,9 @@ public class SaleadsMiNegocioWorkflowTest {
 
 	private void stepLoginWithGoogle() {
 		if (!isMainAppVisible()) {
+			Set<String> handlesBeforeLoginClick = driver.getWindowHandles();
 			clickByVisibleText("Sign in with Google", "Iniciar sesión con Google", "Continuar con Google");
-			handleGoogleAccountSelectionIfPresent();
+			handleGoogleAccountSelectionIfPresent(handlesBeforeLoginClick);
 			waitUntilMainAppVisible();
 		}
 
@@ -142,6 +143,7 @@ public class SaleadsMiNegocioWorkflowTest {
 		assertVisibleText("Tienes 2 de 3 negocios");
 		assertVisibleText("Cancelar");
 		assertVisibleText("Crear Negocio");
+		takeScreenshot("03-agregar-negocio-modal", false);
 
 		WebElement nameInput = findBusinessNameInput();
 		nameInput.click();
@@ -151,7 +153,6 @@ public class SaleadsMiNegocioWorkflowTest {
 
 		clickByVisibleText("Cancelar");
 		wait.until(ExpectedConditions.invisibilityOfElementLocated(By.xpath("//*[contains(normalize-space(.), 'Crear Nuevo Negocio')]")));
-		takeScreenshot("03-agregar-negocio-modal", false);
 	}
 
 	private void stepOpenAdministrarNegocios() {
@@ -168,6 +169,8 @@ public class SaleadsMiNegocioWorkflowTest {
 	}
 
 	private void stepValidateInformacionGeneral() {
+		assertElementExists(By.xpath(
+				"//*[contains(normalize-space(.), 'Información General')]/following::*[not(self::script)][string-length(normalize-space(.)) > 2 and not(contains(normalize-space(.), '@'))][1]"));
 		assertElementExists(By.xpath("//section//*[contains(normalize-space(.), '@')] | //main//*[contains(normalize-space(.), '@')]"));
 		assertElementExists(By.xpath("//section//*[contains(normalize-space(.), 'BUSINESS PLAN')] | //main//*[contains(normalize-space(.), 'BUSINESS PLAN')]"));
 		assertVisibleText("Cambiar Plan");
@@ -235,13 +238,12 @@ public class SaleadsMiNegocioWorkflowTest {
 		System.out.println("===========================================");
 	}
 
-	private void handleGoogleAccountSelectionIfPresent() {
-		Set<String> handlesBefore = driver.getWindowHandles();
+	private void handleGoogleAccountSelectionIfPresent(final Set<String> handlesBeforeClick) {
 		waitForUiLoad();
 
-		boolean newTabOpened = waitForNewTab(handlesBefore, SHORT_TIMEOUT);
+		boolean newTabOpened = waitForNewTab(handlesBeforeClick, SHORT_TIMEOUT);
 		if (newTabOpened) {
-			switchToNewestTab(handlesBefore);
+			switchToNewestTab(handlesBeforeClick);
 		}
 
 		Optional<WebElement> accountOption = findVisibleElementByText(SHORT_TIMEOUT, GOOGLE_ACCOUNT_EMAIL);
