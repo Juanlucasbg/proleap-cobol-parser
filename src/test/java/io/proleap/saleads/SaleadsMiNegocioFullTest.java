@@ -109,7 +109,7 @@ public class SaleadsMiNegocioFullTest {
 			report.put(reportField, Boolean.TRUE);
 		} catch (final Exception ex) {
 			report.put(reportField, Boolean.FALSE);
-			failures.add(reportField + ": " + Optional.ofNullable(ex.getMessage()).orElse(ex.getClass().getSimpleName()));
+			failures.add(reportField + ": " + summarizeException(ex));
 			takeFailureScreenshot(reportField);
 		}
 	}
@@ -253,9 +253,10 @@ public class SaleadsMiNegocioFullTest {
 		final String loginUrl = readSetting("saleads.login.url", "SALEADS_LOGIN_URL");
 		if (isBlank(loginUrl)) {
 			final String currentUrl = driver.getCurrentUrl();
-			if (currentUrl == null || currentUrl.startsWith("about:blank")) {
+			if (currentUrl == null || currentUrl.isBlank() || currentUrl.startsWith("about:blank")
+					|| currentUrl.startsWith("data:,") || currentUrl.startsWith("chrome://newtab")) {
 				throw new IllegalStateException(
-						"No login page configured. Set SALEADS_LOGIN_URL (or -Dsaleads.login.url) for the target environment.");
+						"No login page configured. Set SALEADS_LOGIN_URL (or -Dsaleads.login.url), or attach to an existing logged-in browser with SALEADS_CHROME_DEBUGGER_ADDRESS.");
 			}
 			return;
 		}
@@ -476,6 +477,21 @@ public class SaleadsMiNegocioFullTest {
 
 	private void takeFailureScreenshot(final String stepName) {
 		takeScreenshot("failure-" + stepName);
+	}
+
+	private String summarizeException(final Exception ex) {
+		if (ex instanceof TimeoutException) {
+			return "Timed out waiting for expected UI element or state.";
+		}
+
+		final String fallback = ex.getClass().getSimpleName();
+		final String message = Optional.ofNullable(ex.getMessage()).orElse(fallback).trim();
+		if (message.isEmpty()) {
+			return fallback;
+		}
+
+		final String firstLine = message.split("\\R", 2)[0].trim();
+		return firstLine.isEmpty() ? fallback : firstLine;
 	}
 
 	private void writeFinalReport(final List<String> failures) throws Exception {
