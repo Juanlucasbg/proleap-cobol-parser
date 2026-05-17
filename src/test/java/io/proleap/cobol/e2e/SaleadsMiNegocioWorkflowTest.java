@@ -351,7 +351,8 @@ public class SaleadsMiNegocioWorkflowTest {
   }
 
   private String openLegalLinkAndValidate(
-      final String linkText, final List<String> headingCandidates, final String screenshotName) {
+      final String linkText, final List<String> headingCandidates, final String screenshotName)
+      throws IOException {
     final String originalHandle = driver.getWindowHandle();
     final Set<String> handlesBefore = driver.getWindowHandles();
 
