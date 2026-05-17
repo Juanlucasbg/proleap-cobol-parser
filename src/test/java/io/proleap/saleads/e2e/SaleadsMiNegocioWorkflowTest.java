@@ -54,6 +54,7 @@ public class SaleadsMiNegocioWorkflowTest {
 			.compile("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}");
 	private static final String GOOGLE_ACCOUNT_EMAIL = "juanlucasbarbiergarzon@gmail.com";
 	private static final long DEFAULT_TIMEOUT_MS = 30_000L;
+	private static final int CASE_INSENSITIVE_UNICODE = Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE;
 
 	private Playwright playwright;
 	private Browser browser;
@@ -175,7 +176,7 @@ public class SaleadsMiNegocioWorkflowTest {
 	private void chooseGoogleAccountIfVisible(final Page authPage) {
 		waitForUiLoad(authPage);
 
-		final Locator accountOption = authPage.getByText(Pattern.compile("(?i)" + Pattern.quote(GOOGLE_ACCOUNT_EMAIL))).first();
+		final Locator accountOption = authPage.getByText(caseInsensitiveLiteralPattern(GOOGLE_ACCOUNT_EMAIL)).first();
 		if (accountOption.isVisible()) {
 			accountOption.click(new Locator.ClickOptions().setTimeout(DEFAULT_TIMEOUT_MS));
 			waitForUiLoad(authPage);
@@ -239,7 +240,8 @@ public class SaleadsMiNegocioWorkflowTest {
 
 	private void validateDetallesCuenta() {
 		assertAnyTextVisible("Expected label not visible: Cuenta creada.", "Cuenta creada");
-		assertPatternVisible("Expected label not visible: Estado activo.", Pattern.compile("(?i)Estado\\s+activo"));
+		assertPatternVisible("Expected label not visible: Estado activo.",
+				Pattern.compile("Estado\\s+activo", CASE_INSENSITIVE_UNICODE));
 		assertAnyTextVisible("Expected label not visible: Idioma seleccionado.", "Idioma seleccionado");
 	}
 
@@ -334,7 +336,7 @@ public class SaleadsMiNegocioWorkflowTest {
 	}
 
 	private Locator findInput(final String label) {
-		final Pattern pattern = Pattern.compile("(?i)" + Pattern.quote(label));
+		final Pattern pattern = caseInsensitiveLiteralPattern(label);
 		final Locator byLabel = page.getByLabel(pattern).first();
 		if (byLabel.isVisible()) {
 			return byLabel;
@@ -354,7 +356,7 @@ public class SaleadsMiNegocioWorkflowTest {
 
 	private void assertAnyTextVisibleOnPage(final Page targetPage, final String failureMessage, final String... candidates) {
 		for (final String candidate : candidates) {
-			if (targetPage.getByText(Pattern.compile("(?i)" + Pattern.quote(candidate))).first().isVisible()) {
+			if (targetPage.getByText(caseInsensitiveLiteralPattern(candidate)).first().isVisible()) {
 				return;
 			}
 		}
@@ -396,7 +398,7 @@ public class SaleadsMiNegocioWorkflowTest {
 
 		while (System.currentTimeMillis() < deadline) {
 			for (final String candidate : textCandidates) {
-				final Pattern pattern = Pattern.compile("(?i)" + Pattern.quote(candidate));
+				final Pattern pattern = caseInsensitiveLiteralPattern(candidate);
 				final Locator byButton = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(pattern)).first();
 				if (byButton.isVisible()) {
 					return byButton;
@@ -419,7 +421,7 @@ public class SaleadsMiNegocioWorkflowTest {
 	}
 
 	private boolean isAnyTextVisible(final String text) {
-		return page.getByText(Pattern.compile("(?i)" + Pattern.quote(text))).first().isVisible();
+		return page.getByText(caseInsensitiveLiteralPattern(text)).first().isVisible();
 	}
 
 	private void captureScreenshot(final String checkpointName, final boolean fullPage, final Page targetPage) {
@@ -461,6 +463,10 @@ public class SaleadsMiNegocioWorkflowTest {
 
 	private String sanitize(final String rawName) {
 		return rawName.replaceAll("[^a-z0-9\\-]", "-").replaceAll("-{2,}", "-");
+	}
+
+	private Pattern caseInsensitiveLiteralPattern(final String value) {
+		return Pattern.compile(Pattern.quote(value), CASE_INSENSITIVE_UNICODE);
 	}
 
 	private interface StepExecutable {
