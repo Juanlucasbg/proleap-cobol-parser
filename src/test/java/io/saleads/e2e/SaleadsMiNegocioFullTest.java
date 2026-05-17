@@ -166,10 +166,9 @@ public class SaleadsMiNegocioFullTest {
 		checks.expect(isAnyTextVisible("Cancelar"), "Cancelar button is visible.");
 		checks.expect(isAnyTextVisible("Crear Negocio"), "Crear Negocio button is visible.");
 
+		takeScreenshot("03-agregar-negocio-modal");
 		typeIfVisible("Nombre del Negocio", "Negocio Prueba Automatización");
 		clickByVisibleText("Cancelar");
-
-		takeScreenshot("03-agregar-negocio-modal");
 		return checks.passed();
 	}
 
