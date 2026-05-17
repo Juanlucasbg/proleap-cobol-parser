@@ -154,18 +154,19 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
   const legalUrls = {};
 
   const startUrl = process.env.SALEADS_LOGIN_URL || process.env.SALEADS_BASE_URL || process.env.BASE_URL;
-  if (startUrl) {
-    await page.goto(startUrl, { waitUntil: "domcontentloaded" });
-  } else if (page.url() === "about:blank") {
-    throw new Error(
-      "No login URL available. Set SALEADS_LOGIN_URL (or SALEADS_BASE_URL/BASE_URL) to run this test in your current environment."
-    );
-  }
 
   let workflowError = null;
 
   try {
     await runStep(report, "Login", async () => {
+      if (startUrl) {
+        await page.goto(startUrl, { waitUntil: "domcontentloaded" });
+      } else if (page.url() === "about:blank") {
+        throw new Error(
+          "No login URL available. Set SALEADS_LOGIN_URL (or SALEADS_BASE_URL/BASE_URL) to run this test in your current environment."
+        );
+      }
+
       await waitForUi(page);
 
       const googlePopupPromise = context.waitForEvent("page", { timeout: 10000 }).catch(() => null);
