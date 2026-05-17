@@ -6,11 +6,11 @@ This suite automates the `saleads_mi_negocio_full_test` workflow using Playwrigh
 2. `Mi Negocio` sidebar expansion.
 3. `Agregar Negocio` modal fields and actions.
 4. `Administrar Negocios` page sections.
-5. `Informacion General` validations.
+5. `Información General` validations.
 6. `Detalles de la Cuenta` validations.
 7. `Tus Negocios` validations.
-8. `Terminos y Condiciones` legal link validation (including new tab handling).
-9. `Politica de Privacidad` legal link validation (including new tab handling).
+8. `Términos y Condiciones` legal link validation (including new tab handling).
+9. `Política de Privacidad` legal link validation (including new tab handling).
 10. Final PASS/FAIL report output.
 
 The test is environment-agnostic and does not hardcode any domain.

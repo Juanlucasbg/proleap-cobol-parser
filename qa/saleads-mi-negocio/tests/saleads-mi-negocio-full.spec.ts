@@ -8,11 +8,11 @@ type ReportField =
   | "Mi Negocio menu"
   | "Agregar Negocio modal"
   | "Administrar Negocios view"
-  | "Informacion General"
+  | "Información General"
   | "Detalles de la Cuenta"
   | "Tus Negocios"
-  | "Terminos y Condiciones"
-  | "Politica de Privacidad";
+  | "Términos y Condiciones"
+  | "Política de Privacidad";
 
 interface StepResult {
   status: StepStatus;
@@ -35,11 +35,11 @@ const REPORT_FIELDS: ReportField[] = [
   "Mi Negocio menu",
   "Agregar Negocio modal",
   "Administrar Negocios view",
-  "Informacion General",
+  "Información General",
   "Detalles de la Cuenta",
   "Tus Negocios",
-  "Terminos y Condiciones",
-  "Politica de Privacidad"
+  "Términos y Condiciones",
+  "Política de Privacidad"
 ];
 
 const WAIT_UI_SETTLE_MS = 500;
@@ -321,7 +321,7 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     await takeScreenshot(page, testInfo, "04-administrar-negocios-view.png", true);
   });
 
-  await runStep(report, "Informacion General", async () => {
+  await runStep(report, "Información General", async () => {
     const infoGeneralSection = page
       .locator("section,div,article")
       .filter({ has: page.getByText(/informacion general|informaci[oó]n general/i).first() })
@@ -377,7 +377,7 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     }
   });
 
-  await runStep(report, "Terminos y Condiciones", async () => {
+  await runStep(report, "Términos y Condiciones", async () => {
     const legalResult = await openLegalLinkAndValidate(
       page,
       testInfo,
@@ -388,7 +388,7 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     report.legalUrls.terminosYCondiciones = legalResult.finalUrl;
   });
 
-  await runStep(report, "Politica de Privacidad", async () => {
+  await runStep(report, "Política de Privacidad", async () => {
     const legalResult = await openLegalLinkAndValidate(
       page,
       testInfo,
