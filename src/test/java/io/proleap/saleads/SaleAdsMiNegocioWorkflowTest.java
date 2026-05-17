@@ -140,8 +140,9 @@ public class SaleAdsMiNegocioWorkflowTest {
 
 		Page accountSelectionPage = null;
 		try {
-			accountSelectionPage = context.waitForPage(() -> clickAndWait(page, loginButton),
-					new BrowserContext.WaitForPageOptions().setTimeout(SHORT_TIMEOUT_MS));
+			accountSelectionPage = context.waitForPage(
+					new BrowserContext.WaitForPageOptions().setTimeout(SHORT_TIMEOUT_MS),
+					() -> clickAndWait(page, loginButton));
 		} catch (PlaywrightException ignored) {
 			clickAndWait(page, loginButton);
 		}
@@ -154,7 +155,9 @@ public class SaleAdsMiNegocioWorkflowTest {
 
 		if (accountSelectionPage != null) {
 			try {
-				accountSelectionPage.waitForClose(new Page.WaitForCloseOptions().setTimeout(30_000));
+				if (!accountSelectionPage.isClosed()) {
+					accountSelectionPage.waitForTimeout(1_500);
+				}
 			} catch (PlaywrightException ignored) {
 				// OAuth tabs are not guaranteed to auto-close in all environments.
 			}
@@ -291,8 +294,9 @@ public class SaleAdsMiNegocioWorkflowTest {
 		boolean openedNewTab = false;
 
 		try {
-			legalPage = context.waitForPage(() -> clickAndWait(appPage, link),
-					new BrowserContext.WaitForPageOptions().setTimeout(SHORT_TIMEOUT_MS));
+			legalPage = context.waitForPage(
+					new BrowserContext.WaitForPageOptions().setTimeout(SHORT_TIMEOUT_MS),
+					() -> clickAndWait(appPage, link));
 			openedNewTab = true;
 		} catch (PlaywrightException ignored) {
 			clickAndWait(appPage, link);
