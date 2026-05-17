@@ -87,14 +87,18 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     terms: "",
     privacy: "",
   };
+  let loginCompleted = false;
 
   async function checkpointScreenshot(name, fullPage = false, targetPage = page) {
     const filePath = path.join(runDir, name);
     await targetPage.screenshot({ path: filePath, fullPage });
   }
 
-  async function runStep(reportField, fn) {
+  async function runStep(reportField, fn, options = {}) {
     try {
+      if (options.requiresLogin && !loginCompleted) {
+        throw new Error("Prerequisite failed: Login step did not complete.");
+      }
       await fn();
       stepResults[reportField] = "PASS";
     } catch (error) {
@@ -107,13 +111,17 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
   if (loginUrl) {
     await page.goto(loginUrl, { waitUntil: "domcontentloaded" });
     await waitForUi(page);
-  } else if (page.url() === "about:blank") {
-    throw new Error(
-      "Set SALEADS_LOGIN_URL to the current environment login page. This test does not hardcode a domain."
-    );
+  } else {
+    await waitForUi(page);
   }
 
   await runStep("Login", async () => {
+    if (!loginUrl && page.url() === "about:blank") {
+      throw new Error(
+        "Set SALEADS_LOGIN_URL to the current environment login page. This test does not hardcode a domain."
+      );
+    }
+
     const popupPromise = page.waitForEvent("popup", { timeout: 8_000 }).catch(() => null);
     await clickByVisibleText(page, [
       /sign in with google/i,
@@ -147,6 +155,7 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
 
     await expect(sidebarLocator).toBeVisible({ timeout: 40_000 });
     await checkpointScreenshot("01-dashboard-loaded.png");
+    loginCompleted = true;
   });
 
   await runStep("Mi Negocio menu", async () => {
@@ -156,7 +165,7 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     await expect(page.getByText(/Agregar\s*Negocio/i).first()).toBeVisible();
     await expect(page.getByText(/Administrar\s*Negocios/i).first()).toBeVisible();
     await checkpointScreenshot("02-mi-negocio-expanded.png");
-  });
+  }, { requiresLogin: true });
 
   await runStep("Agregar Negocio modal", async () => {
     await clickByVisibleText(page, [/Agregar\s*Negocio/i]);
@@ -188,7 +197,7 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     await nameInput.fill("Negocio Prueba Automatizacion");
     await modal.getByRole("button", { name: /Cancelar/i }).click();
     await waitForUi(page);
-  });
+  }, { requiresLogin: true });
 
   await runStep("Administrar Negocios view", async () => {
     const administrarLocator = page.getByText(/Administrar\s*Negocios/i).first();
@@ -203,7 +212,7 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     await expect(page.getByText(/Tus\s*Negocios/i).first()).toBeVisible();
     await expect(page.getByText(/Secci[oó]n\s*Legal/i).first()).toBeVisible();
     await checkpointScreenshot("04-account-page.png", true);
-  });
+  }, { requiresLogin: true });
 
   await runStep("Informacion General", async () => {
     const infoSection = page.locator("section,div,article").filter({
@@ -232,7 +241,7 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
 
     await expect(page.getByText(/BUSINESS\s*PLAN/i).first()).toBeVisible();
     await expect(page.getByRole("button", { name: /Cambiar\s*Plan/i }).first()).toBeVisible();
-  });
+  }, { requiresLogin: true });
 
   await runStep("Detalles de la Cuenta", async () => {
     const detailsSection = page.locator("section,div,article").filter({
@@ -243,7 +252,7 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     await expect(detailsSection.getByText(/Cuenta\s*creada/i)).toBeVisible();
     await expect(detailsSection.getByText(/Estado\s*activo/i)).toBeVisible();
     await expect(detailsSection.getByText(/Idioma\s*seleccionado/i)).toBeVisible();
-  });
+  }, { requiresLogin: true });
 
   await runStep("Tus Negocios", async () => {
     const businessSection = page.locator("section,div,article").filter({
@@ -258,7 +267,7 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     if (sectionText.length < 35) {
       throw new Error("Business section content appears empty.");
     }
-  });
+  }, { requiresLogin: true });
 
   async function validateLegalLink({
     reportField,
@@ -321,7 +330,7 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
         await page.goBack().catch(() => {});
       }
       await waitForUi(page);
-    });
+    }, { requiresLogin: true });
   }
 
   await validateLegalLink({
