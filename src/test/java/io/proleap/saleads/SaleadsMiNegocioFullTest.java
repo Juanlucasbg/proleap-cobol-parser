@@ -28,6 +28,8 @@ public class SaleadsMiNegocioFullTest {
 	private static final DateTimeFormatter FILE_TS = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
 	private static final Pattern LOGIN_BUTTON_PATTERN = Pattern.compile(
 			"(?i)(sign in with google|iniciar sesi[oó]n con google|continuar con google|acceder con google|google)");
+	private static final Pattern ENTRY_LOGIN_PATTERN = Pattern
+			.compile("(?i)(login|log in|iniciar sesi[oó]n|sign in|acceder|entrar)");
 	private static final Pattern MAIN_SIDEBAR_PATTERN = Pattern.compile("(?i)(mi negocio|negocio|dashboard|inicio)");
 	private static final Pattern MI_NEGOCIO_PATTERN = Pattern.compile("(?i)mi negocio");
 	private static final Pattern AGREGAR_NEGOCIO_PATTERN = Pattern.compile("(?i)agregar negocio");
@@ -95,10 +97,18 @@ public class SaleadsMiNegocioFullTest {
 	}
 
 	private void doLoginWithGoogle(Page page) {
-		Locator loginButton = page.getByRole(AriaRole.BUTTON,
-				new Page.GetByRoleOptions().setName(LOGIN_BUTTON_PATTERN)).first();
+		Locator loginButton = findGoogleLoginLocator(page);
 		if (!isVisible(loginButton)) {
-			loginButton = page.getByText(LOGIN_BUTTON_PATTERN).first();
+			Locator entryLoginButton = page.getByRole(AriaRole.BUTTON,
+					new Page.GetByRoleOptions().setName(ENTRY_LOGIN_PATTERN)).first();
+			if (!isVisible(entryLoginButton)) {
+				entryLoginButton = page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName(ENTRY_LOGIN_PATTERN))
+						.first();
+			}
+			if (isVisible(entryLoginButton)) {
+				clickAndWait(entryLoginButton, page);
+				loginButton = findGoogleLoginLocator(page);
+			}
 		}
 		waitVisible(loginButton, "Login button / Sign in with Google");
 		clickAndWait(loginButton, page);
@@ -109,6 +119,18 @@ public class SaleadsMiNegocioFullTest {
 		waitVisible(page.getByText(MAIN_SIDEBAR_PATTERN).first(), "Main interface and sidebar");
 		waitVisible(page.getByText(MI_NEGOCIO_PATTERN).first(), "Mi Negocio in left sidebar");
 		captureScreenshot("dashboard-loaded", true);
+	}
+
+	private Locator findGoogleLoginLocator(Page page) {
+		Locator loginButton = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(LOGIN_BUTTON_PATTERN))
+				.first();
+		if (!isVisible(loginButton)) {
+			loginButton = page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName(LOGIN_BUTTON_PATTERN)).first();
+		}
+		if (!isVisible(loginButton)) {
+			loginButton = page.getByText(LOGIN_BUTTON_PATTERN).first();
+		}
+		return loginButton;
 	}
 
 	private void openMiNegocioMenu(Page page) {
