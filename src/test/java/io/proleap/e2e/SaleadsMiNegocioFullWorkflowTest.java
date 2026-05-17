@@ -35,7 +35,8 @@ public class SaleadsMiNegocioFullWorkflowTest {
 	private static final String DEFAULT_GOOGLE_ACCOUNT = "juanlucasbarbiergarzon@gmail.com";
 	private static final long DEFAULT_TIMEOUT_MS = 15000;
 	private static final Pattern LOGIN_WITH_GOOGLE_PATTERN = Pattern
-			.compile("(?i)(sign\\s*in\\s*with\\s*google|iniciar\\s*sesi[oó]n\\s*con\\s*google|continuar\\s*con\\s*google)");
+			.compile("(?i)(sign\\s*in\\s*with\\s*google|iniciar\\s*sesi[oó]n\\s*con\\s*google|continuar\\s*con\\s*google|iniciar\\s*sesi[oó]n|login)");
+	private static final Pattern NEGOCIO_PATTERN = Pattern.compile("(?i)negocio");
 	private static final Pattern MI_NEGOCIO_PATTERN = Pattern.compile("(?i)mi\\s*negocio");
 	private static final Pattern AGREGAR_NEGOCIO_PATTERN = Pattern.compile("(?i)agregar\\s*negocio");
 	private static final Pattern ADMINISTRAR_NEGOCIOS_PATTERN = Pattern.compile("(?i)administrar\\s*negocios");
@@ -86,11 +87,13 @@ public class SaleadsMiNegocioFullWorkflowTest {
 				}
 
 				appPageRef[0] = waitForApplicationPage(context);
+				assertVisibleText(appPageRef[0], NEGOCIO_PATTERN, "Left sidebar navigation");
 				assertVisibleText(appPageRef[0], MI_NEGOCIO_PATTERN, "Left navigation with Mi Negocio");
 				saveScreenshot(appPageRef[0], evidenceDirectory, "01-dashboard-loaded.png", false);
 			});
 
 			final boolean menuOk = loginOk && runStep("Mi Negocio menu", () -> {
+				assertVisibleText(appPageRef[0], NEGOCIO_PATTERN, "Negocio section");
 				clickByVisibleText(appPageRef[0], MI_NEGOCIO_PATTERN, "Mi Negocio");
 				waitForUi(appPageRef[0]);
 				assertVisibleText(appPageRef[0], AGREGAR_NEGOCIO_PATTERN, "Agregar Negocio option");
