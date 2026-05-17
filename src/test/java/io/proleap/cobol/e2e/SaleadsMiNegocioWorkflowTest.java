@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -100,7 +99,9 @@ public class SaleadsMiNegocioWorkflowTest {
   @After
   public void tearDown() throws IOException {
     try {
-      writeReport();
+      if (evidenceDir != null) {
+        writeReport();
+      }
     } finally {
       if (driver != null) {
         driver.quit();
@@ -390,7 +391,8 @@ public class SaleadsMiNegocioWorkflowTest {
   private String detectActiveHandleAfterNavigation(
       final String originalHandle, final Set<String> handlesBeforeClick) {
     try {
-      return wait.until(
+      final WebDriverWait handleWait = new WebDriverWait(driver, Duration.ofSeconds(8));
+      return handleWait.until(
           driverRef -> {
             final Set<String> handlesAfter = driverRef.getWindowHandles();
             if (handlesAfter.size() > handlesBeforeClick.size()) {
@@ -400,7 +402,7 @@ public class SaleadsMiNegocioWorkflowTest {
                 }
               }
             }
-            return originalHandle;
+            return null;
           });
     } catch (TimeoutException ignored) {
       return originalHandle;
