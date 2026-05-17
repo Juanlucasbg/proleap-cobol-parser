@@ -144,24 +144,32 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
   const report = buildInitialReport();
   const failures = [];
   const legalUrls = {};
+  let loginSucceeded = false;
 
   const baseUrl =
     process.env.SALEADS_START_URL || process.env.SALEADS_LOGIN_URL || process.env.BASE_URL;
 
   if (baseUrl) {
     await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
-  } else if (page.url() === "about:blank") {
-    throw new Error(
-      "No login page is available. Set SALEADS_START_URL, SALEADS_LOGIN_URL or BASE_URL.",
-    );
   }
 
   await waitForUi(page);
 
-  const runValidation = async (fieldName, fn) => {
+  const runValidation = async (fieldName, fn, options = {}) => {
+    const requiresLogin = options.requiresLogin ?? true;
+
+    if (requiresLogin && !loginSucceeded) {
+      report[fieldName] = "FAIL";
+      failures.push(`${fieldName}: Skipped because login did not succeed.`);
+      return;
+    }
+
     try {
       await fn();
       report[fieldName] = "PASS";
+      if (fieldName === "Login") {
+        loginSucceeded = true;
+      }
     } catch (error) {
       report[fieldName] = "FAIL";
       failures.push(`${fieldName}: ${error.message}`);
@@ -169,7 +177,15 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     }
   };
 
-  await runValidation("Login", async () => {
+  await runValidation(
+    "Login",
+    async () => {
+    if (!baseUrl && page.url() === "about:blank") {
+      throw new Error(
+        "No login page is available. Set SALEADS_START_URL, SALEADS_LOGIN_URL or BASE_URL.",
+      );
+    }
+
     const loginButton = await findVisibleLocator([
       page.getByRole("button", { name: /sign in with google|login with google|google/i }),
       page.getByRole("link", { name: /sign in with google|login with google|google/i }),
@@ -207,8 +223,10 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
       20000,
     );
 
-    await screenshot(page, testInfo, "01-dashboard-loaded.png", true);
-  });
+      await screenshot(page, testInfo, "01-dashboard-loaded.png", true);
+    },
+    { requiresLogin: false },
+  );
 
   await runValidation("Mi Negocio menu", async () => {
     await clickByVisibleText(page, /negocio/i);
