@@ -119,6 +119,10 @@ public class SaleadsMiNegocioFullTest {
 	private boolean stepLoginWithGoogle() {
 		final CheckCollector checks = new CheckCollector();
 
+		if (!isAnyTextVisible("Sign in with Google", "Iniciar sesión con Google", "Continuar con Google", "Google")) {
+			clickByVisibleText("Iniciar sesión", "Iniciar Sesión", "Login", "Log in", "Get started", "Start now");
+		}
+
 		checks.expect(clickByVisibleText("Sign in with Google", "Iniciar sesión con Google", "Continuar con Google", "Google"),
 				"Google login button is clickable.");
 		selectGoogleAccountIfVisible();
