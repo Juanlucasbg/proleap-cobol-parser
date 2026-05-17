@@ -89,6 +89,28 @@ async function captureScreenshot(page, checkpointName, fullPage = false) {
   return screenshotPath;
 }
 
+async function assertNoInfrastructureError(page, checkpointName) {
+  const errorMarker = await getFirstVisible(
+    [
+      page.getByText(/ssl handshake failed/i),
+      page.getByText(/error code\s*525/i),
+      page.getByText(/host error/i),
+      page.getByText(/cloudflare/i),
+      page.getByText(/bad gateway|502/i),
+    ],
+    1000
+  );
+
+  if (!errorMarker) {
+    return;
+  }
+
+  const screenshotPath = await captureScreenshot(page, `infra-error-${checkpointName}`, true);
+  throw new Error(
+    `Infrastructure error page detected at '${checkpointName}'. See screenshot: ${screenshotPath}`
+  );
+}
+
 async function getFirstVisible(locators, timeoutMs = 3000) {
   for (const locator of locators) {
     const first = locator.first();
@@ -153,6 +175,17 @@ async function runStep(report, stepName, action) {
   } catch (error) {
     setStepStatus(report, stepName, "FAIL", error);
   }
+}
+
+function ensureStepPassed(report, requiredStepName, currentStepName) {
+  if (report.results[requiredStepName].status === "PASS") {
+    return;
+  }
+
+  const reason = report.results[requiredStepName].error || report.results[requiredStepName].status;
+  throw new Error(
+    `Blocked: '${currentStepName}' requires '${requiredStepName}' to pass first. Upstream result: ${reason}`
+  );
 }
 
 async function openLegalLinkAndValidate({
@@ -233,6 +266,7 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
     if (loginUrl) {
       await page.goto(loginUrl, { waitUntil: "domcontentloaded" });
       await waitForUiLoad(page);
+      await assertNoInfrastructureError(page, "login-page-open");
       addNote(report, "Login", `Opened login URL from environment variable: ${loginUrl}`);
     } else if (page.url() === "about:blank") {
       throw new Error(
@@ -266,9 +300,10 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
     }
 
     await waitForUiLoad(page);
+    await assertNoInfrastructureError(page, "after-google-login-click");
 
     await expectAnyVisible(
-      [page.getByText(/dashboard|panel|inicio|home/i), page.getByRole("main"), page.locator("main")],
+      [page.getByText(/dashboard|panel|inicio|home/i), page.locator("main")],
       "No se detectó la interfaz principal tras el login",
       20000
     );
@@ -279,11 +314,24 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
       12000
     );
 
+    await expectAnyVisible(
+      [
+        page.getByText(/mi negocio/i),
+        page.getByText(/negocio/i),
+        page.getByText(/administrar negocios/i),
+        page.getByText(/agregar negocio/i),
+      ],
+      "No se detectó el menú de negocio después del login",
+      12000
+    );
+
     const dashboardShot = await captureScreenshot(page, "01-dashboard-loaded", true);
     addEvidence(report, "Login", { type: "screenshot", path: dashboardShot });
   });
 
   await runStep(report, "Mi Negocio menu", async () => {
+    ensureStepPassed(report, "Login", "Mi Negocio menu");
+
     const clickedMiNegocioDirectly = await tryClickByVisibleText(page, [/^mi negocio$/i, /mi negocio/i], {
       timeoutMs: 6000,
     });
@@ -301,6 +349,7 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
   });
 
   await runStep(report, "Agregar Negocio modal", async () => {
+    ensureStepPassed(report, "Mi Negocio menu", "Agregar Negocio modal");
     await clickByVisibleText(page, [/^agregar negocio$/i, /agregar negocio/i], { timeoutMs: 6000 });
 
     await expectAnyVisible(
@@ -342,6 +391,8 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
   });
 
   await runStep(report, "Administrar Negocios view", async () => {
+    ensureStepPassed(report, "Mi Negocio menu", "Administrar Negocios view");
+
     const adminVisible = await getFirstVisible([page.getByText(/administrar negocios/i)], 2500);
     if (!adminVisible) {
       await clickByVisibleText(page, [/^mi negocio$/i, /mi negocio/i], { timeoutMs: 6000 });
@@ -379,6 +430,8 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
   });
 
   await runStep(report, "Información General", async () => {
+    ensureStepPassed(report, "Administrar Negocios view", "Información General");
+
     await expectAnyVisible(
       [page.getByText(/juanlucasbarbiergarzon@gmail\.com/i), page.getByText(/@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/)],
       "No se visualiza el email del usuario",
@@ -400,12 +453,16 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
   });
 
   await runStep(report, "Detalles de la Cuenta", async () => {
+    ensureStepPassed(report, "Administrar Negocios view", "Detalles de la Cuenta");
+
     await expectAnyVisible([page.getByText(/cuenta creada/i)], "No se visualiza 'Cuenta creada'");
     await expectAnyVisible([page.getByText(/estado activo/i)], "No se visualiza 'Estado activo'");
     await expectAnyVisible([page.getByText(/idioma seleccionado/i)], "No se visualiza 'Idioma seleccionado'");
   });
 
   await runStep(report, "Tus Negocios", async () => {
+    ensureStepPassed(report, "Administrar Negocios view", "Tus Negocios");
+
     await expectAnyVisible(
       [page.locator('section:has-text("Tus Negocios") ul li'), page.locator('section:has-text("Tus Negocios") table tr').nth(1), page.locator('[class*="business"]')],
       "No se visualiza una lista de negocios",
@@ -423,6 +480,8 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
   });
 
   await runStep(report, "Términos y Condiciones", async () => {
+    ensureStepPassed(report, "Administrar Negocios view", "Términos y Condiciones");
+
     await openLegalLinkAndValidate({
       page,
       context,
@@ -435,6 +494,8 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
   });
 
   await runStep(report, "Política de Privacidad", async () => {
+    ensureStepPassed(report, "Administrar Negocios view", "Política de Privacidad");
+
     await openLegalLinkAndValidate({
       page,
       context,
