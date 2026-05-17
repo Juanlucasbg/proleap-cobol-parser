@@ -85,10 +85,10 @@ public class SaleadsMiNegocioFullTest {
 
 		Page popupPage = null;
 		try {
-			popupPage = page.waitForPopup(() -> {
+			popupPage = page.waitForPopup(new Page.WaitForPopupOptions().setTimeout(8000), () -> {
 				loginButton.click();
 				waitForUi(page);
-			}, new Page.WaitForPopupOptions().setTimeout(8000));
+			});
 		} catch (PlaywrightException ignored) {
 			// Google login can open in the same tab.
 		}
@@ -100,14 +100,6 @@ public class SaleadsMiNegocioFullTest {
 		if (accountOption.count() > 0 && accountOption.first().isVisible()) {
 			accountOption.first().click();
 			waitForUi(authPage);
-		}
-
-		if (popupPage != null) {
-			try {
-				popupPage.waitForClose(new Page.WaitForCloseOptions().setTimeout(15000));
-			} catch (PlaywrightException ignored) {
-				// If popup remains open, we continue validating the app tab.
-			}
 		}
 
 		waitForNegocioSidebar(page);
@@ -213,10 +205,10 @@ public class SaleadsMiNegocioFullTest {
 
 		Page legalPage = null;
 		try {
-			legalPage = context.waitForPage(() -> {
+			legalPage = context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(7000), () -> {
 				legalLink.click();
 				waitForUi(page);
-			}, new BrowserContext.WaitForPageOptions().setTimeout(7000));
+			});
 		} catch (PlaywrightException ignored) {
 			// Link can navigate in the same tab.
 		}
