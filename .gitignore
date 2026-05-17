@@ -41,3 +41,7 @@ target/
 
 ## Additional for IntelliJ
 out/
+
+# Node E2E automation artifacts
+/qa/saleads-e2e/node_modules/
+/qa/saleads-e2e/artifacts/

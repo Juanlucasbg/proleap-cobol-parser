@@ -1,0 +1,19 @@
+{
+  "name": "saleads-e2e",
+  "version": "1.0.0",
+  "description": "Portable Playwright E2E for SaleADS Mi Negocio workflow",
+  "scripts": {
+    "test": "node saleads_mi_negocio_full_test.mjs",
+    "install:browsers": "npx playwright install chromium"
+  },
+  "keywords": [
+    "playwright",
+    "saleads",
+    "e2e"
+  ],
+  "author": "cursor automation",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.60.0"
+  }
+}
