@@ -158,8 +158,8 @@ public class SaleadsMiNegocioWorkflowTest {
 
 		Page googlePage = null;
 		try {
-			googlePage = context.waitForPage(() -> clickAndWait(loginButton),
-					new BrowserContext.WaitForPageOptions().setTimeout(7_000));
+			googlePage = context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(7_000),
+					() -> clickAndWait(loginButton));
 		} catch (PlaywrightException ignored) {
 			clickAndWait(loginButton);
 		}
@@ -256,8 +256,8 @@ public class SaleadsMiNegocioWorkflowTest {
 
 		Page legalPage = null;
 		try {
-			legalPage = context.waitForPage(() -> clickAndWait(legalLink),
-					new BrowserContext.WaitForPageOptions().setTimeout(7_000));
+			legalPage = context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(7_000),
+					() -> clickAndWait(legalLink));
 		} catch (PlaywrightException ignored) {
 			clickAndWait(legalLink);
 		}
