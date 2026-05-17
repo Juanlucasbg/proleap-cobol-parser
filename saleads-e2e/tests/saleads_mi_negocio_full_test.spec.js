@@ -214,16 +214,34 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
       await waitForUi(appPage);
     }
 
-    const signInEntryPoint = await firstVisibleLocator([
-      appPage.getByRole("button", { name: /^Sign in$|Iniciar sesi[o\u00f3]n/i }),
-      appPage.getByRole("link", { name: /^Sign in$|Iniciar sesi[o\u00f3]n/i })
+    let googleProvider = await firstVisibleLocator([
+      appPage.getByRole("button", { name: /^Google$|Sign in with Google|Continuar con Google/i }),
+      appPage.getByRole("link", { name: /^Google$|Sign in with Google|Continuar con Google/i })
     ]);
-    if (signInEntryPoint) {
-      await signInEntryPoint.click({ timeout: 15_000 });
-      await waitForUi(appPage);
+
+    if (!googleProvider) {
+      const signInEntryPoint = await firstVisibleLocator([
+        appPage.getByRole("button", { name: /^Sign in$|Iniciar sesi[o\u00f3]n/i }),
+        appPage.getByRole("link", { name: /^Sign in$|Iniciar sesi[o\u00f3]n/i })
+      ]);
+      if (signInEntryPoint) {
+        const signInPopupPromise = appPage.waitForEvent("popup", { timeout: 5_000 }).catch(() => null);
+        const previousUrl = appPage.url();
+        await signInEntryPoint.click({ timeout: 15_000 });
+        const signInPopup = await signInPopupPromise;
+
+        if (signInPopup) {
+          appPage = signInPopup;
+          await appPage.waitForLoadState("domcontentloaded", { timeout: 20_000 }).catch(() => {});
+        } else if (appPage.url() === previousUrl) {
+          await appPage.waitForTimeout(2_000);
+        }
+
+        await waitForUi(appPage);
+      }
     }
 
-    const googleProvider = await firstVisibleLocator([
+    googleProvider = await firstVisibleLocator([
       appPage.getByRole("button", { name: /^Google$|Sign in with Google|Continuar con Google/i }),
       appPage.getByRole("link", { name: /^Google$|Sign in with Google|Continuar con Google/i })
     ]);
