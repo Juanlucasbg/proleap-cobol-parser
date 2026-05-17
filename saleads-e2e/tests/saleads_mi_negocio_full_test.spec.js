@@ -61,6 +61,16 @@ async function findClickableByText(page, textOrRegex) {
   throw new Error(`No visible clickable element found for pattern: ${matcher}`);
 }
 
+async function firstVisibleLocator(locators) {
+  for (const locator of locators) {
+    const first = locator.first();
+    if ((await first.count()) > 0 && (await first.isVisible().catch(() => false))) {
+      return first;
+    }
+  }
+  return null;
+}
+
 async function selectGoogleAccountIfVisible(pages, email) {
   const matcher = new RegExp(escapeRegExp(email), "i");
 
@@ -204,13 +214,25 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
       await waitForUi(appPage);
     }
 
-    const loginButton = await findClickableByText(
-      appPage,
-      /^Google$|Sign in with Google|Inicia sesi[o\u00f3]n con Google|Continuar con Google/i
-    );
-    const popupPromise = appPage.waitForEvent("popup", { timeout: 8_000 }).catch(() => null);
+    const signInEntryPoint = await firstVisibleLocator([
+      appPage.getByRole("button", { name: /^Sign in$|Iniciar sesi[o\u00f3]n/i }),
+      appPage.getByRole("link", { name: /^Sign in$|Iniciar sesi[o\u00f3]n/i })
+    ]);
+    if (signInEntryPoint) {
+      await signInEntryPoint.click({ timeout: 15_000 });
+      await waitForUi(appPage);
+    }
 
-    await loginButton.click({ timeout: 15_000 });
+    const googleProvider = await firstVisibleLocator([
+      appPage.getByRole("button", { name: /^Google$|Sign in with Google|Continuar con Google/i }),
+      appPage.getByRole("link", { name: /^Google$|Sign in with Google|Continuar con Google/i })
+    ]);
+    if (!googleProvider) {
+      throw new Error("Google login option was not visible.");
+    }
+
+    const popupPromise = appPage.waitForEvent("popup", { timeout: 8_000 }).catch(() => null);
+    await googleProvider.click({ timeout: 15_000 });
     await waitForUi(appPage);
 
     const popup = await popupPromise;
