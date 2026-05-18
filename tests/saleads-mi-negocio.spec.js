@@ -80,6 +80,37 @@ async function takeCheckpoint(page, evidenceDir, name, fullPage = false) {
   return screenshotPath;
 }
 
+async function hasAnyLoginTrigger(page) {
+  return (
+    (await isTextVisible(
+      page,
+      /sign in with google|iniciar sesión con google|iniciar sesion con google|continuar con google|google/i,
+      2000,
+    )) ||
+    (await isTextVisible(page, /iniciar sesión|iniciar sesion|login|sign in|entrar/i, 2000))
+  );
+}
+
+async function tryNavigateToLogin(page) {
+  const currentUrl = page.url();
+  if (!currentUrl || currentUrl.startsWith("about:")) {
+    return false;
+  }
+
+  const parsed = new URL(currentUrl);
+  const candidateUrls = [`${parsed.origin}/login`, `${parsed.origin}/es/login`, `${parsed.origin}/en/login`];
+
+  for (const candidate of candidateUrls) {
+    await page.goto(candidate, { waitUntil: "domcontentloaded", timeout: 20000 }).catch(() => null);
+    await waitForUi(page, 12000);
+    if (await hasAnyLoginTrigger(page)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 async function validateLegalPage({
   page,
   context,
@@ -185,15 +216,40 @@ test("saleads_mi_negocio_full_test", async ({ playwright }, testInfo) => {
 
     // Step 1: Login with Google and validate dashboard/sidebar.
     try {
-      const alreadyInApp = await isTextVisible(page, /mi\s*negocio|negocio/i, 5000);
+      const alreadyInApp = await isTextVisible(
+        page,
+        /mi\s*negocio|negocio|my\s*business|business/i,
+        5000,
+      );
       if (!alreadyInApp) {
-        const clickedLogin = await clickByVisibleText(
+        let hasLoginSurface = await hasAnyLoginTrigger(page);
+        if (!hasLoginSurface) {
+          await clickByVisibleText(page, /iniciar sesión|iniciar sesion|login|sign in|entrar/i).catch(
+            () => false,
+          );
+          await waitForUi(page, 12000);
+          hasLoginSurface = await hasAnyLoginTrigger(page);
+        }
+
+        if (!hasLoginSurface) {
+          await tryNavigateToLogin(page);
+        }
+
+        let clickedLogin = await clickByVisibleText(
           page,
-          /sign in with google|iniciar sesión con google|continuar con google|google/i,
+          /sign in with google|iniciar sesión con google|iniciar sesion con google|continuar con google|google/i,
         );
+
+        if (!clickedLogin) {
+          clickedLogin = await clickByVisibleText(
+            page,
+            /continuar|continue|sign in|iniciar sesión|iniciar sesion/i,
+          );
+        }
+
         if (clickedLogin) {
           await clickByVisibleText(page, GOOGLE_ACCOUNT_EMAIL).catch(() => false);
-          await waitForUi(page, 20000);
+          await waitForUi(page, 25000);
         }
       }
 
