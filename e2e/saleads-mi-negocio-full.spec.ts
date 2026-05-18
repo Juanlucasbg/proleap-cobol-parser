@@ -44,6 +44,19 @@ function initReport(): Record<(typeof REPORT_FIELDS)[number], StepResult> {
   }, {} as Record<(typeof REPORT_FIELDS)[number], StepResult>);
 }
 
+function writeAndPrintReport(report: Record<(typeof REPORT_FIELDS)[number], StepResult>): void {
+  fs.writeFileSync(REPORT_PATH, JSON.stringify(report, null, 2), "utf8");
+  console.log(`SaleADS report generated at: ${REPORT_PATH}`);
+  console.table(
+    Object.entries(report).map(([name, result]) => ({
+      step: name,
+      status: result.status,
+      details: result.details,
+      finalUrl: result.finalUrl ?? "",
+    })),
+  );
+}
+
 async function clickAndWaitForUi(page: Page, locator: Locator): Promise<void> {
   await locator.scrollIntoViewIfNeeded();
   await Promise.all([
@@ -128,13 +141,25 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
   ensureArtifactsDirs();
   const report = initReport();
   const startUrl = process.env.SALEADS_START_URL ?? process.env.SALEADS_URL;
+  let preconditionError: string | null = null;
 
   if (startUrl) {
     await page.goto(startUrl, { waitUntil: "domcontentloaded" });
   } else if (page.url() === "about:blank") {
-    throw new Error(
-      "No start URL detected. Set SALEADS_START_URL (or SALEADS_URL) to the current SaleADS login page URL.",
-    );
+    preconditionError =
+      "No start URL detected. Set SALEADS_START_URL (or SALEADS_URL) to the current SaleADS login page URL.";
+  }
+
+  if (preconditionError) {
+    for (const field of REPORT_FIELDS) {
+      report[field] = {
+        status: "FAIL",
+        details: preconditionError,
+        evidence: [],
+      };
+    }
+    writeAndPrintReport(report);
+    expect([preconditionError], preconditionError).toEqual([]);
   }
 
   // Step 1: Login with Google.
@@ -428,16 +453,7 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
     };
   }
 
-  fs.writeFileSync(REPORT_PATH, JSON.stringify(report, null, 2), "utf8");
-  console.log(`SaleADS report generated at: ${REPORT_PATH}`);
-  console.table(
-    Object.entries(report).map(([name, result]) => ({
-      step: name,
-      status: result.status,
-      details: result.details,
-      finalUrl: result.finalUrl ?? "",
-    })),
-  );
+  writeAndPrintReport(report);
 
   const failedSteps = Object.entries(report)
     .filter(([, result]) => result.status === "FAIL")
