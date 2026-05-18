@@ -194,6 +194,14 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+* Optional SaleADS E2E workflow test (Google login + Mi Negocio checks):
+
+```
+$ RUN_SALEADS_E2E=true SALEADS_URL="https://<current-saleads-env>/login" mvn -Dtest=SaleAdsMiNegocioWorkflowTest test
+```
+
+The test is opt-in and skipped by default. It stores screenshots and the final PASS/FAIL report in `target/saleads-evidence/<timestamp>/`.
+
 
 Release process
 ---------------
