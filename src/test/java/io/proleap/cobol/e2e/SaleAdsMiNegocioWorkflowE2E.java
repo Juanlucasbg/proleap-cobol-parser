@@ -189,6 +189,9 @@ public class SaleAdsMiNegocioWorkflowE2E {
 			driver.close();
 			driver.switchTo().window(appWindow);
 			waitForUiLoad();
+		} else {
+			driver.navigate().back();
+			waitForUiLoad();
 		}
 	}
 
