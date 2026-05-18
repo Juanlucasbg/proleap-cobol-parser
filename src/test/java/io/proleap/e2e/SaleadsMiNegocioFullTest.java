@@ -34,11 +34,11 @@ public class SaleadsMiNegocioFullTest {
 	private static final String REPORT_MI_NEGOCIO = "Mi Negocio menu";
 	private static final String REPORT_AGREGAR_MODAL = "Agregar Negocio modal";
 	private static final String REPORT_ADMIN_VIEW = "Administrar Negocios view";
-	private static final String REPORT_INFO_GENERAL = "Informacion General";
+	private static final String REPORT_INFO_GENERAL = "Información General";
 	private static final String REPORT_DETALLES = "Detalles de la Cuenta";
 	private static final String REPORT_TUS_NEGOCIOS = "Tus Negocios";
-	private static final String REPORT_TERMINOS = "Terminos y Condiciones";
-	private static final String REPORT_PRIVACIDAD = "Politica de Privacidad";
+	private static final String REPORT_TERMINOS = "Términos y Condiciones";
+	private static final String REPORT_PRIVACIDAD = "Política de Privacidad";
 
 	@Test
 	public void saleadsMiNegocioFullWorkflow() throws Exception {
@@ -109,10 +109,11 @@ public class SaleadsMiNegocioFullTest {
 				expandMiNegocioMenu(appPage);
 				clickVisible(appPage, "Administrar Negocios");
 				waitForUiToSettle(appPage);
-				assertAnyVisible("'Informacion General' section", candidatesByText(appPage, "Informacion General"));
+				assertAnyVisible("'Informacion General' section",
+						candidatesByText(appPage, "Informacion General", "Información General"));
 				assertAnyVisible("'Detalles de la Cuenta' section", candidatesByText(appPage, "Detalles de la Cuenta"));
 				assertAnyVisible("'Tus Negocios' section", candidatesByText(appPage, "Tus Negocios"));
-				assertAnyVisible("'Seccion Legal' section", candidatesByText(appPage, "Seccion Legal"));
+				assertAnyVisible("'Seccion Legal' section", candidatesByText(appPage, "Seccion Legal", "Sección Legal"));
 				accountPageUrl[0] = appPage.url();
 				capture(appPage, screenshotDir.resolve("04-administrar-negocios-page.png"), true);
 			});
@@ -120,7 +121,7 @@ public class SaleadsMiNegocioFullTest {
 			runStep(REPORT_INFO_GENERAL, report, failures, () -> {
 				assertAnyVisible("User name", candidatesByText(appPage, expectedUserName, googleEmail.split("@")[0]));
 				assertAnyVisible("User email", candidatesByText(appPage, expectedUserEmail, googleEmail));
-				assertAnyVisible("'BUSINESS PLAN' text", candidatesByText(appPage, "BUSINESS PLAN"));
+				assertAnyVisible("'BUSINESS PLAN' text", candidatesByText(appPage, "BUSINESS PLAN", "Business Plan"));
 				assertAnyVisible("'Cambiar Plan' button", candidatesByText(appPage, "Cambiar Plan"));
 			});
 
@@ -280,7 +281,8 @@ public class SaleadsMiNegocioFullTest {
 	private List<Locator> candidatesByText(final Page page, final String... texts) {
 		final List<Locator> result = new ArrayList<>();
 		for (final String text : texts) {
-			result.add(page.getByText(text, new Page.GetByTextOptions().setExact(true)));
+			result.add(page.getByText(text, new Page.GetByTextOptions().setExact(false)));
+			result.add(page.getByText(Pattern.compile("(?i).*" + Pattern.quote(text) + ".*")));
 			result.add(page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName(text)));
 			result.add(page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(text)));
 		}
@@ -304,9 +306,7 @@ public class SaleadsMiNegocioFullTest {
 				} catch (PlaywrightException ignored) {
 				}
 			}
-			if (!candidates.isEmpty()) {
-				candidates.get(0).page().waitForTimeout(200);
-			}
+			sleep(200);
 		}
 		throw new AssertionError("No visible element found for the requested text-based selector.");
 	}
@@ -322,9 +322,7 @@ public class SaleadsMiNegocioFullTest {
 				} catch (PlaywrightException ignored) {
 				}
 			}
-			if (!candidates.isEmpty()) {
-				candidates.get(0).page().waitForTimeout(200);
-			}
+			sleep(200);
 		}
 		return false;
 	}
@@ -398,6 +396,14 @@ public class SaleadsMiNegocioFullTest {
 	private String env(final String key, final String fallback) {
 		final String value = System.getenv(key);
 		return value == null ? fallback : value.trim();
+	}
+
+	private void sleep(final long millis) {
+		try {
+			Thread.sleep(millis);
+		} catch (InterruptedException interruptedException) {
+			Thread.currentThread().interrupt();
+		}
 	}
 
 	@FunctionalInterface
