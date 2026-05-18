@@ -56,6 +56,7 @@ public class SaleadsMiNegocioWorkflowIT {
 	private static final Pattern EMAIL_PATTERN = Pattern.compile("[\\w.%-]+@[\\w.-]+\\.[A-Za-z]{2,}");
 
 	private final Map<String, StepResult> report = new LinkedHashMap<>();
+	private final Map<String, String> stepDetails = new LinkedHashMap<>();
 	private WebDriver driver;
 	private WebDriverWait wait;
 	private Path evidenceDir;
@@ -244,23 +245,21 @@ public class SaleadsMiNegocioWorkflowIT {
 	private void executeStep(final String stepName, final ThrowingRunnable runnable) {
 		try {
 			runnable.run();
-			report.put(stepName, new StepResult(true, "PASS"));
+			final String detail = stepDetails.remove(stepName);
+			report.put(stepName, new StepResult(true, detail == null ? "PASS" : "PASS | " + detail));
 		} catch (final Exception ex) {
 			try {
 				captureScreenshot("error-" + sanitizeFileName(stepName) + ".png");
 			} catch (final IOException ignored) {
 			}
-			report.put(stepName, new StepResult(false, "FAIL: " + rootMessage(ex)));
+			final String detail = stepDetails.remove(stepName);
+			final String message = "FAIL: " + rootMessage(ex);
+			report.put(stepName, new StepResult(false, detail == null ? message : message + " | " + detail));
 		}
 	}
 
 	private void appendDetailToStep(final String stepName, final String detail) {
-		final StepResult previous = report.get(stepName);
-		if (previous == null) {
-			return;
-		}
-
-		report.put(stepName, new StepResult(previous.passed(), previous.detail() + " | " + detail));
+		stepDetails.merge(stepName, detail, (a, b) -> a + " | " + b);
 	}
 
 	private void waitForUiToLoad() {
