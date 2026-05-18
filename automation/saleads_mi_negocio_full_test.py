@@ -128,6 +128,10 @@ def visible_any(page: Page, labels: list[str]) -> bool:
     return any(visible_text(page, label) for label in labels)
 
 
+def is_maintenance_page(page: Page) -> bool:
+    return visible_any(page, ["Mantenimiento en progreso", "Volvemos pronto", "Mantenimiento programado"])
+
+
 def choose_google_account_if_prompted(page: Page, email: str) -> bool:
     if not visible_text(page, email):
         return False
@@ -222,125 +226,183 @@ def run_test(base_url: str | None, cdp_urls: list[str], headless: bool, artifact
             step.check("Main application interface appears", main_interface_ok)
             step.check("Left sidebar is visible", sidebar_ok)
             step.evidence.append(screenshot(page, run_dir, "01_dashboard_loaded"))
+            if is_maintenance_page(page):
+                step.notes.append("Maintenance page detected. Application workflow is not currently accessible.")
         except Exception as exc:
             step.notes.append(str(exc))
         step.finalize()
+        maintenance_mode = is_maintenance_page(page)
+        metadata["maintenance_mode"] = maintenance_mode
 
         # Step 2: Open Mi Negocio menu
         step = results["Mi Negocio menu"]
-        try:
-            click_visible_text(page, ["Negocio"], required=False)
-            click_visible_text(page, ["Mi Negocio"], required=True)
-            submenu_expanded = visible_any(page, ["Agregar Negocio", "Administrar Negocios"])
-            agregar_visible = visible_text(page, "Agregar Negocio")
-            administrar_visible = visible_text(page, "Administrar Negocios")
+        if results["Login"].status != "PASS":
+            step.check("Prerequisite: logged-in app interface available", False, "Login step did not pass.")
+            if maintenance_mode:
+                step.notes.append("Maintenance page detected.")
+            step.evidence.append(screenshot(page, run_dir, "02_mi_negocio_menu_blocked"))
+        else:
+            try:
+                click_visible_text(page, ["Negocio"], required=False)
+                click_visible_text(page, ["Mi Negocio"], required=True)
+                submenu_expanded = visible_any(page, ["Agregar Negocio", "Administrar Negocios"])
+                agregar_visible = visible_text(page, "Agregar Negocio")
+                administrar_visible = visible_text(page, "Administrar Negocios")
 
-            step.check("Submenu expands", submenu_expanded)
-            step.check("Agregar Negocio visible", agregar_visible)
-            step.check("Administrar Negocios visible", administrar_visible)
-            step.evidence.append(screenshot(page, run_dir, "02_mi_negocio_menu_expanded"))
-        except Exception as exc:
-            step.notes.append(str(exc))
+                step.check("Submenu expands", submenu_expanded)
+                step.check("Agregar Negocio visible", agregar_visible)
+                step.check("Administrar Negocios visible", administrar_visible)
+                step.evidence.append(screenshot(page, run_dir, "02_mi_negocio_menu_expanded"))
+            except Exception as exc:
+                step.notes.append(str(exc))
         step.finalize()
 
         # Step 3: Validate Agregar Negocio modal
         step = results["Agregar Negocio modal"]
-        try:
-            click_visible_text(page, ["Agregar Negocio"], required=True)
+        if results["Mi Negocio menu"].status != "PASS":
+            step.check("Prerequisite: Mi Negocio menu available", False, "Mi Negocio menu step did not pass.")
+            if maintenance_mode:
+                step.notes.append("Maintenance page detected.")
+            step.evidence.append(screenshot(page, run_dir, "03_agregar_negocio_modal_blocked"))
+        else:
+            try:
+                click_visible_text(page, ["Agregar Negocio"], required=True)
 
-            title_ok = visible_any(page, ["Crear Nuevo Negocio"])
-            input_ok = visible_any(page, ["Nombre del Negocio"])
-            limit_ok = visible_any(page, ["Tienes 2 de 3 negocios"])
-            cancel_ok = visible_any(page, ["Cancelar"])
-            create_ok = visible_any(page, ["Crear Negocio"])
+                title_ok = visible_any(page, ["Crear Nuevo Negocio"])
+                input_ok = visible_any(page, ["Nombre del Negocio"])
+                limit_ok = visible_any(page, ["Tienes 2 de 3 negocios"])
+                cancel_ok = visible_any(page, ["Cancelar"])
+                create_ok = visible_any(page, ["Crear Negocio"])
 
-            step.check("Modal title visible", title_ok)
-            step.check("Nombre del Negocio input exists", input_ok)
-            step.check("Business limit text visible", limit_ok)
-            step.check("Cancelar button present", cancel_ok)
-            step.check("Crear Negocio button present", create_ok)
+                step.check("Modal title visible", title_ok)
+                step.check("Nombre del Negocio input exists", input_ok)
+                step.check("Business limit text visible", limit_ok)
+                step.check("Cancelar button present", cancel_ok)
+                step.check("Crear Negocio button present", create_ok)
+                step.evidence.append(screenshot(page, run_dir, "03_agregar_negocio_modal"))
 
-            name_input = first_visible_locator(page, "Nombre del Negocio")
-            if name_input is not None:
-                try:
-                    name_input.fill("Negocio Prueba Automatizacion")
-                    wait_for_ui(page)
-                except Exception:
-                    pass
-            click_visible_text(page, ["Cancelar"], required=False)
-
-            step.evidence.append(screenshot(page, run_dir, "03_agregar_negocio_modal"))
-        except Exception as exc:
-            step.notes.append(str(exc))
+                name_input = first_visible_locator(page, "Nombre del Negocio")
+                if name_input is not None:
+                    try:
+                        name_input.fill("Negocio Prueba Automatizacion")
+                        wait_for_ui(page)
+                    except Exception:
+                        pass
+                click_visible_text(page, ["Cancelar"], required=False)
+            except Exception as exc:
+                step.notes.append(str(exc))
         step.finalize()
 
         # Step 4: Open Administrar Negocios
         step = results["Administrar Negocios view"]
-        try:
-            if not visible_text(page, "Administrar Negocios"):
-                click_visible_text(page, ["Mi Negocio"], required=False)
-            click_visible_text(page, ["Administrar Negocios"], required=True)
+        if results["Mi Negocio menu"].status != "PASS":
+            step.check("Prerequisite: Mi Negocio menu available", False, "Mi Negocio menu step did not pass.")
+            if maintenance_mode:
+                step.notes.append("Maintenance page detected.")
+            step.evidence.append(screenshot(page, run_dir, "04_administrar_negocios_blocked", full_page=True))
+        else:
+            try:
+                if not visible_text(page, "Administrar Negocios"):
+                    click_visible_text(page, ["Mi Negocio"], required=False)
+                click_visible_text(page, ["Administrar Negocios"], required=True)
 
-            info_general_ok = visible_any(page, ["Informacion General", "Información General"])
-            detalles_ok = visible_any(page, ["Detalles de la Cuenta"])
-            negocios_ok = visible_any(page, ["Tus Negocios"])
-            legal_ok = visible_any(page, ["Seccion Legal", "Sección Legal", "Legal"])
+                info_general_ok = visible_any(page, ["Informacion General", "Información General"])
+                detalles_ok = visible_any(page, ["Detalles de la Cuenta"])
+                negocios_ok = visible_any(page, ["Tus Negocios"])
+                legal_ok = visible_any(page, ["Seccion Legal", "Sección Legal", "Legal"])
 
-            step.check("Informacion General section exists", info_general_ok)
-            step.check("Detalles de la Cuenta section exists", detalles_ok)
-            step.check("Tus Negocios section exists", negocios_ok)
-            step.check("Seccion Legal section exists", legal_ok)
-            step.evidence.append(screenshot(page, run_dir, "04_administrar_negocios_page", full_page=True))
-        except Exception as exc:
-            step.notes.append(str(exc))
+                step.check("Informacion General section exists", info_general_ok)
+                step.check("Detalles de la Cuenta section exists", detalles_ok)
+                step.check("Tus Negocios section exists", negocios_ok)
+                step.check("Seccion Legal section exists", legal_ok)
+                step.evidence.append(screenshot(page, run_dir, "04_administrar_negocios_page", full_page=True))
+            except Exception as exc:
+                step.notes.append(str(exc))
         step.finalize()
 
         # Step 5: Validate Informacion General
         step = results["Informacion General"]
-        try:
-            step.check("User name visible", visible_any(page, ["@", "Nombre"]))
-            step.check("User email visible", visible_any(page, ["@", ".com"]))
-            step.check("BUSINESS PLAN text visible", visible_any(page, ["BUSINESS PLAN"]))
-            step.check("Cambiar Plan button visible", visible_any(page, ["Cambiar Plan"]))
-        except Exception as exc:
-            step.notes.append(str(exc))
+        if results["Administrar Negocios view"].status != "PASS":
+            step.check(
+                "Prerequisite: Administrar Negocios page available",
+                False,
+                "Administrar Negocios view step did not pass.",
+            )
+            if maintenance_mode:
+                step.notes.append("Maintenance page detected.")
+        else:
+            try:
+                step.check("User name visible", visible_any(page, ["Nombre", "Usuario"]))
+                step.check("User email visible", bool(re.search(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+", page.inner_text("body"))))
+                step.check("BUSINESS PLAN text visible", visible_any(page, ["BUSINESS PLAN"]))
+                step.check("Cambiar Plan button visible", visible_any(page, ["Cambiar Plan"]))
+            except Exception as exc:
+                step.notes.append(str(exc))
         step.finalize()
 
         # Step 6: Validate Detalles de la Cuenta
         step = results["Detalles de la Cuenta"]
-        try:
-            step.check("Cuenta creada visible", visible_any(page, ["Cuenta creada"]))
-            step.check("Estado activo visible", visible_any(page, ["Estado activo"]))
-            step.check("Idioma seleccionado visible", visible_any(page, ["Idioma seleccionado"]))
-        except Exception as exc:
-            step.notes.append(str(exc))
+        if results["Administrar Negocios view"].status != "PASS":
+            step.check(
+                "Prerequisite: Administrar Negocios page available",
+                False,
+                "Administrar Negocios view step did not pass.",
+            )
+            if maintenance_mode:
+                step.notes.append("Maintenance page detected.")
+        else:
+            try:
+                step.check("Cuenta creada visible", visible_any(page, ["Cuenta creada"]))
+                step.check("Estado activo visible", visible_any(page, ["Estado activo"]))
+                step.check("Idioma seleccionado visible", visible_any(page, ["Idioma seleccionado"]))
+            except Exception as exc:
+                step.notes.append(str(exc))
         step.finalize()
 
         # Step 7: Validate Tus Negocios
         step = results["Tus Negocios"]
-        try:
-            step.check("Business list visible", visible_any(page, ["Tus Negocios"]))
-            step.check("Agregar Negocio button exists", visible_any(page, ["Agregar Negocio"]))
-            step.check("Business limit text visible", visible_any(page, ["Tienes 2 de 3 negocios"]))
-        except Exception as exc:
-            step.notes.append(str(exc))
+        if results["Administrar Negocios view"].status != "PASS":
+            step.check(
+                "Prerequisite: Administrar Negocios page available",
+                False,
+                "Administrar Negocios view step did not pass.",
+            )
+            if maintenance_mode:
+                step.notes.append("Maintenance page detected.")
+        else:
+            try:
+                step.check("Business list visible", visible_any(page, ["Tus Negocios"]))
+                step.check("Agregar Negocio button exists", visible_any(page, ["Agregar Negocio"]))
+                step.check("Business limit text visible", visible_any(page, ["Tienes 2 de 3 negocios"]))
+            except Exception as exc:
+                step.notes.append(str(exc))
         step.finalize()
 
         # Step 8: Validate Terminos y Condiciones
         step = results["Terminos y Condiciones"]
         legal_page = page
         opened_new_tab = False
-        try:
-            legal_page, opened_new_tab = click_maybe_new_tab(page, ["Terminos y Condiciones", "Términos y Condiciones"])
-            heading_ok = visible_any(legal_page, ["Terminos y Condiciones", "Términos y Condiciones"])
-            body_ok = len(legal_page.locator("p, article, main").all_inner_texts()) > 0
+        if results["Administrar Negocios view"].status != "PASS":
+            step.check(
+                "Prerequisite: Administrar Negocios page available",
+                False,
+                "Administrar Negocios view step did not pass.",
+            )
+            if maintenance_mode:
+                step.notes.append("Maintenance page detected.")
+            step.evidence.append(screenshot(page, run_dir, "08_terminos_y_condiciones_blocked"))
+        else:
+            try:
+                legal_page, opened_new_tab = click_maybe_new_tab(page, ["Terminos y Condiciones", "Términos y Condiciones"])
+                heading_ok = visible_any(legal_page, ["Terminos y Condiciones", "Términos y Condiciones"])
+                body_ok = len(legal_page.locator("p, article, main").all_inner_texts()) > 0
 
-            step.check("Heading visible", heading_ok)
-            step.check("Legal content visible", body_ok)
-            step.evidence.append(screenshot(legal_page, run_dir, "08_terminos_y_condiciones"))
-            urls["Terminos y Condiciones"] = legal_page.url
-        except Exception as exc:
-            step.notes.append(str(exc))
+                step.check("Heading visible", heading_ok)
+                step.check("Legal content visible", body_ok)
+                step.evidence.append(screenshot(legal_page, run_dir, "08_terminos_y_condiciones"))
+                urls["Terminos y Condiciones"] = legal_page.url
+            except Exception as exc:
+                step.notes.append(str(exc))
         finally:
             try:
                 if opened_new_tab:
@@ -355,17 +417,27 @@ def run_test(base_url: str | None, cdp_urls: list[str], headless: bool, artifact
         step = results["Politica de Privacidad"]
         privacy_page = page
         opened_new_tab = False
-        try:
-            privacy_page, opened_new_tab = click_maybe_new_tab(page, ["Politica de Privacidad", "Política de Privacidad"])
-            heading_ok = visible_any(privacy_page, ["Politica de Privacidad", "Política de Privacidad"])
-            body_ok = len(privacy_page.locator("p, article, main").all_inner_texts()) > 0
+        if results["Administrar Negocios view"].status != "PASS":
+            step.check(
+                "Prerequisite: Administrar Negocios page available",
+                False,
+                "Administrar Negocios view step did not pass.",
+            )
+            if maintenance_mode:
+                step.notes.append("Maintenance page detected.")
+            step.evidence.append(screenshot(page, run_dir, "09_politica_de_privacidad_blocked"))
+        else:
+            try:
+                privacy_page, opened_new_tab = click_maybe_new_tab(page, ["Politica de Privacidad", "Política de Privacidad"])
+                heading_ok = visible_any(privacy_page, ["Politica de Privacidad", "Política de Privacidad"])
+                body_ok = len(privacy_page.locator("p, article, main").all_inner_texts()) > 0
 
-            step.check("Heading visible", heading_ok)
-            step.check("Legal content visible", body_ok)
-            step.evidence.append(screenshot(privacy_page, run_dir, "09_politica_de_privacidad"))
-            urls["Politica de Privacidad"] = privacy_page.url
-        except Exception as exc:
-            step.notes.append(str(exc))
+                step.check("Heading visible", heading_ok)
+                step.check("Legal content visible", body_ok)
+                step.evidence.append(screenshot(privacy_page, run_dir, "09_politica_de_privacidad"))
+                urls["Politica de Privacidad"] = privacy_page.url
+            except Exception as exc:
+                step.notes.append(str(exc))
         finally:
             try:
                 if opened_new_tab:
