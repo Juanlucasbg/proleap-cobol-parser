@@ -71,14 +71,38 @@ test('saleads_mi_negocio_full_test', async ({ page }, testInfo) => {
     return acc;
   }, {} as FinalReport);
 
-  const runStep = async (field: ReportField, action: () => Promise<void>): Promise<void> => {
+  const runStep = async (field: ReportField, action: () => Promise<void>): Promise<boolean> => {
     try {
       await action();
       finalReport[field] = { status: 'PASS', details: 'Validation completed successfully.' };
+      return true;
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       finalReport[field] = { status: 'FAIL', details: message };
+      return false;
     }
+  };
+
+  const markDependencyFailure = (field: ReportField, dependency: ReportField): void => {
+    finalReport[field] = {
+      status: 'FAIL',
+      details: `Skipped because required step "${dependency}" failed.`
+    };
+  };
+
+  const finalizeAndAssert = async (): Promise<void> => {
+    const reportPath = testInfo.outputPath('saleads_mi_negocio_final_report.json');
+    await fs.writeFile(reportPath, JSON.stringify(finalReport, null, 2), 'utf-8');
+    await testInfo.attach('saleads_mi_negocio_final_report', {
+      path: reportPath,
+      contentType: 'application/json'
+    });
+
+    const failedValidations = Object.entries(finalReport).filter(([, result]) => result.status === 'FAIL');
+    expect(
+      failedValidations,
+      `One or more validations failed:\n${JSON.stringify(finalReport, null, 2)}`
+    ).toHaveLength(0);
   };
 
   const loginUrl = process.env.SALEADS_LOGIN_URL ?? process.env.SALEADS_URL ?? process.env.BASE_URL;
@@ -95,7 +119,7 @@ test('saleads_mi_negocio_full_test', async ({ page }, testInfo) => {
     });
   }
 
-  await runStep('Login', async () => {
+  const loginPassed = await runStep('Login', async () => {
     if (page.url() === 'about:blank') {
       throw new Error('Browser is on about:blank. Provide SALEADS_LOGIN_URL (or SALEADS_URL/BASE_URL).');
     }
@@ -146,6 +170,16 @@ test('saleads_mi_negocio_full_test', async ({ page }, testInfo) => {
 
     await captureCheckpoint(page, testInfo, '01_dashboard_loaded', true);
   });
+
+  if (!loginPassed) {
+    for (const field of REPORT_FIELDS) {
+      if (field !== 'Login') {
+        markDependencyFailure(field, 'Login');
+      }
+    }
+    await finalizeAndAssert();
+    return;
+  }
 
   await runStep('Mi Negocio menu', async () => {
     const negocioSection = await firstVisible(
@@ -294,16 +328,5 @@ test('saleads_mi_negocio_full_test', async ({ page }, testInfo) => {
     '09_politica_de_privacidad'
   );
 
-  const reportPath = testInfo.outputPath('saleads_mi_negocio_final_report.json');
-  await fs.writeFile(reportPath, JSON.stringify(finalReport, null, 2), 'utf-8');
-  await testInfo.attach('saleads_mi_negocio_final_report', {
-    path: reportPath,
-    contentType: 'application/json'
-  });
-
-  const failedValidations = Object.entries(finalReport).filter(([, result]) => result.status === 'FAIL');
-  expect(
-    failedValidations,
-    `One or more validations failed:\n${JSON.stringify(finalReport, null, 2)}`
-  ).toHaveLength(0);
+  await finalizeAndAssert();
 });
