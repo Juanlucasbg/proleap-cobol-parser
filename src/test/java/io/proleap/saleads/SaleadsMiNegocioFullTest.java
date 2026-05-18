@@ -55,8 +55,10 @@ public class SaleadsMiNegocioFullTest {
 		final Map<String, StepResult> results = createEmptyResults();
 		final Path evidenceDir = createEvidenceDirectory();
 		BrowserSession session = null;
+		Playwright playwright = null;
 
-		try (Playwright playwright = Playwright.create()) {
+		try {
+			playwright = Playwright.create();
 			session = startSession(playwright);
 			final Page appPage = session.page;
 			final BrowserContext context = session.context;
@@ -74,10 +76,18 @@ public class SaleadsMiNegocioFullTest {
 					PRIVACY_PATTERN, "06-politica-de-privacidad.png"));
 		} finally {
 			if (session != null) {
-				session.close();
+				try {
+					session.close();
+				} catch (final RuntimeException ignored) {
+					// Continue to report writing even if browser already closed.
+				}
 			}
 
 			writeReport(evidenceDir, results);
+
+			if (playwright != null) {
+				playwright.close();
+			}
 		}
 
 		assertTrue(buildFailureSummary(results), allPassed(results));
@@ -128,8 +138,7 @@ public class SaleadsMiNegocioFullTest {
 
 			Page popup = null;
 			try {
-				popup = context.waitForPage(() -> clickAndWaitForUi(appPage, loginButton),
-						new BrowserContext.WaitForPageOptions().setTimeout(timeoutMs()));
+				popup = context.waitForPage(() -> clickAndWaitForUi(appPage, loginButton));
 			} catch (final PlaywrightException noPopupExpected) {
 				clickAndWaitForUi(appPage, loginButton);
 			}
@@ -137,11 +146,7 @@ public class SaleadsMiNegocioFullTest {
 			if (popup != null) {
 				waitForUi(popup);
 				selectGoogleAccountIfVisible(popup);
-				try {
-					popup.waitForClose(new Page.WaitForCloseOptions().setTimeout(timeoutMs() * 2L));
-				} catch (final PlaywrightException ignored) {
-					// Continue if popup stays open but app already authenticated.
-				}
+				popup.waitForTimeout(1000);
 			} else {
 				selectGoogleAccountIfVisible(appPage);
 			}
@@ -311,8 +316,7 @@ public class SaleadsMiNegocioFullTest {
 
 			Page legalPage;
 			try {
-				legalPage = context.waitForPage(() -> clickAndWaitForUi(appPage, legalLink),
-						new BrowserContext.WaitForPageOptions().setTimeout(timeoutMs()));
+				legalPage = context.waitForPage(() -> clickAndWaitForUi(appPage, legalLink));
 			} catch (final PlaywrightException noNewTab) {
 				clickAndWaitForUi(appPage, legalLink);
 				legalPage = appPage;
