@@ -1,0 +1,19 @@
+{
+  "name": "saleads-mi-negocio",
+  "version": "1.0.0",
+  "description": "Environment-agnostic Playwright workflow test for SaleADS Mi Negocio module",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:mi-negocio": "playwright test tests/saleads_mi_negocio_full_test.spec.js",
+    "test:mi-negocio:headed": "playwright test tests/saleads_mi_negocio_full_test.spec.js --headed",
+    "report": "playwright show-report"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.60.0"
+  }
+}
