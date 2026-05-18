@@ -112,6 +112,7 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
   const failures: string[] = [];
   const legalUrls: Record<string, string> = {};
   const checkpointScreenshots: Record<string, string> = {};
+  let loginSucceeded = false;
 
   const recordStep = async (field: ReportField, callback: () => Promise<void>): Promise<void> => {
     try {
@@ -172,9 +173,14 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
       .toBe(true);
 
     checkpointScreenshots.dashboard = await screenshot(page, "dashboard-loaded");
+    loginSucceeded = true;
   });
 
   await recordStep("Mi Negocio menu", async () => {
+    if (!loginSucceeded) {
+      throw new Error("Skipped because login validation failed.");
+    }
+
     const negocioSection = await findByVisibleText(page, /^Negocio$/i);
     if (negocioSection) {
       await clickAndWait(page, negocioSection);
@@ -193,6 +199,10 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
   });
 
   await recordStep("Agregar Negocio modal", async () => {
+    if (!loginSucceeded) {
+      throw new Error("Skipped because login validation failed.");
+    }
+
     const agregarNegocio = await findByVisibleText(page, /^Agregar Negocio$/i);
     if (!agregarNegocio) {
       throw new Error("'Agregar Negocio' option is not visible.");
@@ -215,6 +225,10 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
   });
 
   await recordStep("Administrar Negocios view", async () => {
+    if (!loginSucceeded) {
+      throw new Error("Skipped because login validation failed.");
+    }
+
     const miNegocioOption = await findByVisibleText(page, /^Mi Negocio$/i);
     if (miNegocioOption) {
       await clickAndWait(page, miNegocioOption);
@@ -235,6 +249,10 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
   });
 
   await recordStep("Información General", async () => {
+    if (!loginSucceeded) {
+      throw new Error("Skipped because login validation failed.");
+    }
+
     const infoText = await sectionText(page, /Informaci[oó]n General/i);
 
     if (!/[A-Za-zÀ-ÿ]{2,}\s+[A-Za-zÀ-ÿ]{2,}/.test(infoText)) {
@@ -250,6 +268,10 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
   });
 
   await recordStep("Detalles de la Cuenta", async () => {
+    if (!loginSucceeded) {
+      throw new Error("Skipped because login validation failed.");
+    }
+
     const detailsText = await sectionText(page, /Detalles de la Cuenta/i);
     if (!/Cuenta creada/i.test(detailsText)) {
       throw new Error("'Cuenta creada' is missing in 'Detalles de la Cuenta'.");
@@ -263,6 +285,10 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
   });
 
   await recordStep("Tus Negocios", async () => {
+    if (!loginSucceeded) {
+      throw new Error("Skipped because login validation failed.");
+    }
+
     const negociosHeading = page.getByRole("heading", { name: /Tus Negocios/i }).first();
     await expect(negociosHeading).toBeVisible();
     const negociosSection = negociosHeading.locator(
@@ -326,6 +352,10 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
   };
 
   await recordStep("Términos y Condiciones", async () => {
+    if (!loginSucceeded) {
+      throw new Error("Skipped because login validation failed.");
+    }
+
     await validateLegalPage(
       /T[eé]rminos y Condiciones/i,
       /T[eé]rminos y Condiciones/i,
@@ -335,6 +365,10 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
   });
 
   await recordStep("Política de Privacidad", async () => {
+    if (!loginSucceeded) {
+      throw new Error("Skipped because login validation failed.");
+    }
+
     await validateLegalPage(
       /Pol[ií]tica de Privacidad/i,
       /Pol[ií]tica de Privacidad/i,
