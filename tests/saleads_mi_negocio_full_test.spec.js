@@ -91,9 +91,14 @@ async function findSectionByHeading(page, headingRegex) {
 test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   const detailedReport = {};
   const failureMessages = [];
+  let startupError = null;
 
   async function runStep(reportKey, work) {
     try {
+      if (startupError) {
+        throw startupError;
+      }
+
       const data = (await work()) || {};
       detailedReport[reportKey] = { status: "PASS", ...data };
     } catch (error) {
@@ -107,15 +112,20 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
 
   await waitForUiToLoad(page);
   if (page.url() === "about:blank") {
-    const loginUrl = process.env.SALEADS_URL || process.env.SALEADS_LOGIN_URL;
-    if (!loginUrl) {
-      throw new Error(
-        "Browser is on about:blank. Set SALEADS_URL (or SALEADS_LOGIN_URL) or start from the SaleADS login page before running.",
+    const loginUrl =
+      process.env.SALEADS_URL ||
+      process.env.SALEADS_LOGIN_URL ||
+      process.env.BASE_URL ||
+      process.env.APP_URL ||
+      process.env.TARGET_URL;
+    if (loginUrl) {
+      await page.goto(loginUrl, { waitUntil: "domcontentloaded" });
+      await waitForUiToLoad(page);
+    } else {
+      startupError = new Error(
+        "Browser is on about:blank and no start URL was provided. Set SALEADS_URL (or SALEADS_LOGIN_URL/BASE_URL/APP_URL/TARGET_URL) or start from the SaleADS login page before running.",
       );
     }
-
-    await page.goto(loginUrl, { waitUntil: "domcontentloaded" });
-    await waitForUiToLoad(page);
   }
 
   await runStep("Login", async () => {
