@@ -103,9 +103,11 @@ public class SaleadsMiNegocioWorkflowTest {
 				runStep(report, ACCOUNT_STEP, () -> stepValidateDetallesCuenta(page));
 				runStep(report, BUSINESSES_STEP, () -> stepValidateTusNegocios(page));
 				runStep(report, TERMS_STEP,
-						() -> stepValidateLegalLink(page, "Términos y Condiciones", "08-terminos-y-condiciones.png", legalUrls));
+						() -> stepValidateLegalLink(page, "Términos y Condiciones",
+								evidenceDir.resolve("08-terminos-y-condiciones.png"), legalUrls));
 				runStep(report, PRIVACY_STEP,
-						() -> stepValidateLegalLink(page, "Política de Privacidad", "09-politica-de-privacidad.png", legalUrls));
+						() -> stepValidateLegalLink(page, "Política de Privacidad",
+								evidenceDir.resolve("09-politica-de-privacidad.png"), legalUrls));
 			} else {
 				markBlocked(report, INFO_STEP, "Administrar Negocios view step failed.");
 				markBlocked(report, ACCOUNT_STEP, "Administrar Negocios view step failed.");
@@ -220,9 +222,9 @@ public class SaleadsMiNegocioWorkflowTest {
 		Assert.assertTrue("Business list is not visible in 'Tus Negocios'.", reduced.length() > 5);
 	}
 
-	private void stepValidateLegalLink(final Page appPage, final String linkText, final String screenshotFileName,
+	private void stepValidateLegalLink(final Page appPage, final String linkText, final Path screenshotPath,
 			final Map<String, String> legalUrls) {
-		clickByVisibleText(appPage, "Sección Legal");
+		assertTextVisible(appPage, "Sección Legal", 10000);
 
 		final Locator legalLink = firstVisibleLocator(appPage, List.of(linkText), 8000);
 		Assert.assertNotNull("Legal link was not found: " + linkText, legalLink);
@@ -235,7 +237,7 @@ public class SaleadsMiNegocioWorkflowTest {
 		final String bodyText = normalizeSpaces(legalPage.locator("body").innerText());
 		Assert.assertTrue("Legal content text is not visible for '" + linkText + "'.", bodyText.length() > 250);
 
-		takeScreenshot(legalPage, createEvidenceDirectoryIfNeeded(screenshotFileName), true);
+		takeScreenshot(legalPage, screenshotPath, true);
 		legalUrls.put(linkText, legalPage.url());
 
 		if (legalPopup != null) {
@@ -319,10 +321,6 @@ public class SaleadsMiNegocioWorkflowTest {
 		return evidenceDir;
 	}
 
-	private Path createEvidenceDirectoryIfNeeded(final String screenshotFileName) {
-		return Paths.get("target", "saleads-evidence").resolve(screenshotFileName);
-	}
-
 	private void takeScreenshot(final Page page, final Path path, final boolean fullPage) {
 		try {
 			Files.createDirectories(path.getParent());
@@ -370,8 +368,7 @@ public class SaleadsMiNegocioWorkflowTest {
 	}
 
 	private Locator findSection(final Page page, final String heading) {
-		final Pattern pattern = Pattern.compile("(?i).*" + Pattern.quote(heading) + ".*");
-		return page.locator("section, article, div").filter(new Locator.FilterOptions().setHasText(pattern)).first();
+		return page.locator("section, article, div").filter(new Locator.FilterOptions().setHasText(heading)).first();
 	}
 
 	private Locator firstVisibleLocator(final Page page, final List<String> texts, final double timeoutMs) {
