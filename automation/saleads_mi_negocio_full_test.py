@@ -403,14 +403,14 @@ def run_test(base_url: str | None, cdp_urls: list[str], headless: bool, artifact
                 urls["Terminos y Condiciones"] = legal_page.url
             except Exception as exc:
                 step.notes.append(str(exc))
-        finally:
-            try:
-                if opened_new_tab:
-                    legal_page.close()
-                    page.bring_to_front()
-                    wait_for_ui(page)
-            except Exception:
-                pass
+            finally:
+                try:
+                    if opened_new_tab:
+                        legal_page.close()
+                        page.bring_to_front()
+                        wait_for_ui(page)
+                except Exception:
+                    pass
         step.finalize()
 
         # Step 9: Validate Politica de Privacidad
@@ -438,14 +438,14 @@ def run_test(base_url: str | None, cdp_urls: list[str], headless: bool, artifact
                 urls["Politica de Privacidad"] = privacy_page.url
             except Exception as exc:
                 step.notes.append(str(exc))
-        finally:
-            try:
-                if opened_new_tab:
-                    privacy_page.close()
-                    page.bring_to_front()
-                    wait_for_ui(page)
-            except Exception:
-                pass
+            finally:
+                try:
+                    if opened_new_tab:
+                        privacy_page.close()
+                        page.bring_to_front()
+                        wait_for_ui(page)
+                except Exception:
+                    pass
         step.finalize()
 
         if browser_to_close is not None and metadata["mode"] == "launched_browser":
