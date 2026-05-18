@@ -380,10 +380,10 @@ public class SaleadsMiNegocioWorkflowTest {
 		for (final String text : texts) {
 			final Pattern containsText = Pattern.compile("(?i).*" + Pattern.quote(text) + ".*");
 			final Locator[] candidates = inputFirst
-					? new Locator[] { page.getByLabel(containsText).first(), page.getByPlaceholder(containsText).first(),
+					? new Locator[] { page.getByLabel(text).first(), page.getByPlaceholder(text).first(),
 							page.getByText(containsText).first() }
-					: new Locator[] { page.getByText(containsText).first(), page.getByLabel(containsText).first(),
-							page.getByPlaceholder(containsText).first() };
+					: new Locator[] { page.getByText(containsText).first(), page.getByLabel(text).first(),
+							page.getByPlaceholder(text).first() };
 			for (final Locator candidate : candidates) {
 				if (isVisible(candidate, timeoutMs)) {
 					return candidate;
