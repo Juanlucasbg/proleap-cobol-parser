@@ -45,7 +45,7 @@ import org.openqa.selenium.support.ui.WebDriverWait;
  * Runtime properties:
  * </p>
  * <ul>
- * <li>saleads.login.url (required): Environment login URL (dev/staging/prod).</li>
+ * <li>saleads.login.url (optional): Environment login URL (dev/staging/prod).</li>
  * <li>saleads.headless (optional, default true): true/false.</li>
  * <li>saleads.timeout.seconds (optional, default 30): explicit wait timeout.</li>
  * </ul>
@@ -91,9 +91,11 @@ public class SaleadsMiNegocioWorkflowIT {
 
 	@Test
 	public void saleadsMiNegocioFullWorkflow() {
-		final String loginUrl = getRequiredProperty("saleads.login.url");
-		driver.get(loginUrl);
-		waitForUiToLoad();
+		final String loginUrl = System.getProperty("saleads.login.url", "").trim();
+		if (!loginUrl.isEmpty()) {
+			driver.get(loginUrl);
+			waitForUiToLoad();
+		}
 
 		executeStep("Login", this::stepLoginWithGoogle);
 		executeStep("Mi Negocio menu", this::stepOpenMiNegocioMenu);
@@ -488,16 +490,6 @@ public class SaleadsMiNegocioWorkflowIT {
 	private void captureScreenshot(final String fileName) throws IOException {
 		final File screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
 		Files.copy(screenshot.toPath(), evidenceDir.resolve(fileName));
-	}
-
-	private String getRequiredProperty(final String key) {
-		final String value = System.getProperty(key, "").trim();
-		if (!value.isEmpty()) {
-			return value;
-		}
-
-		throw new IllegalStateException("Missing required property '" + key
-				+ "'. Provide the environment-specific login URL at runtime, e.g. -Dsaleads.login.url=https://<your-env>/login");
 	}
 
 	private void scrollIntoView(final WebElement element) {
