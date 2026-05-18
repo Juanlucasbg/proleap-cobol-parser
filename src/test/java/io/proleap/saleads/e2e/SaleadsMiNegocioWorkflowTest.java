@@ -133,8 +133,10 @@ public class SaleadsMiNegocioWorkflowTest {
 				screenshot(appPage, "04-administrar-negocios-page.png", true);
 			});
 
-			runStep("Informacion General", () -> {
-				visibleTextRegex(appPage, "@");
+			runStep("Informaci\u00f3n General", () -> {
+				firstVisible("user name",
+						appPage.locator(":text-matches(\"[A-Za-z\\u00c1\\u00c9\\u00cd\\u00d3\\u00da\\u00d1\\u00e1\\u00e9\\u00ed\\u00f3\\u00fa\\u00f1]{2,}\\\\s+[A-Za-z\\u00c1\\u00c9\\u00cd\\u00d3\\u00da\\u00d1\\u00e1\\u00e9\\u00ed\\u00f3\\u00fa\\u00f1]{2,}\", \"i\")"));
+				visibleText(appPage, "@");
 				firstVisible("BUSINESS PLAN text", appPage.getByText("BUSINESS PLAN"));
 				firstVisible("Cambiar Plan button", appPage.getByText("Cambiar Plan"));
 			});
@@ -151,13 +153,13 @@ public class SaleadsMiNegocioWorkflowTest {
 				firstVisible("Tienes 2 de 3 negocios text", appPage.getByText("Tienes 2 de 3 negocios"));
 			});
 
-			runStep("Terminos y Condiciones", () -> {
+			runStep("T\u00e9rminos y Condiciones", () -> {
 				final String finalUrl = validateLegalLink(context, appPage, "T\u00e9rminos y Condiciones",
 						"T\u00e9rminos y Condiciones", "05-terminos-y-condiciones.png");
 				legalUrls.put("Terminos y Condiciones URL", finalUrl);
 			});
 
-			runStep("Politica de Privacidad", () -> {
+			runStep("Pol\u00edtica de Privacidad", () -> {
 				final String finalUrl = validateLegalLink(context, appPage, "Pol\u00edtica de Privacidad",
 						"Pol\u00edtica de Privacidad", "06-politica-de-privacidad.png");
 				legalUrls.put("Politica de Privacidad URL", finalUrl);
@@ -238,7 +240,7 @@ public class SaleadsMiNegocioWorkflowTest {
 		throw new AssertionError("Could not find visible element: " + description);
 	}
 
-	private void visibleTextRegex(final Page page, final String textSnippet) {
+	private void visibleText(final Page page, final String textSnippet) {
 		final Locator text = page.getByText(textSnippet);
 		text.first().waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout((double) TIMEOUT_MS));
 	}
@@ -271,11 +273,11 @@ public class SaleadsMiNegocioWorkflowTest {
 		writeReportLine(content, "Mi Negocio menu");
 		writeReportLine(content, "Agregar Negocio modal");
 		writeReportLine(content, "Administrar Negocios view");
-		writeReportLine(content, "Informacion General");
+		writeReportLine(content, "Informaci\u00f3n General");
 		writeReportLine(content, "Detalles de la Cuenta");
 		writeReportLine(content, "Tus Negocios");
-		writeReportLine(content, "Terminos y Condiciones");
-		writeReportLine(content, "Politica de Privacidad");
+		writeReportLine(content, "T\u00e9rminos y Condiciones");
+		writeReportLine(content, "Pol\u00edtica de Privacidad");
 
 		if (!legalUrls.isEmpty()) {
 			content.append("\nCaptured URLs:\n");
