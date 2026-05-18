@@ -24,6 +24,7 @@ import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.PlaywrightException;
 import com.microsoft.playwright.options.LoadState;
 import com.microsoft.playwright.options.WaitForSelectorState;
+import com.microsoft.playwright.options.WaitUntilState;
 
 /**
  * End-to-end SaleADS "Mi Negocio" flow with screenshots and final PASS/FAIL report.
@@ -55,7 +56,7 @@ public class SaleadsMiNegocioFullWorkflowTest {
 
 		final String loginUrl = readRequiredEnv("SALEADS_LOGIN_URL");
 		final boolean headless = Boolean.parseBoolean(readConfig("saleads.headless", "true"));
-		final float slowMoMs = Float.parseFloat(readConfig("saleads.slowMoMs", "0"));
+		final double slowMoMs = Double.parseDouble(readConfig("saleads.slowMoMs", "0"));
 		final String expectedUserName = readOptionalEnv("SALEADS_EXPECTED_USER_NAME");
 
 		try (Playwright playwright = Playwright.create()) {
@@ -64,7 +65,7 @@ public class SaleadsMiNegocioFullWorkflowTest {
 			final BrowserContext context = browser.newContext(new Browser.NewContextOptions().setViewportSize(1600, 1200));
 			final Page page = context.newPage();
 
-			page.navigate(loginUrl, new Page.NavigateOptions().setWaitUntil(LoadState.DOMCONTENTLOADED));
+			page.navigate(loginUrl, new Page.NavigateOptions().setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
 			waitForUi(page);
 
 			runStep("Login", () -> {
