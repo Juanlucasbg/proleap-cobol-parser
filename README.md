@@ -194,6 +194,26 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+SaleADS E2E workflow test
+-------------------------
+
+This repository also includes an end-to-end Playwright test for the SaleADS "Mi Negocio" workflow:
+
+```
+$ mvn -Dtest=io.proleap.saleads.e2e.SaleadsMiNegocioWorkflowTest test
+```
+
+Optional runtime variables:
+
+- `SALEADS_START_URL`: login URL of the target SaleADS environment.
+- `SALEADS_HEADLESS`: `true` or `false` (defaults to `true`).
+
+The test captures screenshots and writes a final PASS/FAIL report at:
+
+```
+target/saleads-evidence/<run-id>/final-report.txt
+```
+
 
 Release process
 ---------------
