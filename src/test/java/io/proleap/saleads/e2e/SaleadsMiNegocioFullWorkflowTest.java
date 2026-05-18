@@ -81,7 +81,7 @@ public class SaleadsMiNegocioFullWorkflowTest {
 			appPage.navigate(loginUrl);
 			waitForUi(appPage);
 
-			runStep(results, "Login", () -> {
+			runStep(results, "Login", appPage, screenshotsDir.resolve("01-login-failure.png"), () -> {
 				final Locator loginButton = visibleLocatorOrThrow(appPage, "Google login button",
 						appPage.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(LOGIN_BUTTON_PATTERN)),
 						appPage.getByText(LOGIN_BUTTON_PATTERN));
@@ -99,7 +99,7 @@ public class SaleadsMiNegocioFullWorkflowTest {
 				takeScreenshot(appPage, screenshotsDir.resolve("01-dashboard.png"), true);
 			});
 
-			runStep(results, "Mi Negocio menu", () -> {
+			runStep(results, "Mi Negocio menu", appPage, screenshotsDir.resolve("02-mi-negocio-menu-failure.png"), () -> {
 				openMiNegocioMenu(appPage);
 				visibleLocatorOrThrow(appPage, "Agregar Negocio menu entry", appPage.getByText(AGREGAR_NEGOCIO_PATTERN));
 				visibleLocatorOrThrow(appPage, "Administrar Negocios menu entry",
@@ -107,7 +107,7 @@ public class SaleadsMiNegocioFullWorkflowTest {
 				takeScreenshot(appPage, screenshotsDir.resolve("02-mi-negocio-menu-expanded.png"), false);
 			});
 
-			runStep(results, "Agregar Negocio modal", () -> {
+			runStep(results, "Agregar Negocio modal", appPage, screenshotsDir.resolve("03-agregar-negocio-modal-failure.png"), () -> {
 				Locator agregarNegocio = visibleLocatorOrThrow(appPage, "Agregar Negocio", appPage.getByText(AGREGAR_NEGOCIO_PATTERN));
 				clickAndWait(agregarNegocio, appPage);
 
@@ -129,7 +129,8 @@ public class SaleadsMiNegocioFullWorkflowTest {
 						appPage);
 			});
 
-			runStep(results, "Administrar Negocios view", () -> {
+			runStep(results, "Administrar Negocios view", appPage,
+					screenshotsDir.resolve("04-administrar-negocios-view-failure.png"), () -> {
 				openMiNegocioMenu(appPage);
 				clickAndWait(visibleLocatorOrThrow(appPage, "Administrar Negocios", appPage.getByText(ADMINISTRAR_NEGOCIOS_PATTERN)),
 						appPage);
@@ -141,7 +142,8 @@ public class SaleadsMiNegocioFullWorkflowTest {
 				takeScreenshot(appPage, screenshotsDir.resolve("04-administrar-negocios-full-page.png"), true);
 			});
 
-			runStep(results, "Informaci\u00F3n General", () -> {
+			runStep(results, "Informaci\u00F3n General", appPage,
+					screenshotsDir.resolve("05-informacion-general-failure.png"), () -> {
 				visibleLocatorOrThrow(appPage, "User name", appPage.getByText(Pattern.compile("[A-Za-z]{2,}\\s+[A-Za-z]{2,}")));
 				visibleLocatorOrThrow(appPage, "User email",
 						appPage.getByText(Pattern.compile("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}")));
@@ -150,20 +152,22 @@ public class SaleadsMiNegocioFullWorkflowTest {
 						appPage.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(CAMBIAR_PLAN_PATTERN)));
 			});
 
-			runStep(results, "Detalles de la Cuenta", () -> {
+			runStep(results, "Detalles de la Cuenta", appPage,
+					screenshotsDir.resolve("06-detalles-cuenta-failure.png"), () -> {
 				visibleLocatorOrThrow(appPage, "Cuenta creada", appPage.getByText(CUENTA_CREADA_PATTERN));
 				visibleLocatorOrThrow(appPage, "Estado activo", appPage.getByText(ESTADO_ACTIVO_PATTERN));
 				visibleLocatorOrThrow(appPage, "Idioma seleccionado", appPage.getByText(IDIOMA_SELECCIONADO_PATTERN));
 			});
 
-			runStep(results, "Tus Negocios", () -> {
+			runStep(results, "Tus Negocios", appPage, screenshotsDir.resolve("07-tus-negocios-failure.png"), () -> {
 				visibleLocatorOrThrow(appPage, "Tus Negocios section", appPage.getByText(TUS_NEGOCIOS_PATTERN));
 				visibleLocatorOrThrow(appPage, "Agregar Negocio button",
 						appPage.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(AGREGAR_NEGOCIO_PATTERN)));
 				visibleLocatorOrThrow(appPage, "Business quota text", appPage.getByText(NEGOCIOS_QUOTA_PATTERN));
 			});
 
-			runStep(results, "T\u00E9rminos y Condiciones", () -> {
+			runStep(results, "T\u00E9rminos y Condiciones", appPage,
+					screenshotsDir.resolve("08-terminos-y-condiciones-failure.png"), () -> {
 				Page termsPage = openLegalDocument(context, appPage, TERMINOS_LINK_PATTERN);
 				visibleLocatorOrThrow(termsPage, "Terminos y Condiciones heading", termsPage.getByText(TERMINOS_HEADING_PATTERN));
 				visibleLocatorOrThrow(termsPage, "Legal content text", termsPage.locator("p"),
@@ -173,7 +177,8 @@ public class SaleadsMiNegocioFullWorkflowTest {
 				closeOrReturnToApp(appPage, termsPage);
 			});
 
-			runStep(results, "Pol\u00EDtica de Privacidad", () -> {
+			runStep(results, "Pol\u00EDtica de Privacidad", appPage,
+					screenshotsDir.resolve("09-politica-privacidad-failure.png"), () -> {
 				Page privacyPage = openLegalDocument(context, appPage, PRIVACIDAD_LINK_PATTERN);
 				visibleLocatorOrThrow(privacyPage, "Politica de Privacidad heading", privacyPage.getByText(PRIVACIDAD_HEADING_PATTERN));
 				visibleLocatorOrThrow(privacyPage, "Legal content text", privacyPage.locator("p"),
@@ -288,12 +293,23 @@ public class SaleadsMiNegocioFullWorkflowTest {
 		page.screenshot(new Page.ScreenshotOptions().setPath(screenshotPath).setFullPage(fullPage));
 	}
 
-	private void runStep(final List<StepResult> results, final String stepName, final CheckedRunnable runnable) {
+	private void runStep(final List<StepResult> results, final String stepName, final Page page, final Path failureScreenshotPath,
+			final CheckedRunnable runnable) {
 		try {
 			runnable.run();
 			results.add(StepResult.pass(stepName));
 		} catch (Throwable throwable) {
-			results.add(StepResult.fail(stepName, throwable.getMessage()));
+			final String screenshotInfo = takeScreenshotSafely(page, failureScreenshotPath);
+			results.add(StepResult.fail(stepName, throwable.getMessage() + screenshotInfo));
+		}
+	}
+
+	private String takeScreenshotSafely(final Page page, final Path screenshotPath) {
+		try {
+			takeScreenshot(page, screenshotPath, true);
+			return " (failure screenshot: " + screenshotPath + ")";
+		} catch (Throwable ignored) {
+			return "";
 		}
 	}
 
