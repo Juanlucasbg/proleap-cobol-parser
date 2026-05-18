@@ -95,7 +95,14 @@ public class SaleadsMiNegocioFullTest {
 
 	@Test
 	public void saleadsMiNegocioFullWorkflow() {
-		runStep("Login", this::stepLogin);
+		final boolean loginPassed = runStep("Login", this::stepLogin);
+		if (!loginPassed) {
+			markRemainingStepsFailed("Skipped because Login failed.");
+			printFinalReport();
+			assertTrue("SaleADS Mi Negocio workflow failed.\n" + formatFailures(), failures.isEmpty());
+			return;
+		}
+
 		runStep("Mi Negocio menu", this::stepMiNegocioMenu);
 		runStep("Agregar Negocio modal", this::stepAgregarNegocioModal);
 		runStep("Administrar Negocios view", this::stepAdministrarNegocios);
@@ -110,6 +117,11 @@ public class SaleadsMiNegocioFullTest {
 	}
 
 	private void stepLogin() throws Exception {
+		if (isBlankLandingPage()) {
+			throw new IllegalStateException(
+					"Browser opened a blank page. Set SALEADS_START_URL to the login page of the target SaleADS environment.");
+		}
+
 		if (!isSidebarVisible()) {
 			final WebElement loginButton = waitForClickableByTexts("Sign in with Google", "Iniciar sesi\u00F3n con Google",
 					"Ingresar con Google", "Google");
@@ -237,13 +249,15 @@ public class SaleadsMiNegocioFullTest {
 		return finalUrl;
 	}
 
-	private void runStep(final String reportField, final StepAction action) {
+	private boolean runStep(final String reportField, final StepAction action) {
 		try {
 			action.run();
 			report.put(reportField, "PASS");
+			return true;
 		} catch (final Exception | AssertionError error) {
 			report.put(reportField, "FAIL");
 			failures.put(reportField, safeMessage(error));
+			return false;
 		}
 	}
 
@@ -260,11 +274,12 @@ public class SaleadsMiNegocioFullTest {
 	}
 
 	private WebElement waitForClickableByTexts(final String... texts) {
+		final WebDriverWait clickableWait = new WebDriverWait(driver, SHORT_TIMEOUT);
 		Exception lastError = null;
 		for (final String text : texts) {
 			final By locator = clickableTextLocator(text);
 			try {
-				return wait.until(ExpectedConditions.elementToBeClickable(locator));
+				return clickableWait.until(ExpectedConditions.elementToBeClickable(locator));
 			} catch (final Exception error) {
 				lastError = error;
 			}
@@ -495,6 +510,11 @@ public class SaleadsMiNegocioFullTest {
 		}
 	}
 
+	private boolean isBlankLandingPage() {
+		final String url = driver.getCurrentUrl();
+		return url == null || url.isBlank() || "about:blank".equals(url) || "data:,".equals(url);
+	}
+
 	private void takeScreenshot(final String fileName) throws IOException {
 		if (!(driver instanceof TakesScreenshot)) {
 			return;
@@ -532,6 +552,15 @@ public class SaleadsMiNegocioFullTest {
 		final StringBuilder builder = new StringBuilder();
 		failures.forEach((field, message) -> builder.append("- ").append(field).append(": ").append(message).append('\n'));
 		return builder.toString();
+	}
+
+	private void markRemainingStepsFailed(final String reason) {
+		for (final String field : REPORT_FIELDS) {
+			if ("NOT_RUN".equals(report.get(field))) {
+				report.put(field, "FAIL");
+				failures.put(field, reason);
+			}
+		}
 	}
 
 	private void printFinalReport() {
