@@ -201,8 +201,18 @@ public class SaleadsMiNegocioFullWorkflowTest {
 		assertVisible("Cambiar Plan button",
 				appPage.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(Pattern.compile("(?iu).*cambiar plan.*"))));
 
+		final String configuredAccount = readSetting("saleads.google.account", "SALEADS_GOOGLE_ACCOUNT",
+				DEFAULT_GOOGLE_ACCOUNT);
+		final String accountPrefix = configuredAccount.contains("@") ? configuredAccount.substring(0, configuredAccount.indexOf('@'))
+				: configuredAccount;
+		final String normalizedAccountPrefix = accountPrefix.replaceAll("[^A-Za-z]+", " ").trim();
+		final String firstNameToken = normalizedAccountPrefix.isEmpty() ? "usuario"
+				: normalizedAccountPrefix.split("\\s+")[0];
+
 		final boolean userNameVisible = waitForVisible(
-				appPage.getByText(Pattern.compile("(?iu).*(nombre|usuario|user name|perfil).*")), 5_000);
+				appPage.getByText(Pattern.compile("(?iu).*(nombre|usuario|user name|perfil).*")), 5_000)
+				|| waitForVisible(appPage.getByText(Pattern.compile("(?iu).*" + Pattern.quote(firstNameToken) + ".*")),
+						5_000);
 		assertTrue("Expected user name indicator to be visible in Información General section.", userNameVisible);
 	}
 
@@ -246,8 +256,7 @@ public class SaleadsMiNegocioFullWorkflowTest {
 		}
 
 		assertVisible(linkText + " heading", legalPage.getByText(Pattern.compile(headingPattern)));
-		assertTrue("Expected legal content text to be visible for " + linkText + ".",
-				waitForVisible(legalPage.locator("main, article, body").first(), 10_000));
+		assertTrue("Expected legal content text to be visible for " + linkText + ".", hasLegalContent(legalPage));
 		captureScreenshot(legalPage, screenshotName, true);
 
 		final String finalUrl = legalPage.url();
@@ -260,6 +269,19 @@ public class SaleadsMiNegocioFullWorkflowTest {
 		}
 
 		return finalUrl;
+	}
+
+	private boolean hasLegalContent(final Page legalPage) {
+		if (waitForVisible(legalPage.locator("main p, article p, p"), 10_000)) {
+			return true;
+		}
+
+		try {
+			final String bodyText = legalPage.locator("body").first().innerText();
+			return bodyText != null && bodyText.strip().length() > 200;
+		} catch (final PlaywrightException ignored) {
+			return false;
+		}
 	}
 
 	private void chooseGoogleAccountIfPrompted(final String accountEmail) {
