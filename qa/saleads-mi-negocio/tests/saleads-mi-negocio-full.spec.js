@@ -4,6 +4,7 @@ const { test, expect } = require('@playwright/test');
 
 const TEST_NAME = 'saleads_mi_negocio_full_test';
 const GOOGLE_ACCOUNT_EMAIL = 'juanlucasbarbiergarzon@gmail.com';
+const GOOGLE_LOGIN_TEXT = /sign in with google|continue with google|continuar con google|iniciar sesion con google|iniciar sesión con google/i;
 const CHECKPOINT_DIR = path.resolve(__dirname, '../checkpoints');
 const REPORT_DIR = path.resolve(__dirname, '../test-results');
 const REPORT_PATH = path.join(REPORT_DIR, `${TEST_NAME}_report.json`);
@@ -86,10 +87,20 @@ async function pickGoogleAccountIfPresent(targetPage) {
 
 async function findGoogleLoginEntry(page) {
   return findFirstVisible([
-    page.getByRole('button', { name: /sign in with google|continuar con google|google/i }),
-    page.getByRole('link', { name: /sign in with google|continuar con google|google/i }),
-    page.getByText(/sign in with google|continuar con google|google/i)
+    page.getByRole('button', { name: GOOGLE_LOGIN_TEXT }),
+    page.getByRole('link', { name: GOOGLE_LOGIN_TEXT }),
+    page.getByText(GOOGLE_LOGIN_TEXT)
   ]);
+}
+
+async function findPageWithSidebar(pages) {
+  for (const candidate of pages) {
+    const sidebar = await findFirstVisible([candidate.locator('aside'), candidate.getByText(/negocio/i)]);
+    if (sidebar) {
+      return { candidate, sidebar };
+    }
+  }
+  return null;
 }
 
 async function openLegalDocumentAndReturn({
@@ -140,12 +151,13 @@ async function openLegalDocumentAndReturn({
 
 test('Login with Google and validate Mi Negocio module workflow', async ({ page }) => {
   const baseUrl = process.env.SALEADS_BASE_URL || process.env.BASE_URL;
+  let appPage = page;
   const results = initResultMap();
   const errors = {};
   const legalUrls = {};
 
   fs.mkdirSync(REPORT_DIR, { recursive: true });
-  await captureCheckpoint(page, '00-browser-opened.png', true);
+  await captureCheckpoint(appPage, '00-browser-opened.png', true);
 
   const runStep = async (resultKey, action) => {
     try {
@@ -154,7 +166,7 @@ test('Login with Google and validate Mi Negocio module workflow', async ({ page 
     } catch (error) {
       errors[resultKey] = error instanceof Error ? error.message : String(error);
       results[resultKey] = 'FAIL';
-      await captureCheckpoint(page, `fail-${toFileSafeName(resultKey)}.png`, true).catch(() => {});
+      await captureCheckpoint(appPage, `fail-${toFileSafeName(resultKey)}.png`, true).catch(() => {});
     }
   };
 
@@ -165,32 +177,46 @@ test('Login with Google and validate Mi Negocio module workflow', async ({ page 
       );
     }
 
-    await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
-    await waitForUiLoad(page);
-    await captureCheckpoint(page, '00-initial-saleads-page.png', true);
+    await appPage.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+    await waitForUiLoad(appPage);
+    await captureCheckpoint(appPage, '00-initial-saleads-page.png', true);
 
-    let loginButton = await findGoogleLoginEntry(page);
+    let authPage = appPage;
+    let loginButton = await findGoogleLoginEntry(authPage);
     if (!loginButton) {
       const accessAppButton = await findFirstVisible([
-        page.getByRole('button', { name: /log in|iniciar sesion|iniciar sesión|acceder|start free|empieza gratis/i }),
-        page.getByRole('link', { name: /log in|iniciar sesion|iniciar sesión|acceder|start free|empieza gratis/i }),
-        page.getByText(/log in|iniciar sesion|iniciar sesión|acceder|start free|empieza gratis/i)
+        authPage.getByRole('button', {
+          name: /log in|sign in|iniciar sesion|iniciar sesión|acceder|start free|get started|empieza gratis/i
+        }),
+        authPage.getByRole('link', {
+          name: /log in|sign in|iniciar sesion|iniciar sesión|acceder|start free|get started|empieza gratis/i
+        }),
+        authPage.getByText(/log in|sign in|iniciar sesion|iniciar sesión|acceder|start free|get started|empieza gratis/i)
       ]);
 
       if (accessAppButton) {
-        await clickAndWait(page, accessAppButton);
+        const appPopupPromise = appPage.context().waitForEvent('page', { timeout: 10000 }).catch(() => null);
+        await accessAppButton.click();
+        await waitForUiLoad(authPage);
+
+        const appPopup = await appPopupPromise;
+        if (appPopup) {
+          authPage = appPopup;
+          await authPage.waitForLoadState('domcontentloaded');
+          await waitForUiLoad(authPage);
+        }
       }
 
-      loginButton = await findGoogleLoginEntry(page);
+      loginButton = await findGoogleLoginEntry(authPage);
     }
 
     if (!loginButton) {
       throw new Error('Google login button was not found.');
     }
 
-    const popupPromise = page.context().waitForEvent('page', { timeout: 15000 }).catch(() => null);
+    const popupPromise = authPage.context().waitForEvent('page', { timeout: 15000 }).catch(() => null);
     await loginButton.click();
-    await waitForUiLoad(page);
+    await waitForUiLoad(authPage);
 
     const popup = await popupPromise;
     if (popup) {
@@ -198,98 +224,99 @@ test('Login with Google and validate Mi Negocio module workflow', async ({ page 
       await pickGoogleAccountIfPresent(popup);
       await popup.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
     } else {
-      await pickGoogleAccountIfPresent(page);
+      await pickGoogleAccountIfPresent(authPage);
     }
 
-    await waitForUiLoad(page);
+    await waitForUiLoad(authPage);
 
-    const sidebar = await findFirstVisible([
-      page.locator('aside'),
-      page.getByText(/negocio/i)
-    ]);
-    if (!sidebar) {
+    const sidebarPage = await findPageWithSidebar(appPage.context().pages());
+    if (!sidebarPage) {
       throw new Error('Main app interface did not show a visible sidebar.');
     }
-    await expect(sidebar).toBeVisible();
 
-    await captureCheckpoint(page, '01-dashboard-loaded.png', true);
+    await expect(sidebarPage.sidebar).toBeVisible();
+
+    appPage = sidebarPage.candidate;
+    await sidebarPage.candidate.bringToFront();
+    await waitForUiLoad(appPage);
+    await captureCheckpoint(appPage, '01-dashboard-loaded.png', true);
   });
 
   await runStep('Mi Negocio menu', async () => {
     const negocioEntry = await findFirstVisible([
-      page.getByRole('button', { name: /^Negocio$/i }),
-      page.getByText(/^Negocio$/i)
+      appPage.getByRole('button', { name: /^Negocio$/i }),
+      appPage.getByText(/^Negocio$/i)
     ]);
     if (!negocioEntry) {
       throw new Error('Sidebar item "Negocio" was not found.');
     }
-    await clickAndWait(page, negocioEntry);
+    await clickAndWait(appPage, negocioEntry);
 
     const miNegocioEntry = await findFirstVisible([
-      page.getByRole('button', { name: /^Mi Negocio$/i }),
-      page.getByText(/^Mi Negocio$/i)
+      appPage.getByRole('button', { name: /^Mi Negocio$/i }),
+      appPage.getByText(/^Mi Negocio$/i)
     ]);
     if (!miNegocioEntry) {
       throw new Error('Option "Mi Negocio" was not found.');
     }
-    await clickAndWait(page, miNegocioEntry);
+    await clickAndWait(appPage, miNegocioEntry);
 
-    await expect(page.getByText(/Agregar Negocio/i).first()).toBeVisible();
-    await expect(page.getByText(/Administrar Negocios/i).first()).toBeVisible();
+    await expect(appPage.getByText(/Agregar Negocio/i).first()).toBeVisible();
+    await expect(appPage.getByText(/Administrar Negocios/i).first()).toBeVisible();
 
-    await captureCheckpoint(page, '02-mi-negocio-menu-expanded.png');
+    await captureCheckpoint(appPage, '02-mi-negocio-menu-expanded.png');
   });
 
   await runStep('Agregar Negocio modal', async () => {
-    const agregarNegocioOption = page.getByText(/^Agregar Negocio$/i).first();
-    await clickAndWait(page, agregarNegocioOption);
+    const agregarNegocioOption = appPage.getByText(/^Agregar Negocio$/i).first();
+    await clickAndWait(appPage, agregarNegocioOption);
 
-    const modalTitle = page.getByText(/Crear Nuevo Negocio/i).first();
+    const modalTitle = appPage.getByText(/Crear Nuevo Negocio/i).first();
     await expect(modalTitle).toBeVisible();
-    await expect(page.getByText(/Nombre del Negocio/i).first()).toBeVisible();
-    await expect(page.getByText(/Tienes 2 de 3 negocios/i).first()).toBeVisible();
-    await expect(page.getByRole('button', { name: /Cancelar/i }).first()).toBeVisible();
-    await expect(page.getByRole('button', { name: /Crear Negocio/i }).first()).toBeVisible();
+    await expect(appPage.getByText(/Nombre del Negocio/i).first()).toBeVisible();
+    await expect(appPage.getByText(/Tienes 2 de 3 negocios/i).first()).toBeVisible();
+    await expect(appPage.getByRole('button', { name: /Cancelar/i }).first()).toBeVisible();
+    await expect(appPage.getByRole('button', { name: /Crear Negocio/i }).first()).toBeVisible();
 
-    await captureCheckpoint(page, '03-agregar-negocio-modal.png');
+    await captureCheckpoint(appPage, '03-agregar-negocio-modal.png');
 
-    const businessNameInput = page.getByPlaceholder(/Nombre del Negocio/i).first();
+    const businessNameInput = appPage.getByPlaceholder(/Nombre del Negocio/i).first();
     if (await businessNameInput.isVisible().catch(() => false)) {
       await businessNameInput.fill('Negocio Prueba Automatizacion');
     }
-    await clickAndWait(page, page.getByRole('button', { name: /Cancelar/i }).first());
+    await clickAndWait(appPage, appPage.getByRole('button', { name: /Cancelar/i }).first());
   });
 
   await runStep('Administrar Negocios view', async () => {
-    if (!(await page.getByText(/Administrar Negocios/i).first().isVisible().catch(() => false))) {
+    if (!(await appPage.getByText(/Administrar Negocios/i).first().isVisible().catch(() => false))) {
       const miNegocioEntry = await findFirstVisible([
-        page.getByRole('button', { name: /^Mi Negocio$/i }),
-        page.getByText(/^Mi Negocio$/i)
+        appPage.getByRole('button', { name: /^Mi Negocio$/i }),
+        appPage.getByText(/^Mi Negocio$/i)
       ]);
       if (miNegocioEntry) {
-        await clickAndWait(page, miNegocioEntry);
+        await clickAndWait(appPage, miNegocioEntry);
       }
     }
 
-    await clickAndWait(page, page.getByText(/Administrar Negocios/i).first());
+    await clickAndWait(appPage, appPage.getByText(/Administrar Negocios/i).first());
 
-    await expect(page.getByText(/Informacion General|Información General/i).first()).toBeVisible();
-    await expect(page.getByText(/Detalles de la Cuenta/i).first()).toBeVisible();
-    await expect(page.getByText(/Tus Negocios/i).first()).toBeVisible();
-    await expect(page.getByText(/Seccion Legal|Sección Legal/i).first()).toBeVisible();
+    await expect(appPage.getByText(/Informacion General|Información General/i).first()).toBeVisible();
+    await expect(appPage.getByText(/Detalles de la Cuenta/i).first()).toBeVisible();
+    await expect(appPage.getByText(/Tus Negocios/i).first()).toBeVisible();
+    await expect(appPage.getByText(/Seccion Legal|Sección Legal/i).first()).toBeVisible();
 
-    await captureCheckpoint(page, '04-administrar-negocios-page-full.png', true);
+    await captureCheckpoint(appPage, '04-administrar-negocios-page-full.png', true);
   });
 
   await runStep('Información General', async () => {
-    const infoSection = sectionByHeading(page, 'Información General');
+    const infoSection = sectionByHeading(appPage, 'Información General');
     await expect(infoSection).toBeVisible();
 
-    const emailLocator = page.getByText(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/).first();
+    const emailLocator = appPage.getByText(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/).first();
     await expect(emailLocator).toBeVisible();
 
-    await expect(page.getByText(/BUSINESS PLAN/i).first()).toBeVisible();
-    await expect(page.getByRole('button', { name: /Cambiar Plan/i }).first()).toBeVisible();
+    await expect(appPage.getByText(/BUSINESS PLAN/i).first()).toBeVisible();
+    await expect(appPage.getByRole('button', { name: /Cambiar Plan/i }).first()).toBeVisible();
 
     const visibleTexts = (await infoSection.locator('*').allTextContents()).map(normalizeText);
     const hasNameLikeText = visibleTexts.some(
@@ -304,13 +331,13 @@ test('Login with Google and validate Mi Negocio module workflow', async ({ page 
   });
 
   await runStep('Detalles de la Cuenta', async () => {
-    await expect(page.getByText(/Cuenta creada/i).first()).toBeVisible();
-    await expect(page.getByText(/Estado activo/i).first()).toBeVisible();
-    await expect(page.getByText(/Idioma seleccionado/i).first()).toBeVisible();
+    await expect(appPage.getByText(/Cuenta creada/i).first()).toBeVisible();
+    await expect(appPage.getByText(/Estado activo/i).first()).toBeVisible();
+    await expect(appPage.getByText(/Idioma seleccionado/i).first()).toBeVisible();
   });
 
   await runStep('Tus Negocios', async () => {
-    const negociosSection = sectionByHeading(page, 'Tus Negocios');
+    const negociosSection = sectionByHeading(appPage, 'Tus Negocios');
     await expect(negociosSection).toBeVisible();
 
     await expect(negociosSection.getByRole('button', { name: /Agregar Negocio/i }).first()).toBeVisible();
@@ -329,7 +356,7 @@ test('Login with Google and validate Mi Negocio module workflow', async ({ page 
 
   await runStep('Términos y Condiciones', async () => {
     legalUrls.terminosYCondiciones = await openLegalDocumentAndReturn({
-      page,
+      page: appPage,
       linkText: 'Términos y Condiciones',
       expectedHeading: 'Términos y Condiciones',
       screenshotFileName: '05-terminos-y-condiciones.png'
@@ -338,7 +365,7 @@ test('Login with Google and validate Mi Negocio module workflow', async ({ page 
 
   await runStep('Política de Privacidad', async () => {
     legalUrls.politicaDePrivacidad = await openLegalDocumentAndReturn({
-      page,
+      page: appPage,
       linkText: 'Política de Privacidad',
       expectedHeading: 'Política de Privacidad',
       screenshotFileName: '06-politica-de-privacidad.png'
