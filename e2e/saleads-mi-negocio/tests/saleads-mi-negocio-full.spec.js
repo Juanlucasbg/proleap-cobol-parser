@@ -239,7 +239,8 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
         await waitForUi(page);
       }
 
-      await expect(page.locator("aside, nav").first()).toBeVisible();
+      const hasAppSidebarMenu = await waitForAnyVisible(page, ["Negocio", "Mi Negocio"], 12000);
+      expect(hasAppSidebarMenu).toBeTruthy();
       evidence.dashboard = await capture(page, "dashboard-after-login");
     });
 
