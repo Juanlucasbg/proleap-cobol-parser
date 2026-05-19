@@ -253,7 +253,7 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
       contentType: "application/json",
     });
 
-    const artifactDir = path.resolve(process.cwd(), "e2e", "artifacts");
+    const artifactDir = path.resolve(process.cwd(), "artifacts");
     await fs.mkdir(artifactDir, { recursive: true });
     await fs.writeFile(
       path.join(artifactDir, "saleads-mi-negocio-latest-report.json"),
