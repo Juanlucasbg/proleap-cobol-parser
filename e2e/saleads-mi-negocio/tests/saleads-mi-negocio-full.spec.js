@@ -89,6 +89,7 @@ async function goToLoginPageIfNeeded(page) {
     "Inicia sesión",
     "Iniciar Sesión",
     "Inicia Sesión",
+    "Sign in",
     "Login",
     "Log in",
     "Acceder",
@@ -227,7 +228,8 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
         "Inicia sesión con Google",
         "Acceder con Google",
         "Continuar con Google",
-        "Continue with Google"
+        "Continue with Google",
+        "Google"
       );
       expect(loginClicked).toBeTruthy();
 
