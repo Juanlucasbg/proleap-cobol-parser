@@ -194,6 +194,37 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+UI workflow automation (SaleADS Mi Negocio)
+-------------------------------------------
+
+A Selenium-based end-to-end test was added for validating the complete **Mi Negocio** workflow:
+
+`io.proleap.cobol.ui.SaleadsMiNegocioWorkflowTest`
+
+The test is environment-agnostic and does **not** hardcode domains. It reads the login URL from environment variables.
+
+Required setup:
+
+* Set one of:
+  * `SALEADS_LOGIN_URL`
+  * `SALEADS_BASE_URL`
+  * `BASE_URL`
+* Optionally set:
+  * `SALEADS_GOOGLE_EMAIL` (default: `juanlucasbarbiergarzon@gmail.com`)
+  * `HEADLESS` (`true` by default; set `false` to watch execution)
+
+Run only this workflow test:
+
+```
+$ SALEADS_LOGIN_URL="https://your-environment/login" mvn -Dtest=SaleadsMiNegocioWorkflowTest test
+```
+
+Evidence screenshots are written to:
+
+```
+target/ui-evidence/<timestamp>/
+```
+
 
 Release process
 ---------------
