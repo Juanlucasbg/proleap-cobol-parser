@@ -65,13 +65,19 @@ async function waitForAnyVisible(page, candidateTexts, timeoutMs = 10000) {
   return false;
 }
 
+async function isNotFoundPage(page) {
+  return waitForAnyVisible(page, ["We are sorry", "Page not found", "Página no encontrada", "404"], 2000);
+}
+
 async function goToLoginPageIfNeeded(page) {
   const loginIndicators = [
     "Sign in with Google",
     "Iniciar sesión con Google",
+    "Inicia sesión con Google",
     "Acceder con Google",
     "Continuar con Google",
   ];
+  const originalUrl = page.url();
 
   if (await waitForAnyVisible(page, loginIndicators, 4000)) {
     return;
@@ -80,7 +86,9 @@ async function goToLoginPageIfNeeded(page) {
   // If we land on a marketing page, use the visible CTA/login actions to reach auth.
   const ctaTexts = [
     "Iniciar sesión",
+    "Inicia sesión",
     "Iniciar Sesión",
+    "Inicia Sesión",
     "Login",
     "Log in",
     "Acceder",
@@ -114,22 +122,44 @@ async function goToLoginPageIfNeeded(page) {
     }
   }
 
-  // Last fallback for any environment with custom routing.
-  const fallbackPaths = ["/login", "/auth/login", "/signin", "/auth/signin"];
+  // Last fallback for any environment with custom routing and locale prefixes.
+  const fallbackSuffixes = ["/login", "/auth/login", "/signin", "/auth/signin", "/auth"];
+  const currentUrl = new URL(page.url());
+  const localePrefixes = ["", "/es", "/en"];
+  const localeMatch = currentUrl.pathname.match(/^\/(es|en)(\/|$)/i);
+  if (localeMatch) {
+    localePrefixes.unshift(`/${localeMatch[1].toLowerCase()}`);
+  }
+
+  const fallbackPaths = [];
+  for (const prefix of [...new Set(localePrefixes)]) {
+    for (const suffix of fallbackSuffixes) {
+      fallbackPaths.push(prefix ? `${prefix}${suffix}` : suffix);
+    }
+  }
+
   for (const pathname of fallbackPaths) {
     try {
-      const current = new URL(page.url());
+      const current = new URL(currentUrl.toString());
       current.pathname = pathname;
       current.search = "";
       current.hash = "";
       await page.goto(current.toString(), { waitUntil: "domcontentloaded" });
       await waitForUi(page);
+      if (await isNotFoundPage(page)) {
+        continue;
+      }
       if (await waitForAnyVisible(page, loginIndicators, 5000)) {
         return;
       }
     } catch (_error) {
       // Ignore and continue trying the next fallback.
     }
+  }
+
+  if (originalUrl && page.url() !== originalUrl) {
+    await page.goto(originalUrl, { waitUntil: "domcontentloaded" }).catch(() => Promise.resolve());
+    await waitForUi(page);
   }
 }
 
@@ -194,6 +224,7 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
         page,
         "Sign in with Google",
         "Iniciar sesión con Google",
+        "Inicia sesión con Google",
         "Acceder con Google",
         "Continuar con Google",
         "Continue with Google"
