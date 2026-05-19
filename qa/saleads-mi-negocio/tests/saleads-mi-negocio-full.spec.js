@@ -48,6 +48,15 @@ function normalizeText(value) {
   return value.replace(/\s+/g, ' ').trim();
 }
 
+function toFileSafeName(value) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+    .toLowerCase();
+}
+
 async function findFirstVisible(locators) {
   for (const locator of locators) {
     if (await locator.first().isVisible().catch(() => false)) {
@@ -73,6 +82,14 @@ async function pickGoogleAccountIfPresent(targetPage) {
   if (accountOption) {
     await clickAndWait(targetPage, accountOption);
   }
+}
+
+async function findGoogleLoginEntry(page) {
+  return findFirstVisible([
+    page.getByRole('button', { name: /sign in with google|continuar con google|google/i }),
+    page.getByRole('link', { name: /sign in with google|continuar con google|google/i }),
+    page.getByText(/sign in with google|continuar con google|google/i)
+  ]);
 }
 
 async function openLegalDocumentAndReturn({
@@ -128,6 +145,7 @@ test('Login with Google and validate Mi Negocio module workflow', async ({ page 
   const legalUrls = {};
 
   fs.mkdirSync(REPORT_DIR, { recursive: true });
+  await captureCheckpoint(page, '00-browser-opened.png', true);
 
   const runStep = async (resultKey, action) => {
     try {
@@ -136,6 +154,7 @@ test('Login with Google and validate Mi Negocio module workflow', async ({ page 
     } catch (error) {
       errors[resultKey] = error instanceof Error ? error.message : String(error);
       results[resultKey] = 'FAIL';
+      await captureCheckpoint(page, `fail-${toFileSafeName(resultKey)}.png`, true).catch(() => {});
     }
   };
 
@@ -148,11 +167,22 @@ test('Login with Google and validate Mi Negocio module workflow', async ({ page 
 
     await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
     await waitForUiLoad(page);
+    await captureCheckpoint(page, '00-initial-saleads-page.png', true);
 
-    const loginButton = await findFirstVisible([
-      page.getByRole('button', { name: /sign in with google|continuar con google|google/i }),
-      page.getByText(/sign in with google|continuar con google|google/i)
-    ]);
+    let loginButton = await findGoogleLoginEntry(page);
+    if (!loginButton) {
+      const accessAppButton = await findFirstVisible([
+        page.getByRole('button', { name: /log in|iniciar sesion|iniciar sesión|acceder|start free|empieza gratis/i }),
+        page.getByRole('link', { name: /log in|iniciar sesion|iniciar sesión|acceder|start free|empieza gratis/i }),
+        page.getByText(/log in|iniciar sesion|iniciar sesión|acceder|start free|empieza gratis/i)
+      ]);
+
+      if (accessAppButton) {
+        await clickAndWait(page, accessAppButton);
+      }
+
+      loginButton = await findGoogleLoginEntry(page);
+    }
 
     if (!loginButton) {
       throw new Error('Google login button was not found.');
@@ -166,9 +196,12 @@ test('Login with Google and validate Mi Negocio module workflow', async ({ page 
     if (popup) {
       await popup.waitForLoadState('domcontentloaded');
       await pickGoogleAccountIfPresent(popup);
+      await popup.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
     } else {
       await pickGoogleAccountIfPresent(page);
     }
+
+    await waitForUiLoad(page);
 
     const sidebar = await findFirstVisible([
       page.locator('aside'),

@@ -15,6 +15,7 @@ module.exports = defineConfig({
     actionTimeout: 20000,
     navigationTimeout: 60000,
     ignoreHTTPSErrors: true,
-    trace: 'on-first-retry'
+    trace: 'on-first-retry',
+    storageState: process.env.SALEADS_STORAGE_STATE || undefined
   }
 });
