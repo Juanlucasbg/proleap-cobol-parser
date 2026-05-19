@@ -41,3 +41,8 @@ target/
 
 ## Additional for IntelliJ
 out/
+
+# Automation runtime outputs
+artifacts/
+__pycache__/
+*.py[cod]
