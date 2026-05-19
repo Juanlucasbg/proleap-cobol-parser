@@ -61,6 +61,13 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
 
   try {
     if (!loginUrl) {
+      for (const field of REQUIRED_REPORT_FIELDS) {
+        markStep(
+          field,
+          false,
+          "Blocked: missing SALEADS_LOGIN_URL (or SALEADS_URL/BASE_URL).",
+        );
+      }
       throw new Error(
         "No login URL provided. Set SALEADS_LOGIN_URL, SALEADS_URL, or BASE_URL.",
       );
