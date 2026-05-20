@@ -159,7 +159,15 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
   const reportNotes = {};
   const urls = {};
 
-  async function runSection(key, fn) {
+  async function runSection(key, fn, dependencies = []) {
+    for (const dependency of dependencies) {
+      if (report[dependency] !== "PASS") {
+        report[key] = "FAIL";
+        reportNotes[key] = `Skipped because dependency failed: ${dependency}`;
+        return;
+      }
+    }
+
     try {
       await fn();
       report[key] = "PASS";
@@ -228,7 +236,9 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     await captureCheckpoint(page, testInfo, "01-dashboard.png", true);
   });
 
-  await runSection("Mi Negocio menu", async () => {
+  await runSection(
+    "Mi Negocio menu",
+    async () => {
     await clickAndWait(
       page,
       [
@@ -268,9 +278,13 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     );
 
     await captureCheckpoint(page, testInfo, "02-mi-negocio-menu-expanded.png");
-  });
+    },
+    ["Login"]
+  );
 
-  await runSection("Agregar Negocio modal", async () => {
+  await runSection(
+    "Agregar Negocio modal",
+    async () => {
     await clickAndWait(
       page,
       [
@@ -307,9 +321,13 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     await nameField.click();
     await nameField.fill("Negocio Prueba Automatizacion");
     await clickAndWait(page, [page.getByRole("button", { name: /cancelar/i })], "Cancelar modal button");
-  });
+    },
+    ["Mi Negocio menu"]
+  );
 
-  await runSection("Administrar Negocios view", async () => {
+  await runSection(
+    "Administrar Negocios view",
+    async () => {
     await clickAndWait(
       page,
       [
@@ -340,9 +358,13 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     );
 
     await captureCheckpoint(page, testInfo, "04-administrar-negocios-cuenta.png", true);
-  });
+    },
+    ["Mi Negocio menu"]
+  );
 
-  await runSection("Informacion General", async () => {
+  await runSection(
+    "Informacion General",
+    async () => {
     await mustFindVisible([page.getByText(/juan|lucas|barbier|garzon/i)], "user name");
     await mustFindVisible([page.getByText(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)], "user email");
     await mustFindVisible([page.getByText(/business plan/i)], "BUSINESS PLAN text");
@@ -350,15 +372,23 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
       [page.getByRole("button", { name: /cambiar plan/i }), page.getByText(/cambiar plan/i)],
       "Cambiar Plan button"
     );
-  });
+    },
+    ["Administrar Negocios view"]
+  );
 
-  await runSection("Detalles de la Cuenta", async () => {
+  await runSection(
+    "Detalles de la Cuenta",
+    async () => {
     await mustFindVisible([page.getByText(/cuenta creada/i)], "Cuenta creada");
     await mustFindVisible([page.getByText(/estado activo/i)], "Estado activo");
     await mustFindVisible([page.getByText(/idioma seleccionado/i)], "Idioma seleccionado");
-  });
+    },
+    ["Administrar Negocios view"]
+  );
 
-  await runSection("Tus Negocios", async () => {
+  await runSection(
+    "Tus Negocios",
+    async () => {
     await mustFindVisible(
       [
         page.locator("ul, table, [role='table']").filter({ hasText: /negocio/i }),
@@ -375,9 +405,13 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
       "Agregar Negocio button"
     );
     await mustFindVisible([page.getByText(/tienes\s*2\s*de\s*3\s*negocios/i)], "Tienes 2 de 3 negocios");
-  });
+    },
+    ["Administrar Negocios view"]
+  );
 
-  await runSection("Terminos y Condiciones", async () => {
+  await runSection(
+    "Terminos y Condiciones",
+    async () => {
     await validateLegalPage({
       page,
       testInfo,
@@ -388,9 +422,13 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
       screenshotName: "05-terminos-y-condiciones.png",
       reportKey: "Terminos y Condiciones"
     });
-  });
+    },
+    ["Administrar Negocios view"]
+  );
 
-  await runSection("Politica de Privacidad", async () => {
+  await runSection(
+    "Politica de Privacidad",
+    async () => {
     await validateLegalPage({
       page,
       testInfo,
@@ -401,7 +439,9 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
       screenshotName: "06-politica-de-privacidad.png",
       reportKey: "Politica de Privacidad"
     });
-  });
+    },
+    ["Administrar Negocios view"]
+  );
 
   const finalReport = {
     Login: report["Login"],
