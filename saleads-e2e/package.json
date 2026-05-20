@@ -1,0 +1,11 @@
+{
+  "name": "saleads-e2e",
+  "private": true,
+  "description": "SaleADS Mi Negocio full workflow validation",
+  "scripts": {
+    "test:mi-negocio": "node saleads_mi_negocio_full_test.js"
+  },
+  "dependencies": {
+    "playwright": "^1.60.0"
+  }
+}
