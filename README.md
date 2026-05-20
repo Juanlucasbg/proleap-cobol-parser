@@ -205,3 +205,52 @@ License
 -------
 
 Licensed under the MIT License. See LICENSE for details.
+
+
+SaleADS E2E workflow test
+-------------------------
+
+This repository now includes a Playwright end-to-end test for validating the
+`Mi Negocio` workflow in any SaleADS.ai environment.
+
+### Test file
+
+`tests/saleads-mi-negocio.spec.ts`
+
+### What it validates
+
+- Google login flow (including account chooser handling)
+- Sidebar visibility and `Mi Negocio` menu expansion
+- `Agregar Negocio` modal validation
+- `Administrar Negocios` sections:
+  - `Información General`
+  - `Detalles de la Cuenta`
+  - `Tus Negocios`
+  - `Sección Legal`
+- Legal links:
+  - `Términos y Condiciones`
+  - `Política de Privacidad`
+- New-tab handling when legal links open outside the app
+- Checkpoint screenshots and final PASS/FAIL report attachment
+
+### Run
+
+1. Install Node dependencies:
+
+```
+npm install
+```
+
+2. Install Chromium for Playwright:
+
+```
+npm run pw:install
+```
+
+3. Run against any environment by passing the login URL:
+
+```
+SALEADS_LOGIN_URL="https://<your-environment-login-url>" npm run test:saleads-mi-negocio
+```
+
+No SaleADS domain is hardcoded; the test always uses environment variables.
