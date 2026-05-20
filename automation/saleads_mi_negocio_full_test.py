@@ -168,6 +168,8 @@ def step_login(page: Page, output_dir: Path, google_email: str) -> StepResult:
         result.mark_validation("Main application interface appears", main_ui_visible)
         result.mark_validation("Left sidebar navigation is visible", sidebar_visible and menu_visible)
         result.evidence.append(capture_screenshot(page, output_dir, "01_dashboard_loaded.png", full_page=True))
+        if not main_ui_visible and ("accounts.google.com" in page.url or "keycloak" in page.url):
+            result.error = "Google login did not complete (account selector/credentials required)."
     except Exception as exc:  # noqa: BLE001
         result.error = str(exc)
         result.mark_validation("Main application interface appears", False)
