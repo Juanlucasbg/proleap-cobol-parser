@@ -82,6 +82,29 @@ function updateStep(
   report.steps[stepName] = { status, details };
 }
 
+function finalizeAndPrintReport(report: WorkflowReport): string {
+  report.overallStatus = REPORT_FIELDS.every((field) => report.steps[field].status === "PASS") ? "PASS" : "FAIL";
+  report.generatedAt = new Date().toISOString();
+
+  const artifactsDir = path.join(process.cwd(), "tests", "e2e", "artifacts");
+  fs.mkdirSync(artifactsDir, { recursive: true });
+  const reportPath = path.join(artifactsDir, "mi-negocio-latest-report.json");
+  fs.writeFileSync(reportPath, JSON.stringify(report, null, 2), "utf-8");
+
+  console.log("=== saleads_mi_negocio_full_test final report ===");
+  for (const field of REPORT_FIELDS) {
+    const step = report.steps[field];
+    console.log(`${field}: ${step.status} - ${step.details}`);
+  }
+  console.log(`Overall: ${report.overallStatus}`);
+  console.log(`Report file: ${reportPath}`);
+  if (Object.keys(report.finalUrls).length > 0) {
+    console.log("Captured legal URLs:", report.finalUrls);
+  }
+
+  return reportPath;
+}
+
 async function captureCheckpoint(page: Page, name: string, report: WorkflowReport): Promise<void> {
   const artifactsDir = path.join(process.cwd(), "tests", "e2e", "artifacts");
   fs.mkdirSync(artifactsDir, { recursive: true });
@@ -101,9 +124,14 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
     await page.goto(targetUrl, { waitUntil: "domcontentloaded" });
     await waitForUiLoad(page);
   } else if (page.url() === "about:blank") {
-    throw new Error(
-      "No URL found. Set SALEADS_LOGIN_URL, SALEADS_APP_URL, or SALEADS_BASE_URL to run in any environment."
-    );
+    const missingUrlMessage =
+      "No URL found. Set SALEADS_LOGIN_URL, SALEADS_APP_URL, or SALEADS_BASE_URL to run in any environment.";
+    for (const field of REPORT_FIELDS) {
+      updateStep(report, field, "FAIL", missingUrlMessage);
+    }
+    finalizeAndPrintReport(report);
+    expect(report.overallStatus, "No SaleADS URL configured for this environment.").toBe("PASS");
+    return;
   }
 
   // Step 1: Login with Google
@@ -410,24 +438,7 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
     );
   }
 
-  report.overallStatus = REPORT_FIELDS.every((field) => report.steps[field].status === "PASS") ? "PASS" : "FAIL";
-  report.generatedAt = new Date().toISOString();
-
-  const artifactsDir = path.join(process.cwd(), "tests", "e2e", "artifacts");
-  fs.mkdirSync(artifactsDir, { recursive: true });
-  const reportPath = path.join(artifactsDir, "mi-negocio-latest-report.json");
-  fs.writeFileSync(reportPath, JSON.stringify(report, null, 2), "utf-8");
-
-  console.log("=== saleads_mi_negocio_full_test final report ===");
-  for (const field of REPORT_FIELDS) {
-    const step = report.steps[field];
-    console.log(`${field}: ${step.status} - ${step.details}`);
-  }
-  console.log(`Overall: ${report.overallStatus}`);
-  console.log(`Report file: ${reportPath}`);
-  if (Object.keys(report.finalUrls).length > 0) {
-    console.log("Captured legal URLs:", report.finalUrls);
-  }
+  finalizeAndPrintReport(report);
 
   expect(report.overallStatus, "One or more workflow validations failed. Review mi-negocio-latest-report.json.").toBe(
     "PASS"
