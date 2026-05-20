@@ -85,13 +85,20 @@ def find_sidebar(page: Page) -> Locator | None:
     )
 
 
+def app_menu_visible(page: Page, timeout_ms: int = 5000) -> bool:
+    return safe_visible(
+        page.get_by_text(re.compile(r"(mi negocio|administrar negocios|agregar negocio)", re.IGNORECASE)),
+        timeout_ms=timeout_ms,
+    )
+
+
 def click_google_login(page: Page, google_email: str) -> None:
     login_button = first_visible(
         [
             page.get_by_role("button", name=re.compile(r"sign in with google", re.IGNORECASE)),
             page.get_by_role("button", name=re.compile(r"iniciar sesi[oó]n con google", re.IGNORECASE)),
             page.get_by_role("button", name=re.compile(r"continuar con google", re.IGNORECASE)),
-            page.get_by_text(re.compile(r"google", re.IGNORECASE)),
+            page.get_by_role("link", name=re.compile(r"google", re.IGNORECASE)),
         ],
         timeout_ms=7000,
     )
@@ -135,12 +142,11 @@ def step_login(page: Page, output_dir: Path, google_email: str) -> StepResult:
     try:
         click_google_login(page, google_email)
         sidebar = find_sidebar(page)
-        main_ui_visible = safe_visible(page.locator("main"), timeout_ms=6000) or safe_visible(
-            page.get_by_text(re.compile(r"dashboard|inicio|panel|negocio", re.IGNORECASE)),
-            timeout_ms=6000,
-        )
+        sidebar_visible = sidebar is not None
+        menu_visible = app_menu_visible(page, timeout_ms=6000)
+        main_ui_visible = sidebar_visible and menu_visible
         result.mark_validation("Main application interface appears", main_ui_visible)
-        result.mark_validation("Left sidebar navigation is visible", sidebar is not None)
+        result.mark_validation("Left sidebar navigation is visible", sidebar_visible and menu_visible)
         result.evidence.append(capture_screenshot(page, output_dir, "01_dashboard_loaded.png", full_page=True))
     except Exception as exc:  # noqa: BLE001
         result.error = str(exc)
@@ -290,7 +296,11 @@ def step_administrar_negocios(page: Page, output_dir: Path) -> StepResult:
 def step_info_general(page: Page) -> StepResult:
     result = StepResult(name="Información General")
     try:
-        user_name_ok = safe_visible(page.locator("h1, h2, h3, p, span").filter(has_text=re.compile(r"[A-Za-z].+[A-Za-z]")))
+        info_general_loaded = safe_visible(page.get_by_text(re.compile(r"informaci[oó]n general", re.IGNORECASE)), timeout_ms=5000)
+        if not info_general_loaded:
+            raise RuntimeError("Not on Administrar Negocios account page.")
+
+        user_name_ok = safe_visible(page.get_by_text(re.compile(r"(nombre|usuario|user)", re.IGNORECASE)))
         email_ok = safe_visible(page.get_by_text(re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")))
         plan_ok = safe_visible(page.get_by_text(re.compile(r"business plan", re.IGNORECASE)))
         change_plan_ok = safe_visible(page.get_by_role("button", name=re.compile(r"cambiar plan", re.IGNORECASE)))
@@ -311,6 +321,10 @@ def step_info_general(page: Page) -> StepResult:
 def step_detalles_cuenta(page: Page) -> StepResult:
     result = StepResult(name="Detalles de la Cuenta")
     try:
+        account_page_loaded = safe_visible(page.get_by_text(re.compile(r"detalles de la cuenta", re.IGNORECASE)), timeout_ms=5000)
+        if not account_page_loaded:
+            raise RuntimeError("Not on account details section page.")
+
         created_ok = safe_visible(page.get_by_text(re.compile(r"cuenta creada", re.IGNORECASE)))
         active_ok = safe_visible(page.get_by_text(re.compile(r"estado activo", re.IGNORECASE)))
         language_ok = safe_visible(page.get_by_text(re.compile(r"idioma seleccionado", re.IGNORECASE)))
@@ -329,6 +343,10 @@ def step_detalles_cuenta(page: Page) -> StepResult:
 def step_tus_negocios(page: Page) -> StepResult:
     result = StepResult(name="Tus Negocios")
     try:
+        businesses_loaded = safe_visible(page.get_by_text(re.compile(r"tus negocios", re.IGNORECASE)), timeout_ms=5000)
+        if not businesses_loaded:
+            raise RuntimeError("Not on business administration view.")
+
         list_ok = safe_visible(page.get_by_text(re.compile(r"tus negocios", re.IGNORECASE)))
         add_button_ok = safe_visible(page.get_by_role("button", name=re.compile(r"agregar negocio", re.IGNORECASE)))
         quota_ok = safe_visible(page.get_by_text(re.compile(r"tienes\s+2\s+de\s+3\s+negocios", re.IGNORECASE)))
@@ -347,6 +365,10 @@ def step_tus_negocios(page: Page) -> StepResult:
 def step_legal_link(page: Page, output_dir: Path, link_text: str, heading_text: str, screenshot_name: str) -> StepResult:
     result = StepResult(name=link_text)
     try:
+        legal_section_visible = safe_visible(page.get_by_text(re.compile(r"secci[oó]n legal", re.IGNORECASE)), timeout_ms=5000)
+        if not legal_section_visible:
+            raise RuntimeError("Legal section is not visible in Mi Negocio account page.")
+
         link = first_visible(
             [
                 page.get_by_role("link", name=re.compile(link_text, re.IGNORECASE)),
