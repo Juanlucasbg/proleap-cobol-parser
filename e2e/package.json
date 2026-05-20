@@ -1,0 +1,14 @@
+{
+  "name": "saleads-mi-negocio-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "test:saleads": "playwright test tests/saleads-mi-negocio-full-test.spec.ts",
+    "test:saleads:headed": "playwright test --headed tests/saleads-mi-negocio-full-test.spec.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0"
+  }
+}
