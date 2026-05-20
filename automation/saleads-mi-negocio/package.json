@@ -1,0 +1,13 @@
+{
+  "name": "saleads-mi-negocio-automation",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Cross-environment SaleADS Mi Negocio workflow validation",
+  "scripts": {
+    "test:mi-negocio": "node saleads_mi_negocio_full_test.mjs"
+  },
+  "dependencies": {
+    "playwright": "^1.55.0"
+  }
+}
