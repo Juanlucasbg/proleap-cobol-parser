@@ -93,14 +93,27 @@ def app_menu_visible(page: Page, timeout_ms: int = 5000) -> bool:
 
 
 def click_google_login(page: Page, google_email: str) -> None:
+    entry_login_button = first_visible(
+        [
+            page.get_by_role("button", name=re.compile(r"inicia sesi[oó]n|iniciar sesi[oó]n|login|sign in", re.IGNORECASE)),
+            page.get_by_role("link", name=re.compile(r"inicia sesi[oó]n|iniciar sesi[oó]n|login|sign in", re.IGNORECASE)),
+        ],
+        timeout_ms=6000,
+    )
+    if entry_login_button:
+        click_and_wait(page, entry_login_button)
+
     login_button = first_visible(
         [
+            page.get_by_text(re.compile(r"^google$", re.IGNORECASE)),
             page.get_by_role("button", name=re.compile(r"sign in with google", re.IGNORECASE)),
             page.get_by_role("button", name=re.compile(r"iniciar sesi[oó]n con google", re.IGNORECASE)),
             page.get_by_role("button", name=re.compile(r"continuar con google", re.IGNORECASE)),
+            page.get_by_role("button", name=re.compile(r"google", re.IGNORECASE)),
             page.get_by_role("link", name=re.compile(r"google", re.IGNORECASE)),
+            page.get_by_text(re.compile(r"sign in with google|iniciar sesi[oó]n con google|continuar con google", re.IGNORECASE)),
         ],
-        timeout_ms=7000,
+        timeout_ms=15000,
     )
     if not login_button:
         raise RuntimeError("Google login button was not found.")
@@ -115,6 +128,13 @@ def click_google_login(page: Page, google_email: str) -> None:
         click_and_wait(page, login_button)
 
     account_page = popup or page
+    continue_button = first_visible(
+        [account_page.get_by_role("button", name=re.compile(r"continuar", re.IGNORECASE))],
+        timeout_ms=3000,
+    )
+    if continue_button and "accounts.google.com" not in account_page.url:
+        click_and_wait(account_page, continue_button)
+
     account_selector = first_visible(
         [
             account_page.get_by_text(google_email, exact=True),
@@ -152,6 +172,7 @@ def step_login(page: Page, output_dir: Path, google_email: str) -> StepResult:
         result.error = str(exc)
         result.mark_validation("Main application interface appears", False)
         result.mark_validation("Left sidebar navigation is visible", False)
+        result.evidence.append(capture_screenshot(page, output_dir, "01_login_error.png", full_page=True))
     result.conclude()
     return result
 
@@ -202,6 +223,7 @@ def step_mi_negocio_menu(page: Page, output_dir: Path) -> StepResult:
         result.mark_validation("Submenu expands", False)
         result.mark_validation("'Agregar Negocio' is visible", False)
         result.mark_validation("'Administrar Negocios' is visible", False)
+        result.evidence.append(capture_screenshot(page, output_dir, "02_mi_negocio_menu_error.png", full_page=True))
     result.conclude()
     return result
 
@@ -250,6 +272,7 @@ def step_agregar_negocio_modal(page: Page, output_dir: Path) -> StepResult:
         result.mark_validation("Input field 'Nombre del Negocio' exists", False)
         result.mark_validation("Text 'Tienes 2 de 3 negocios' is visible", False)
         result.mark_validation("Buttons 'Cancelar' and 'Crear Negocio' are present", False)
+        result.evidence.append(capture_screenshot(page, output_dir, "03_agregar_negocio_modal_error.png", full_page=True))
     result.conclude()
     return result
 
@@ -289,6 +312,7 @@ def step_administrar_negocios(page: Page, output_dir: Path) -> StepResult:
         result.mark_validation("Section 'Detalles de la Cuenta' exists", False)
         result.mark_validation("Section 'Tus Negocios' exists", False)
         result.mark_validation("Section 'Sección Legal' exists", False)
+        result.evidence.append(capture_screenshot(page, output_dir, "04_administrar_negocios_error.png", full_page=True))
     result.conclude()
     return result
 
@@ -410,6 +434,8 @@ def step_legal_link(page: Page, output_dir: Path, link_text: str, heading_text: 
         result.error = str(exc)
         result.mark_validation(f"The page contains heading '{heading_text}'", False)
         result.mark_validation("Legal content text is visible", False)
+        error_name = screenshot_name.replace(".png", "_error.png")
+        result.evidence.append(capture_screenshot(page, output_dir, error_name, full_page=True))
     result.conclude()
     return result
 
