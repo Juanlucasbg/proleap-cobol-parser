@@ -50,7 +50,10 @@ public class SaleadsMiNegocioFullWorkflowTest {
 	@Before
 	public void setUp() throws Exception {
 		final ChromeOptions options = new ChromeOptions();
-		if (Boolean.parseBoolean(getConfig("SALEADS_HEADLESS", "saleads.headless", "true"))) {
+		final String debuggerAddress = getConfig("SALEADS_DEBUGGER_ADDRESS", "saleads.debugger.address", "");
+		if (!debuggerAddress.isBlank()) {
+			options.setExperimentalOption("debuggerAddress", debuggerAddress);
+		} else if (Boolean.parseBoolean(getConfig("SALEADS_HEADLESS", "saleads.headless", "true"))) {
 			options.addArguments("--headless=new");
 		}
 
@@ -64,12 +67,15 @@ public class SaleadsMiNegocioFullWorkflowTest {
 		evidenceDirectory = Files.createDirectories(Paths.get("target", "saleads-evidence", timestamp));
 
 		final String loginUrl = getConfig("SALEADS_LOGIN_URL", "saleads.login.url", "");
-		if (loginUrl.isBlank()) {
+		if (loginUrl.isBlank() && debuggerAddress.isBlank()) {
 			throw new IllegalStateException(
-					"SALEADS_LOGIN_URL is required. Use an environment-specific login URL (dev/staging/prod) without hardcoding domains in this test.");
+					"Provide SALEADS_LOGIN_URL or SALEADS_DEBUGGER_ADDRESS. This test avoids hardcoded domains and can run in any environment.");
 		}
 
-		driver.get(loginUrl);
+		if (!loginUrl.isBlank()) {
+			driver.get(loginUrl);
+		}
+
 		waitForUiToLoad();
 	}
 
