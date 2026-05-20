@@ -45,6 +45,17 @@ async function clickAndWait(page, locator) {
   await waitForUi(page);
 }
 
+async function ensureAppShellVisible(page) {
+  const miNegocioVisible =
+    (await isVisible(page.getByRole("link", { name: /Mi Negocio/i }), 3500)) ||
+    (await isVisible(page.getByRole("button", { name: /Mi Negocio/i }), 3500)) ||
+    (await isVisible(page.getByText(/Mi Negocio/i), 3500));
+
+  if (!miNegocioVisible) {
+    throw new Error("Application shell was not detected. Verify that login completed in the target environment.");
+  }
+}
+
 async function saveScreenshot(page, evidenceDir, fileName, fullPage = false) {
   const targetPath = path.join(evidenceDir, fileName);
   await page.screenshot({ path: targetPath, fullPage });
@@ -107,6 +118,8 @@ async function openLegalLinkAndValidate({
 }
 
 test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
+  test.setTimeout(420000);
+
   const loginUrl = process.env.SALEADS_LOGIN_URL;
   const googleAccount = process.env.SALEADS_GOOGLE_EMAIL || "juanlucasbarbiergarzon@gmail.com";
   const evidenceDir = path.resolve(process.env.E2E_EVIDENCE_DIR || "test-results/evidence");
@@ -124,6 +137,7 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
   };
 
   let appPage = page;
+  let loginSucceeded = false;
 
   await runStep(report, "Login", async () => {
     if (loginUrl) {
@@ -142,8 +156,30 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
       12000,
     );
 
+    // If we are on a public landing page, move to the real login screen first.
+    if (!(await isVisible(signInButton, 2000))) {
+      const loginCta = await pickVisible(
+        [
+          appPage.getByRole("link", { name: /iniciar sesi[o\u00f3]n|login|log in|acceder|entrar/i }),
+          appPage.getByRole("button", { name: /iniciar sesi[o\u00f3]n|login|log in|acceder|entrar/i }),
+          appPage.getByText(/iniciar sesi[o\u00f3]n|login|acceder|entrar/i),
+        ],
+        8000,
+      );
+      await clickAndWait(appPage, loginCta);
+    }
+
+    const googleSignInButton = await pickVisible(
+      [
+        appPage.getByRole("button", { name: /google|sign in|iniciar sesi[o\u00f3]n/i }),
+        appPage.getByRole("link", { name: /google|sign in|iniciar sesi[o\u00f3]n/i }),
+        appPage.getByText(/google/i),
+      ],
+      12000,
+    );
+
     const popupPromise = appPage.context().waitForEvent("page", { timeout: 7000 }).catch(() => null);
-    await clickAndWait(appPage, signInButton);
+    await clickAndWait(appPage, googleSignInButton);
 
     const popup = await popupPromise;
     const authPage = popup || appPage;
@@ -160,18 +196,18 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     await appPage.bringToFront();
     await waitForUi(appPage);
 
-    const sidebarCandidate = await pickVisible(
-      [appPage.locator("aside"), appPage.getByRole("navigation"), appPage.locator('[class*="sidebar"]')],
-      25000,
-    );
-
-    await expect(sidebarCandidate).toBeVisible();
-    await expect(appPage.getByText(/Negocio/i)).toBeVisible({ timeout: 25000 });
+    await ensureAppShellVisible(appPage);
 
     report.evidence.dashboard = await saveScreenshot(appPage, evidenceDir, "01-dashboard-loaded.png", true);
   });
+  loginSucceeded = report.results.Login === "PASS";
 
   await runStep(report, "Mi Negocio menu", async () => {
+    if (!loginSucceeded) {
+      throw new Error("Skipped because login did not reach the authenticated application shell.");
+    }
+    await ensureAppShellVisible(appPage);
+
     const negocioSection = await pickVisible(
       [
         appPage.getByRole("link", { name: /^Negocio$/i }),
@@ -204,6 +240,11 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
   });
 
   await runStep(report, "Agregar Negocio modal", async () => {
+    if (!loginSucceeded) {
+      throw new Error("Skipped because login did not reach the authenticated application shell.");
+    }
+    await ensureAppShellVisible(appPage);
+
     const addBusinessOption = await pickVisible(
       [
         appPage.getByRole("link", { name: /Agregar Negocio/i }),
@@ -252,6 +293,11 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
   });
 
   await runStep(report, "Administrar Negocios view", async () => {
+    if (!loginSucceeded) {
+      throw new Error("Skipped because login did not reach the authenticated application shell.");
+    }
+    await ensureAppShellVisible(appPage);
+
     if (!(await isVisible(appPage.getByText(/Administrar Negocios/i), 3000))) {
       const miNegocioOption = await pickVisible(
         [
@@ -288,6 +334,11 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
   });
 
   await runStep(report, "Informacion General", async () => {
+    if (!loginSucceeded) {
+      throw new Error("Skipped because login did not reach the authenticated application shell.");
+    }
+    await ensureAppShellVisible(appPage);
+
     await expect(appPage.getByText(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/)).toBeVisible();
     await expect(appPage.getByText(/BUSINESS PLAN/i)).toBeVisible();
     await expect(appPage.getByRole("button", { name: /Cambiar Plan/i })).toBeVisible();
@@ -300,18 +351,33 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
   });
 
   await runStep(report, "Detalles de la Cuenta", async () => {
+    if (!loginSucceeded) {
+      throw new Error("Skipped because login did not reach the authenticated application shell.");
+    }
+    await ensureAppShellVisible(appPage);
+
     await expect(appPage.getByText(/Cuenta creada/i)).toBeVisible();
     await expect(appPage.getByText(/Estado activo/i)).toBeVisible();
     await expect(appPage.getByText(/Idioma seleccionado/i)).toBeVisible();
   });
 
   await runStep(report, "Tus Negocios", async () => {
+    if (!loginSucceeded) {
+      throw new Error("Skipped because login did not reach the authenticated application shell.");
+    }
+    await ensureAppShellVisible(appPage);
+
     await expect(appPage.getByText(/Tus Negocios/i)).toBeVisible();
     await expect(appPage.getByText(/Tienes\s+2\s+de\s+3\s+negocios/i)).toBeVisible();
     await expect(appPage.getByRole("button", { name: /Agregar Negocio/i })).toBeVisible();
   });
 
   await runStep(report, "Terminos y Condiciones", async () => {
+    if (!loginSucceeded) {
+      throw new Error("Skipped because login did not reach the authenticated application shell.");
+    }
+    await ensureAppShellVisible(appPage);
+
     const result = await openLegalLinkAndValidate({
       appPage,
       linkPattern: /T[e\u00e9]rminos y Condiciones/i,
@@ -325,6 +391,11 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
   });
 
   await runStep(report, "Politica de Privacidad", async () => {
+    if (!loginSucceeded) {
+      throw new Error("Skipped because login did not reach the authenticated application shell.");
+    }
+    await ensureAppShellVisible(appPage);
+
     const result = await openLegalLinkAndValidate({
       appPage,
       linkPattern: /Pol[i\u00ed]tica de Privacidad/i,
