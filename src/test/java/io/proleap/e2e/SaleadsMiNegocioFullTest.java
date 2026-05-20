@@ -218,10 +218,10 @@ public class SaleadsMiNegocioFullTest {
 
     Page googlePopup = null;
     try {
-      googlePopup = appPage.waitForPopup(() -> {
+      googlePopup = appPage.waitForPopup(new Page.WaitForPopupOptions().setTimeout(8_000), () -> {
         googleLogin.click();
         waitForUiSettled(appPage);
-      }, new Page.WaitForPopupOptions().setTimeout(8_000));
+      });
     } catch (PlaywrightException ignored) {
       waitForUiSettled(appPage);
     }
@@ -229,11 +229,6 @@ public class SaleadsMiNegocioFullTest {
     if (googlePopup != null) {
       chooseGoogleAccountIfVisible(googlePopup);
       waitForUiSettled(googlePopup);
-      try {
-        googlePopup.waitForClose(new Page.WaitForCloseOptions().setTimeout(25_000));
-      } catch (PlaywrightException ignored) {
-        // Popup may remain open after login; the dashboard check below is the source of truth.
-      }
     } else {
       chooseGoogleAccountIfVisible(appPage);
     }
@@ -276,10 +271,10 @@ public class SaleadsMiNegocioFullTest {
     boolean newTab = false;
 
     try {
-      legalPage = context.waitForPage(() -> {
+      legalPage = context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(8_000), () -> {
         link.click();
         waitForUiSettled(appPage);
-      }, new BrowserContext.WaitForPageOptions().setTimeout(8_000));
+      });
       newTab = true;
     } catch (PlaywrightException ignored) {
       clickAndWait(appPage, link, linkText + " link");
