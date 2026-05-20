@@ -27,7 +27,7 @@ async function findVisible(
   page: Page,
   locators: Locator[],
   description: string,
-  timeoutMs = 20000
+  timeoutMs = 10000
 ): Promise<Locator> {
   const deadline = Date.now() + timeoutMs;
 
@@ -145,6 +145,8 @@ async function openLegalPage(
 }
 
 test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
+  test.setTimeout(180000);
+
   const report: FinalReport = {
     Login: { status: "FAIL", details: "Step did not execute." },
     "Mi Negocio menu": { status: "FAIL", details: "Step did not execute." },
@@ -159,8 +161,20 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
 
   const failures: string[] = [];
   const evidence: Record<string, string> = {};
+  let loginSuccessful = false;
+  let adminViewLoaded = false;
 
-  const runStep = async (key: ReportKey, fn: () => Promise<void>) => {
+  const runStep = async (
+    key: ReportKey,
+    fn: () => Promise<void>,
+    dependency?: { ok: boolean; message: string }
+  ) => {
+    if (dependency && !dependency.ok) {
+      report[key] = { status: "FAIL", details: `Blocked: ${dependency.message}` };
+      failures.push(`${key}: Blocked: ${dependency.message}`);
+      return;
+    }
+
     try {
       await fn();
       report[key] = { status: "PASS" };
@@ -228,9 +242,12 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     await expect(sidebar).toBeVisible();
 
     await checkpoint(page, testInfo, "01-dashboard-loaded.png", true);
+    loginSuccessful = true;
   });
 
-  await runStep("Mi Negocio menu", async () => {
+  await runStep(
+    "Mi Negocio menu",
+    async () => {
     const negocioSection = await findVisible(
       page,
       [
@@ -258,9 +275,13 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     await expect(page.getByText(/^Agregar Negocio$/i).first()).toBeVisible();
     await expect(page.getByText(/^Administrar Negocios$/i).first()).toBeVisible();
     await checkpoint(page, testInfo, "02-mi-negocio-menu-expanded.png");
-  });
+    },
+    { ok: loginSuccessful, message: "Login step failed." }
+  );
 
-  await runStep("Agregar Negocio modal", async () => {
+  await runStep(
+    "Agregar Negocio modal",
+    async () => {
     await ensureMiNegocioExpanded(page);
 
     const agregarNegocioButton = await findVisible(
@@ -300,9 +321,13 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     const cancelarButton = page.getByRole("button", { name: /^Cancelar$/i }).first();
     await cancelarButton.click();
     await waitForUi(page);
-  });
+    },
+    { ok: loginSuccessful, message: "Login step failed." }
+  );
 
-  await runStep("Administrar Negocios view", async () => {
+  await runStep(
+    "Administrar Negocios view",
+    async () => {
     await ensureMiNegocioExpanded(page);
 
     const administrarNegocios = await findVisible(
@@ -322,9 +347,14 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     await expect(page.getByText(/Tus Negocios/i).first()).toBeVisible();
     await expect(page.getByText(/Sección Legal/i).first()).toBeVisible();
     await checkpoint(page, testInfo, "04-administrar-negocios-view.png", true);
-  });
+    adminViewLoaded = true;
+    },
+    { ok: loginSuccessful, message: "Login step failed." }
+  );
 
-  await runStep("Información General", async () => {
+  await runStep(
+    "Información General",
+    async () => {
     const generalSection = page.locator("section, div").filter({ hasText: /Información General/i }).first();
     await expect(generalSection).toBeVisible();
 
@@ -350,17 +380,25 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
 
     await expect(generalSection.getByText(/BUSINESS PLAN/i)).toBeVisible();
     await expect(generalSection.getByRole("button", { name: /Cambiar Plan/i }).first()).toBeVisible();
-  });
+    },
+    { ok: adminViewLoaded, message: "Administrar Negocios view step failed." }
+  );
 
-  await runStep("Detalles de la Cuenta", async () => {
+  await runStep(
+    "Detalles de la Cuenta",
+    async () => {
     const detailsSection = page.locator("section, div").filter({ hasText: /Detalles de la Cuenta/i }).first();
     await expect(detailsSection).toBeVisible();
     await expect(detailsSection.getByText(/Cuenta creada/i)).toBeVisible();
     await expect(detailsSection.getByText(/Estado activo/i)).toBeVisible();
     await expect(detailsSection.getByText(/Idioma seleccionado/i)).toBeVisible();
-  });
+    },
+    { ok: adminViewLoaded, message: "Administrar Negocios view step failed." }
+  );
 
-  await runStep("Tus Negocios", async () => {
+  await runStep(
+    "Tus Negocios",
+    async () => {
     const businessSection = page.locator("section, div").filter({ hasText: /Tus Negocios/i }).first();
     await expect(businessSection).toBeVisible();
     await expect(businessSection.getByRole("button", { name: /^Agregar Negocio$/i }).first()).toBeVisible();
@@ -372,9 +410,13 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     if (businessItemCount < 1) {
       throw new Error("Business list is not visible or has no visible items.");
     }
-  });
+    },
+    { ok: adminViewLoaded, message: "Administrar Negocios view step failed." }
+  );
 
-  await runStep("Términos y Condiciones", async () => {
+  await runStep(
+    "Términos y Condiciones",
+    async () => {
     const termsUrl = await openLegalPage(
       page,
       testInfo,
@@ -383,9 +425,13 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
       "05-terminos-y-condiciones.png"
     );
     evidence["Términos y Condiciones URL"] = termsUrl;
-  });
+    },
+    { ok: adminViewLoaded, message: "Administrar Negocios view step failed." }
+  );
 
-  await runStep("Política de Privacidad", async () => {
+  await runStep(
+    "Política de Privacidad",
+    async () => {
     const privacyUrl = await openLegalPage(
       page,
       testInfo,
@@ -394,7 +440,9 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
       "06-politica-de-privacidad.png"
     );
     evidence["Política de Privacidad URL"] = privacyUrl;
-  });
+    },
+    { ok: adminViewLoaded, message: "Administrar Negocios view step failed." }
+  );
 
   const finalPayload = {
     report,
