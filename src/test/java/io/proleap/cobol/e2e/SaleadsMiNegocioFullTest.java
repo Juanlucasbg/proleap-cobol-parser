@@ -68,6 +68,7 @@ public class SaleadsMiNegocioFullTest {
 		final String expectedUserName = readEnv("SALEADS_EXPECTED_USER_NAME");
 		final long timeoutSeconds = readLongEnv("SALEADS_WAIT_SECONDS", 25L);
 		final String browser = readEnv("SALEADS_BROWSER", "chrome");
+		Assume.assumeFalse("Set SALEADS_LOGIN_URL to the login page of the current SaleADS environment.", baseUrl.isBlank());
 
 		evidenceDir = buildEvidenceDir();
 		driver = createDriver(browser);
@@ -271,14 +272,14 @@ public class SaleadsMiNegocioFullTest {
 
 			wait.until(d -> d.getWindowHandles().size() > beforeHandles.size()
 					|| !d.getCurrentUrl().equals(originalUrl)
-					|| isTextVisible(linkText));
+					|| isHeadingVisible(linkText));
 			openedInNewTab = driver.getWindowHandles().size() > beforeHandles.size();
 			if (openedInNewTab) {
 				currentWindowAfterClick = newestWindowHandle(beforeHandles);
 				driver.switchTo().window(currentWindowAfterClick);
 			}
 
-			requireVisible(linkText, Duration.ofSeconds(30));
+			requireHeadingVisible(linkText, Duration.ofSeconds(30));
 			requireElement(By.xpath("//main//*[string-length(normalize-space(.)) > 120] | //article//*[string-length(normalize-space(.)) > 120] | //p[string-length(normalize-space(.)) > 120]"),
 					Duration.ofSeconds(30));
 
@@ -324,13 +325,8 @@ public class SaleadsMiNegocioFullTest {
 	}
 
 	private void prepareStartPage(final String baseUrl) {
-		if (!baseUrl.isBlank()) {
-			driver.get(baseUrl);
-			waitForUiSettled();
-			return;
-		}
-
-		notes.add("SALEADS_LOGIN_URL not provided. Set it to start from the login page in standalone runs.");
+		driver.get(baseUrl);
+		waitForUiSettled();
 	}
 
 	private void expandMiNegocioIfCollapsed() {
@@ -401,6 +397,13 @@ public class SaleadsMiNegocioFullTest {
 		new WebDriverWait(driver, timeout).until(ExpectedConditions.visibilityOfElementLocated(by));
 	}
 
+	private void requireHeadingVisible(final String text, final Duration timeout) {
+		final By by = By.xpath("//h1[contains(normalize-space(.), " + xpathLiteral(text) + ")]"
+				+ " | //h2[contains(normalize-space(.), " + xpathLiteral(text) + ")]"
+				+ " | //h3[contains(normalize-space(.), " + xpathLiteral(text) + ")]");
+		new WebDriverWait(driver, timeout).until(ExpectedConditions.visibilityOfElementLocated(by));
+	}
+
 	private boolean isElementVisible(final By by) {
 		final List<WebElement> elements = driver.findElements(by);
 		for (final WebElement element : elements) {
@@ -413,6 +416,13 @@ public class SaleadsMiNegocioFullTest {
 
 	private boolean isTextVisible(final String text) {
 		return isElementVisible(By.xpath("//*[contains(normalize-space(.), " + xpathLiteral(text) + ")]"));
+	}
+
+	private boolean isHeadingVisible(final String text) {
+		final By by = By.xpath("//h1[contains(normalize-space(.), " + xpathLiteral(text) + ")]"
+				+ " | //h2[contains(normalize-space(.), " + xpathLiteral(text) + ")]"
+				+ " | //h3[contains(normalize-space(.), " + xpathLiteral(text) + ")]");
+		return isElementVisible(by);
 	}
 
 	private String newestWindowHandle(final Set<String> oldHandles) {
