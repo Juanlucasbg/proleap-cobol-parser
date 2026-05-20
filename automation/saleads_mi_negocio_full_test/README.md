@@ -27,6 +27,7 @@ It also captures screenshots at major checkpoints and writes a structured JSON r
 
 ```bash
 npm install
+npx playwright install
 ```
 
 ## Run
