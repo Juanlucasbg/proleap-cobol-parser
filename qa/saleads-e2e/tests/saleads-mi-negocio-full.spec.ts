@@ -2,7 +2,7 @@ import { expect, Locator, Page, test } from "@playwright/test";
 import fs from "node:fs/promises";
 import path from "node:path";
 
-type ResultStatus = "PASS" | "FAIL" | "SKIPPED";
+type ResultStatus = "PASS" | "FAIL";
 
 type StepResult = {
   status: ResultStatus;
@@ -103,14 +103,11 @@ async function findSectionHeading(page: Page, heading: RegExp): Promise<Locator 
 }
 
 test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
-  const baseUrl = process.env.SALEADS_BASE_URL ?? process.env.BASE_URL;
-  if (!baseUrl) {
-    throw new Error("Missing SALEADS_BASE_URL (or BASE_URL). The test is environment-agnostic and requires runtime URL injection.");
-  }
+  const baseUrl = process.env.SALEADS_BASE_URL ?? process.env.BASE_URL ?? testInfo.project.use.baseURL;
 
   const results = REPORT_FIELDS.reduce(
     (acc, field) => {
-      acc[field] = { status: "SKIPPED", details: "Step was not executed.", evidence: [] };
+      acc[field] = { status: "FAIL", details: "Step did not complete successfully.", evidence: [] };
       return acc;
     },
     {} as Record<(typeof REPORT_FIELDS)[number], StepResult>
@@ -137,6 +134,40 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
     const details = error instanceof Error ? error.message : String(error);
     results[field] = { status: "FAIL", details, evidence };
   };
+
+  const finalizeReport = async () => {
+    const finalReport = REPORT_FIELDS.map((field) => ({
+      field,
+      status: results[field].status,
+      details: results[field].details,
+      evidence: results[field].evidence,
+      finalUrl: results[field].finalUrl ?? null
+    }));
+
+    const reportDir = path.resolve(process.cwd(), "test-results");
+    await fs.mkdir(reportDir, { recursive: true });
+    const reportPath = path.join(reportDir, "saleads-mi-negocio-final-report.json");
+    await fs.writeFile(reportPath, `${JSON.stringify(finalReport, null, 2)}\n`, "utf8");
+    await testInfo.attach("final-report.json", { path: reportPath, contentType: "application/json" });
+
+    // eslint-disable-next-line no-console
+    console.log("SALEADS_MI_NEGOCIO_FINAL_REPORT", JSON.stringify(finalReport, null, 2));
+
+    return finalReport;
+  };
+
+  if (!baseUrl) {
+    for (const field of REPORT_FIELDS) {
+      fail(
+        field,
+        "Missing SALEADS_BASE_URL (or BASE_URL / Playwright baseURL). Provide runtime URL for the target SaleADS environment."
+      );
+    }
+    const missingConfigReport = await finalizeReport();
+    const failedFields = missingConfigReport.filter((entry) => entry.status !== "PASS").map((entry) => entry.field);
+    expect(failedFields, `Validation failures in: ${failedFields.join(", ")}`).toEqual([]);
+    return;
+  }
 
   await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
   await waitForUi(page);
@@ -423,23 +454,7 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   }
 
   // 10) Final report.
-  const finalReport = REPORT_FIELDS.map((field) => ({
-    field,
-    status: results[field].status,
-    details: results[field].details,
-    evidence: results[field].evidence,
-    finalUrl: results[field].finalUrl ?? null
-  }));
-
-  const reportDir = path.resolve(process.cwd(), "test-results");
-  await fs.mkdir(reportDir, { recursive: true });
-  const reportPath = path.join(reportDir, "saleads-mi-negocio-final-report.json");
-  await fs.writeFile(reportPath, `${JSON.stringify(finalReport, null, 2)}\n`, "utf8");
-  await testInfo.attach("final-report.json", { path: reportPath, contentType: "application/json" });
-
-  // eslint-disable-next-line no-console
-  console.log("SALEADS_MI_NEGOCIO_FINAL_REPORT", JSON.stringify(finalReport, null, 2));
-
+  const finalReport = await finalizeReport();
   const failedFields = finalReport.filter((entry) => entry.status !== "PASS").map((entry) => entry.field);
   expect(failedFields, `Validation failures in: ${failedFields.join(", ")}`).toEqual([]);
 });
