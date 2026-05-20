@@ -133,7 +133,19 @@ test('saleads_mi_negocio_full_test', async ({ page }, testInfo) => {
   const report = createReport();
   const failures: string[] = [];
 
-  const runStep = async (field: ReportKey, fn: () => Promise<void>): Promise<void> => {
+  const runStep = async (
+    field: ReportKey,
+    fn: () => Promise<void>,
+    options?: { dependsOn?: ReportKey[] },
+  ): Promise<void> => {
+    const dependencies = options?.dependsOn ?? [];
+    const failedDependencies = dependencies.filter((dependency) => report[dependency] === 'FAIL');
+    if (failedDependencies.length > 0) {
+      report[field] = 'FAIL';
+      failures.push(`${field}: Blocked by prerequisite failures (${failedDependencies.join(', ')})`);
+      return;
+    }
+
     try {
       await fn();
       report[field] = 'PASS';
@@ -177,20 +189,26 @@ test('saleads_mi_negocio_full_test', async ({ page }, testInfo) => {
     await captureCheckpoint(testInfo, page, '01-dashboard-loaded');
   });
 
-  await runStep('Mi Negocio menu', async () => {
+  await runStep(
+    'Mi Negocio menu',
+    async () => {
     await clickFirstVisible(page, [
       page.getByRole('button', { name: /^Negocio$/i }),
       page.getByRole('link', { name: /^Negocio$/i }),
       page.getByText(/^Negocio$/i),
     ]);
 
-    await openMiNegocioMenu(page);
-    await expect(page.getByText('Agregar Negocio', { exact: true })).toBeVisible();
-    await expect(page.getByText('Administrar Negocios', { exact: true })).toBeVisible();
-    await captureCheckpoint(testInfo, page, '02-mi-negocio-expanded');
-  });
+      await openMiNegocioMenu(page);
+      await expect(page.getByText('Agregar Negocio', { exact: true })).toBeVisible();
+      await expect(page.getByText('Administrar Negocios', { exact: true })).toBeVisible();
+      await captureCheckpoint(testInfo, page, '02-mi-negocio-expanded');
+    },
+    { dependsOn: ['Login'] },
+  );
 
-  await runStep('Agregar Negocio modal', async () => {
+  await runStep(
+    'Agregar Negocio modal',
+    async () => {
     await clickFirstVisible(page, [
       page.getByRole('button', { name: /^Agregar Negocio$/i }),
       page.getByRole('link', { name: /^Agregar Negocio$/i }),
@@ -203,77 +221,103 @@ test('saleads_mi_negocio_full_test', async ({ page }, testInfo) => {
     await expect(page.getByRole('button', { name: 'Cancelar' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Crear Negocio' })).toBeVisible();
 
-    await page.getByLabel('Nombre del Negocio').fill('Negocio Prueba Automatización');
-    await clickFirstVisible(page, [page.getByRole('button', { name: 'Cancelar' })]);
-    await captureCheckpoint(testInfo, page, '03-agregar-negocio-modal');
-  });
+      await captureCheckpoint(testInfo, page, '03-agregar-negocio-modal');
+      await page.getByLabel('Nombre del Negocio').fill('Negocio Prueba Automatización');
+      await clickFirstVisible(page, [page.getByRole('button', { name: 'Cancelar' })]);
+    },
+    { dependsOn: ['Mi Negocio menu'] },
+  );
 
-  await runStep('Administrar Negocios view', async () => {
-    await openMiNegocioMenu(page);
-    await clickFirstVisible(page, [
-      page.getByRole('button', { name: /^Administrar Negocios$/i }),
-      page.getByRole('link', { name: /^Administrar Negocios$/i }),
-      page.getByText(/^Administrar Negocios$/i),
-    ]);
+  await runStep(
+    'Administrar Negocios view',
+    async () => {
+      await openMiNegocioMenu(page);
+      await clickFirstVisible(page, [
+        page.getByRole('button', { name: /^Administrar Negocios$/i }),
+        page.getByRole('link', { name: /^Administrar Negocios$/i }),
+        page.getByText(/^Administrar Negocios$/i),
+      ]);
 
-    await expect(page.getByRole('heading', { name: /Informaci[oó]n General/i })).toBeVisible();
-    await expect(page.getByRole('heading', { name: /Detalles de la Cuenta/i })).toBeVisible();
-    await expect(page.getByRole('heading', { name: /Tus Negocios/i })).toBeVisible();
-    await expect(page.getByRole('heading', { name: /Secci[oó]n Legal/i })).toBeVisible();
-    await captureCheckpoint(testInfo, page, '04-administrar-negocios-page', true);
-  });
+      await expect(page.getByRole('heading', { name: /Informaci[oó]n General/i })).toBeVisible();
+      await expect(page.getByRole('heading', { name: /Detalles de la Cuenta/i })).toBeVisible();
+      await expect(page.getByRole('heading', { name: /Tus Negocios/i })).toBeVisible();
+      await expect(page.getByRole('heading', { name: /Secci[oó]n Legal/i })).toBeVisible();
+      await captureCheckpoint(testInfo, page, '04-administrar-negocios-page', true);
+    },
+    { dependsOn: ['Mi Negocio menu'] },
+  );
 
-  await runStep('Información General', async () => {
+  await runStep(
+    'Información General',
+    async () => {
     const infoSection = page.locator('section,div').filter({ hasText: /Informaci[oó]n General/i }).first();
-    await expect(infoSection).toBeVisible();
-    const infoText = await infoSection.innerText();
+      await expect(infoSection).toBeVisible();
+      const infoText = await infoSection.innerText();
 
-    const hasSpecificEmail = infoText.includes(GOOGLE_EMAIL);
-    const hasAnyEmail = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/.test(infoText);
+      const hasSpecificEmail = infoText.includes(GOOGLE_EMAIL);
+      const hasAnyEmail = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/.test(infoText);
 
-    expect(hasSpecificEmail || hasAnyEmail).toBeTruthy();
-    await expect(page.getByText('BUSINESS PLAN', { exact: false })).toBeVisible();
-    await expect(page.getByRole('button', { name: /Cambiar Plan/i })).toBeVisible();
+      expect(hasSpecificEmail || hasAnyEmail).toBeTruthy();
+      await expect(page.getByText('BUSINESS PLAN', { exact: false })).toBeVisible();
+      await expect(page.getByRole('button', { name: /Cambiar Plan/i })).toBeVisible();
 
-    const nonHeadingText = infoText
-      .split('\n')
-      .map((line) => line.trim())
-      .filter((line) => line.length > 0 && !/informaci[oó]n general/i.test(line));
-    expect(nonHeadingText.length).toBeGreaterThan(1);
-  });
+      const nonHeadingText = infoText
+        .split('\n')
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0 && !/informaci[oó]n general/i.test(line));
+      expect(nonHeadingText.length).toBeGreaterThan(1);
+    },
+    { dependsOn: ['Administrar Negocios view'] },
+  );
 
-  await runStep('Detalles de la Cuenta', async () => {
-    await expect(page.getByText(/Cuenta creada/i)).toBeVisible();
-    await expect(page.getByText(/Estado activo/i)).toBeVisible();
-    await expect(page.getByText(/Idioma seleccionado/i)).toBeVisible();
-  });
+  await runStep(
+    'Detalles de la Cuenta',
+    async () => {
+      await expect(page.getByText(/Cuenta creada/i)).toBeVisible();
+      await expect(page.getByText(/Estado activo/i)).toBeVisible();
+      await expect(page.getByText(/Idioma seleccionado/i)).toBeVisible();
+    },
+    { dependsOn: ['Administrar Negocios view'] },
+  );
 
-  await runStep('Tus Negocios', async () => {
-    const businessesSection = page.locator('section,div').filter({ hasText: /Tus Negocios/i }).first();
-    await expect(businessesSection).toBeVisible();
-    await expect(page.getByRole('button', { name: /^Agregar Negocio$/i }).first()).toBeVisible();
-    await expect(page.getByText('Tienes 2 de 3 negocios', { exact: false }).first()).toBeVisible();
-  });
+  await runStep(
+    'Tus Negocios',
+    async () => {
+      const businessesSection = page.locator('section,div').filter({ hasText: /Tus Negocios/i }).first();
+      await expect(businessesSection).toBeVisible();
+      await expect(page.getByRole('button', { name: /^Agregar Negocio$/i }).first()).toBeVisible();
+      await expect(page.getByText('Tienes 2 de 3 negocios', { exact: false }).first()).toBeVisible();
+    },
+    { dependsOn: ['Administrar Negocios view'] },
+  );
 
-  await runStep('Términos y Condiciones', async () => {
-    await validateLegalDocument(
-      page,
-      testInfo,
-      'Términos y Condiciones',
-      /T[eé]rminos y Condiciones/i,
-      '05-terminos-condiciones',
-    );
-  });
+  await runStep(
+    'Términos y Condiciones',
+    async () => {
+      await validateLegalDocument(
+        page,
+        testInfo,
+        'Términos y Condiciones',
+        /T[eé]rminos y Condiciones/i,
+        '05-terminos-condiciones',
+      );
+    },
+    { dependsOn: ['Administrar Negocios view'] },
+  );
 
-  await runStep('Política de Privacidad', async () => {
-    await validateLegalDocument(
-      page,
-      testInfo,
-      'Política de Privacidad',
-      /Pol[ií]tica de Privacidad/i,
-      '06-politica-privacidad',
-    );
-  });
+  await runStep(
+    'Política de Privacidad',
+    async () => {
+      await validateLegalDocument(
+        page,
+        testInfo,
+        'Política de Privacidad',
+        /Pol[ií]tica de Privacidad/i,
+        '06-politica-privacidad',
+      );
+    },
+    { dependsOn: ['Administrar Negocios view'] },
+  );
 
   await testInfo.attach('final-report.json', {
     body: Buffer.from(JSON.stringify(report, null, 2), 'utf-8'),
