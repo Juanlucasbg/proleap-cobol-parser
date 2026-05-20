@@ -1,0 +1,13 @@
+{
+  "name": "saleads-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Environment-agnostic SaleADS Mi Negocio E2E workflow validation.",
+  "scripts": {
+    "test:saleads-mi-negocio": "playwright test tests/saleads-mi-negocio-full.spec.ts",
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.54.1"
+  }
+}
