@@ -1,0 +1,12 @@
+{
+  "name": "saleads-mi-negocio-full-test",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Playwright workflow validation for SaleADS Mi Negocio module.",
+  "scripts": {
+    "test": "node run-test.js"
+  },
+  "dependencies": {
+    "playwright": "latest"
+  }
+}
