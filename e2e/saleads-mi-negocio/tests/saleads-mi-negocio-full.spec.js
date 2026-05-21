@@ -144,14 +144,41 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
       );
     }
 
-    const signInButton = await findFirstVisible(
+    const clickEntrySignInIfPresent = async () => {
+      const entrySignIn = await findFirstVisible(
+        [
+          page.getByRole("button", { name: /^Sign in$/i }),
+          page.getByRole("link", { name: /^Sign in$/i }),
+          page.getByRole("button", { name: /^Iniciar sesión$/i }),
+          page.getByRole("link", { name: /^Iniciar sesión$/i }),
+        ],
+        5000,
+      ).catch(() => null);
+
+      if (entrySignIn) {
+        await entrySignIn.click();
+        await waitAfterClick(page);
+      }
+    };
+
+    let signInButton = await findFirstVisible(
       [
         page.getByRole("button", { name: /google/i }),
         page.getByRole("link", { name: /google/i }),
-        page.getByText(/sign in with google|iniciar sesión con google|google/i),
       ],
-      15000,
-    );
+      8000,
+    ).catch(() => null);
+
+    if (!signInButton) {
+      await clickEntrySignInIfPresent();
+      signInButton = await findFirstVisible(
+        [
+          page.getByRole("button", { name: /google/i }),
+          page.getByRole("link", { name: /google/i }),
+        ],
+        15000,
+      );
+    }
 
     const popupPromise = page.context().waitForEvent("page", { timeout: 7000 }).catch(() => null);
     await signInButton.click();
