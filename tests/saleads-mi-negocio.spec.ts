@@ -88,6 +88,15 @@ async function runStep(
   }
 }
 
+function requireSuccessfulDependency(
+  reports: Record<ReportField, StepReport>,
+  dependency: ReportField,
+): void {
+  if (reports[dependency].status !== "PASS") {
+    throw new Error(`Dependency "${dependency}" did not pass.`);
+  }
+}
+
 async function selectGoogleAccountIfVisible(page: Page): Promise<void> {
   const accountOption = page.getByText(new RegExp(`^${escapeRegex(GOOGLE_ACCOUNT_EMAIL)}$`, "i"));
   if (await isVisible(accountOption.first(), 2_000)) {
@@ -154,9 +163,9 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
 
   const evidence: Record<string, string> = {};
 
-  await navigateToLoginPageWhenNeeded(page, testInfo);
-
   await runStep(reports, "Login", async () => {
+    await navigateToLoginPageWhenNeeded(page, testInfo);
+
     const sidebarCandidate = page.locator("aside, nav").first();
 
     if (!(await isVisible(sidebarCandidate, 3_000))) {
@@ -187,6 +196,8 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
   });
 
   await runStep(reports, "Mi Negocio menu", async () => {
+    requireSuccessfulDependency(reports, "Login");
+
     const negocio = await findFirstVisible([
       page.getByRole("button", { name: /^Negocio$/i }),
       page.getByRole("link", { name: /^Negocio$/i }),
@@ -208,6 +219,8 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
   });
 
   await runStep(reports, "Agregar Negocio modal", async () => {
+    requireSuccessfulDependency(reports, "Mi Negocio menu");
+
     const agregarNegocio = await findFirstVisible([
       page.getByRole("button", { name: /^Agregar Negocio$/i }),
       page.getByRole("link", { name: /^Agregar Negocio$/i }),
@@ -232,6 +245,8 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
   });
 
   await runStep(reports, "Administrar Negocios view", async () => {
+    requireSuccessfulDependency(reports, "Agregar Negocio modal");
+
     if (!(await isVisible(page.getByText(/^Administrar Negocios$/i).first(), 1_500))) {
       const miNegocio = await findFirstVisible([
         page.getByRole("button", { name: /^Mi Negocio$/i }),
@@ -262,6 +277,8 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
   });
 
   await runStep(reports, "Información General", async () => {
+    requireSuccessfulDependency(reports, "Administrar Negocios view");
+
     const infoGeneralSection = page
       .locator("section,div")
       .filter({ has: page.getByText(/^Información General$/i) })
@@ -280,12 +297,16 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
   });
 
   await runStep(reports, "Detalles de la Cuenta", async () => {
+    requireSuccessfulDependency(reports, "Administrar Negocios view");
+
     await expect(page.getByText(/Cuenta creada/i)).toBeVisible();
     await expect(page.getByText(/Estado activo/i)).toBeVisible();
     await expect(page.getByText(/Idioma seleccionado/i)).toBeVisible();
   });
 
   await runStep(reports, "Tus Negocios", async () => {
+    requireSuccessfulDependency(reports, "Administrar Negocios view");
+
     const negociosSection = page
       .locator("section,div")
       .filter({ has: page.getByText(/^Tus Negocios$/i) })
@@ -298,6 +319,8 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
   });
 
   await runStep(reports, "Términos y Condiciones", async () => {
+    requireSuccessfulDependency(reports, "Administrar Negocios view");
+
     evidence.terminosUrl = await openLegalDocument(
       page,
       testInfo,
@@ -308,6 +331,8 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
   });
 
   await runStep(reports, "Política de Privacidad", async () => {
+    requireSuccessfulDependency(reports, "Administrar Negocios view");
+
     evidence.politicaUrl = await openLegalDocument(
       page,
       testInfo,
