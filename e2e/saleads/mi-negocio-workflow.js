@@ -454,6 +454,14 @@ async function main() {
     report.overallStatus = hasAnyFailure ? "FAIL" : "PASS";
   } catch (error) {
     reportLine(`Workflow stopped early: ${error.message}`);
+    if (report.steps["Login"].notes.length === 0) {
+      report.steps["Login"].notes.push(error.message);
+    }
+    for (const field of REPORT_FIELDS) {
+      if (field !== "Login" && report.steps[field].status === "FAIL" && report.steps[field].notes.length === 0) {
+        report.steps[field].notes.push("Not executed due to an earlier blocking failure.");
+      }
+    }
     const hasAnyFailure = REPORT_FIELDS.some((field) => report.steps[field].status !== "PASS");
     report.overallStatus = hasAnyFailure ? "FAIL" : "PASS";
   } finally {
