@@ -97,11 +97,11 @@ public class SaleadsMiNegocioWorkflowE2ETest {
 		executeStep("Mi Negocio menu", this::openMiNegocioMenu);
 		executeStep("Agregar Negocio modal", this::validateAgregarNegocioModal);
 		executeStep("Administrar Negocios view", this::openAdministrarNegocios);
-		executeStep("Informacion General", this::validateInformacionGeneral);
+		executeStep("Informaci\u00f3n General", this::validateInformacionGeneral);
 		executeStep("Detalles de la Cuenta", this::validateDetallesDeLaCuenta);
 		executeStep("Tus Negocios", this::validateTusNegocios);
-		executeStep("Terminos y Condiciones", () -> validateLegalPage("T\u00e9rminos y Condiciones", "08-terminos"));
-		executeStep("Politica de Privacidad", () -> validateLegalPage("Pol\u00edtica de Privacidad", "09-politica"));
+		executeStep("T\u00e9rminos y Condiciones", () -> validateLegalPage("T\u00e9rminos y Condiciones", "08-terminos"));
+		executeStep("Pol\u00edtica de Privacidad", () -> validateLegalPage("Pol\u00edtica de Privacidad", "09-politica"));
 
 		logFinalReport();
 		Assert.assertTrue("Workflow validation failures:\n" + String.join("\n", failures), failures.isEmpty());
@@ -125,7 +125,7 @@ public class SaleadsMiNegocioWorkflowE2ETest {
 
 	private void openMiNegocioMenu() throws IOException {
 		expandNegocioIfNeeded();
-		clickVisibleElement(byExactText("Mi Negocio"));
+		clickVisibleElement(byClickableTextExact("Mi Negocio"));
 		waitForUiToLoad();
 
 		Assert.assertTrue("Expected Agregar Negocio submenu option to be visible.", isTextVisible("Agregar Negocio"));
@@ -135,7 +135,7 @@ public class SaleadsMiNegocioWorkflowE2ETest {
 	}
 
 	private void validateAgregarNegocioModal() throws IOException {
-		clickVisibleElement(byExactText("Agregar Negocio"));
+		clickVisibleElement(byClickableTextExact("Agregar Negocio"));
 		waitForVisible(byExactText("Crear Nuevo Negocio"));
 
 		Assert.assertTrue("Modal title Crear Nuevo Negocio is not visible.", isTextVisible("Crear Nuevo Negocio"));
@@ -152,7 +152,7 @@ public class SaleadsMiNegocioWorkflowE2ETest {
 
 	private void openAdministrarNegocios() throws IOException {
 		expandMiNegocioIfCollapsed();
-		clickVisibleElement(byExactText("Administrar Negocios"));
+		clickVisibleElement(byClickableTextExact("Administrar Negocios"));
 		waitForUiToLoad();
 
 		assertVisibleText("Informaci\u00f3n General");
@@ -194,7 +194,7 @@ public class SaleadsMiNegocioWorkflowE2ETest {
 		final String originalWindow = driver.getWindowHandle();
 		final Set<String> beforeHandles = driver.getWindowHandles();
 
-		clickVisibleElement(byExactText(linkText));
+		clickVisibleElement(byClickableTextExact(linkText));
 		waitForUiToLoad();
 
 		final String newHandle = waitForNewWindowHandle(beforeHandles, Duration.ofSeconds(10));
@@ -208,6 +208,7 @@ public class SaleadsMiNegocioWorkflowE2ETest {
 		assertVisibleText(linkText);
 		assertAnyVisible(By.xpath("//article//*[normalize-space(.)!='']"), By.xpath("//main//*[normalize-space(.)!='']"),
 				By.xpath("//body//*[normalize-space(.)!='']"));
+		assertLegalContentText(linkText);
 
 		takeScreenshot(screenshotPrefix + "-legal-page");
 		final String currentUrl = driver.getCurrentUrl();
@@ -265,19 +266,19 @@ public class SaleadsMiNegocioWorkflowE2ETest {
 			}
 		}
 
-		clickVisibleElement(byExactText("Cancelar"));
+		clickVisibleElement(byClickableTextExact("Cancelar"));
 		waitForUiToLoad();
 	}
 
 	private void expandNegocioIfNeeded() {
 		if (!isTextVisible("Mi Negocio") && isTextVisible("Negocio")) {
-			clickVisibleElement(byExactText("Negocio"));
+			clickVisibleElement(byClickableTextExact("Negocio"));
 		}
 	}
 
 	private void expandMiNegocioIfCollapsed() {
 		if (!isTextVisible("Administrar Negocios") && isTextVisible("Mi Negocio")) {
-			clickVisibleElement(byExactText("Mi Negocio"));
+			clickVisibleElement(byClickableTextExact("Mi Negocio"));
 			waitForUiToLoad();
 		}
 	}
@@ -364,12 +365,12 @@ public class SaleadsMiNegocioWorkflowE2ETest {
 
 	private void clickFirstVisibleByText(final List<String> textCandidates) {
 		for (final String text : textCandidates) {
-			final By exact = byExactText(text);
+			final By exact = byClickableTextExact(text);
 			if (isAnyElementVisible(exact)) {
 				clickVisibleElement(exact);
 				return;
 			}
-			final By contains = byTextContains(text);
+			final By contains = byClickableTextContains(text);
 			if (isAnyElementVisible(contains)) {
 				clickVisibleElement(contains);
 				return;
@@ -412,9 +413,31 @@ public class SaleadsMiNegocioWorkflowE2ETest {
 		return By.xpath("//*[normalize-space(.)=" + escapedText + "]");
 	}
 
+	private By byClickableTextExact(final String text) {
+		final String escapedText = escapeForXPath(text);
+		return By.xpath("//button[normalize-space(.)=" + escapedText + "] | //a[normalize-space(.)=" + escapedText
+				+ "] | //*[@role='button' and normalize-space(.)=" + escapedText
+				+ "] | //button[.//*[normalize-space(.)=" + escapedText + "]] | //a[.//*[normalize-space(.)="
+				+ escapedText + "]] | //*[@role='button'][.//*[normalize-space(.)=" + escapedText + "]]");
+	}
+
+	private By byClickableTextContains(final String text) {
+		final String escapedText = escapeForXPath(text);
+		return By.xpath("//button[contains(normalize-space(.)," + escapedText + ")] | //a[contains(normalize-space(.),"
+				+ escapedText + ")] | //*[@role='button' and contains(normalize-space(.)," + escapedText
+				+ ")] | //button[.//*[contains(normalize-space(.)," + escapedText + ")]] | //a[.//*[contains(normalize-space(.),"
+				+ escapedText + ")]] | //*[@role='button'][.//*[contains(normalize-space(.)," + escapedText + ")]]");
+	}
+
 	private By byTextContains(final String text) {
 		final String escapedText = escapeForXPath(text);
 		return By.xpath("//*[contains(normalize-space(.)," + escapedText + ")]");
+	}
+
+	private void assertLegalContentText(final String headingText) {
+		final String bodyText = waitForVisible(By.tagName("body")).getText();
+		final String withoutHeading = bodyText.replace(headingText, "").trim();
+		Assert.assertTrue("Legal content body text appears too short.", withoutHeading.length() > 80);
 	}
 
 	private String escapeForXPath(final String value) {
@@ -455,11 +478,12 @@ public class SaleadsMiNegocioWorkflowE2ETest {
 		LOG.info("Mi Negocio menu: {}", stepStatus.getOrDefault("Mi Negocio menu", "NOT RUN"));
 		LOG.info("Agregar Negocio modal: {}", stepStatus.getOrDefault("Agregar Negocio modal", "NOT RUN"));
 		LOG.info("Administrar Negocios view: {}", stepStatus.getOrDefault("Administrar Negocios view", "NOT RUN"));
-		LOG.info("Informacion General: {}", stepStatus.getOrDefault("Informacion General", "NOT RUN"));
+		LOG.info("Informaci\u00f3n General: {}", stepStatus.getOrDefault("Informaci\u00f3n General", "NOT RUN"));
 		LOG.info("Detalles de la Cuenta: {}", stepStatus.getOrDefault("Detalles de la Cuenta", "NOT RUN"));
 		LOG.info("Tus Negocios: {}", stepStatus.getOrDefault("Tus Negocios", "NOT RUN"));
-		LOG.info("Terminos y Condiciones: {}", stepStatus.getOrDefault("Terminos y Condiciones", "NOT RUN"));
-		LOG.info("Politica de Privacidad: {}", stepStatus.getOrDefault("Politica de Privacidad", "NOT RUN"));
+		LOG.info("T\u00e9rminos y Condiciones: {}",
+				stepStatus.getOrDefault("T\u00e9rminos y Condiciones", "NOT RUN"));
+		LOG.info("Pol\u00edtica de Privacidad: {}", stepStatus.getOrDefault("Pol\u00edtica de Privacidad", "NOT RUN"));
 		LOG.info("T\u00e9rminos y Condiciones URL: {}", termsUrl);
 		LOG.info("Pol\u00edtica de Privacidad URL: {}", privacyUrl);
 		LOG.info("Screenshots directory: {}", screenshotsDir.toAbsolutePath());
