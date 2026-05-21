@@ -362,6 +362,7 @@ test("saleads_mi_negocio_full_test", async ({ page, baseURL }, testInfo) => {
   };
 
   const reportPath = path.join(testInfo.outputDir, "mi-negocio-final-report.json");
+  await fs.mkdir(path.dirname(reportPath), { recursive: true });
   await fs.writeFile(reportPath, JSON.stringify(finalReport, null, 2), "utf8");
   await testInfo.attach("final-report", {
     path: reportPath,
