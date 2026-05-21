@@ -161,32 +161,25 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
       }
     };
 
-    let signInButton = await findFirstVisible(
-      [
-        page.getByRole("button", {
-          name: /^(google|sign in with google|continue with google|iniciar sesi[oó]n con google)$/i,
-        }),
-        page.getByRole("link", {
-          name: /^(google|sign in with google|continue with google|iniciar sesi[oó]n con google)$/i,
-        }),
-      ],
-      8000,
-    ).catch(() => null);
+    const googleAuthCandidates = [
+      page.locator("a[href*='broker/google/login']"),
+      page.getByRole("button", { name: /\bgoogle\b/i }),
+      page.getByRole("link", { name: /\bgoogle\b/i }),
+    ];
 
-    if (!signInButton) {
+    const onAuthPage =
+      /\/realms\//i.test(page.url()) ||
+      (await page
+        .getByRole("heading", { name: /sign in to your account|iniciar sesi[oó]n/i })
+        .first()
+        .isVisible({ timeout: 3000 })
+        .catch(() => false));
+
+    if (!onAuthPage) {
       await clickEntrySignInIfPresent();
-      signInButton = await findFirstVisible(
-        [
-          page.getByRole("button", {
-            name: /^(google|sign in with google|continue with google|iniciar sesi[oó]n con google)$/i,
-          }),
-          page.getByRole("link", {
-            name: /^(google|sign in with google|continue with google|iniciar sesi[oó]n con google)$/i,
-          }),
-        ],
-        15000,
-      );
     }
+
+    const signInButton = await findFirstVisible(googleAuthCandidates, 15000);
 
     const popupPromise = page.context().waitForEvent("page", { timeout: 7000 }).catch(() => null);
     await signInButton.click();
