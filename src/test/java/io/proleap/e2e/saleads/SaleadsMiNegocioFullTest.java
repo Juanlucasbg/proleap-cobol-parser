@@ -76,6 +76,9 @@ public class SaleadsMiNegocioFullTest {
 		evidenceDir = Paths.get("target", "saleads-evidence", "saleads_mi_negocio_full_test");
 		Files.createDirectories(evidenceDir);
 
+		final String loginUrl = firstNonBlank(System.getProperty("saleads.loginUrl"), System.getenv("SALEADS_LOGIN_URL"));
+		Assume.assumeTrue("Provide -Dsaleads.loginUrl (or SALEADS_LOGIN_URL) for the current environment.", loginUrl != null);
+
 		final boolean headless = Boolean.parseBoolean(
 				firstNonBlank(System.getProperty("saleads.headless"), System.getenv("SALEADS_HEADLESS"), "true"));
 		final int timeoutSeconds = Integer
@@ -90,17 +93,8 @@ public class SaleadsMiNegocioFullTest {
 
 		driver = new ChromeDriver(options);
 		wait = new WebDriverWait(driver, Duration.ofSeconds(timeoutSeconds));
-
-		final String loginUrl = firstNonBlank(System.getProperty("saleads.loginUrl"), System.getenv("SALEADS_LOGIN_URL"));
-		if (loginUrl != null) {
-			driver.get(loginUrl);
-			waitForUiToLoad();
-		}
-
-		final String currentUrl = driver.getCurrentUrl();
-		Assume.assumeTrue(
-				"Provide -Dsaleads.loginUrl (or SALEADS_LOGIN_URL), or start the browser on the SaleADS login page.",
-				currentUrl != null && !currentUrl.isBlank() && !currentUrl.startsWith("data:,") && !currentUrl.equals("about:blank"));
+		driver.get(loginUrl);
+		waitForUiToLoad();
 		appHandle = driver.getWindowHandle();
 	}
 
