@@ -47,7 +47,7 @@ public class SaleadsMiNegocioFullTest {
 	private String privacyPolicyUrl = "N/A";
 
 	@Before
-	public void setUp() throws IOException {
+	public void setUp() throws Exception {
 		final String startUrl = requiredEnv("SALEADS_LOGIN_URL");
 		final int waitSeconds = Integer.parseInt(envOrDefault("SALEADS_WAIT_SECONDS", "30"));
 
