@@ -194,6 +194,30 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+UI workflow smoke test for SaleADS
+----------------------------------
+
+This repository now includes a Playwright-based UI workflow test class:
+
+`io.proleap.cobol.e2e.SaleadsMiNegocioFullTest`
+
+The test validates a complete "Mi Negocio" workflow after Google login, captures screenshots at key checkpoints, validates legal links (same-tab or new-tab), and writes a final PASS/FAIL report.
+
+Run it with:
+
+```
+$ SALEADS_LOGIN_URL="https://<current-env-login-page>" mvn -Dtest=io.proleap.cobol.e2e.SaleadsMiNegocioFullTest test
+```
+
+Optional environment variables:
+
+* `SALEADS_BROWSER` (`chromium`, `firefox`, `webkit`) defaults to `chromium`
+* `SALEADS_HEADLESS` (`true` or `false`) defaults to `true`
+
+Evidence output (screenshots + final report) is written to:
+
+`target/evidence/saleads-mi-negocio/<timestamp>/`
+
 
 Release process
 ---------------
