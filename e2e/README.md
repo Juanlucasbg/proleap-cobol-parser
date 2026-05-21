@@ -37,6 +37,8 @@ Optional environment variables:
 - `SALEADS_LOGIN_URL`: alias of `SALEADS_URL`
 - `SALEADS_GOOGLE_ACCOUNT`: defaults to `juanlucasbarbiergarzon@gmail.com`
 - `HEADLESS`: defaults to `true`; set `false` to run headed
+- `BASE_URL` / `APP_URL`: additional URL fallbacks
+- `SALEADS_CDP_URL` / `PLAYWRIGHT_CDP_URL`: connect to an already-open browser session/tab (useful when the login page is already open)
 
 ## Output
 

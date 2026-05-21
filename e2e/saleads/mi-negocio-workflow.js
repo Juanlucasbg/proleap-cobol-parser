@@ -238,7 +238,13 @@ async function main() {
   );
   ensureDir(artifactsDir);
 
-  const saleadsUrl = process.env.SALEADS_URL || process.env.SALEADS_LOGIN_URL || "";
+  const saleadsUrl =
+    process.env.SALEADS_URL ||
+    process.env.SALEADS_LOGIN_URL ||
+    process.env.BASE_URL ||
+    process.env.APP_URL ||
+    "";
+  const cdpUrl = process.env.SALEADS_CDP_URL || process.env.PLAYWRIGHT_CDP_URL || "";
   const googleAccountEmail = process.env.SALEADS_GOOGLE_ACCOUNT || DEFAULT_GOOGLE_ACCOUNT;
   const headless = (process.env.HEADLESS || "true").toLowerCase() !== "false";
 
@@ -269,17 +275,27 @@ async function main() {
   let page;
 
   try {
-    browser = await chromium.launch({ headless });
-    context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
-    page = await context.newPage();
+    if (cdpUrl) {
+      reportLine(`Connecting to existing browser via CDP: ${cdpUrl}`);
+      browser = await chromium.connectOverCDP(cdpUrl);
+      context = browser.contexts()[0] || (await browser.newContext({ viewport: { width: 1440, height: 900 } }));
+      page = context.pages()[0] || (await context.newPage());
+    } else {
+      browser = await chromium.launch({ headless });
+      context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+      page = await context.newPage();
+    }
 
     if (saleadsUrl) {
       reportLine(`Navigating to SaleADS login: ${saleadsUrl}`);
       await page.goto(saleadsUrl, { waitUntil: "domcontentloaded", timeout: 45000 });
       await waitForUi(page);
+    } else if (page.url() && page.url() !== "about:blank") {
+      reportLine(`Using existing open page as login page: ${page.url()}`);
+      await waitForUi(page);
     } else {
       throw new Error(
-        "SALEADS_URL (or SALEADS_LOGIN_URL) is required to start from the login page in this environment."
+        "Provide SALEADS_URL/SALEADS_LOGIN_URL (or connect with SALEADS_CDP_URL to an already-open login tab)."
       );
     }
 
