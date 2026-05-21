@@ -20,6 +20,19 @@ function createInitialReport() {
   );
 }
 
+function stripAnsi(input) {
+  return input.replace(/\u001B\[[0-9;]*m/g, "");
+}
+
+function toFileSlug(value) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
 async function waitAfterClick(page) {
   try {
     await page.waitForLoadState("networkidle", { timeout: 10000 });
@@ -98,13 +111,20 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
   const report = createInitialReport();
 
   const runStep = async (field, callback) => {
+    const slug = toFileSlug(field);
+
     try {
       const details = await callback();
       report[field] = { status: "PASS", ...(details ?? {}) };
     } catch (error) {
+      await page.screenshot({
+        path: testInfo.outputPath(`fail-${slug}.png`),
+        fullPage: true,
+      });
+
       report[field] = {
         status: "FAIL",
-        details: error instanceof Error ? error.message : String(error),
+        details: stripAnsi(error instanceof Error ? error.message : String(error)),
       };
     }
   };
