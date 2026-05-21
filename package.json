@@ -1,0 +1,13 @@
+{
+  "name": "saleads-e2e-workflows",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Portable Playwright workflow tests for SaleADS modules.",
+  "scripts": {
+    "test:e2e:mi-negocio": "playwright test tests/e2e/saleads-mi-negocio.spec.ts",
+    "test:e2e:mi-negocio:headed": "playwright test tests/e2e/saleads-mi-negocio.spec.ts --headed"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.54.1"
+  }
+}
