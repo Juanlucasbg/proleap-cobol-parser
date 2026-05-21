@@ -163,8 +163,12 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
 
     let signInButton = await findFirstVisible(
       [
-        page.getByRole("button", { name: /google/i }),
-        page.getByRole("link", { name: /google/i }),
+        page.getByRole("button", {
+          name: /^(google|sign in with google|continue with google|iniciar sesi[oó]n con google)$/i,
+        }),
+        page.getByRole("link", {
+          name: /^(google|sign in with google|continue with google|iniciar sesi[oó]n con google)$/i,
+        }),
       ],
       8000,
     ).catch(() => null);
@@ -173,8 +177,12 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
       await clickEntrySignInIfPresent();
       signInButton = await findFirstVisible(
         [
-          page.getByRole("button", { name: /google/i }),
-          page.getByRole("link", { name: /google/i }),
+          page.getByRole("button", {
+            name: /^(google|sign in with google|continue with google|iniciar sesi[oó]n con google)$/i,
+          }),
+          page.getByRole("link", {
+            name: /^(google|sign in with google|continue with google|iniciar sesi[oó]n con google)$/i,
+          }),
         ],
         15000,
       );
