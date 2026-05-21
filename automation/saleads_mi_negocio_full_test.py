@@ -35,6 +35,7 @@ class StepResult:
 class SaleadsMiNegocioWorkflow:
     def __init__(self) -> None:
         self.login_url = os.getenv("SALEADS_LOGIN_URL")
+        self.cdp_url = os.getenv("SALEADS_CDP_URL")
         self.google_email = os.getenv(
             "SALEADS_GOOGLE_EMAIL", "juanlucasbarbiergarzon@gmail.com"
         )
@@ -53,16 +54,33 @@ class SaleadsMiNegocioWorkflow:
     def run(self) -> int:
         try:
             with sync_playwright() as playwright:
-                browser = playwright.chromium.launch(headless=self.headless)
-                context = browser.new_context(
-                    viewport={"width": 1600, "height": 1000},
-                    ignore_https_errors=True,
-                )
-                page = context.new_page()
-                page.set_default_timeout(self.timeout_ms)
-
-                self.execute_workflow(page)
-                browser.close()
+                if self.cdp_url:
+                    browser = playwright.chromium.connect_over_cdp(self.cdp_url)
+                    context = browser.contexts[0] if browser.contexts else browser.new_context()
+                    page = context.pages[0] if context.pages else context.new_page()
+                    page.set_default_timeout(self.timeout_ms)
+                    self.execute_workflow(page, auto_navigate=False)
+                    browser.close()
+                else:
+                    if not self.login_url:
+                        self.results["Login"] = StepResult(
+                            status="FAIL",
+                            details=(
+                                "Provide SALEADS_LOGIN_URL or SALEADS_CDP_URL "
+                                "to start the workflow."
+                            ),
+                        )
+                        self.mark_remaining_failed("Missing login URL/CDP configuration")
+                    else:
+                        browser = playwright.chromium.launch(headless=self.headless)
+                        context = browser.new_context(
+                            viewport={"width": 1600, "height": 1000},
+                            ignore_https_errors=True,
+                        )
+                        page = context.new_page()
+                        page.set_default_timeout(self.timeout_ms)
+                        self.execute_workflow(page, auto_navigate=True)
+                        browser.close()
         except Exception as exc:  # pylint: disable=broad-except
             self.results["Framework"] = StepResult(
                 status="FAIL",
@@ -73,20 +91,13 @@ class SaleadsMiNegocioWorkflow:
         self.print_summary()
         return 0 if self.all_passed() else 1
 
-    def execute_workflow(self, page: Page) -> None:
-        if not self.login_url:
-            self.results["Login"] = StepResult(
-                status="FAIL",
-                details=(
-                    "SALEADS_LOGIN_URL is not set. "
-                    "Provide the current environment login URL."
-                ),
-            )
-            self.mark_remaining_failed("Missing login URL")
-            return
-
-        page.goto(self.login_url, wait_until="domcontentloaded")
-        self.wait_for_ui(page)
+    def execute_workflow(self, page: Page, auto_navigate: bool) -> None:
+        if auto_navigate:
+            page.goto(self.login_url, wait_until="domcontentloaded")
+            self.wait_for_ui(page)
+        elif self.login_url and page.url in {"about:blank", "chrome://new-tab-page/"}:
+            page.goto(self.login_url, wait_until="domcontentloaded")
+            self.wait_for_ui(page)
 
         if not self.run_step(
             "Login",
@@ -520,6 +531,7 @@ class SaleadsMiNegocioWorkflow:
             "test_name": "saleads_mi_negocio_full_test",
             "generated_at_utc": datetime.utcnow().isoformat() + "Z",
             "login_url": self.login_url,
+            "cdp_url_configured": bool(self.cdp_url),
             "google_email": self.google_email,
             "artifacts_dir": str(self.run_dir),
             "legal_urls": self.legal_urls,
