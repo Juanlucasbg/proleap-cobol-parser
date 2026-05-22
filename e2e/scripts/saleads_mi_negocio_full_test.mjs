@@ -1,6 +1,7 @@
 import { chromium } from "playwright";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const TEST_NAME = "saleads_mi_negocio_full_test";
 const REPORT_FIELDS = [
@@ -21,9 +22,11 @@ const LOGIN_URL =
   "";
 const HEADLESS = process.env.HEADLESS !== "false";
 const ACCOUNT_EMAIL = "juanlucasbarbiergarzon@gmail.com";
+const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+const projectRoot = path.resolve(scriptDir, "..");
 
 const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-const artifactsDir = path.resolve("e2e", "artifacts", `${TEST_NAME}_${timestamp}`);
+const artifactsDir = path.join(projectRoot, "artifacts", `${TEST_NAME}_${timestamp}`);
 
 const report = {
   name: TEST_NAME,
