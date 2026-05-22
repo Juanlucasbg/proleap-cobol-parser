@@ -153,8 +153,12 @@ public class SaleadsMiNegocioFullTest {
 	}
 
 	private void selectGoogleAccountIfVisible(final Page page) {
-		if (waitForVisibleText(page, 15_000L, GOOGLE_ACCOUNT_EMAIL)) {
-			clickByVisibleText(page, GOOGLE_ACCOUNT_EMAIL);
+		try {
+			if (waitForVisibleText(page, 15_000L, GOOGLE_ACCOUNT_EMAIL)) {
+				clickByVisibleText(page, GOOGLE_ACCOUNT_EMAIL);
+			}
+		} catch (final PlaywrightException ignored) {
+			// If the Google account chooser closes quickly, continue with application validation.
 		}
 	}
 
@@ -169,13 +173,12 @@ public class SaleadsMiNegocioFullTest {
 	}
 
 	private void fillBusinessNameAndCancel(final Page page) {
-		final Locator businessNameInput = page.locator("input").filter(new Locator.FilterOptions().setHasText(""));
 		if (page.locator("input[placeholder*='Nombre']").count() > 0) {
 			page.locator("input[placeholder*='Nombre']").first().fill("Negocio Prueba Automatizacion");
 		} else if (page.locator("input[name*='nombre']").count() > 0) {
 			page.locator("input[name*='nombre']").first().fill("Negocio Prueba Automatizacion");
-		} else if (businessNameInput.count() > 0) {
-			businessNameInput.first().fill("Negocio Prueba Automatizacion");
+		} else if (page.locator("input").count() > 0) {
+			page.locator("input").first().fill("Negocio Prueba Automatizacion");
 		}
 
 		clickByVisibleText(page, "Cancelar");
@@ -208,7 +211,11 @@ public class SaleadsMiNegocioFullTest {
 			appPage.bringToFront();
 			waitForUi(appPage);
 		} else {
-			appPage.goBack();
+			try {
+				appPage.goBack();
+			} catch (final PlaywrightException ignored) {
+				// Some legal pages can replace history. Keep current page and continue.
+			}
 			waitForUi(appPage);
 		}
 
@@ -266,24 +273,38 @@ public class SaleadsMiNegocioFullTest {
 		if (page.locator("section:has-text('Información General') strong").count() > 0) {
 			return true;
 		}
+		if (page.locator("section:has-text('Informacion General') strong").count() > 0) {
+			return true;
+		}
 		return page.locator("section:has-text('Información General') h1").count() > 0
-				|| page.locator("section:has-text('Información General') h2").count() > 0;
+				|| page.locator("section:has-text('Información General') h2").count() > 0
+				|| page.locator("section:has-text('Informacion General') h1").count() > 0
+				|| page.locator("section:has-text('Informacion General') h2").count() > 0;
 	}
 
 	private boolean hasEmailVisible(final Page page) {
-		return page.locator("text=/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}/").count() > 0;
+		final String body = getBodyText(page);
+		return body.matches("(?s).*[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}.*");
 	}
 
 	private int getBodyTextLength(final Page page) {
+		final String text = getBodyText(page);
+		return text.trim().length();
+	}
+
+	private String getBodyText(final Page page) {
 		try {
 			final String text = page.locator("body").innerText();
-			return text == null ? 0 : text.trim().length();
+			return text == null ? "" : text;
 		} catch (final PlaywrightException ignored) {
-			return 0;
+			return "";
 		}
 	}
 
 	private void waitForUi(final Page page) {
+		if (page.isClosed()) {
+			return;
+		}
 		page.waitForLoadState(LoadState.DOMCONTENTLOADED);
 		try {
 			page.waitForLoadState(LoadState.NETWORKIDLE, new Page.WaitForLoadStateOptions().setTimeout(7_500));
