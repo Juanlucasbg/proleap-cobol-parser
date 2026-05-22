@@ -7,11 +7,11 @@ const REPORT_FIELDS = [
   "Mi Negocio menu",
   "Agregar Negocio modal",
   "Administrar Negocios view",
-  "Informacion General",
+  "Información General",
   "Detalles de la Cuenta",
   "Tus Negocios",
-  "Terminos y Condiciones",
-  "Politica de Privacidad",
+  "Términos y Condiciones",
+  "Política de Privacidad",
 ];
 
 const SCREENSHOT_DIR = path.resolve(__dirname, "..", "artifacts", "screenshots");
@@ -251,7 +251,7 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
     await takeCheckpoint(page, "04-administrar-negocios-view.png", true);
   });
 
-  await runValidation("Informacion General", async () => {
+  await runValidation("Información General", async () => {
     const section = page.locator("section, div").filter({ hasText: /Informaci[oó]n General/i }).first();
     await expect(section).toBeVisible();
 
@@ -269,7 +269,7 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
         !/informaci[oó]n general|business plan|cambiar plan|@|plan/i.test(line) &&
         /[a-z]/i.test(line)
     );
-    expect(probableNameLine, "A user name line was not detected in 'Informacion General'.").toBeTruthy();
+    expect(probableNameLine, "A user name line was not detected in 'Información General'.").toBeTruthy();
   });
 
   await runValidation("Detalles de la Cuenta", async () => {
@@ -331,7 +331,7 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
     }
   }
 
-  await runValidation("Terminos y Condiciones", async () => {
+  await runValidation("Términos y Condiciones", async () => {
     await validateLegalLink(
       "Términos y Condiciones",
       /T[eé]rminos y Condiciones/i,
@@ -340,7 +340,7 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
     );
   });
 
-  await runValidation("Politica de Privacidad", async () => {
+  await runValidation("Política de Privacidad", async () => {
     await validateLegalLink(
       "Política de Privacidad",
       /Pol[ií]tica de Privacidad/i,
