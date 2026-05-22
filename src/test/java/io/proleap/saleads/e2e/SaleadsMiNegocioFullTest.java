@@ -139,11 +139,6 @@ public class SaleadsMiNegocioFullTest {
 		if (googlePage != null) {
 			waitForUi(googlePage);
 			selectGoogleAccountIfVisible(googlePage);
-			try {
-				googlePage.waitForClose();
-			} catch (final PlaywrightException ignored) {
-				// In some environments Google stays on same popup lifecycle; continue waiting on app page.
-			}
 		} else {
 			selectGoogleAccountIfVisible(page);
 		}
