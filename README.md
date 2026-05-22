@@ -194,6 +194,37 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+SaleADS Mi Negocio E2E workflow test
+------------------------------------
+
+This repository now includes an optional Selenium-based end-to-end test at:
+
+* `src/test/java/io/proleap/saleads/SaleAdsMiNegocioFullTest.java`
+
+The test validates the full workflow requested for:
+
+* Google login
+* `Mi Negocio` menu expansion
+* `Agregar Negocio` modal fields and actions
+* `Administrar Negocios` account sections
+* Legal links (`Términos y Condiciones` and `Política de Privacidad`)
+
+To keep it environment-agnostic, the test does not hardcode any domain.
+Provide the current environment login URL at runtime:
+
+```
+$ mvn -Dtest=io.proleap.saleads.SaleAdsMiNegocioFullTest \
+      -Dsaleads.start.url="<current_saleads_login_url>" \
+      test
+```
+
+Useful runtime properties:
+
+* `saleads.start.url` (or `SALEADS_START_URL`): login page for the current environment.
+* `saleads.headless` (default `true`): runs browser headless.
+* `saleads.selenium.remote.url` (or `SALEADS_SELENIUM_REMOTE_URL`): run via remote Selenium grid.
+* `saleads.evidence.dir` (default `target/saleads-evidence`): screenshots and `final-report.txt` output.
+
 
 Release process
 ---------------
