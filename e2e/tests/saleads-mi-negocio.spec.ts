@@ -1,5 +1,5 @@
 import { expect, Locator, Page, test } from "@playwright/test";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 type ReportField =
@@ -105,6 +105,7 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
   const artifactsDir = path.resolve("artifacts", "saleads-mi-negocio");
   const screenshotsDir = path.join(artifactsDir, "screenshots");
   const reportPath = path.join(artifactsDir, "final-report.json");
+  await rm(artifactsDir, { recursive: true, force: true });
   await mkdir(screenshotsDir, { recursive: true });
 
   const report: Record<ReportField, StepResult> = Object.fromEntries(
