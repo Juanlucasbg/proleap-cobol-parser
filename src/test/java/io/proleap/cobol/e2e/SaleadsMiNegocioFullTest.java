@@ -58,11 +58,11 @@ public class SaleadsMiNegocioFullTest {
 	private static final String STEP_MENU = "Mi Negocio menu";
 	private static final String STEP_MODAL = "Agregar Negocio modal";
 	private static final String STEP_ADMIN_VIEW = "Administrar Negocios view";
-	private static final String STEP_GENERAL_INFO = "Informacion General";
+	private static final String STEP_GENERAL_INFO = "Información General";
 	private static final String STEP_ACCOUNT_DETAILS = "Detalles de la Cuenta";
 	private static final String STEP_BUSINESSES = "Tus Negocios";
-	private static final String STEP_TERMS = "Terminos y Condiciones";
-	private static final String STEP_PRIVACY = "Politica de Privacidad";
+	private static final String STEP_TERMS = "Términos y Condiciones";
+	private static final String STEP_PRIVACY = "Política de Privacidad";
 
 	private static final List<String> STEP_ORDER = Arrays.asList(STEP_LOGIN, STEP_MENU, STEP_MODAL, STEP_ADMIN_VIEW,
 			STEP_GENERAL_INFO, STEP_ACCOUNT_DETAILS, STEP_BUSINESSES, STEP_TERMS, STEP_PRIVACY);
@@ -197,7 +197,7 @@ public class SaleadsMiNegocioFullTest {
 				assertTrue("Legal content is not visible for Terminos y Condiciones.",
 						normalized(textOrEmpty(legalPage.locator("body"))).length() > 200);
 				captureScreenshot(legalPage, evidenceDir, "05-terminos-y-condiciones", true);
-				legalUrls.put("Terminos y Condiciones", legalPage.url());
+				legalUrls.put("Términos y Condiciones", legalPage.url());
 				returnFromLegalPage(appPage, legalPage);
 			}));
 
@@ -209,7 +209,7 @@ public class SaleadsMiNegocioFullTest {
 				assertTrue("Legal content is not visible for Politica de Privacidad.",
 						normalized(textOrEmpty(legalPage.locator("body"))).length() > 200);
 				captureScreenshot(legalPage, evidenceDir, "06-politica-de-privacidad", true);
-				legalUrls.put("Politica de Privacidad", legalPage.url());
+				legalUrls.put("Política de Privacidad", legalPage.url());
 				returnFromLegalPage(appPage, legalPage);
 			}));
 		}
@@ -441,10 +441,10 @@ public class SaleadsMiNegocioFullTest {
 		}
 		report.append("  },\n");
 		report.append("  \"final_urls\": {\n");
-		report.append("    \"Terminos y Condiciones\": \"")
-				.append(escapeJson(legalUrls.getOrDefault("Terminos y Condiciones", ""))).append("\",\n");
-		report.append("    \"Politica de Privacidad\": \"")
-				.append(escapeJson(legalUrls.getOrDefault("Politica de Privacidad", ""))).append("\"\n");
+		report.append("    \"Términos y Condiciones\": \"")
+				.append(escapeJson(legalUrls.getOrDefault("Términos y Condiciones", ""))).append("\",\n");
+		report.append("    \"Política de Privacidad\": \"")
+				.append(escapeJson(legalUrls.getOrDefault("Política de Privacidad", ""))).append("\"\n");
 		report.append("  },\n");
 		report.append("  \"evidence_dir\": \"").append(escapeJson(evidenceDir.toAbsolutePath().toString())).append("\",\n");
 		report.append("  \"failures\": [\n");
