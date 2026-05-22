@@ -22,6 +22,7 @@ Optional:
 
 - `HEADLESS=false` to run headed.
 - `SALEADS_BASE_URL` can be used instead of `SALEADS_LOGIN_URL`.
+- If your automation runner already opens the SaleADS login page before the test starts, `SALEADS_LOGIN_URL` is optional.
 
 ## Artifacts generated
 

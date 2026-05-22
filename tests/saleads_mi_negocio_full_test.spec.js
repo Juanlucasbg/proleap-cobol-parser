@@ -103,7 +103,7 @@ async function writeFinalReport({ results, failures, legalUrls }) {
     testName: "saleads_mi_negocio_full_test",
     generatedAt: new Date().toISOString(),
     environment: {
-      saleadsLoginUrl: LOGIN_URL || "NOT_PROVIDED",
+      saleadsLoginUrl: LOGIN_URL || "CURRENT_PAGE",
       googleAccount: GOOGLE_ACCOUNT_EMAIL
     },
     results,
@@ -137,12 +137,6 @@ ${failureRows}
 }
 
 test("saleads_mi_negocio_full_test", async ({ page }) => {
-  if (!LOGIN_URL) {
-    throw new Error(
-      "Set SALEADS_LOGIN_URL (or SALEADS_BASE_URL) to the SaleADS login page URL for the current environment."
-    );
-  }
-
   fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 
   const results = defaultResults();
@@ -160,8 +154,10 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
   }
 
   await runStep("Login", async () => {
-    await page.goto(LOGIN_URL, { waitUntil: "domcontentloaded" });
-    await waitForUi(page);
+    if (LOGIN_URL) {
+      await page.goto(LOGIN_URL, { waitUntil: "domcontentloaded" });
+      await waitForUi(page);
+    }
 
     const loginButton = await firstVisibleLocator([
       page.getByRole("button", { name: /google/i }),
