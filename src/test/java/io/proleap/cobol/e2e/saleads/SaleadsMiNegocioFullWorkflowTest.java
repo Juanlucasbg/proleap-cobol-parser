@@ -242,12 +242,12 @@ public class SaleadsMiNegocioFullWorkflowTest {
 		try {
 			action.run();
 			report.put(stepName, StepResult.pass("Validation completed."));
-		} catch (final Exception ex) {
+		} catch (final Throwable ex) {
 			report.put(stepName, StepResult.fail(ex.getMessage() == null ? ex.getClass().getSimpleName() : ex.getMessage()));
 
 			try {
 				takeScreenshot("error-" + sanitize(stepName));
-			} catch (final Exception ignored) {
+			} catch (final Throwable ignored) {
 				// Keep the test moving to produce a full report.
 			}
 		}
