@@ -128,10 +128,9 @@ public class SaleadsMiNegocioFullTest {
 	private void executeGoogleLogin(final Page page) {
 		Page googlePage = null;
 		try {
-			googlePage = page.waitForPopup(
+			googlePage = page.waitForPopup(new Page.WaitForPopupOptions().setTimeout(8_000),
 					() -> clickByVisibleTextNoWait(page, "Sign in with Google", "Iniciar sesión con Google",
-							"Iniciar sesion con Google", "Continuar con Google", "Acceder con Google"),
-					new Page.WaitForPopupOptions().setTimeout(8_000));
+							"Iniciar sesion con Google", "Continuar con Google", "Acceder con Google"));
 		} catch (final PlaywrightException popupNotOpened) {
 			clickByVisibleText(page, "Sign in with Google", "Iniciar sesión con Google", "Iniciar sesion con Google",
 					"Continuar con Google", "Acceder con Google");
@@ -141,7 +140,7 @@ public class SaleadsMiNegocioFullTest {
 			waitForUi(googlePage);
 			selectGoogleAccountIfVisible(googlePage);
 			try {
-				googlePage.waitForClose(new Page.WaitForCloseOptions().setTimeout(60_000));
+				googlePage.waitForClose();
 			} catch (final PlaywrightException ignored) {
 				// In some environments Google stays on same popup lifecycle; continue waiting on app page.
 			}
@@ -192,8 +191,8 @@ public class SaleadsMiNegocioFullTest {
 		boolean openedNewTab = false;
 
 		try {
-			legalPage = appPage.waitForPopup(() -> clickByVisibleTextNoWait(appPage, linkText),
-					new Page.WaitForPopupOptions().setTimeout(6_000));
+			legalPage = appPage.waitForPopup(new Page.WaitForPopupOptions().setTimeout(6_000),
+					() -> clickByVisibleTextNoWait(appPage, linkText));
 			openedNewTab = true;
 		} catch (final PlaywrightException popupNotOpened) {
 			clickByVisibleText(appPage, linkText);
