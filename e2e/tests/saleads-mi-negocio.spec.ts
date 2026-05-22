@@ -95,6 +95,8 @@ function cleanError(error: unknown): string {
 }
 
 test("saleads_mi_negocio_full_test", async ({ page }) => {
+  test.setTimeout(420_000);
+
   const loginUrl = process.env.SALEADS_LOGIN_URL ?? process.env.SALEADS_URL ?? process.env.BASE_URL;
   if (!loginUrl) {
     throw new Error("Missing SALEADS_LOGIN_URL (or SALEADS_URL / BASE_URL) environment variable.");
@@ -163,6 +165,51 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
 
     await captureScreenshot(page, path.join(screenshotsDir, "01-dashboard-loaded.png"));
   });
+
+  const blockRemainingDueToLoginFailure = (): boolean => {
+    if (report["Login"].status === "PASS") {
+      return false;
+    }
+
+    for (const field of REPORT_FIELDS) {
+      if (field !== "Login" && report[field].details === "Not executed") {
+        report[field] = {
+          status: "FAIL",
+          details: "Blocked because login validation failed."
+        };
+      }
+    }
+    return true;
+  };
+
+  if (blockRemainingDueToLoginFailure()) {
+    await writeFile(
+      reportPath,
+      JSON.stringify(
+        {
+          name: "saleads_mi_negocio_full_test",
+          generatedAt: new Date().toISOString(),
+          loginUrl,
+          results: REPORT_FIELDS.map((field) => ({
+            field,
+            status: report[field].status,
+            details: report[field].details,
+            finalUrl: report[field].finalUrl
+          }))
+        },
+        null,
+        2
+      ),
+      "utf8"
+    );
+
+    const failedFields = REPORT_FIELDS.filter((field) => report[field].status === "FAIL");
+    expect(
+      failedFields,
+      `The following validations failed: ${failedFields.join(", ")}`
+    ).toEqual([]);
+    return;
+  }
 
   await runStep("Mi Negocio menu", async () => {
     await clickByVisibleText(page, ["Negocio"]);
