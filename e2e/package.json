@@ -1,0 +1,13 @@
+{
+  "name": "saleads-e2e",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Environment-agnostic SaleADS E2E tests",
+  "scripts": {
+    "test": "playwright test",
+    "test:saleads-mi-negocio": "playwright test tests/saleads-mi-negocio.spec.ts --reporter=line"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.54.2"
+  }
+}
