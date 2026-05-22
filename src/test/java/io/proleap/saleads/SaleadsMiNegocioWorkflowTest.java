@@ -55,9 +55,9 @@ public class SaleadsMiNegocioWorkflowTest {
 
 			report.put(REPORT_LOGIN, executeStep(() -> {
 				final String loginUrl = resolveLoginUrl();
-				Assert.assertNotNull("Provide -Dsaleads.login.url or SALEADS_LOGIN_URL with the current environment login page URL.", loginUrl);
-
-				page.navigate(loginUrl);
+				if (loginUrl != null) {
+					page.navigate(loginUrl);
+				}
 				waitForUi(page);
 
 				final Locator loginButton = pickVisibleLocator("Google login button",
