@@ -75,6 +75,11 @@ async function findVisibleByText(page, text) {
   return findVisibleByRegex(page, regex);
 }
 
+async function findVisibleByExactText(page, text) {
+  const regex = new RegExp(`^\\s*${escapeRegExp(text)}\\s*$`, "i");
+  return findVisibleByRegex(page, regex);
+}
+
 function setPass(report, field, details = "Validated successfully") {
   report[field] = { status: "PASS", details };
 }
@@ -126,10 +131,10 @@ async function ensureMiNegocioExpanded(page) {
     return;
   }
 
-  const negocio = await findVisibleByText(page, "Negocio");
+  const negocio = await findVisibleByExactText(page, "Negocio");
   await clickAndWait(page, negocio);
 
-  const miNegocio = await findVisibleByText(page, "Mi Negocio");
+  const miNegocio = await findVisibleByExactText(page, "Mi Negocio");
   await clickAndWait(page, miNegocio);
 
   await expect(page.getByText(/Agregar Negocio/i).first()).toBeVisible({ timeout: 10000 });
@@ -182,6 +187,7 @@ async function validateLegalLink({
 test("saleads_mi_negocio_full_test", async ({ context, page }, testInfo) => {
   const report = newReport();
   const legalUrls = {};
+  const startUrl = page.url();
 
   try {
     const loginOk = await runStep(report, "Login", async () => {
@@ -191,13 +197,26 @@ test("saleads_mi_negocio_full_test", async ({ context, page }, testInfo) => {
         page,
         /(Sign in with Google|Continuar con Google|Iniciar sesi[oó]n con Google|Google)/i,
       );
+      const googlePopupPromise = context.waitForEvent("page", { timeout: 12000 }).catch(() => null);
       await clickAndWait(page, loginButton);
+      const googlePopup = await googlePopupPromise;
+      const authPage = googlePopup || page;
 
-      const googleAccount = page
+      await authPage.waitForLoadState("domcontentloaded", { timeout: 15000 }).catch(() => {});
+      await authPage.waitForLoadState("networkidle", { timeout: 8000 }).catch(() => {});
+
+      const googleAccount = authPage
         .getByText(/juanlucasbarbiergarzon@gmail\.com/i, { exact: false })
         .first();
       if (await safeIsVisible(googleAccount, 7000)) {
-        await clickAndWait(page, googleAccount);
+        await clickAndWait(authPage, googleAccount);
+      }
+
+      if (googlePopup) {
+        await googlePopup.waitForEvent("close", { timeout: 20000 }).catch(() => {});
+        await page.bringToFront();
+        await page.waitForLoadState("domcontentloaded", { timeout: 30000 }).catch(() => {});
+        await page.waitForLoadState("networkidle", { timeout: 10000 }).catch(() => {});
       }
 
       const sidebar = page.locator("aside, nav").first();
@@ -211,10 +230,10 @@ test("saleads_mi_negocio_full_test", async ({ context, page }, testInfo) => {
     }
 
     const menuOk = await runStep(report, "Mi Negocio menu", async () => {
-      const negocioOption = await findVisibleByText(page, "Negocio");
+      const negocioOption = await findVisibleByExactText(page, "Negocio");
       await clickAndWait(page, negocioOption);
 
-      const miNegocioOption = await findVisibleByText(page, "Mi Negocio");
+      const miNegocioOption = await findVisibleByExactText(page, "Mi Negocio");
       await clickAndWait(page, miNegocioOption);
 
       await expect(page.getByText(/Agregar Negocio/i).first()).toBeVisible({ timeout: 15000 });
@@ -325,7 +344,7 @@ test("saleads_mi_negocio_full_test", async ({ context, page }, testInfo) => {
     const reportPayload = {
       name: "saleads_mi_negocio_full_test",
       generatedAt: new Date().toISOString(),
-      startUrl: page.url(),
+      startUrl,
       legalUrls,
       results: report,
     };
