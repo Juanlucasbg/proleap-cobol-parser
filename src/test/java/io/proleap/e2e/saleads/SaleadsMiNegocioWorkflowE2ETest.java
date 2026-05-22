@@ -44,9 +44,10 @@ import org.openqa.selenium.support.ui.WebDriverWait;
  * End-to-end workflow for SaleADS "Mi Negocio".
  *
  * Required runtime environment variables:
- * - SALEADS_BASE_URL: Login URL for the current SaleADS environment.
+ * - SALEADS_BASE_URL: Login URL for the current SaleADS environment, unless using SALEADS_DEBUGGER_ADDRESS.
  *
  * Optional environment variables:
+ * - SALEADS_DEBUGGER_ADDRESS (attach to an already-open Chrome session, e.g. localhost:9222)
  * - SALEADS_HEADLESS (default: true)
  * - SALEADS_TIMEOUT_SECONDS (default: 30)
  * - SALEADS_EXPECTED_USER_NAME
@@ -71,8 +72,13 @@ public class SaleadsMiNegocioWorkflowE2ETest {
 	@Before
 	public void setUp() throws IOException {
 		final ChromeOptions options = new ChromeOptions();
+		final String debuggerAddress = getEnvOrDefault("SALEADS_DEBUGGER_ADDRESS", "").trim();
 
-		if (Boolean.parseBoolean(getEnvOrDefault("SALEADS_HEADLESS", "true"))) {
+		if (!debuggerAddress.isEmpty()) {
+			options.setExperimentalOption("debuggerAddress", debuggerAddress);
+		}
+
+		if (debuggerAddress.isEmpty() && Boolean.parseBoolean(getEnvOrDefault("SALEADS_HEADLESS", "true"))) {
 			options.addArguments("--headless=new");
 		}
 
@@ -100,9 +106,17 @@ public class SaleadsMiNegocioWorkflowE2ETest {
 	@Test
 	public void saleadsMiNegocioFullWorkflow() {
 		final String baseUrl = getEnvOrDefault("SALEADS_BASE_URL", "").trim();
-		Assert.assertFalse("SALEADS_BASE_URL must be set to the current environment login URL.", baseUrl.isEmpty());
-		driver.get(baseUrl);
-		waitForUiToLoad();
+		if (!baseUrl.isEmpty()) {
+			driver.get(baseUrl);
+			waitForUiToLoad();
+		} else {
+			final String currentUrl = driver.getCurrentUrl();
+			final boolean hasUsableCurrentPage = currentUrl != null && !currentUrl.isBlank()
+					&& !"about:blank".equals(currentUrl) && !currentUrl.startsWith("data:");
+			Assert.assertTrue(
+					"Set SALEADS_BASE_URL, or set SALEADS_DEBUGGER_ADDRESS with an already-open browser on the SaleADS login page.",
+					hasUsableCurrentPage);
+		}
 
 		executeStep("Login", this::runStepLoginWithGoogle);
 		executeStep("Mi Negocio menu", this::runStepOpenMiNegocioMenu);
