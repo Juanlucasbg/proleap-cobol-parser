@@ -1,0 +1,13 @@
+{
+  "name": "saleads-mi-negocio-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Environment-agnostic SaleADS Mi Negocio workflow validation",
+  "type": "module",
+  "scripts": {
+    "saleads:mi-negocio:test": "node ./e2e/saleads_mi_negocio_full_test.mjs"
+  },
+  "dependencies": {
+    "playwright": "^1.54.0"
+  }
+}
