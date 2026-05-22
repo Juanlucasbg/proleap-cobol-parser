@@ -87,10 +87,11 @@ async function captureScreenshot(page: Page, filePath: string, fullPage = false)
 }
 
 function cleanError(error: unknown): string {
+  const stripAnsi = (value: string): string => value.replace(/\u001b\[[0-9;]*m/g, "");
   if (error instanceof Error) {
-    return error.message;
+    return stripAnsi(error.message);
   }
-  return String(error);
+  return stripAnsi(String(error));
 }
 
 test("saleads_mi_negocio_full_test", async ({ page }) => {
@@ -113,6 +114,15 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
       await action();
       report[field] = { status: "PASS", finalUrl: report[field].finalUrl };
     } catch (error) {
+      const failureScreenshotName = `fail-${field
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-zA-Z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .toLowerCase()}.png`;
+      await captureScreenshot(page, path.join(screenshotsDir, failureScreenshotName), true).catch(
+        () => undefined
+      );
       report[field] = {
         status: "FAIL",
         details: cleanError(error),
@@ -124,6 +134,7 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
   await runStep("Login", async () => {
     await page.goto(loginUrl, { waitUntil: "domcontentloaded" });
     await waitForUi(page);
+    await captureScreenshot(page, path.join(screenshotsDir, "00-login-page.png"));
 
     const popupPromise = page.waitForEvent("popup", { timeout: 10_000 }).catch(() => null);
     await clickByVisibleText(page, [
