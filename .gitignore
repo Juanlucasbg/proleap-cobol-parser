@@ -45,3 +45,4 @@ out/
 # Node / Playwright artifacts
 node_modules/
 e2e/saleads-mi-negocio/artifacts/
+e2e/saleads-mi-negocio/test-results/
