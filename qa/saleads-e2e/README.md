@@ -28,8 +28,11 @@ This folder contains a Playwright test that automates the full `saleads_mi_negoc
 cd /workspace/qa/saleads-e2e
 npm install
 npx playwright install --with-deps
+export SALEADS_LOGIN_URL="https://<current-saleads-environment>/login"
 npm test
 ```
+
+`SALEADS_LOGIN_URL` is optional if your harness opens the login page before the test starts.
 
 ## Output evidence
 

@@ -186,6 +186,16 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
     };
   };
 
+  const loginUrl = process.env.SALEADS_LOGIN_URL;
+  if (loginUrl) {
+    await page.goto(loginUrl, { waitUntil: "domcontentloaded" });
+    await waitForUiToSettle(page);
+  } else if (page.url() === "about:blank") {
+    throw new Error(
+      "Set SALEADS_LOGIN_URL to the current SaleADS login page, or start the test with the browser already on the login view."
+    );
+  }
+
   // Step 1: Login with Google and validate dashboard.
   try {
     await clickFirstVisible(
