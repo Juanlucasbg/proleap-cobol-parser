@@ -288,12 +288,12 @@ async function run() {
       const googleLoginButton = await firstVisibleLocator([
         page
           .getByRole("button", {
-            name: /sign in with google|iniciar sesi[oó]n con google|continuar con google|acceder con google/i,
+            name: /sign in with google|iniciar sesi[oó]n con google|continuar con google|acceder con google|^google$/i,
           })
           .first(),
         page
           .getByRole("link", {
-            name: /sign in with google|iniciar sesi[oó]n con google|continuar con google|acceder con google/i,
+            name: /sign in with google|iniciar sesi[oó]n con google|continuar con google|acceder con google|^google$/i,
           })
           .first(),
         page
