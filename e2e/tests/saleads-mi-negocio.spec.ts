@@ -26,7 +26,7 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   const legalUrls: Record<string, string> = {};
   const evidenceDir = buildEvidenceDir(testInfo.outputDir);
 
-  await runStep("Login", report, errors, async () => {
+  const loginPassed = await runStep("Login", report, errors, async () => {
     await openLoginPage(page);
 
     const loginTrigger = await firstVisible(
@@ -54,7 +54,8 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
     await screenshot(activeAppPage, evidenceDir, "01-dashboard-loaded.png");
   });
 
-  await runStep("Mi Negocio menu", report, errors, async () => {
+  const miNegocioMenuPassed = loginPassed
+    ? await runStep("Mi Negocio menu", report, errors, async () => {
     await ensureSidebarVisible(page);
 
     const negocioEntry = await firstVisible(
@@ -80,9 +81,11 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
     await expect(page.getByText(/^Agregar Negocio$/i)).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText(/^Administrar Negocios$/i)).toBeVisible({ timeout: 20_000 });
     await screenshot(page, evidenceDir, "02-mi-negocio-menu-expanded.png");
-  });
+      })
+    : skipStep("Mi Negocio menu", report, errors, "Prerequisite failed: Login");
 
-  await runStep("Agregar Negocio modal", report, errors, async () => {
+  const agregarNegocioModalPassed = miNegocioMenuPassed
+    ? await runStep("Agregar Negocio modal", report, errors, async () => {
     const agregarNegocioEntry = await firstVisible(
       [
         page.getByRole("button", { name: /^Agregar Negocio$/i }),
@@ -121,9 +124,11 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
     );
     await clickAndWait(page, cancelButton);
     await expect(page.getByText(/^Crear Nuevo Negocio$/i)).not.toBeVisible({ timeout: 20_000 });
-  });
+      })
+    : skipStep("Agregar Negocio modal", report, errors, "Prerequisite failed: Mi Negocio menu");
 
-  await runStep("Administrar Negocios view", report, errors, async () => {
+  const administrarViewPassed = loginPassed
+    ? await runStep("Administrar Negocios view", report, errors, async () => {
     await ensureMiNegocioExpanded(page);
 
     const administrarNegociosEntry = await firstVisible(
@@ -143,9 +148,11 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
     await expect(page.getByText(/Sección Legal/i)).toBeVisible({ timeout: 30_000 });
 
     await screenshot(page, evidenceDir, "04-administrar-negocios-full-view.png");
-  });
+      })
+    : skipStep("Administrar Negocios view", report, errors, "Prerequisite failed: Login");
 
-  await runStep("Información General", report, errors, async () => {
+  const informacionGeneralPassed = administrarViewPassed
+    ? await runStep("Información General", report, errors, async () => {
     await expect(page.getByText(/BUSINESS PLAN/i)).toBeVisible({ timeout: 20_000 });
     await expect(page.getByRole("button", { name: /Cambiar Plan/i })).toBeVisible({ timeout: 20_000 });
 
@@ -168,21 +175,27 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
       20_000,
     );
     await expect(nameCandidate).toBeVisible();
-  });
+      })
+    : skipStep("Información General", report, errors, "Prerequisite failed: Administrar Negocios view");
 
-  await runStep("Detalles de la Cuenta", report, errors, async () => {
+  const detallesCuentaPassed = administrarViewPassed
+    ? await runStep("Detalles de la Cuenta", report, errors, async () => {
     await expect(page.getByText(/Cuenta creada/i)).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText(/Estado activo/i)).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText(/Idioma seleccionado/i)).toBeVisible({ timeout: 20_000 });
-  });
+      })
+    : skipStep("Detalles de la Cuenta", report, errors, "Prerequisite failed: Administrar Negocios view");
 
-  await runStep("Tus Negocios", report, errors, async () => {
+  const tusNegociosPassed = administrarViewPassed
+    ? await runStep("Tus Negocios", report, errors, async () => {
     await expect(page.getByText(/Tus Negocios/i)).toBeVisible({ timeout: 20_000 });
     await expect(page.getByRole("button", { name: /^Agregar Negocio$/i })).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText(/Tienes\s+2\s+de\s+3\s+negocios/i)).toBeVisible({ timeout: 20_000 });
-  });
+      })
+    : skipStep("Tus Negocios", report, errors, "Prerequisite failed: Administrar Negocios view");
 
-  await runStep("Términos y Condiciones", report, errors, async () => {
+  const terminosPassed = administrarViewPassed
+    ? await runStep("Términos y Condiciones", report, errors, async () => {
     const legalUrl = await validateLegalDocument({
       page,
       context,
@@ -192,9 +205,11 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
       headingPattern: /Términos y Condiciones/i,
     });
     legalUrls["Términos y Condiciones"] = legalUrl;
-  });
+      })
+    : skipStep("Términos y Condiciones", report, errors, "Prerequisite failed: Administrar Negocios view");
 
-  await runStep("Política de Privacidad", report, errors, async () => {
+  const politicaPassed = administrarViewPassed
+    ? await runStep("Política de Privacidad", report, errors, async () => {
     const legalUrl = await validateLegalDocument({
       page,
       context,
@@ -204,7 +219,8 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
       headingPattern: /Política de Privacidad/i,
     });
     legalUrls["Política de Privacidad"] = legalUrl;
-  });
+      })
+    : skipStep("Política de Privacidad", report, errors, "Prerequisite failed: Administrar Negocios view");
 
   const finalReportPath = path.join(evidenceDir, "final-report.json");
   const finalReport = {
@@ -215,6 +231,13 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   };
   fs.writeFileSync(finalReportPath, JSON.stringify(finalReport, null, 2), "utf-8");
   await testInfo.attach("final-report", { path: finalReportPath, contentType: "application/json" });
+
+  void agregarNegocioModalPassed;
+  void informacionGeneralPassed;
+  void detallesCuentaPassed;
+  void tusNegociosPassed;
+  void terminosPassed;
+  void politicaPassed;
 
   if (errors.length > 0) {
     throw new Error(`Workflow validation failed:\n${errors.map((item) => `- ${item}`).join("\n")}`);
@@ -233,15 +256,23 @@ async function runStep(
   report: Report,
   errors: string[],
   callback: () => Promise<void>,
-): Promise<void> {
+): Promise<boolean> {
   try {
     await callback();
     report[field] = "PASS";
+    return true;
   } catch (error) {
     const message = errorToMessage(error);
     report[field] = `FAIL: ${message}`;
     errors.push(`${field}: ${message}`);
+    return false;
   }
+}
+
+function skipStep(field: ReportField, report: Report, errors: string[], reason: string): false {
+  report[field] = `FAIL: ${reason}`;
+  errors.push(`${field}: ${reason}`);
+  return false;
 }
 
 async function openLoginPage(page: Page): Promise<void> {
