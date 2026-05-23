@@ -30,6 +30,7 @@ import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.PlaywrightException;
 import com.microsoft.playwright.options.LoadState;
+import com.microsoft.playwright.options.WaitUntilState;
 
 /**
  * End-to-end validation for the SaleADS "Mi Negocio" workflow.
@@ -70,7 +71,7 @@ public class SaleadsMiNegocioWorkflowTest {
 			final Page appPage = context.newPage();
 			appPage.setDefaultTimeout(30_000);
 
-			appPage.navigate(baseUrl, new Page.NavigateOptions().setWaitUntil(LoadState.NETWORKIDLE));
+			appPage.navigate(baseUrl, new Page.NavigateOptions().setWaitUntil(WaitUntilState.NETWORKIDLE));
 			waitForUi(appPage);
 
 			runStep(report, failureDetails, "Login", () -> {
