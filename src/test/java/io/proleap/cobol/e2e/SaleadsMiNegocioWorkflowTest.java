@@ -7,7 +7,6 @@ import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.PlaywrightException;
-import com.microsoft.playwright.assertions.PlaywrightAssertions;
 import com.microsoft.playwright.options.LoadState;
 import com.microsoft.playwright.options.WaitForSelectorState;
 import org.junit.Assert;
@@ -130,7 +129,7 @@ public class SaleadsMiNegocioWorkflowTest {
           return page;
         });
 
-        appPage = runStep("Informacion General", report, failures, appPage, page -> {
+        appPage = runStep("Informaci\u00f3n General", report, failures, appPage, page -> {
           assertTextVisible(page, EMAIL_PATTERN, "user email");
           assertTextVisible(page, resolveExpectedUserNamePattern(), "user name");
           assertTextVisible(page, BUSINESS_PLAN_PATTERN, "text 'BUSINESS PLAN'");
@@ -154,14 +153,14 @@ public class SaleadsMiNegocioWorkflowTest {
           return page;
         });
 
-        appPage = runStep("Terminos y Condiciones", report, failures, appPage, page -> {
+        appPage = runStep("T\u00e9rminos y Condiciones", report, failures, appPage, page -> {
           final String legalUrl = validateLegalLink(page, context, TERMINOS_LINK_PATTERN, TERMINOS_HEADING_PATTERN,
               evidenceDirectory, "05-terminos-y-condiciones");
           legalUrls.put("Terminos y Condiciones", legalUrl);
           return page;
         });
 
-        appPage = runStep("Politica de Privacidad", report, failures, appPage, page -> {
+        appPage = runStep("Pol\u00edtica de Privacidad", report, failures, appPage, page -> {
           final String legalUrl = validateLegalLink(page, context, PRIVACIDAD_LINK_PATTERN, PRIVACIDAD_HEADING_PATTERN,
               evidenceDirectory, "06-politica-de-privacidad");
           legalUrls.put("Politica de Privacidad", legalUrl);
@@ -351,8 +350,7 @@ public class SaleadsMiNegocioWorkflowTest {
   private void assertTextVisible(final Page page, final Pattern pattern, final String description) {
     final Locator locator = page.getByText(pattern).first();
     locator.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(DEFAULT_TIMEOUT_MS));
-    PlaywrightAssertions.assertThat(locator).isVisible();
-    Assert.assertTrue("Expected to find visible text for " + description, locator.count() > 0);
+    Assert.assertTrue("Expected to find visible text for " + description, locator.isVisible());
   }
 
   private void assertSidebarVisible(final Page page) {
