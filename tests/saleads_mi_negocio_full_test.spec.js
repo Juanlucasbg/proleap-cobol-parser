@@ -182,6 +182,10 @@ test("saleads_mi_negocio_full_test", async ({ page, baseURL }, testInfo) => {
     }
   };
 
+  const markBlocked = (field, blockerField) => {
+    recordResult(field, false, `blocked because "${blockerField}" failed`);
+  };
+
   if (baseURL) {
     await page.goto(baseURL, { waitUntil: "domcontentloaded" });
     await waitForUi(page);
@@ -226,149 +230,183 @@ test("saleads_mi_negocio_full_test", async ({ page, baseURL }, testInfo) => {
     recordResult("Login", false, error.message);
   }
 
+  const canContinueAfterLogin = results["Login"] === "PASS";
+
   // Step 2: Open Mi Negocio menu
-  try {
-    await ensureBusinessMenuExpanded(page);
-    await expect(page.getByText(/agregar negocio/i).first()).toBeVisible();
-    await expect(page.getByText(/administrar negocios/i).first()).toBeVisible();
-    await captureCheckpoint(page, testInfo, "02-mi-negocio-expanded.png");
-    recordResult("Mi Negocio menu", true);
-  } catch (error) {
-    recordResult("Mi Negocio menu", false, error.message);
+  if (canContinueAfterLogin) {
+    try {
+      await ensureBusinessMenuExpanded(page);
+      await expect(page.getByText(/agregar negocio/i).first()).toBeVisible();
+      await expect(page.getByText(/administrar negocios/i).first()).toBeVisible();
+      await captureCheckpoint(page, testInfo, "02-mi-negocio-expanded.png");
+      recordResult("Mi Negocio menu", true);
+    } catch (error) {
+      recordResult("Mi Negocio menu", false, error.message);
+    }
+  } else {
+    markBlocked("Mi Negocio menu", "Login");
   }
 
   // Step 3: Validate Agregar Negocio modal
-  try {
-    const addBusiness = await findFirstVisible([
-      page.getByRole("button", { name: /agregar negocio/i }),
-      page.getByRole("link", { name: /agregar negocio/i }),
-      page.getByText(/agregar negocio/i),
-    ]);
-    await clickAndWait(page, addBusiness);
+  if (results["Mi Negocio menu"] === "PASS") {
+    try {
+      const addBusiness = await findFirstVisible([
+        page.getByRole("button", { name: /agregar negocio/i }),
+        page.getByRole("link", { name: /agregar negocio/i }),
+        page.getByText(/agregar negocio/i),
+      ]);
+      await clickAndWait(page, addBusiness);
 
-    await expect(page.getByText(/crear nuevo negocio/i).first()).toBeVisible();
-    await expect(page.getByLabel(/nombre del negocio/i)).toBeVisible();
-    await expect(page.getByText(/tienes 2 de 3 negocios/i).first()).toBeVisible();
-    await expect(page.getByRole("button", { name: /cancelar/i })).toBeVisible();
-    await expect(page.getByRole("button", { name: /crear negocio/i })).toBeVisible();
+      await expect(page.getByText(/crear nuevo negocio/i).first()).toBeVisible();
+      await expect(page.getByLabel(/nombre del negocio/i)).toBeVisible();
+      await expect(page.getByText(/tienes 2 de 3 negocios/i).first()).toBeVisible();
+      await expect(page.getByRole("button", { name: /cancelar/i })).toBeVisible();
+      await expect(page.getByRole("button", { name: /crear negocio/i })).toBeVisible();
 
-    await captureCheckpoint(page, testInfo, "03-agregar-negocio-modal.png");
+      await captureCheckpoint(page, testInfo, "03-agregar-negocio-modal.png");
 
-    const businessNameInput = page.getByLabel(/nombre del negocio/i);
-    await businessNameInput.click();
-    await businessNameInput.fill(TEST_BUSINESS_NAME);
-    await clickAndWait(page, page.getByRole("button", { name: /cancelar/i }));
-    recordResult("Agregar Negocio modal", true);
-  } catch (error) {
-    recordResult("Agregar Negocio modal", false, error.message);
+      const businessNameInput = page.getByLabel(/nombre del negocio/i);
+      await businessNameInput.click();
+      await businessNameInput.fill(TEST_BUSINESS_NAME);
+      await clickAndWait(page, page.getByRole("button", { name: /cancelar/i }));
+      recordResult("Agregar Negocio modal", true);
+    } catch (error) {
+      recordResult("Agregar Negocio modal", false, error.message);
+    }
+  } else {
+    markBlocked("Agregar Negocio modal", "Mi Negocio menu");
   }
 
   // Step 4: Open Administrar Negocios
-  try {
-    await ensureBusinessMenuExpanded(page);
+  if (results["Mi Negocio menu"] === "PASS") {
+    try {
+      await ensureBusinessMenuExpanded(page);
 
-    const manageBusinesses = await findFirstVisible([
-      page.getByRole("button", { name: /administrar negocios/i }),
-      page.getByRole("link", { name: /administrar negocios/i }),
-      page.getByText(/administrar negocios/i),
-    ]);
-    await clickAndWait(page, manageBusinesses);
+      const manageBusinesses = await findFirstVisible([
+        page.getByRole("button", { name: /administrar negocios/i }),
+        page.getByRole("link", { name: /administrar negocios/i }),
+        page.getByText(/administrar negocios/i),
+      ]);
+      await clickAndWait(page, manageBusinesses);
 
-    await validateSectionHeading(page, /informacion general|información general/i);
-    await validateSectionHeading(page, /detalles de la cuenta/i);
-    await validateSectionHeading(page, /tus negocios/i);
-    await validateSectionHeading(page, /seccion legal|sección legal/i);
+      await validateSectionHeading(page, /informacion general|información general/i);
+      await validateSectionHeading(page, /detalles de la cuenta/i);
+      await validateSectionHeading(page, /tus negocios/i);
+      await validateSectionHeading(page, /seccion legal|sección legal/i);
 
-    await captureCheckpoint(page, testInfo, "04-administrar-negocios-view.png", { fullPage: true });
-    recordResult("Administrar Negocios view", true);
-  } catch (error) {
-    recordResult("Administrar Negocios view", false, error.message);
+      await captureCheckpoint(page, testInfo, "04-administrar-negocios-view.png", { fullPage: true });
+      recordResult("Administrar Negocios view", true);
+    } catch (error) {
+      recordResult("Administrar Negocios view", false, error.message);
+    }
+  } else {
+    markBlocked("Administrar Negocios view", "Mi Negocio menu");
   }
 
   // Step 5: Validate Información General
-  try {
-    const infoGeneralContainer = await findFirstVisible([
-      page.locator("section, div").filter({ hasText: /informacion general|información general/i }),
-      page.locator("section, div").filter({ hasText: /business plan/i }),
-    ]);
+  if (results["Administrar Negocios view"] === "PASS") {
+    try {
+      const infoGeneralContainer = await findFirstVisible([
+        page.locator("section, div").filter({ hasText: /informacion general|información general/i }),
+        page.locator("section, div").filter({ hasText: /business plan/i }),
+      ]);
 
-    await expect(infoGeneralContainer.getByText(/business plan/i)).toBeVisible();
-    await expect(infoGeneralContainer.getByRole("button", { name: /cambiar plan/i })).toBeVisible();
-    await expect(page.getByText(/@/).first()).toBeVisible();
+      await expect(infoGeneralContainer.getByText(/business plan/i)).toBeVisible();
+      await expect(infoGeneralContainer.getByRole("button", { name: /cambiar plan/i })).toBeVisible();
+      await expect(page.getByText(/@/).first()).toBeVisible();
 
-    const hasPotentialName = await infoGeneralContainer
-      .locator("h1, h2, h3, h4, p, span, div")
-      .filter({ hasText: /[A-Za-zÁÉÍÓÚÑáéíóúñ]{2,}\s+[A-Za-zÁÉÍÓÚÑáéíóúñ]{2,}/ })
-      .first()
-      .isVisible()
-      .catch(() => false);
+      const hasPotentialName = await infoGeneralContainer
+        .locator("h1, h2, h3, h4, p, span, div")
+        .filter({ hasText: /[A-Za-zÁÉÍÓÚÑáéíóúñ]{2,}\s+[A-Za-zÁÉÍÓÚÑáéíóúñ]{2,}/ })
+        .first()
+        .isVisible()
+        .catch(() => false);
 
-    expect(hasPotentialName).toBeTruthy();
-    recordResult("Información General", true);
-  } catch (error) {
-    recordResult("Información General", false, error.message);
+      expect(hasPotentialName).toBeTruthy();
+      recordResult("Información General", true);
+    } catch (error) {
+      recordResult("Información General", false, error.message);
+    }
+  } else {
+    markBlocked("Información General", "Administrar Negocios view");
   }
 
   // Step 6: Validate Detalles de la Cuenta
-  try {
-    await expect(page.getByText(/cuenta creada/i).first()).toBeVisible();
-    await expect(page.getByText(/estado activo/i).first()).toBeVisible();
-    await expect(page.getByText(/idioma seleccionado/i).first()).toBeVisible();
-    recordResult("Detalles de la Cuenta", true);
-  } catch (error) {
-    recordResult("Detalles de la Cuenta", false, error.message);
+  if (results["Administrar Negocios view"] === "PASS") {
+    try {
+      await expect(page.getByText(/cuenta creada/i).first()).toBeVisible();
+      await expect(page.getByText(/estado activo/i).first()).toBeVisible();
+      await expect(page.getByText(/idioma seleccionado/i).first()).toBeVisible();
+      recordResult("Detalles de la Cuenta", true);
+    } catch (error) {
+      recordResult("Detalles de la Cuenta", false, error.message);
+    }
+  } else {
+    markBlocked("Detalles de la Cuenta", "Administrar Negocios view");
   }
 
   // Step 7: Validate Tus Negocios
-  try {
-    const businessesSection = await findFirstVisible([
-      page.locator("section, div").filter({ hasText: /tus negocios/i }),
-      page.locator("section, div").filter({ hasText: /tienes 2 de 3 negocios/i }),
-    ]);
+  if (results["Administrar Negocios view"] === "PASS") {
+    try {
+      const businessesSection = await findFirstVisible([
+        page.locator("section, div").filter({ hasText: /tus negocios/i }),
+        page.locator("section, div").filter({ hasText: /tienes 2 de 3 negocios/i }),
+      ]);
 
-    await expect(businessesSection).toBeVisible();
-    await expect(page.getByText(/tienes 2 de 3 negocios/i).first()).toBeVisible();
-    await expect(page.getByRole("button", { name: /agregar negocio/i }).first()).toBeVisible();
+      await expect(businessesSection).toBeVisible();
+      await expect(page.getByText(/tienes 2 de 3 negocios/i).first()).toBeVisible();
+      await expect(page.getByRole("button", { name: /agregar negocio/i }).first()).toBeVisible();
 
-    const hasBusinessRows =
-      (await businessesSection.locator("li, tr, [role='listitem'], [role='row']").count()) > 0;
-    expect(hasBusinessRows).toBeTruthy();
+      const hasBusinessRows =
+        (await businessesSection.locator("li, tr, [role='listitem'], [role='row']").count()) > 0;
+      expect(hasBusinessRows).toBeTruthy();
 
-    recordResult("Tus Negocios", true);
-  } catch (error) {
-    recordResult("Tus Negocios", false, error.message);
+      recordResult("Tus Negocios", true);
+    } catch (error) {
+      recordResult("Tus Negocios", false, error.message);
+    }
+  } else {
+    markBlocked("Tus Negocios", "Administrar Negocios view");
   }
 
   // Step 8: Validate Términos y Condiciones
-  try {
-    await validateLegalLink({
-      page,
-      urls,
-      linkRegex: /terminos y condiciones|términos y condiciones/i,
-      headingRegex: /terminos y condiciones|términos y condiciones/i,
-      reportKey: "Términos y Condiciones",
-      screenshotName: "08-terminos-y-condiciones.png",
-      testInfo,
-    });
-    recordResult("Términos y Condiciones", true);
-  } catch (error) {
-    recordResult("Términos y Condiciones", false, error.message);
+  if (results["Administrar Negocios view"] === "PASS") {
+    try {
+      await validateLegalLink({
+        page,
+        urls,
+        linkRegex: /terminos y condiciones|términos y condiciones/i,
+        headingRegex: /terminos y condiciones|términos y condiciones/i,
+        reportKey: "Términos y Condiciones",
+        screenshotName: "08-terminos-y-condiciones.png",
+        testInfo,
+      });
+      recordResult("Términos y Condiciones", true);
+    } catch (error) {
+      recordResult("Términos y Condiciones", false, error.message);
+    }
+  } else {
+    markBlocked("Términos y Condiciones", "Administrar Negocios view");
   }
 
   // Step 9: Validate Política de Privacidad
-  try {
-    await validateLegalLink({
-      page,
-      urls,
-      linkRegex: /politica de privacidad|política de privacidad/i,
-      headingRegex: /politica de privacidad|política de privacidad/i,
-      reportKey: "Política de Privacidad",
-      screenshotName: "09-politica-de-privacidad.png",
-      testInfo,
-    });
-    recordResult("Política de Privacidad", true);
-  } catch (error) {
-    recordResult("Política de Privacidad", false, error.message);
+  if (results["Administrar Negocios view"] === "PASS") {
+    try {
+      await validateLegalLink({
+        page,
+        urls,
+        linkRegex: /politica de privacidad|política de privacidad/i,
+        headingRegex: /politica de privacidad|política de privacidad/i,
+        reportKey: "Política de Privacidad",
+        screenshotName: "09-politica-de-privacidad.png",
+        testInfo,
+      });
+      recordResult("Política de Privacidad", true);
+    } catch (error) {
+      recordResult("Política de Privacidad", false, error.message);
+    }
+  } else {
+    markBlocked("Política de Privacidad", "Administrar Negocios view");
   }
 
   const finalReport = {
