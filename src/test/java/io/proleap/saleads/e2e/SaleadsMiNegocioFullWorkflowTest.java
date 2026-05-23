@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 
 public class SaleadsMiNegocioFullWorkflowTest {
@@ -32,6 +33,15 @@ public class SaleadsMiNegocioFullWorkflowTest {
 
   @Test
   public void saleadsMiNegocioFullTest() throws Exception {
+    Assume.assumeTrue(
+        "Enable SaleADS E2E with SALEADS_E2E_ENABLED=true or -Dsaleads.e2e.enabled=true.",
+        isE2eEnabled());
+
+    final String startUrl = resolveStartUrl();
+    Assume.assumeTrue(
+        "Set SALEADS_START_URL or -Dsaleads.startUrl to the login page for the current environment.",
+        startUrl != null);
+
     final Path evidenceDir = createEvidenceDirectory();
     final Map<String, Boolean> report = initializeReport();
     final List<String> failures = new ArrayList<>();
@@ -43,13 +53,6 @@ public class SaleadsMiNegocioFullWorkflowTest {
               .launch(new BrowserType.LaunchOptions().setHeadless(isHeadlessEnabled()));
       final BrowserContext context = browser.newContext();
       final Page appPage = context.newPage();
-
-      final String startUrl = resolveStartUrl();
-      if (startUrl == null) {
-        throw new IllegalStateException(
-            "Missing start URL. Set SALEADS_START_URL or -Dsaleads.startUrl to the login page "
-                + "for the current environment.");
-      }
 
       appPage.navigate(startUrl);
       waitForUiToSettle(appPage);
@@ -419,6 +422,18 @@ public class SaleadsMiNegocioFullWorkflowTest {
       return Boolean.parseBoolean(env);
     }
     return true;
+  }
+
+  private static boolean isE2eEnabled() {
+    final String property = System.getProperty("saleads.e2e.enabled");
+    if (property != null && !property.isBlank()) {
+      return Boolean.parseBoolean(property);
+    }
+    final String env = System.getenv("SALEADS_E2E_ENABLED");
+    if (env != null && !env.isBlank()) {
+      return Boolean.parseBoolean(env);
+    }
+    return false;
   }
 
   private static Path createEvidenceDirectory() throws Exception {
