@@ -67,6 +67,43 @@ public class SaleadsMiNegocioFullWorkflowTest {
 			"Términos y Condiciones",
 			"Política de Privacidad");
 
+	private static final List<String> SIGN_IN_ENTRY_TEXTS = Arrays.asList("Sign in", "Iniciar sesión");
+	private static final List<String> GOOGLE_SIGN_IN_TEXTS = Arrays.asList(
+			"Sign in with Google",
+			"Iniciar sesión con Google",
+			"Continuar con Google",
+			"Continue with Google",
+			"Google");
+	private static final List<String> SIDEBAR_NEGOCIO_TEXTS = Arrays.asList("Negocio", "Business");
+	private static final List<String> SIDEBAR_MI_NEGOCIO_TEXTS = Arrays.asList("Mi Negocio", "My Business");
+	private static final List<String> SIDEBAR_AGREGAR_NEGOCIO_TEXTS = Arrays.asList("Agregar Negocio", "Add Business");
+	private static final List<String> SIDEBAR_ADMIN_NEGOCIOS_TEXTS = Arrays.asList(
+			"Administrar Negocios",
+			"Manage Businesses",
+			"Manage Business");
+	private static final List<String> MODAL_CREAR_NEGOCIO_TITLE_TEXTS = Arrays.asList(
+			"Crear Nuevo Negocio",
+			"Create New Business");
+	private static final List<String> INPUT_NOMBRE_NEGOCIO_TEXTS = Arrays.asList(
+			"Nombre del Negocio",
+			"Business Name");
+	private static final List<String> QUOTA_NEGOCIOS_TEXTS = Arrays.asList(
+			"Tienes 2 de 3 negocios",
+			"You have 2 of 3 businesses");
+	private static final List<String> BTN_CANCELAR_TEXTS = Arrays.asList("Cancelar", "Cancel");
+	private static final List<String> BTN_CREAR_NEGOCIO_TEXTS = Arrays.asList("Crear Negocio", "Create Business");
+	private static final List<String> SECTION_INFO_GENERAL_TEXTS = Arrays.asList("Información General", "General Information");
+	private static final List<String> SECTION_DETALLES_CUENTA_TEXTS = Arrays.asList("Detalles de la Cuenta", "Account Details");
+	private static final List<String> SECTION_TUS_NEGOCIOS_TEXTS = Arrays.asList("Tus Negocios", "Your Businesses");
+	private static final List<String> SECTION_LEGAL_TEXTS = Arrays.asList("Sección Legal", "Legal Section");
+	private static final List<String> BUSINESS_PLAN_TEXTS = Arrays.asList("BUSINESS PLAN");
+	private static final List<String> BTN_CAMBIAR_PLAN_TEXTS = Arrays.asList("Cambiar Plan", "Change Plan");
+	private static final List<String> DETALLE_CUENTA_CREADA_TEXTS = Arrays.asList("Cuenta creada", "Account created");
+	private static final List<String> DETALLE_ESTADO_ACTIVO_TEXTS = Arrays.asList("Estado activo", "Active status");
+	private static final List<String> DETALLE_IDIOMA_TEXTS = Arrays.asList("Idioma seleccionado", "Selected language");
+	private static final List<String> TERMINOS_TEXTS = Arrays.asList("Términos y Condiciones", "Terms and Conditions");
+	private static final List<String> PRIVACIDAD_TEXTS = Arrays.asList("Política de Privacidad", "Privacy Policy");
+
 	private WebDriver driver;
 	private WebDriverWait wait;
 	private Path evidenceDir;
@@ -150,14 +187,10 @@ public class SaleadsMiNegocioFullWorkflowTest {
 
 		driver.get(loginUrl);
 		waitForUiToLoad();
+		openLoginScreenIfNeeded();
 
 		final Set<String> initialHandles = driver.getWindowHandles();
-		clickFirstVisibleText(Arrays.asList(
-				"Sign in with Google",
-				"Iniciar sesión con Google",
-				"Continuar con Google",
-				"Continue with Google",
-				"Google"), false);
+		clickFirstVisibleText(GOOGLE_SIGN_IN_TEXTS, false);
 
 		selectGoogleAccountIfPrompted(initialHandles);
 		waitForMainApplication();
@@ -166,20 +199,19 @@ public class SaleadsMiNegocioFullWorkflowTest {
 
 	private void stepOpenMiNegocioMenu() throws IOException {
 		expandMiNegocioMenu();
-		Assert.assertTrue("Expected submenu option 'Agregar Negocio' to be visible.", isTextVisible("Agregar Negocio"));
-		Assert.assertTrue("Expected submenu option 'Administrar Negocios' to be visible.",
-				isTextVisible("Administrar Negocios"));
+		assertAnyTextVisible(SIDEBAR_AGREGAR_NEGOCIO_TEXTS, "Expected submenu option 'Agregar Negocio' to be visible.");
+		assertAnyTextVisible(SIDEBAR_ADMIN_NEGOCIOS_TEXTS, "Expected submenu option 'Administrar Negocios' to be visible.");
 		captureScreenshot("02-mi-negocio-menu-expanded");
 	}
 
 	private void stepValidateAgregarNegocioModal() throws IOException {
-		clickFirstVisibleText(Collections.singletonList("Agregar Negocio"), true);
+		clickFirstVisibleText(SIDEBAR_AGREGAR_NEGOCIO_TEXTS, true);
 
-		assertTextVisible("Crear Nuevo Negocio");
-		findVisibleElementByText("Nombre del Negocio");
-		assertTextVisible("Tienes 2 de 3 negocios");
-		assertTextVisible("Cancelar");
-		assertTextVisible("Crear Negocio");
+		assertAnyTextVisible(MODAL_CREAR_NEGOCIO_TITLE_TEXTS, "Modal title should be visible.");
+		findVisibleElementByAnyText(INPUT_NOMBRE_NEGOCIO_TEXTS);
+		assertAnyTextVisible(QUOTA_NEGOCIOS_TEXTS, "Business quota text should be visible.");
+		assertAnyTextVisible(BTN_CANCELAR_TEXTS, "Cancelar button should be visible.");
+		assertAnyTextVisible(BTN_CREAR_NEGOCIO_TEXTS, "Crear Negocio button should be visible.");
 
 		final WebElement negocioInput = findBusinessNameInput();
 		negocioInput.click();
@@ -189,29 +221,29 @@ public class SaleadsMiNegocioFullWorkflowTest {
 
 		captureScreenshot("03-agregar-negocio-modal");
 
-		clickFirstVisibleText(Collections.singletonList("Cancelar"), true);
-		wait.until(ExpectedConditions.invisibilityOfElementLocated(textLocator("Crear Nuevo Negocio")));
+		clickFirstVisibleText(BTN_CANCELAR_TEXTS, true);
+		wait.until(d -> !isAnyTextVisible(MODAL_CREAR_NEGOCIO_TITLE_TEXTS));
 	}
 
 	private void stepOpenAdministrarNegocios() throws IOException {
 		expandMiNegocioMenu();
-		clickFirstVisibleText(Collections.singletonList("Administrar Negocios"), true);
+		clickFirstVisibleText(SIDEBAR_ADMIN_NEGOCIOS_TEXTS, true);
 
-		assertTextVisible("Información General");
-		assertTextVisible("Detalles de la Cuenta");
-		assertTextVisible("Tus Negocios");
-		assertTextVisible("Sección Legal");
+		assertAnyTextVisible(SECTION_INFO_GENERAL_TEXTS, "Section 'Información General' should be visible.");
+		assertAnyTextVisible(SECTION_DETALLES_CUENTA_TEXTS, "Section 'Detalles de la Cuenta' should be visible.");
+		assertAnyTextVisible(SECTION_TUS_NEGOCIOS_TEXTS, "Section 'Tus Negocios' should be visible.");
+		assertAnyTextVisible(SECTION_LEGAL_TEXTS, "Section 'Sección Legal' should be visible.");
 
 		captureScreenshot("04-administrar-negocios-view");
 	}
 
 	private void stepValidateInformacionGeneral() {
-		final WebElement section = findSectionByHeading("Información General");
+		final WebElement section = findSectionByHeading(SECTION_INFO_GENERAL_TEXTS);
 		final String sectionText = normalizeWhitespace(section.getText());
 
 		Assert.assertTrue("Expected 'BUSINESS PLAN' in Información General.",
-				containsIgnoreCase(sectionText, "BUSINESS PLAN"));
-		Assert.assertTrue("Expected button/text 'Cambiar Plan'.", isTextVisible("Cambiar Plan"));
+				containsAnyIgnoreCase(sectionText, BUSINESS_PLAN_TEXTS));
+		assertAnyTextVisible(BTN_CAMBIAR_PLAN_TEXTS, "Expected button/text 'Cambiar Plan'.");
 
 		final String expectedUserName = config("SALEADS_EXPECTED_USER_NAME", "saleads.expected.user.name", "");
 		if (!expectedUserName.isBlank()) {
@@ -228,53 +260,56 @@ public class SaleadsMiNegocioFullWorkflowTest {
 	}
 
 	private void stepValidateDetallesCuenta() {
-		final WebElement section = findSectionByHeading("Detalles de la Cuenta");
+		final WebElement section = findSectionByHeading(SECTION_DETALLES_CUENTA_TEXTS);
 		final String sectionText = normalizeWhitespace(section.getText());
 
-		Assert.assertTrue("Expected 'Cuenta creada' label.", containsIgnoreCase(sectionText, "Cuenta creada"));
-		Assert.assertTrue("Expected 'Estado activo' label.", containsIgnoreCase(sectionText, "Estado activo"));
-		Assert.assertTrue("Expected 'Idioma seleccionado' label.",
-				containsIgnoreCase(sectionText, "Idioma seleccionado"));
+		Assert.assertTrue("Expected 'Cuenta creada' label.", containsAnyIgnoreCase(sectionText, DETALLE_CUENTA_CREADA_TEXTS));
+		Assert.assertTrue("Expected 'Estado activo' label.", containsAnyIgnoreCase(sectionText, DETALLE_ESTADO_ACTIVO_TEXTS));
+		Assert.assertTrue("Expected 'Idioma seleccionado' label.", containsAnyIgnoreCase(sectionText, DETALLE_IDIOMA_TEXTS));
 	}
 
 	private void stepValidateTusNegocios() {
-		final WebElement section = findSectionByHeading("Tus Negocios");
+		final WebElement section = findSectionByHeading(SECTION_TUS_NEGOCIOS_TEXTS);
 		final String sectionText = normalizeWhitespace(section.getText());
 
-		Assert.assertTrue("Expected button/text 'Agregar Negocio'.", containsIgnoreCase(sectionText, "Agregar Negocio"));
+		Assert.assertTrue("Expected button/text 'Agregar Negocio'.",
+				containsAnyIgnoreCase(sectionText, SIDEBAR_AGREGAR_NEGOCIO_TEXTS));
 		Assert.assertTrue("Expected quota text 'Tienes 2 de 3 negocios'.",
-				containsIgnoreCase(sectionText, "Tienes 2 de 3 negocios"));
+				containsAnyIgnoreCase(sectionText, QUOTA_NEGOCIOS_TEXTS));
 
 		final List<String> meaningfulLines = extractMeaningfulLines(sectionText, Arrays.asList(
 				"tus negocios",
 				"agregar negocio",
-				"tienes 2 de 3 negocios"));
+				"tienes 2 de 3 negocios",
+				"your businesses",
+				"add business",
+				"you have 2 of 3 businesses"));
 		Assert.assertFalse("Business list is not visible in 'Tus Negocios' section.", meaningfulLines.isEmpty());
 	}
 
 	private void stepValidateTerminosCondiciones() throws IOException {
 		final String finalUrl = openLegalDocument(
-				"Términos y Condiciones",
-				"Términos y Condiciones",
+				TERMINOS_TEXTS,
+				TERMINOS_TEXTS,
 				"08-terminos-condiciones");
 		legalUrls.put("Términos y Condiciones", finalUrl);
 	}
 
 	private void stepValidatePoliticaPrivacidad() throws IOException {
 		final String finalUrl = openLegalDocument(
-				"Política de Privacidad",
-				"Política de Privacidad",
+				PRIVACIDAD_TEXTS,
+				PRIVACIDAD_TEXTS,
 				"09-politica-privacidad");
 		legalUrls.put("Política de Privacidad", finalUrl);
 	}
 
-	private String openLegalDocument(final String linkText, final String headingText, final String screenshotName)
+	private String openLegalDocument(final List<String> linkTexts, final List<String> headingTexts, final String screenshotName)
 			throws IOException {
 		final String appWindow = driver.getWindowHandle();
 		final Set<String> handlesBeforeClick = driver.getWindowHandles();
 		final String initialUrl = driver.getCurrentUrl();
 
-		clickFirstVisibleText(Collections.singletonList(linkText), false);
+		clickFirstVisibleText(linkTexts, false);
 		waitForUiToLoad();
 
 		final String newHandle = waitForNewWindow(handlesBeforeClick, 10);
@@ -290,9 +325,9 @@ public class SaleadsMiNegocioFullWorkflowTest {
 			waitForUiToLoad();
 		}
 
-		assertTextVisible(headingText);
+		assertAnyTextVisible(headingTexts, "Expected legal heading to be visible.");
 		final String legalText = normalizeWhitespace(driver.findElement(By.tagName("body")).getText());
-		Assert.assertTrue("Legal content text is not visible for: " + headingText, legalText.length() > 120);
+		Assert.assertTrue("Legal content text is not visible for: " + headingTexts, legalText.length() > 120);
 
 		captureScreenshot(screenshotName);
 
@@ -306,7 +341,13 @@ public class SaleadsMiNegocioFullWorkflowTest {
 		}
 
 		waitForUiToLoad();
-		waitForAnyVisibleText(Arrays.asList("Sección Legal", "Información General", "Tus Negocios"));
+		waitForAnyVisibleText(Arrays.asList(
+				"Sección Legal",
+				"Información General",
+				"Tus Negocios",
+				"Legal Section",
+				"General Information",
+				"Your Businesses"));
 
 		return finalUrl;
 	}
@@ -334,17 +375,17 @@ public class SaleadsMiNegocioFullWorkflowTest {
 	}
 
 	private void expandMiNegocioMenu() {
-		if (isTextVisible("Agregar Negocio") && isTextVisible("Administrar Negocios")) {
+		if (isAnyTextVisible(SIDEBAR_AGREGAR_NEGOCIO_TEXTS) && isAnyTextVisible(SIDEBAR_ADMIN_NEGOCIOS_TEXTS)) {
 			return;
 		}
 
-		clickTextIfPresent(Collections.singletonList("Negocio"));
+		clickTextIfPresent(SIDEBAR_NEGOCIO_TEXTS);
 		waitForUiToLoad();
 
-		clickFirstVisibleText(Collections.singletonList("Mi Negocio"), true);
+		clickFirstVisibleText(SIDEBAR_MI_NEGOCIO_TEXTS, true);
 
-		if (!isTextVisible("Agregar Negocio") || !isTextVisible("Administrar Negocios")) {
-			clickTextIfPresent(Collections.singletonList("Mi Negocio"));
+		if (!isAnyTextVisible(SIDEBAR_AGREGAR_NEGOCIO_TEXTS) || !isAnyTextVisible(SIDEBAR_ADMIN_NEGOCIOS_TEXTS)) {
+			clickTextIfPresent(SIDEBAR_MI_NEGOCIO_TEXTS);
 			waitForUiToLoad();
 		}
 	}
@@ -369,20 +410,27 @@ public class SaleadsMiNegocioFullWorkflowTest {
 	}
 
 	private void waitForMainApplication() {
-		waitForAnyVisibleText(Arrays.asList("Negocio", "Mi Negocio", "Dashboard"));
+		waitForAnyVisibleText(Arrays.asList("Negocio", "Mi Negocio", "Business", "My Business", "Dashboard"));
 		Assert.assertTrue("Main application sidebar is not visible.", isSidebarVisible());
 	}
 
 	private boolean isSidebarVisible() {
 		final List<By> sidebarLocators = Arrays.asList(
 				By.cssSelector("aside"),
-				By.cssSelector("nav"),
 				By.cssSelector("[class*='sidebar']"),
-				By.cssSelector("[id*='sidebar']"));
+				By.cssSelector("[id*='sidebar']"),
+				By.cssSelector("nav"));
 
 		for (final By locator : sidebarLocators) {
 			for (final WebElement element : driver.findElements(locator)) {
-				if (isDisplayed(element)) {
+				if (isDisplayed(element)
+						&& element.getRect().getX() <= 350
+						&& element.getRect().getHeight() >= 250
+						&& containsAnyIgnoreCase(normalizeWhitespace(element.getText()), Arrays.asList(
+								"negocio",
+								"business",
+								"dashboard",
+								"account"))) {
 					return true;
 				}
 			}
@@ -394,12 +442,13 @@ public class SaleadsMiNegocioFullWorkflowTest {
 	private WebElement findBusinessNameInput() {
 		final By inputLocator = By.xpath(
 				"//input[@placeholder='Nombre del Negocio' or @aria-label='Nombre del Negocio']"
+						+ " | //input[@placeholder='Business Name' or @aria-label='Business Name']"
 						+ " | //label[contains(normalize-space(), 'Nombre del Negocio')]/following::input[1]");
 		return wait.until(ExpectedConditions.visibilityOfElementLocated(inputLocator));
 	}
 
-	private WebElement findSectionByHeading(final String headingText) {
-		final WebElement heading = findVisibleElementByText(headingText);
+	private WebElement findSectionByHeading(final List<String> headingTexts) {
+		final WebElement heading = findVisibleElementByAnyText(headingTexts);
 		try {
 			return heading.findElement(By.xpath(
 					"./ancestor::*[self::section or self::article or self::div][1]"));
@@ -661,6 +710,46 @@ public class SaleadsMiNegocioFullWorkflowTest {
 
 	private boolean containsIgnoreCase(final String text, final String target) {
 		return text.toLowerCase(Locale.ROOT).contains(target.toLowerCase(Locale.ROOT));
+	}
+
+	private boolean containsAnyIgnoreCase(final String text, final List<String> targets) {
+		for (final String target : targets) {
+			if (containsIgnoreCase(text, target)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private boolean isAnyTextVisible(final List<String> candidateTexts) {
+		for (final String candidateText : candidateTexts) {
+			if (isTextVisible(candidateText)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private void assertAnyTextVisible(final List<String> candidateTexts, final String message) {
+		Assert.assertTrue(message + " Expected one of: " + candidateTexts, isAnyTextVisible(candidateTexts));
+	}
+
+	private WebElement findVisibleElementByAnyText(final List<String> candidateTexts) {
+		for (final String candidateText : candidateTexts) {
+			if (isTextVisible(candidateText)) {
+				return findVisibleElementByText(candidateText);
+			}
+		}
+		throw new NoSuchElementException("Visible element not found for text candidates: " + candidateTexts);
+	}
+
+	private void openLoginScreenIfNeeded() {
+		if (isAnyTextVisible(GOOGLE_SIGN_IN_TEXTS)) {
+			return;
+		}
+
+		clickTextIfPresent(SIGN_IN_ENTRY_TEXTS);
+		waitForUiToLoad();
 	}
 
 	private boolean hasLikelyDisplayedName(final String sectionText) {
