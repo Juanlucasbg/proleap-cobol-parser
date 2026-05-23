@@ -161,8 +161,10 @@ public class SaleadsMiNegocioFullTest {
 
 	private void validateInformacionGeneral() {
 		assertVisibleText("Información General");
-		assertAnyElementVisible(Arrays.asList(By.xpath("//*[contains(normalize-space(),'@')]"), textLocatorContains("Nombre"),
-				textLocatorContains("Usuario"), textLocatorContains("Name")));
+		assertAnyElementVisible(Arrays.asList(By.xpath("//*[contains(normalize-space(),'@') and contains(normalize-space(), '.')]"),
+				textLocatorContains(GOOGLE_ACCOUNT_EMAIL)));
+		assertAnyElementVisible(Arrays.asList(textLocatorContains("Nombre"), textLocatorContains("Usuario"),
+				textLocatorContains("Name")));
 		assertVisibleText("BUSINESS PLAN");
 		assertVisibleText("Cambiar Plan");
 	}
@@ -178,9 +180,13 @@ public class SaleadsMiNegocioFullTest {
 		assertVisibleText("Agregar Negocio");
 		assertVisibleText("Tienes 2 de 3 negocios");
 
-		final WebElement negociosSection = wait.until(ExpectedConditions
-				.visibilityOfElementLocated(By.xpath("//*[normalize-space()='Tus Negocios']/ancestor::*[1]")));
-		assertTrue("Business list is not visible in 'Tus Negocios'.", negociosSection.getText().length() > 50);
+		final WebElement negociosSection = wait.until(ExpectedConditions.visibilityOfElementLocated(
+				By.xpath("//*[normalize-space()='Tus Negocios']/ancestor::*[self::section or self::div][1]")));
+		final List<WebElement> businessEntries = negociosSection.findElements(By.xpath(
+				".//li[normalize-space()] | .//tr[normalize-space()] | .//*[contains(@class,'negocio') or contains(@class,'business')]"));
+		if (businessEntries.isEmpty()) {
+			throw new IllegalStateException("Business list is not visible in 'Tus Negocios'.");
+		}
 	}
 
 	private void validateLegalLink(final String linkText, final String expectedHeading, final String screenshotName)
@@ -291,7 +297,7 @@ public class SaleadsMiNegocioFullTest {
 		try {
 			action.run();
 			report.put(name, Boolean.TRUE);
-		} catch (final Exception ex) {
+		} catch (final Throwable ex) {
 			report.put(name, Boolean.FALSE);
 			failures.add(name + " -> " + ex.getMessage());
 			try {
@@ -324,8 +330,7 @@ public class SaleadsMiNegocioFullTest {
 
 	private void clickByVisibleText(final String text) {
 		final WebElement element = wait.until(ExpectedConditions
-				.presenceOfElementLocated(By.xpath("(" + textLocatorExact(text).toString().replace("By.xpath: ", "")
-						+ " | " + textLocatorContains(text).toString().replace("By.xpath: ", "") + ")[1]")));
+				.visibilityOfElementLocated(By.xpath("(" + textExpressionExact(text) + " | " + textExpressionContains(text) + ")[1]")));
 		clickElement(element);
 	}
 
@@ -392,11 +397,19 @@ public class SaleadsMiNegocioFullTest {
 	}
 
 	private By textLocatorExact(final String text) {
-		return By.xpath("//*[normalize-space()=" + asXPathLiteral(text) + "]");
+		return By.xpath(textExpressionExact(text));
 	}
 
 	private By textLocatorContains(final String text) {
-		return By.xpath("//*[contains(normalize-space(), " + asXPathLiteral(text) + ")]");
+		return By.xpath(textExpressionContains(text));
+	}
+
+	private String textExpressionExact(final String text) {
+		return "//*[normalize-space()=" + asXPathLiteral(text) + "]";
+	}
+
+	private String textExpressionContains(final String text) {
+		return "//*[contains(normalize-space(), " + asXPathLiteral(text) + ")]";
 	}
 
 	private String asXPathLiteral(final String value) {
