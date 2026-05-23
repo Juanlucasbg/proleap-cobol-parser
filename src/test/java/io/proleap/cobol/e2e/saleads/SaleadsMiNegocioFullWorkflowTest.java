@@ -220,9 +220,9 @@ public class SaleadsMiNegocioFullWorkflowTest {
 			action.run();
 			sectionStatus.put(sectionName, Boolean.TRUE);
 			sectionDetails.put(sectionName, "PASS");
-		} catch (final Exception exception) {
+		} catch (final Throwable throwable) {
 			sectionStatus.put(sectionName, Boolean.FALSE);
-			sectionDetails.put(sectionName, "FAIL - " + exception.getMessage());
+			sectionDetails.put(sectionName, "FAIL - " + throwable.getMessage());
 			try {
 				captureScreenshot("failure-" + sanitizeFileName(sectionName.toLowerCase(Locale.ROOT)));
 			} catch (final IOException screenshotException) {
