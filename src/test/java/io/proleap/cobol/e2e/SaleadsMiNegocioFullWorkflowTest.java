@@ -126,8 +126,8 @@ public class SaleadsMiNegocioFullWorkflowTest {
 
     final Page googlePopup = waitForPossiblePopup(context, () -> {
       loginButton.click(new Locator.ClickOptions().setTimeout(STEP_TIMEOUT_MS));
-      waitForUiToSettle(appPage);
     });
+    waitForUiToSettle(appPage);
 
     if (googlePopup != null) {
       selectGoogleAccountIfPrompted(googlePopup, GOOGLE_ACCOUNT_EMAIL);
