@@ -44,11 +44,11 @@ public class SaleadsMiNegocioWorkflowTest {
   private static final String MENU = "Mi Negocio menu";
   private static final String MODAL = "Agregar Negocio modal";
   private static final String ADMIN_VIEW = "Administrar Negocios view";
-  private static final String INFO_GENERAL = "Informacion General";
+  private static final String INFO_GENERAL = "Información General";
   private static final String ACCOUNT_DETAILS = "Detalles de la Cuenta";
   private static final String BUSINESSES = "Tus Negocios";
-  private static final String TERMS = "Terminos y Condiciones";
-  private static final String PRIVACY = "Politica de Privacidad";
+  private static final String TERMS = "Términos y Condiciones";
+  private static final String PRIVACY = "Política de Privacidad";
 
   private final Map<String, Boolean> statusByStep = new LinkedHashMap<>();
   private final Map<String, String> legalUrls = new LinkedHashMap<>();
