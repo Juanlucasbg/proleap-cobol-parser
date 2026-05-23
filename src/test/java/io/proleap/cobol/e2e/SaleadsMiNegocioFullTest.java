@@ -312,8 +312,8 @@ public class SaleadsMiNegocioFullTest {
 	private static Page clickAndCapturePopup(final Page page, final Locator locator) {
 		try {
 			return page.waitForPopup(
-					() -> clickAndWait(page, locator),
-					new Page.WaitForPopupOptions().setTimeout(POPUP_TIMEOUT_MS));
+					new Page.WaitForPopupOptions().setTimeout(POPUP_TIMEOUT_MS),
+					() -> clickAndWait(page, locator));
 		} catch (final PlaywrightException popupNotOpened) {
 			clickAndWait(page, locator);
 			return null;
