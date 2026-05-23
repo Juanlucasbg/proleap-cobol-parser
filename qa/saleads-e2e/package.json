@@ -1,0 +1,17 @@
+{
+  "name": "saleads-e2e",
+  "version": "1.0.0",
+  "description": "Cross-environment SaleADS Mi Negocio end-to-end workflow test",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test:mi-negocio": "node tests/saleads_mi_negocio_full_test.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@playwright/test": "^1.60.0"
+  }
+}
