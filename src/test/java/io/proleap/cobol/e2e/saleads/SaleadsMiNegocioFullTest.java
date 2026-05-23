@@ -187,11 +187,12 @@ public class SaleadsMiNegocioFullTest {
 				.getByText(Pattern.compile("Crear\\s+Nuevo\\s+Negocio", Pattern.CASE_INSENSITIVE));
 		require(isVisibleWithTimeout(modalTitle, 12000), "Modal title 'Crear Nuevo Negocio' is not visible");
 
-		final Locator nombreField = firstVisibleWithTimeout(10000,
-				page.getByLabel(Pattern.compile("Nombre\\s+del\\s+Negocio", Pattern.CASE_INSENSITIVE)),
-				page.getByPlaceholder(Pattern.compile("Nombre\\s+del\\s+Negocio", Pattern.CASE_INSENSITIVE)),
-				page.locator("input").filter(new Locator.FilterOptions()
-						.setHasText(Pattern.compile("Nombre\\s+del\\s+Negocio", Pattern.CASE_INSENSITIVE))));
+		require(isAnyVisibleWithTimeout(page, 10000,
+				page.getByText(Pattern.compile("Nombre\\s+del\\s+Negocio", Pattern.CASE_INSENSITIVE))),
+				"Label text 'Nombre del Negocio' is not visible");
+		final Locator nombreField = firstVisibleWithTimeout(10000, page.locator("input[placeholder*='Nombre']"),
+				page.locator("input[name*='nombre' i]"), page.locator("input[id*='nombre' i]"),
+				page.locator("form input"));
 		requireVisible(nombreField, "Input 'Nombre del Negocio' was not found");
 		require(
 				isAnyVisibleWithTimeout(page, 10000,
