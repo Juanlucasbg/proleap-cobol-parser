@@ -68,11 +68,13 @@ public class SaleadsMiNegocioFullTest {
 			report.put("Tus Negocios", runStep("Tus Negocios", details, () -> validateTusNegocios(page)));
 			report.put("Términos y Condiciones", runStep("Términos y Condiciones", details,
 					() -> validateLegalDocument(page, context, runDir, legalUrls,
+							"Términos y Condiciones",
 							Pattern.compile("T[eé]rminos\\s+y\\s+Condiciones", Pattern.CASE_INSENSITIVE),
 							Pattern.compile("T[eé]rminos\\s+y\\s+Condiciones", Pattern.CASE_INSENSITIVE),
 							"08_terminos_y_condiciones.png")));
 			report.put("Política de Privacidad", runStep("Política de Privacidad", details,
 					() -> validateLegalDocument(page, context, runDir, legalUrls,
+							"Política de Privacidad",
 							Pattern.compile("Pol[ií]tica\\s+de\\s+Privacidad", Pattern.CASE_INSENSITIVE),
 							Pattern.compile("Pol[ií]tica\\s+de\\s+Privacidad", Pattern.CASE_INSENSITIVE),
 							"09_politica_de_privacidad.png")));
@@ -304,8 +306,8 @@ public class SaleadsMiNegocioFullTest {
 	}
 
 	private void validateLegalDocument(final Page appPage, final BrowserContext context, final Path runDir,
-			final Map<String, String> legalUrls, final Pattern linkPattern, final Pattern headingPattern,
-			final String screenshotName) {
+			final Map<String, String> legalUrls, final String reportLabel, final Pattern linkPattern,
+			final Pattern headingPattern, final String screenshotName) {
 		final Locator legalLink = firstVisibleWithTimeout(10000, appPage.getByText(linkPattern),
 				appPage.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName(linkPattern)),
 				appPage.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(linkPattern)));
@@ -330,7 +332,7 @@ public class SaleadsMiNegocioFullTest {
 				"Legal content text is not visible");
 
 		takeScreenshot(legalPage, runDir.resolve(screenshotName), true);
-		legalUrls.put(extractReadableLabel(headingPattern), legalPage.url());
+		legalUrls.put(reportLabel, legalPage.url());
 
 		if (openedInNewTab) {
 			legalPage.close();
@@ -519,10 +521,6 @@ public class SaleadsMiNegocioFullTest {
 			}
 		}
 		return null;
-	}
-
-	private static String extractReadableLabel(final Pattern pattern) {
-		return pattern.pattern().replace("\\s+", " ").replace("\\", "");
 	}
 
 	@FunctionalInterface
