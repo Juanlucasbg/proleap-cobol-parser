@@ -194,6 +194,38 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+SaleADS Mi Negocio E2E workflow (Playwright)
+--------------------------------------------
+
+This repository also includes a standalone browser automation script for the
+SaleADS "Mi Negocio" workflow:
+
+```
+$ npm run setup:saleads:e2e
+$ npm run test:saleads:mi-negocio
+```
+
+The test is URL-agnostic and uses visible text selectors. Configure runtime
+variables when needed:
+
+* `SALEADS_START_URL` (optional): login URL of the current environment (dev, staging, production).
+* `SALEADS_HEADLESS` (optional): set to `false` to run headed.
+* `SALEADS_EVIDENCE_DIR` (optional): output directory for screenshots.
+
+Expected evidence includes screenshots for dashboard load, expanded menu,
+"Crear Nuevo Negocio" modal, account page, terms page and privacy page.
+The script prints a final PASS/FAIL report for:
+
+* Login
+* Mi Negocio menu
+* Agregar Negocio modal
+* Administrar Negocios view
+* Información General
+* Detalles de la Cuenta
+* Tus Negocios
+* Términos y Condiciones
+* Política de Privacidad
+
 
 Release process
 ---------------
