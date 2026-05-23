@@ -254,7 +254,7 @@ public class SaleadsMiNegocioWorkflowTest {
       clickFirstVisibleText(popup, List.of(ACCOUNT_EMAIL));
       waitForUiToLoad(popup);
       try {
-        popup.waitForClose(new Page.WaitForCloseOptions().setTimeout(8_000));
+        popup.waitForClose();
       } catch (PlaywrightException ignored) {
         // Some environments redirect back without closing immediately.
       }
