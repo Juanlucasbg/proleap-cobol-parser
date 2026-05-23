@@ -205,7 +205,7 @@ public class SaleAdsMiNegocioFullWorkflowTest {
 
 		final boolean hasListLikeItem = !section
 				.findElements(By.xpath(".//li | .//tr[td] | .//*[contains(@class,'business') or contains(@class,'negocio')]"))
-				isEmpty();
+				.isEmpty();
 		assertTrue("Business list is not visible in Tus Negocios section.",
 				hasListLikeItem || section.getText().length() > "Tus Negocios".length() + 20);
 	}
