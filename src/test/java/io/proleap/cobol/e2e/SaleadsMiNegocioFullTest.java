@@ -124,14 +124,13 @@ public class SaleadsMiNegocioFullTest {
 
 		Page popup = null;
 		try {
-			popup = appPage.waitForPopup(
+			popup = appPage.waitForPopup(new Page.WaitForPopupOptions().setTimeout(8000),
 					() -> clickVisible("Sign in with Google button",
 							appPage.getByRole(AriaRole.BUTTON,
 									new Page.GetByRoleOptions().setName(
 											Pattern.compile("(?iu)(sign in with google|iniciar sesión con google|continuar con google|google)"))),
 							appPage.getByText(
-									Pattern.compile("(?iu)(sign in with google|iniciar sesión con google|continuar con google)"))),
-					new Page.WaitForPopupOptions().setTimeout(8000));
+									Pattern.compile("(?iu)(sign in with google|iniciar sesión con google|continuar con google)"))));
 		} catch (final PlaywrightException popupMissing) {
 			// Login can happen in same tab, so a popup is not mandatory.
 		}
@@ -283,7 +282,7 @@ public class SaleadsMiNegocioFullTest {
 		boolean openedInPopup = false;
 
 		try {
-			targetPage = appPage.waitForPopup(() -> link.click(), new Page.WaitForPopupOptions().setTimeout(7000));
+			targetPage = appPage.waitForPopup(new Page.WaitForPopupOptions().setTimeout(7000), () -> link.click());
 			openedInPopup = true;
 		} catch (final PlaywrightException noPopup) {
 			// Same-tab navigation is also valid.
