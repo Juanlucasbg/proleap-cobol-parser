@@ -49,11 +49,11 @@ public class SaleadsMiNegocioFullWorkflowTest {
       "Mi Negocio menu",
       "Agregar Negocio modal",
       "Administrar Negocios view",
-      "Informacion General",
+      "Información General",
       "Detalles de la Cuenta",
       "Tus Negocios",
-      "Terminos y Condiciones",
-      "Politica de Privacidad");
+      "Términos y Condiciones",
+      "Política de Privacidad");
 
   @Test
   public void saleadsMiNegocioFullWorkflow() throws Exception {
@@ -91,11 +91,11 @@ public class SaleadsMiNegocioFullWorkflowTest {
           });
 
           if (administrarOk) {
-            executeStep("Informacion General", report, failures, () -> stepValidateInformacionGeneral(appPage));
+            executeStep("Información General", report, failures, () -> stepValidateInformacionGeneral(appPage));
             executeStep("Detalles de la Cuenta", report, failures, () -> stepValidateDetallesCuenta(appPage));
             executeStep("Tus Negocios", report, failures, () -> stepValidateTusNegocios(appPage));
-            executeStep("Terminos y Condiciones", report, failures, () -> stepValidateTerminosYCondiciones(context, appPage, evidenceDir));
-            executeStep("Politica de Privacidad", report, failures, () -> stepValidatePoliticaPrivacidad(context, appPage, evidenceDir));
+            executeStep("Términos y Condiciones", report, failures, () -> stepValidateTerminosYCondiciones(context, appPage, evidenceDir));
+            executeStep("Política de Privacidad", report, failures, () -> stepValidatePoliticaPrivacidad(context, appPage, evidenceDir));
           }
         }
       }
