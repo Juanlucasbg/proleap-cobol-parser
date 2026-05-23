@@ -1,0 +1,16 @@
+{
+  "name": "e2e",
+  "version": "1.0.0",
+  "description": "SaleADS end-to-end automation flows",
+  "type": "module",
+  "scripts": {
+    "test": "node saleads-mi-negocio-full-test.mjs",
+    "saleads:mi-negocio-full-test": "node saleads-mi-negocio-full-test.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "playwright": "^1.60.0"
+  }
+}
