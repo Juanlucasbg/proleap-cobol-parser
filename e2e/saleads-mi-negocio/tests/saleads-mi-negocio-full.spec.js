@@ -76,6 +76,12 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
     }
   };
 
+  const requireSuccessfulStep = (name) => {
+    if (report[name].status !== "PASS") {
+      throw new Error(`Skipped: prerequisite step "${name}" did not pass.`);
+    }
+  };
+
   await runStep("Login", async () => {
     if (!baseUrl) {
       throw new Error("Set SALEADS_BASE_URL (or SALEADS_URL / BASE_URL) to run against the active environment.");
@@ -129,6 +135,8 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   });
 
   await runStep("Mi Negocio menu", async () => {
+    requireSuccessfulStep("Login");
+
     const negocioItem = await firstVisible(
       [
         page.getByRole("button", { name: /^Negocio$/i }).first(),
@@ -155,6 +163,8 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   });
 
   await runStep("Agregar Negocio modal", async () => {
+    requireSuccessfulStep("Mi Negocio menu");
+
     const addBusinessOption = await firstVisible(
       [
         page.getByRole("button", { name: /^Agregar Negocio$/i }).first(),
@@ -179,6 +189,8 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   });
 
   await runStep("Administrar Negocios view", async () => {
+    requireSuccessfulStep("Mi Negocio menu");
+
     const miNegocioItem = await firstVisible(
       [
         page.getByRole("button", { name: /^Mi Negocio$/i }).first(),
@@ -209,6 +221,8 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   });
 
   await runStep("Información General", async () => {
+    requireSuccessfulStep("Administrar Negocios view");
+
     const infoSection = sectionByTitle(page, /^Información General$/i);
     await expect(infoSection).toBeVisible();
 
@@ -219,6 +233,8 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   });
 
   await runStep("Detalles de la Cuenta", async () => {
+    requireSuccessfulStep("Administrar Negocios view");
+
     const detailsSection = sectionByTitle(page, /^Detalles de la Cuenta$/i);
     await expect(detailsSection).toBeVisible();
 
@@ -228,6 +244,8 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   });
 
   await runStep("Tus Negocios", async () => {
+    requireSuccessfulStep("Administrar Negocios view");
+
     const businessesSection = sectionByTitle(page, /^Tus Negocios$/i);
     await expect(businessesSection).toBeVisible();
 
@@ -275,6 +293,8 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   };
 
   await runStep("Términos y Condiciones", async () => {
+    requireSuccessfulStep("Administrar Negocios view");
+
     await validateLegalLink(
       "Términos y Condiciones",
       /T[eé]rminos y Condiciones/i,
@@ -284,6 +304,8 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   });
 
   await runStep("Política de Privacidad", async () => {
+    requireSuccessfulStep("Administrar Negocios view");
+
     await validateLegalLink(
       "Política de Privacidad",
       /Pol[ií]tica de Privacidad/i,
