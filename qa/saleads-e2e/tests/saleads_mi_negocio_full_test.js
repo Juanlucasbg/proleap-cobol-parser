@@ -46,6 +46,8 @@ function safeFileName(input) {
 }
 
 async function waitForUi(page) {
+  let fatalError = null;
+
   try {
     await page.waitForLoadState("networkidle", { timeout: ACTION_TIMEOUT_MS });
   } catch {
@@ -391,6 +393,12 @@ async function main() {
       screenshotName: "politica_de_privacidad",
       reportUrlKey: "politicaDePrivacidad",
     });
+  } catch (error) {
+    fatalError = error;
+    report.errors.push({
+      step: "Precondition / Setup",
+      message: error instanceof Error ? error.message : String(error),
+    });
   } finally {
     if (context) {
       await context.close();
@@ -410,7 +418,13 @@ async function main() {
     process.stdout.write(`${JSON.stringify(report.status, null, 2)}\n`);
     process.stdout.write(`Overall: ${report.overall}\n`);
 
-    if (hasFailedStep) {
+    if (fatalError) {
+      process.stdout.write(
+        `Fatal error: ${fatalError instanceof Error ? fatalError.message : String(fatalError)}\n`
+      );
+    }
+
+    if (hasFailedStep || fatalError) {
       process.exitCode = 1;
     }
   }
