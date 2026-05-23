@@ -436,9 +436,7 @@ public class SaleadsMiNegocioFullWorkflow {
 	}
 
 	private boolean hasVisibleTextQuick(final String text) {
-		final String exactXpath = "//*[normalize-space(.)=" + xpathLiteral(text) + "]";
-		final String containsXpath = "//*[contains(normalize-space(.), " + xpathLiteral(text) + ")]";
-		for (final String xpath : Arrays.asList(exactXpath, containsXpath)) {
+		for (final String xpath : buildTextXPaths(text)) {
 			final List<WebElement> elements = driver.findElements(By.xpath(xpath));
 			for (final WebElement element : elements) {
 				if (safeDisplayed(element)) {
@@ -453,9 +451,7 @@ public class SaleadsMiNegocioFullWorkflow {
 		final long end = System.currentTimeMillis() + timeout.toMillis();
 		while (System.currentTimeMillis() < end) {
 			for (final String text : candidateTexts) {
-				final String exactXpath = "//*[normalize-space(.)=" + xpathLiteral(text) + "]";
-				final String containsXpath = "//*[contains(normalize-space(.), " + xpathLiteral(text) + ")]";
-				for (final String xpath : Arrays.asList(exactXpath, containsXpath)) {
+				for (final String xpath : buildTextXPaths(text)) {
 					final List<WebElement> elements = driver.findElements(By.xpath(xpath));
 					for (final WebElement element : elements) {
 						if (safeDisplayed(element)) {
@@ -579,6 +575,18 @@ public class SaleadsMiNegocioFullWorkflow {
 		}
 		literal.append(')');
 		return literal.toString();
+	}
+
+	private List<String> buildTextXPaths(final String text) {
+		final String lowerText = text.toLowerCase(Locale.ROOT);
+		final String normalized = "translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZÁÉÍÓÚÜÑ', 'abcdefghijklmnopqrstuvwxyzáéíóúüñ')";
+
+		final String exactCaseSensitive = "//*[normalize-space(.)=" + xpathLiteral(text) + "]";
+		final String containsCaseSensitive = "//*[contains(normalize-space(.), " + xpathLiteral(text) + ")]";
+		final String exactCaseInsensitive = "//*[" + normalized + "=" + xpathLiteral(lowerText) + "]";
+		final String containsCaseInsensitive = "//*[contains(" + normalized + ", " + xpathLiteral(lowerText) + ")]";
+
+		return Arrays.asList(exactCaseSensitive, containsCaseSensitive, exactCaseInsensitive, containsCaseInsensitive);
 	}
 
 	private String findAnyEmail(final String text) {
