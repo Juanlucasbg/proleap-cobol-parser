@@ -194,6 +194,23 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+* To run the SaleADS Mi Negocio full E2E workflow test (disabled by default):
+
+```
+$ mvn -Dtest=SaleAdsMiNegocioFullWorkflowTest \
+      -Dsaleads.e2e.enabled=true \
+      -Dsaleads.e2e.loginUrl="https://<your-saleads-env>/login" \
+      test
+```
+
+Optional runtime settings:
+
+* `-Dsaleads.e2e.headless=true|false` (default `true`)
+* `-Dsaleads.e2e.accountEmail=<email>` (default `juanlucasbarbiergarzon@gmail.com`)
+* `-Dsaleads.e2e.accountName=<display-name>` (optional strict user-name validation)
+
+Evidence screenshots are stored under `target/saleads-evidence/<timestamp>/`.
+
 
 Release process
 ---------------
