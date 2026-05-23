@@ -119,6 +119,25 @@ async function takeScreenshot(page, screenshotsDir, name, fullPage = false) {
   return filePath;
 }
 
+async function hasAppSidebarShell(page) {
+  const sidebar = await firstVisibleLocator(
+    [page.locator("aside").first(), page.locator('[class*="sidebar"]').first()],
+    2500,
+  );
+  if (!sidebar) {
+    return false;
+  }
+  const negocioMarker = await isVisible(
+    page.getByText(/\bmi negocio\b|\bnegocio\b/i).first(),
+    2500,
+  );
+  const marketingHeroVisible = await isVisible(
+    page.getByText(/comienza ahora|a 52 segundos|mam[aá] emprendedora/i).first(),
+    1000,
+  );
+  return negocioMarker && !marketingHeroVisible;
+}
+
 function detectEmail(text) {
   const match = text.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
   return match?.[0] ?? "";
@@ -157,15 +176,17 @@ async function validateLegalPage({
   screenshotsDir,
   section,
   linkLabel,
+  linkPattern,
   headingPattern,
   screenshotName,
 }) {
   const beforeUrl = appPage.url();
   const popupPromise = context.waitForEvent("page", { timeout: 7000 }).catch(() => null);
 
+  const linkMatcher = linkPattern ?? new RegExp(linkLabel, "i");
   const link = await firstVisibleLocator([
-    appPage.getByRole("link", { name: new RegExp(linkLabel, "i") }).first(),
-    appPage.getByText(new RegExp(linkLabel, "i")).first(),
+    appPage.getByRole("link", { name: linkMatcher }).first(),
+    appPage.getByText(linkMatcher).first(),
   ]);
 
   const hasLink = Boolean(link);
@@ -243,33 +264,54 @@ async function run() {
     // Step 1: Login with Google.
     {
       const section = report.sections["Login"];
-      const popupPromise = context.waitForEvent("page", { timeout: 7000 }).catch(() => null);
+      let alreadyInApp = await hasAppSidebarShell(page);
 
-      const loginButton = await firstVisibleLocator([
+      if (!alreadyInApp) {
+        const entryLoginButton = await firstVisibleLocator([
+          page.getByRole("button", { name: /inicia sesi[oó]n|iniciar sesi[oó]n/i }).first(),
+          page.getByRole("link", { name: /inicia sesi[oó]n|iniciar sesi[oó]n/i }).first(),
+          page.getByText(/inicia sesi[oó]n|iniciar sesi[oó]n/i).first(),
+        ]);
+        addValidation(
+          section,
+          "Entry login button is visible",
+          Boolean(entryLoginButton),
+          entryLoginButton ? "" : "Could not locate initial login entry from landing/login page.",
+        );
+        if (entryLoginButton) {
+          await entryLoginButton.click();
+          await waitForUiLoad(page);
+        }
+      }
+
+      const popupPromise = context.waitForEvent("page", { timeout: 7000 }).catch(() => null);
+      const googleLoginButton = await firstVisibleLocator([
         page
           .getByRole("button", {
-            name: /sign in with google|iniciar sesion con google|continuar con google|google/i,
+            name: /sign in with google|iniciar sesi[oó]n con google|continuar con google|acceder con google/i,
           })
           .first(),
         page
           .getByRole("link", {
-            name: /sign in with google|iniciar sesion con google|continuar con google|google/i,
+            name: /sign in with google|iniciar sesi[oó]n con google|continuar con google|acceder con google/i,
           })
           .first(),
         page
-          .getByText(/sign in with google|iniciar sesion con google|continuar con google|google/i)
+          .getByText(
+            /sign in with google|iniciar sesi[oó]n con google|continuar con google|acceder con google/i,
+          )
           .first(),
       ]);
 
-      const loginButtonVisible = Boolean(loginButton);
+      const loginButtonVisible = Boolean(googleLoginButton);
       addValidation(
         section,
         "Login button or 'Sign in with Google' is visible",
         loginButtonVisible,
       );
 
-      if (loginButton) {
-        await loginButton.click();
+      if (googleLoginButton) {
+        await googleLoginButton.click();
       }
       await waitForUiLoad(page);
 
@@ -284,6 +326,13 @@ async function run() {
         authPage.getByRole("button", { name: new RegExp(args.accountEmail, "i") }).first(),
       ]);
 
+      const accountOptionVisible = Boolean(accountLocator);
+      addValidation(
+        section,
+        `Google account option "${args.accountEmail}" appears`,
+        accountOptionVisible,
+      );
+
       if (accountLocator) {
         await accountLocator.click();
       }
@@ -297,22 +346,18 @@ async function run() {
       }
       await waitForUiLoad(page);
 
-      const sidebarVisible = await firstVisibleLocator([
-        page.getByRole("navigation").first(),
-        page.locator("aside").first(),
-        page.locator('[class*="sidebar"]').first(),
-      ]);
+      alreadyInApp = await hasAppSidebarShell(page);
       addValidation(
         section,
         "Main application interface appears",
-        Boolean(sidebarVisible),
-        sidebarVisible ? "" : "Sidebar/main app shell was not detected after login.",
+        alreadyInApp,
+        alreadyInApp ? "" : "Main app shell was not detected after login flow.",
       );
       addValidation(
         section,
         "Left sidebar navigation is visible",
-        Boolean(sidebarVisible),
-        sidebarVisible ? "" : "Could not confirm left sidebar visibility.",
+        alreadyInApp,
+        alreadyInApp ? "" : "Could not confirm left sidebar visibility.",
       );
 
       const screenshotPath = await takeScreenshot(page, screenshotsDir, "01_dashboard_loaded");
@@ -324,12 +369,12 @@ async function run() {
     {
       const section = report.sections["Mi Negocio menu"];
       const sidebarVisible = await firstVisibleLocator([
-        page.getByRole("navigation").first(),
         page.locator("aside").first(),
+        page.locator('[class*="sidebar"]').first(),
       ]);
       addValidation(section, "Left sidebar navigation exists", Boolean(sidebarVisible));
 
-      const negocioLabelVisible = await isVisible(page.getByText(/negocio/i).first(), 5000);
+      const negocioLabelVisible = await isVisible(page.getByText(/\bnegocio\b/i).first(), 5000);
       addValidation(section, 'Section "Negocio" is visible', negocioLabelVisible);
 
       const miNegocioTrigger = await firstVisibleLocator([
@@ -448,13 +493,16 @@ async function run() {
         await waitForUiLoad(page);
       }
 
-      const infoGeneralVisible = await isVisible(page.getByText(/informacion general/i).first(), 10000);
+      const infoGeneralVisible = await isVisible(
+        page.getByText(/informaci[oó]n general/i).first(),
+        10000,
+      );
       const detallesVisible = await isVisible(
         page.getByText(/detalles de la cuenta/i).first(),
         10000,
       );
       const negociosVisible = await isVisible(page.getByText(/tus negocios/i).first(), 10000);
-      const legalVisible = await isVisible(page.getByText(/seccion legal/i).first(), 10000);
+      const legalVisible = await isVisible(page.getByText(/secci[oó]n legal/i).first(), 10000);
 
       addValidation(section, 'Section "Informacion General" exists', infoGeneralVisible);
       addValidation(section, 'Section "Detalles de la Cuenta" exists', detallesVisible);
@@ -530,7 +578,8 @@ async function run() {
       screenshotsDir,
       section: report.sections["Terminos y Condiciones"],
       linkLabel: "Terminos y Condiciones",
-      headingPattern: /terminos y condiciones/i,
+      linkPattern: /t[eé]rminos y condiciones|terminos y condiciones/i,
+      headingPattern: /t[eé]rminos y condiciones|terminos y condiciones/i,
       screenshotName: "08_terminos_y_condiciones",
     });
 
@@ -541,7 +590,8 @@ async function run() {
       screenshotsDir,
       section: report.sections["Politica de Privacidad"],
       linkLabel: "Politica de Privacidad",
-      headingPattern: /politica de privacidad/i,
+      linkPattern: /pol[ií]tica de privacidad|politica de privacidad/i,
+      headingPattern: /pol[ií]tica de privacidad|politica de privacidad/i,
       screenshotName: "09_politica_de_privacidad",
     });
   } finally {
