@@ -12,6 +12,8 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -153,7 +155,7 @@ public class SaleadsMiNegocioFullWorkflowTest {
 		waitForVisibleText("Detalles de la Cuenta");
 		waitForVisibleText("Tus Negocios");
 		waitForVisibleText("Sección Legal");
-		captureScreenshot("04-administrar-negocios");
+		captureFullPageScreenshot("04-administrar-negocios");
 	}
 
 	private void validateInformacionGeneral() {
@@ -477,6 +479,22 @@ public class SaleadsMiNegocioFullWorkflowTest {
 		String fileName = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss-SSS").withZone(ZoneOffset.UTC).format(Instant.now())
 				+ "-" + sanitizeFileName(checkpointName) + ".png";
 		Files.copy(source.toPath(), evidenceDirectory.resolve(fileName), StandardCopyOption.REPLACE_EXISTING);
+	}
+
+	private void captureFullPageScreenshot(final String checkpointName) throws IOException {
+		if (driver instanceof ChromeDriver chromeDriver) {
+			Map<String, Object> params = new HashMap<>();
+			params.put("captureBeyondViewport", Boolean.TRUE);
+			params.put("fromSurface", Boolean.TRUE);
+			String data = (String) chromeDriver.executeCdpCommand("Page.captureScreenshot", params).get("data");
+
+			String fileName = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss-SSS").withZone(ZoneOffset.UTC).format(Instant.now())
+					+ "-" + sanitizeFileName(checkpointName) + ".png";
+			Files.write(evidenceDirectory.resolve(fileName), Base64.getDecoder().decode(data));
+			return;
+		}
+
+		captureScreenshot(checkpointName);
 	}
 
 	private Path createEvidenceDirectory() throws IOException {
