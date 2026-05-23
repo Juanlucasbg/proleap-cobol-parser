@@ -264,9 +264,9 @@ public class SaleadsMiNegocioWorkflowTest {
 
     Page openedPage = null;
     try {
-      openedPage = context.waitForPage(() -> {
+      openedPage = context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(7_000), () -> {
         legalLink.click();
-      }, new BrowserContext.WaitForPageOptions().setTimeout(7_000));
+      });
     } catch (PlaywrightException ignored) {
       // Same-tab navigation is valid, the click already happened.
     }
@@ -302,9 +302,9 @@ public class SaleadsMiNegocioWorkflowTest {
   private Page clickAndMaybeGetPopup(final Page sourcePage, final BrowserContext context, final Locator locator) {
     Page popup = null;
     try {
-      popup = context.waitForPage(() -> {
+      popup = context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(7_000), () -> {
         locator.click();
-      }, new BrowserContext.WaitForPageOptions().setTimeout(7_000));
+      });
     } catch (PlaywrightException ignored) {
       // No popup opened. The click callback already ran.
     }
