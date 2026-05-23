@@ -25,6 +25,7 @@ import org.junit.Test;
 
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
+import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
@@ -66,7 +67,7 @@ public class SaleadsMiNegocioWorkflowTest {
 		final List<String> finalUrls = new ArrayList<>();
 
 		try (Playwright playwright = Playwright.create()) {
-			final Browser browser = playwright.chromium().launch(new Browser.LaunchOptions().setHeadless(headless));
+			final Browser browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(headless));
 			final BrowserContext context = browser.newContext(new Browser.NewContextOptions().setViewportSize(1600, 1200));
 			final Page appPage = context.newPage();
 			appPage.setDefaultTimeout(30_000);
@@ -259,10 +260,10 @@ public class SaleadsMiNegocioWorkflowTest {
 	private static Page clickAndMaybeGetPopup(BrowserContext context, Runnable clickAction) {
 		AtomicBoolean executed = new AtomicBoolean(false);
 		try {
-			return context.waitForPage(() -> {
+			return context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(8_000), () -> {
 				executed.set(true);
 				clickAction.run();
-			}, new BrowserContext.WaitForPageOptions().setTimeout(8_000));
+			});
 		} catch (PlaywrightException noPopup) {
 			if (!executed.get()) {
 				clickAction.run();
