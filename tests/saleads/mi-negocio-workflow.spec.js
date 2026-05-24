@@ -48,6 +48,12 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
     await takeCheckpoint(page, screenshotsDir, "01-dashboard-loaded");
   });
 
+  if (report.Login !== "PASS") {
+    markRemainingAsBlocked(report, "Login");
+    await finalizeAndAssertReport(testInfo, report, evidence);
+    return;
+  }
+
   await runStep(report, "Mi Negocio menu", async () => {
     await expect(getSidebarLocator(page)).toBeVisible();
     await expect(page.getByText("Negocio", { exact: false }).first()).toBeVisible();
@@ -172,22 +178,7 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
     evidence.politicaUrl = result.finalUrl;
   });
 
-  const finalPayload = {
-    workflow: "saleads_mi_negocio_full_test",
-    report,
-    evidence
-  };
-
-  await testInfo.attach("final-report", {
-    body: JSON.stringify(finalPayload, null, 2),
-    contentType: "application/json"
-  });
-
-  const failures = Object.entries(report).filter(([, status]) => status !== "PASS");
-  if (failures.length > 0) {
-    const failureText = failures.map(([step, status]) => `${step}: ${status}`).join("\n");
-    throw new Error(`Workflow validation failed:\n${failureText}`);
-  }
+  await finalizeAndAssertReport(testInfo, report, evidence);
 });
 
 async function runStep(report, stepName, stepAction) {
@@ -328,6 +319,33 @@ async function validateLegalPage(page, headingName, screenshotsDir, screenshotNa
   }
 
   await takeCheckpoint(page, screenshotsDir, screenshotName, { fullPage: true });
+}
+
+function markRemainingAsBlocked(report, blockingStepName) {
+  for (const [step, status] of Object.entries(report)) {
+    if (status === "NOT_EXECUTED") {
+      report[step] = `FAIL - Blocked because '${blockingStepName}' did not complete successfully.`;
+    }
+  }
+}
+
+async function finalizeAndAssertReport(testInfo, report, evidence) {
+  const finalPayload = {
+    workflow: "saleads_mi_negocio_full_test",
+    report,
+    evidence
+  };
+
+  await testInfo.attach("final-report", {
+    body: JSON.stringify(finalPayload, null, 2),
+    contentType: "application/json"
+  });
+
+  const failures = Object.entries(report).filter(([, status]) => status !== "PASS");
+  if (failures.length > 0) {
+    const failureText = failures.map(([step, status]) => `${step}: ${status}`).join("\n");
+    throw new Error(`Workflow validation failed:\n${failureText}`);
+  }
 }
 
 function normalizeErrorMessage(error) {
