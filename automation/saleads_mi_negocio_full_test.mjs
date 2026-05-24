@@ -64,6 +64,16 @@ function fail(step, message) {
   report.results[step].details.push(`FAIL: ${message}`);
 }
 
+function stepPassed(step) {
+  return report.results[step].status === "PASS";
+}
+
+function failIfNoDetail(step, message) {
+  if (!report.results[step].details.length) {
+    fail(step, message);
+  }
+}
+
 async function ensureDir() {
   await fs.mkdir(outputDir, { recursive: true });
 }
@@ -105,13 +115,13 @@ async function clickAndWait(locator, page) {
   await waitUi(page);
 }
 
-async function visibleText(page, textOrRegex) {
-  const target = page.getByText(textOrRegex, { exact: false });
+async function visibleText(root, textOrRegex) {
+  const target = root.getByText(textOrRegex, { exact: false });
   return (await target.count()) > 0 && (await target.first().isVisible());
 }
 
-async function expectVisible(step, page, textOrRegex, successMessage) {
-  const isVisible = await visibleText(page, textOrRegex);
+async function expectVisible(step, root, textOrRegex, successMessage) {
+  const isVisible = await visibleText(root, textOrRegex);
   if (isVisible) {
     detail(step, `PASS: ${successMessage}`);
   } else {
@@ -119,19 +129,52 @@ async function expectVisible(step, page, textOrRegex, successMessage) {
   }
 }
 
+async function sectionByHeading(page, headingRegex) {
+  const heading = await firstVisible(
+    [
+      page.getByRole("heading", { name: headingRegex }),
+      page.getByText(headingRegex),
+    ],
+    7000,
+  );
+  if (!heading) {
+    return null;
+  }
+
+  return heading.locator(
+    "xpath=ancestor::*[self::section or self::article or self::main or self::div][1]",
+  );
+}
+
 async function loginWithGoogle(page) {
   const step = "Login";
-  const popupPromise = page.context().waitForEvent("page", { timeout: 12000 }).catch(() => null);
+  const genericLogin = await firstVisible(
+    [
+      page.getByRole("button", { name: /iniciar sesión|iniciar sesion|sign in|login|acceder/i }),
+      page.getByRole("link", { name: /iniciar sesión|iniciar sesion|sign in|login|acceder/i }),
+    ],
+    4000,
+  );
 
-  const loginButton = await firstVisible([
-    page.getByRole("button", { name: /google/i }),
-    page.getByRole("link", { name: /google/i }),
-    page.getByText(/sign in with google|iniciar sesión con google|continuar con google/i),
-  ]);
+  if (genericLogin) {
+    await clickAndWait(genericLogin, page);
+    detail(step, "Click en botón inicial de acceso ejecutado.");
+  }
+
+  const popupPromise = page.context().waitForEvent("page", { timeout: 12000 }).catch(() => null);
+  const loginButton = await firstVisible(
+    [
+      page.getByRole("button", { name: /iniciar sesión con google|iniciar sesion con google|continuar con google|sign in with google|google/i }),
+      page.getByRole("link", { name: /iniciar sesión con google|iniciar sesion con google|continuar con google|sign in with google|google/i }),
+      page.getByText(/sign in with google|iniciar sesión con google|iniciar sesion con google|continuar con google/i),
+    ],
+    12000,
+  );
 
   if (!loginButton) {
     fail(step, "No se encontró botón de login con Google.");
-    return;
+    await screenshot(page, "login_google_button_not_found");
+    return false;
   }
 
   await clickAndWait(loginButton, page);
@@ -155,6 +198,11 @@ async function loginWithGoogle(page) {
   if (accountChoice) {
     await accountChoice.click();
     detail(step, `Cuenta de Google seleccionada: ${GOOGLE_ACCOUNT_EMAIL}`);
+    try {
+      await waitUi(authPage);
+    } catch {
+      // If popup closes automatically, this wait can fail and it's safe to continue.
+    }
   } else {
     detail(step, "Selector de cuenta no visible; se continúa (posible sesión previa).");
   }
@@ -176,11 +224,13 @@ async function loginWithGoogle(page) {
 
   if (!sidebarVisible) {
     fail(step, "No se detectó barra lateral tras login.");
-  } else {
-    detail(step, "Interfaz principal y sidebar visibles tras login.");
+    await screenshot(page, "dashboard_sidebar_not_found");
+    return false;
   }
 
+  detail(step, "Interfaz principal y sidebar visibles tras login.");
   await screenshot(page, "dashboard_loaded");
+  return true;
 }
 
 async function openMiNegocioMenu(page) {
@@ -207,7 +257,8 @@ async function openMiNegocioMenu(page) {
 
   if (!miNegocio) {
     fail(step, "No se encontró opción Mi Negocio.");
-    return;
+    await screenshot(page, "mi_negocio_option_not_found");
+    return false;
   }
 
   await clickAndWait(miNegocio, page);
@@ -217,6 +268,7 @@ async function openMiNegocioMenu(page) {
   await expectVisible(step, page, /administrar negocios/i, "'Administrar Negocios' visible");
 
   await screenshot(page, "mi_negocio_menu_expanded");
+  return stepPassed(step);
 }
 
 async function validateAgregarNegocioModal(page) {
@@ -230,7 +282,8 @@ async function validateAgregarNegocioModal(page) {
 
   if (!agregarNegocio) {
     fail(step, "No se encontró botón/acción Agregar Negocio.");
-    return;
+    await screenshot(page, "agregar_negocio_entry_not_found");
+    return false;
   }
 
   await clickAndWait(agregarNegocio, page);
@@ -241,7 +294,8 @@ async function validateAgregarNegocioModal(page) {
     detail(step, "Modal visible.");
   } catch {
     fail(step, "No apareció modal tras click en Agregar Negocio.");
-    return;
+    await screenshot(page, "agregar_negocio_modal_not_found");
+    return false;
   }
 
   const modalScope = modal.first();
@@ -303,6 +357,8 @@ async function validateAgregarNegocioModal(page) {
   } else {
     fail(step, "No se encontró botón Cancelar para cierre del modal.");
   }
+
+  return stepPassed(step);
 }
 
 async function openAdministrarNegocios(page) {
@@ -337,25 +393,67 @@ async function openAdministrarNegocios(page) {
 
   if (!administrarAfterExpand) {
     fail(step, "No se encontró acceso a Administrar Negocios.");
-    return;
+    await screenshot(page, "administrar_negocios_entry_not_found");
+    return {
+      ok: false,
+      infoSection: null,
+      detailsSection: null,
+      businessesSection: null,
+      legalSection: null,
+    };
   }
 
   await clickAndWait(administrarAfterExpand, page);
+  const infoSection = await sectionByHeading(page, /información general/i);
+  const detailsSection = await sectionByHeading(page, /detalles de la cuenta/i);
+  const businessesSection = await sectionByHeading(page, /tus negocios/i);
+  const legalSection = await sectionByHeading(page, /sección legal/i);
 
-  await expectVisible(step, page, /información general/i, "Sección 'Información General' visible");
-  await expectVisible(step, page, /detalles de la cuenta/i, "Sección 'Detalles de la Cuenta' visible");
-  await expectVisible(step, page, /tus negocios/i, "Sección 'Tus Negocios' visible");
-  await expectVisible(step, page, /sección legal/i, "Sección 'Sección Legal' visible");
+  if (infoSection) {
+    detail(step, "PASS: Sección 'Información General' visible");
+  } else {
+    fail(step, "Sección 'Información General' no visible");
+  }
+
+  if (detailsSection) {
+    detail(step, "PASS: Sección 'Detalles de la Cuenta' visible");
+  } else {
+    fail(step, "Sección 'Detalles de la Cuenta' no visible");
+  }
+
+  if (businessesSection) {
+    detail(step, "PASS: Sección 'Tus Negocios' visible");
+  } else {
+    fail(step, "Sección 'Tus Negocios' no visible");
+  }
+
+  if (legalSection) {
+    detail(step, "PASS: Sección 'Sección Legal' visible");
+  } else {
+    fail(step, "Sección 'Sección Legal' no visible");
+  }
 
   await screenshot(page, "administrar_negocios_page", true);
+  return {
+    ok: stepPassed(step),
+    infoSection,
+    detailsSection,
+    businessesSection,
+    legalSection,
+  };
 }
 
-async function validateInformacionGeneral(page) {
+async function validateInformacionGeneral(infoSection) {
   const step = "Información General";
 
+  if (!infoSection) {
+    fail(step, "Precondición incumplida: no se cargó la sección Información General.");
+    return;
+  }
+
   const emailVisible =
-    (await visibleText(page, /juanlucasbarbiergarzon@gmail\.com/i)) ||
-    (await visibleText(page, /@[a-z0-9.-]+\.[a-z]{2,}/i));
+    (await visibleText(infoSection, /juanlucasbarbiergarzon@gmail\.com/i)) ||
+    (await visibleText(infoSection, /@[a-z0-9.-]+\.[a-z]{2,}/i));
 
   if (emailVisible) {
     detail(step, "PASS: Email visible.");
@@ -363,55 +461,92 @@ async function validateInformacionGeneral(page) {
     fail(step, "Email de usuario no visible.");
   }
 
-  await expectVisible(step, page, /business plan/i, "Texto 'BUSINESS PLAN' visible");
-  await expectVisible(step, page, /cambiar plan/i, "Botón 'Cambiar Plan' visible");
+  await expectVisible(step, infoSection, /business plan/i, "Texto 'BUSINESS PLAN' visible");
+  await expectVisible(step, infoSection, /cambiar plan/i, "Botón 'Cambiar Plan' visible");
 
-  const profileCandidate = await firstVisible(
-    [
-      page.locator("h1, h2, h3").filter({ hasText: /[A-Za-zÁÉÍÓÚÑáéíóúñ]{3,}/ }),
-      page.locator("p, span, div").filter({ hasText: /[A-Za-zÁÉÍÓÚÑáéíóúñ]{3,}\s+[A-Za-zÁÉÍÓÚÑáéíóúñ]{3,}/ }),
-    ],
-    3000,
-  );
+  const rawTexts = await infoSection.locator("h1,h2,h3,h4,p,span,strong").allTextContents();
+  const nameCandidates = rawTexts
+    .map((item) => item.trim())
+    .filter(
+      (item) =>
+        item.length > 3 &&
+        !/@/.test(item) &&
+        /\s+/.test(item) &&
+        !/información general|business plan|cambiar plan/i.test(item),
+    );
 
-  if (profileCandidate) {
+  if (nameCandidates.length > 0) {
     detail(step, "PASS: Nombre de usuario visible.");
   } else {
     fail(step, "Nombre de usuario no visible.");
   }
 }
 
-async function validateDetallesCuenta(page) {
+async function validateDetallesCuenta(detailsSection) {
   const step = "Detalles de la Cuenta";
-  await expectVisible(step, page, /cuenta creada/i, "'Cuenta creada' visible");
-  await expectVisible(step, page, /estado activo|activo/i, "'Estado activo' visible");
-  await expectVisible(step, page, /idioma seleccionado|idioma/i, "'Idioma seleccionado' visible");
+
+  if (!detailsSection) {
+    fail(step, "Precondición incumplida: no se cargó la sección Detalles de la Cuenta.");
+    return;
+  }
+
+  await expectVisible(step, detailsSection, /cuenta creada/i, "'Cuenta creada' visible");
+  await expectVisible(step, detailsSection, /estado activo/i, "'Estado activo' visible");
+  await expectVisible(step, detailsSection, /idioma seleccionado/i, "'Idioma seleccionado' visible");
 }
 
-async function validateTusNegocios(page) {
+async function validateTusNegocios(businessesSection) {
   const step = "Tus Negocios";
-  await expectVisible(step, page, /tus negocios/i, "Listado de negocios visible");
-  await expectVisible(step, page, /agregar negocio/i, "Botón 'Agregar Negocio' visible");
-  await expectVisible(step, page, /tienes\s*2\s*de\s*3\s*negocios/i, "Texto de cuota de negocios visible");
+
+  if (!businessesSection) {
+    fail(step, "Precondición incumplida: no se cargó la sección Tus Negocios.");
+    return;
+  }
+
+  const listVisible = await firstVisible(
+    [
+      businessesSection.locator("li"),
+      businessesSection.locator("[role='listitem']"),
+      businessesSection.locator("tbody tr"),
+      businessesSection.locator("[class*='negocio'], [class*='business']"),
+    ],
+    5000,
+  );
+  if (listVisible) {
+    detail(step, "PASS: Listado de negocios visible.");
+  } else {
+    fail(step, "Listado de negocios no visible.");
+  }
+
+  await expectVisible(step, businessesSection, /agregar negocio/i, "Botón 'Agregar Negocio' visible");
+  await expectVisible(step, businessesSection, /tienes\s*2\s*de\s*3\s*negocios/i, "Texto de cuota de negocios visible");
 }
 
 async function validateLegalLink({
   appPage,
+  legalSection,
   linkRegex,
   headingRegex,
   stepName,
   screenshotLabel,
   urlKey,
 }) {
+  if (!legalSection) {
+    fail(stepName, "Precondición incumplida: sección legal no visible en la app.");
+    await screenshot(appPage, "seccion_legal_not_found");
+    return;
+  }
+
   const popupPromise = appPage.context().waitForEvent("page", { timeout: 6000 }).catch(() => null);
   const link = await firstVisible([
-    appPage.getByRole("link", { name: linkRegex }),
-    appPage.getByRole("button", { name: linkRegex }),
-    appPage.getByText(linkRegex),
+    legalSection.getByRole("link", { name: linkRegex }),
+    legalSection.getByRole("button", { name: linkRegex }),
+    legalSection.getByText(linkRegex),
   ]);
 
   if (!link) {
-    fail(stepName, `No se encontró enlace ${linkRegex.toString()}.`);
+    fail(stepName, `No se encontró enlace ${linkRegex.toString()} dentro de Sección Legal.`);
+    await screenshot(appPage, `${screenshotLabel}_link_not_found`);
     return;
   }
 
@@ -525,16 +660,18 @@ async function run() {
   try {
     await page.goto(APP_URL, { waitUntil: "domcontentloaded", timeout: DEFAULT_TIMEOUT_MS });
     await waitUi(page);
+    await screenshot(page, "initial_page");
 
     await loginWithGoogle(page);
     await openMiNegocioMenu(page);
     await validateAgregarNegocioModal(page);
-    await openAdministrarNegocios(page);
-    await validateInformacionGeneral(page);
-    await validateDetallesCuenta(page);
-    await validateTusNegocios(page);
+    const adminView = await openAdministrarNegocios(page);
+    await validateInformacionGeneral(adminView.infoSection);
+    await validateDetallesCuenta(adminView.detailsSection);
+    await validateTusNegocios(adminView.businessesSection);
     await validateLegalLink({
       appPage: page,
+      legalSection: adminView.legalSection,
       linkRegex: /términos y condiciones|terminos y condiciones/i,
       headingRegex: /términos y condiciones|terminos y condiciones/i,
       stepName: "Términos y Condiciones",
@@ -543,6 +680,7 @@ async function run() {
     });
     await validateLegalLink({
       appPage: page,
+      legalSection: adminView.legalSection,
       linkRegex: /política de privacidad|politica de privacidad/i,
       headingRegex: /política de privacidad|politica de privacidad/i,
       stepName: "Política de Privacidad",
@@ -573,9 +711,7 @@ async function run() {
 run().catch(async (error) => {
   console.error(`Fatal error: ${error.message}`);
   for (const field of REPORT_FIELDS) {
-    if (!report.results[field].details.length) {
-      fail(field, `No ejecutado por error fatal: ${error.message}`);
-    }
+    failIfNoDetail(field, `No ejecutado por error fatal: ${error.message}`);
   }
 
   try {
