@@ -60,6 +60,7 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   const report = Object.fromEntries(REPORT_FIELDS.map((field) => [field, "FAIL"]));
   const legalUrls = {};
   const failures = [];
+  let loginCompleted = false;
 
   async function runStep(field, runner) {
     try {
@@ -68,6 +69,12 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
     } catch (error) {
       report[field] = "FAIL";
       failures.push(`${field}: ${error.message}`);
+    }
+  }
+
+  function assertLoginCompleted() {
+    if (!loginCompleted) {
+      throw new Error("Blocked because Login step did not complete successfully.");
     }
   }
 
@@ -203,9 +210,11 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
     await expect(page.locator("aside, nav").first()).toBeVisible();
     await expect(page.getByText(/Negocio/i).first()).toBeVisible();
     await captureCheckpoint(testInfo, page, "01-dashboard-loaded");
+    loginCompleted = true;
   });
 
   await runStep("Mi Negocio menu", async () => {
+    assertLoginCompleted();
     await expect(page.locator("aside, nav").first()).toBeVisible();
     await expect(page.getByText(/^Negocio$/i).first()).toBeVisible();
 
@@ -217,6 +226,7 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   });
 
   await runStep("Agregar Negocio modal", async () => {
+    assertLoginCompleted();
     await ensureMiNegocioExpanded();
 
     const agregarNegocioItem = await firstVisible(
@@ -261,6 +271,7 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   });
 
   await runStep("Administrar Negocios view", async () => {
+    assertLoginCompleted();
     await ensureMiNegocioExpanded();
 
     const administrarNegociosItem = await firstVisible(
@@ -280,6 +291,7 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   });
 
   await runStep("Información General", async () => {
+    assertLoginCompleted();
     const heading = page.getByText(/^Información General$/i).first();
     await expect(heading).toBeVisible();
 
@@ -305,6 +317,7 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   });
 
   await runStep("Detalles de la Cuenta", async () => {
+    assertLoginCompleted();
     await expect(page.getByText(/^Detalles de la Cuenta$/i).first()).toBeVisible();
     await expect(page.getByText(/Cuenta creada/i).first()).toBeVisible();
     await expect(page.getByText(/Estado activo/i).first()).toBeVisible();
@@ -312,6 +325,7 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   });
 
   await runStep("Tus Negocios", async () => {
+    assertLoginCompleted();
     const heading = page.getByText(/^Tus Negocios$/i).first();
     await expect(heading).toBeVisible();
 
@@ -328,6 +342,7 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   });
 
   await runStep("Términos y Condiciones", async () => {
+    assertLoginCompleted();
     await openLegalDocument(
       "Términos y Condiciones",
       /Términos y Condiciones/i,
@@ -336,6 +351,7 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   });
 
   await runStep("Política de Privacidad", async () => {
+    assertLoginCompleted();
     await openLegalDocument(
       "Política de Privacidad",
       /Política de Privacidad/i,
