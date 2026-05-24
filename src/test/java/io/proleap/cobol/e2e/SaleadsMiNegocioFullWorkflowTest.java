@@ -93,10 +93,12 @@ public class SaleadsMiNegocioFullWorkflowTest {
 			if (popup != null) {
 				waitForUiLoad(popup);
 				selectGoogleAccountIfVisible(popup);
-				try {
-					popup.waitForClose(new Page.WaitForCloseOptions().setTimeout(20000));
-				} catch (PlaywrightException ignored) {
-					// popup may stay open after auth in some environments
+				long popupCloseDeadline = System.currentTimeMillis() + 20000;
+				while (!popup.isClosed() && System.currentTimeMillis() <= popupCloseDeadline) {
+					popup.waitForTimeout(250);
+				}
+				if (!popup.isClosed()) {
+					popup.close();
 				}
 				page.bringToFront();
 				waitForUiLoad(page);
