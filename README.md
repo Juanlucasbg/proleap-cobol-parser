@@ -195,6 +195,35 @@ $ mvn clean test
 ```
 
 
+SaleADS Mi Negocio E2E workflow test
+------------------------------------
+
+This repository now includes an environment-agnostic Playwright test at:
+
+`src/test/java/io/proleap/cobol/e2e/SaleadsMiNegocioWorkflowE2ETest.java`
+
+The test covers:
+
+* Login with Google.
+* `Negocio` -> `Mi Negocio` navigation checks.
+* `Agregar Negocio` modal validations.
+* `Administrar Negocios` account page validations.
+* `Términos y Condiciones` and `Política de Privacidad` validation (including new-tab handling).
+* Screenshot evidence at key checkpoints.
+* Final PASS/FAIL report in `target/saleads-e2e-artifacts/final-report.txt`.
+
+Run it by providing the login URL of the current SaleADS environment (without hardcoding a domain in code):
+
+```
+$ SALEADS_LOGIN_URL="https://your-environment-login-page" mvn -Dtest=SaleadsMiNegocioWorkflowE2ETest test
+```
+
+Optional environment variables:
+
+* `SALEADS_GOOGLE_ACCOUNT_EMAIL` (default: `juanlucasbarbiergarzon@gmail.com`)
+* `SALEADS_HEADLESS` (`true` by default)
+
+
 Release process
 ---------------
 
