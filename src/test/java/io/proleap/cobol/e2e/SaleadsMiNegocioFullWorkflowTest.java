@@ -71,7 +71,7 @@ public class SaleadsMiNegocioFullWorkflowTest {
 	private final Map<String, String> legalUrls = new LinkedHashMap<>();
 
 	@Before
-	public void setup() throws IOException {
+	public void setup() throws IOException, InterruptedException {
 		Assume.assumeTrue("Set -Dsaleads.e2e.enabled=true to run this test.",
 				Boolean.parseBoolean(System.getProperty("saleads.e2e.enabled", "false")));
 
