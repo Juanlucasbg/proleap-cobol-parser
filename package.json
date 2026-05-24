@@ -1,0 +1,14 @@
+{
+  "name": "saleads-e2e-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Playwright end-to-end tests for SaleADS workflows.",
+  "scripts": {
+    "test:saleads-mi-negocio": "playwright test tests/saleads-mi-negocio-full.spec.ts",
+    "test:saleads-mi-negocio:headed": "playwright test tests/saleads-mi-negocio-full.spec.ts --headed"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.54.0",
+    "typescript": "^5.8.3"
+  }
+}
