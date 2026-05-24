@@ -114,7 +114,7 @@ public class SaleadsMiNegocioWorkflowE2E {
 			selectGoogleAccountIfShown(googlePopup);
 			if (!googlePopup.isClosed()) {
 				try {
-					googlePopup.waitForClose(new Page.WaitForCloseOptions().setTimeout(20000));
+					googlePopup.waitForTimeout(2000);
 				} catch (final PlaywrightException ignored) {
 					// Popup can stay open if Google already redirected in-place.
 				}
