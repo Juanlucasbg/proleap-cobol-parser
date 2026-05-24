@@ -41,3 +41,9 @@ target/
 
 ## Additional for IntelliJ
 out/
+
+# SaleADS E2E artifacts
+qa/saleads-e2e/node_modules/
+qa/saleads-e2e/playwright-report/
+qa/saleads-e2e/test-results/
+qa/saleads-e2e/.env
