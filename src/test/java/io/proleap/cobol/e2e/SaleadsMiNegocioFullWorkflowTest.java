@@ -172,7 +172,8 @@ public class SaleadsMiNegocioFullWorkflowTest {
 
 		Page popup = null;
 		try {
-			popup = page.waitForPopup(() -> loginButton.first().click(), new Page.WaitForPopupOptions().setTimeout(8_000));
+			popup = page.waitForPopup(new Page.WaitForPopupOptions().setTimeout(8_000),
+					() -> loginButton.first().click());
 		} catch (PlaywrightException ignored) {
 			loginButton.first().click();
 		}
@@ -220,8 +221,8 @@ public class SaleadsMiNegocioFullWorkflowTest {
 	private LegalNavigationResult openLegalContent(final BrowserContext context, final Page appPage, final String linkText) {
 		Page legalPage = null;
 		try {
-			legalPage = context.waitForPage(() -> clickByVisibleTextAndWait(appPage, linkText),
-					new BrowserContext.WaitForPageOptions().setTimeout(8_000));
+			legalPage = context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(8_000),
+					() -> clickByVisibleTextAndWait(appPage, linkText));
 		} catch (PlaywrightException ignored) {
 			clickByVisibleTextAndWait(appPage, linkText);
 		}
