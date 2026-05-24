@@ -43,110 +43,113 @@ public class SaleadsMiNegocioFullWorkflowTest {
 			final double slowMoMs = parseDouble(valueOrDefault(System.getProperty("saleads.slowMoMs"),
 					System.getenv("SALEADS_SLOWMO_MS"), "250"));
 
-			final Browser browser = playwright.chromium()
+			try (Browser browser = playwright.chromium()
 					.launch(new BrowserType.LaunchOptions().setHeadless(headless).setSlowMo(slowMoMs));
-			final BrowserContext context = browser.newContext(new Browser.NewContextOptions().setViewportSize(1600, 1000));
-			context.setDefaultTimeout(20_000);
-			final Page page = context.newPage();
+					BrowserContext context = browser
+							.newContext(new Browser.NewContextOptions().setViewportSize(1600, 1000))) {
+				context.setDefaultTimeout(20_000);
+				final Page page = context.newPage();
 
-			openLoginPage(page);
+				openLoginPage(page);
 
-			runStep(report, "Login", () -> {
-				loginWithGoogle(page);
-				assertVisible(findByVisibleText(page, "Negocio"), "Left sidebar navigation should be visible.");
-				captureScreenshot(page, evidenceDir, "01-dashboard-loaded", false);
-			});
+				runStep(report, "Login", () -> {
+					loginWithGoogle(page);
+					assertVisible(findByVisibleText(page, "Negocio"), "Left sidebar navigation should be visible.");
+					captureScreenshot(page, evidenceDir, "01-dashboard-loaded", false);
+				});
 
-			runStep(report, "Mi Negocio menu", () -> {
-				clickByVisibleTextAndWait(page, "Mi Negocio");
-				assertVisible(findByVisibleText(page, "Agregar Negocio"), "'Agregar Negocio' should be visible.");
-				assertVisible(findByVisibleText(page, "Administrar Negocios"),
-						"'Administrar Negocios' should be visible.");
-				captureScreenshot(page, evidenceDir, "02-mi-negocio-expanded", false);
-			});
-
-			runStep(report, "Agregar Negocio modal", () -> {
-				clickByVisibleTextAndWait(page, "Agregar Negocio");
-				assertVisible(findByVisibleText(page, "Crear Nuevo Negocio"), "Modal title should be visible.");
-				assertVisible(findByVisibleText(page, "Nombre del Negocio"),
-						"'Nombre del Negocio' field label should be visible.");
-				assertVisible(findByVisibleText(page, "Tienes 2 de 3 negocios"),
-						"'Tienes 2 de 3 negocios' should be visible.");
-				assertVisible(findByVisibleText(page, "Cancelar"), "'Cancelar' button should be visible.");
-				assertVisible(findByVisibleText(page, "Crear Negocio"), "'Crear Negocio' button should be visible.");
-				captureScreenshot(page, evidenceDir, "03-agregar-negocio-modal", false);
-
-				fillBusinessNameAndCancel(page);
-			});
-
-			runStep(report, "Administrar Negocios view", () -> {
-				final Locator administrarNegociosLink = findByVisibleText(page, "Administrar Negocios");
-				if (administrarNegociosLink.count() == 0 || !administrarNegociosLink.first().isVisible()) {
+				runStep(report, "Mi Negocio menu", () -> {
 					clickByVisibleTextAndWait(page, "Mi Negocio");
+					assertVisible(findByVisibleText(page, "Agregar Negocio"), "'Agregar Negocio' should be visible.");
+					assertVisible(findByVisibleText(page, "Administrar Negocios"),
+							"'Administrar Negocios' should be visible.");
+					captureScreenshot(page, evidenceDir, "02-mi-negocio-expanded", false);
+				});
+
+				runStep(report, "Agregar Negocio modal", () -> {
+					clickByVisibleTextAndWait(page, "Agregar Negocio");
+					assertVisible(findByVisibleText(page, "Crear Nuevo Negocio"), "Modal title should be visible.");
+					assertVisible(findByVisibleText(page, "Nombre del Negocio"),
+							"'Nombre del Negocio' field label should be visible.");
+					assertVisible(findByVisibleText(page, "Tienes 2 de 3 negocios"),
+							"'Tienes 2 de 3 negocios' should be visible.");
+					assertVisible(findByVisibleText(page, "Cancelar"), "'Cancelar' button should be visible.");
+					assertVisible(findByVisibleText(page, "Crear Negocio"), "'Crear Negocio' button should be visible.");
+					captureScreenshot(page, evidenceDir, "03-agregar-negocio-modal", false);
+
+					fillBusinessNameAndCancel(page);
+				});
+
+				runStep(report, "Administrar Negocios view", () -> {
+					final Locator administrarNegociosLink = findByVisibleText(page, "Administrar Negocios");
+					if (administrarNegociosLink.count() == 0 || !administrarNegociosLink.first().isVisible()) {
+						clickByVisibleTextAndWait(page, "Mi Negocio");
+					}
+
+					clickByVisibleTextAndWait(page, "Administrar Negocios");
+					assertVisible(findByVisibleText(page, "Información General"), "'Información General' should be visible.");
+					assertVisible(findByVisibleText(page, "Detalles de la Cuenta"),
+							"'Detalles de la Cuenta' should be visible.");
+					assertVisible(findByVisibleText(page, "Tus Negocios"), "'Tus Negocios' should be visible.");
+					assertVisible(findByVisibleText(page, "Sección Legal"), "'Sección Legal' should be visible.");
+					captureScreenshot(page, evidenceDir, "04-administrar-negocios-full", true);
+				});
+
+				runStep(report, "Información General", () -> {
+					assertVisible(findByVisibleText(page, "BUSINESS PLAN"), "'BUSINESS PLAN' should be visible.");
+					assertVisible(findByVisibleText(page, "Cambiar Plan"), "'Cambiar Plan' button should be visible.");
+
+					final String visibleText = page.innerText("body");
+					assertTrue("User email should be visible in account page.", EMAIL_PATTERN.matcher(visibleText).find());
+					assertTrue("User name should be visible in account page.", hasLikelyUserName(visibleText));
+				});
+
+				runStep(report, "Detalles de la Cuenta", () -> {
+					assertVisible(findByVisibleText(page, "Cuenta creada"), "'Cuenta creada' should be visible.");
+					assertVisible(findByVisibleText(page, "Estado activo"), "'Estado activo' should be visible.");
+					assertVisible(findByVisibleText(page, "Idioma seleccionado"),
+							"'Idioma seleccionado' should be visible.");
+				});
+
+				runStep(report, "Tus Negocios", () -> {
+					assertVisible(findByVisibleText(page, "Tus Negocios"), "Business list section should be visible.");
+					assertVisible(findByVisibleText(page, "Agregar Negocio"), "'Agregar Negocio' should be visible.");
+					assertVisible(findByVisibleText(page, "Tienes 2 de 3 negocios"),
+							"'Tienes 2 de 3 negocios' should be visible.");
+				});
+
+				runStep(report, "Términos y Condiciones", () -> {
+					final LegalNavigationResult legalResult = openLegalContent(context, page, "Términos y Condiciones");
+					assertVisible(findByVisibleText(legalResult.targetPage, "Términos y Condiciones"),
+							"Heading 'Términos y Condiciones' should be visible.");
+					assertTrue("Legal content text should be visible for Términos y Condiciones.",
+							legalResult.targetPage.innerText("body").trim().length() > 80);
+					captureScreenshot(legalResult.targetPage, evidenceDir, "05-terminos-y-condiciones", true);
+					System.out.println("FINAL_URL_TERMINOS_Y_CONDICIONES=" + legalResult.targetPage.url());
+					legalResult.cleanup.run();
+				});
+
+				runStep(report, "Política de Privacidad", () -> {
+					final LegalNavigationResult legalResult = openLegalContent(context, page, "Política de Privacidad");
+					assertVisible(findByVisibleText(legalResult.targetPage, "Política de Privacidad"),
+							"Heading 'Política de Privacidad' should be visible.");
+					assertTrue("Legal content text should be visible for Política de Privacidad.",
+							legalResult.targetPage.innerText("body").trim().length() > 80);
+					captureScreenshot(legalResult.targetPage, evidenceDir, "06-politica-de-privacidad", true);
+					System.out.println("FINAL_URL_POLITICA_DE_PRIVACIDAD=" + legalResult.targetPage.url());
+					legalResult.cleanup.run();
+				});
+
+				printFinalReport(report, evidenceDir);
+
+				final List<String> failedSteps = new ArrayList<>();
+				for (Map.Entry<String, StepResult> entry : report.entrySet()) {
+					if (!entry.getValue().passed) {
+						failedSteps.add(entry.getKey());
+					}
 				}
-
-				clickByVisibleTextAndWait(page, "Administrar Negocios");
-				assertVisible(findByVisibleText(page, "Información General"), "'Información General' should be visible.");
-				assertVisible(findByVisibleText(page, "Detalles de la Cuenta"),
-						"'Detalles de la Cuenta' should be visible.");
-				assertVisible(findByVisibleText(page, "Tus Negocios"), "'Tus Negocios' should be visible.");
-				assertVisible(findByVisibleText(page, "Sección Legal"), "'Sección Legal' should be visible.");
-				captureScreenshot(page, evidenceDir, "04-administrar-negocios-full", true);
-			});
-
-			runStep(report, "Información General", () -> {
-				assertVisible(findByVisibleText(page, "BUSINESS PLAN"), "'BUSINESS PLAN' should be visible.");
-				assertVisible(findByVisibleText(page, "Cambiar Plan"), "'Cambiar Plan' button should be visible.");
-
-				final String visibleText = page.innerText("body");
-				assertTrue("User email should be visible in account page.", EMAIL_PATTERN.matcher(visibleText).find());
-				assertTrue("User name should be visible in account page.", hasLikelyUserName(visibleText));
-			});
-
-			runStep(report, "Detalles de la Cuenta", () -> {
-				assertVisible(findByVisibleText(page, "Cuenta creada"), "'Cuenta creada' should be visible.");
-				assertVisible(findByVisibleText(page, "Estado activo"), "'Estado activo' should be visible.");
-				assertVisible(findByVisibleText(page, "Idioma seleccionado"), "'Idioma seleccionado' should be visible.");
-			});
-
-			runStep(report, "Tus Negocios", () -> {
-				assertVisible(findByVisibleText(page, "Tus Negocios"), "Business list section should be visible.");
-				assertVisible(findByVisibleText(page, "Agregar Negocio"), "'Agregar Negocio' should be visible.");
-				assertVisible(findByVisibleText(page, "Tienes 2 de 3 negocios"),
-						"'Tienes 2 de 3 negocios' should be visible.");
-			});
-
-			runStep(report, "Términos y Condiciones", () -> {
-				final LegalNavigationResult legalResult = openLegalContent(context, page, "Términos y Condiciones");
-				assertVisible(findByVisibleText(legalResult.targetPage, "Términos y Condiciones"),
-						"Heading 'Términos y Condiciones' should be visible.");
-				assertTrue("Legal content text should be visible for Términos y Condiciones.",
-						legalResult.targetPage.innerText("body").trim().length() > 80);
-				captureScreenshot(legalResult.targetPage, evidenceDir, "05-terminos-y-condiciones", true);
-				System.out.println("FINAL_URL_TERMINOS_Y_CONDICIONES=" + legalResult.targetPage.url());
-				legalResult.cleanup.run();
-			});
-
-			runStep(report, "Política de Privacidad", () -> {
-				final LegalNavigationResult legalResult = openLegalContent(context, page, "Política de Privacidad");
-				assertVisible(findByVisibleText(legalResult.targetPage, "Política de Privacidad"),
-						"Heading 'Política de Privacidad' should be visible.");
-				assertTrue("Legal content text should be visible for Política de Privacidad.",
-						legalResult.targetPage.innerText("body").trim().length() > 80);
-				captureScreenshot(legalResult.targetPage, evidenceDir, "06-politica-de-privacidad", true);
-				System.out.println("FINAL_URL_POLITICA_DE_PRIVACIDAD=" + legalResult.targetPage.url());
-				legalResult.cleanup.run();
-			});
-
-			printFinalReport(report, evidenceDir);
-
-			final List<String> failedSteps = new ArrayList<>();
-			for (Map.Entry<String, StepResult> entry : report.entrySet()) {
-				if (!entry.getValue().passed) {
-					failedSteps.add(entry.getKey());
-				}
+				assertTrue("One or more workflow steps failed: " + failedSteps, failedSteps.isEmpty());
 			}
-			assertTrue("One or more workflow steps failed: " + failedSteps, failedSteps.isEmpty());
 		}
 	}
 
@@ -197,9 +200,9 @@ public class SaleadsMiNegocioFullWorkflowTest {
 	}
 
 	private void fillBusinessNameAndCancel(final Page page) {
-		Locator businessNameField = page.getByLabel(Pattern.compile("(?i).*Nombre del Negocio.*"));
+		Locator businessNameField = page.getByLabel("Nombre del Negocio");
 		if (businessNameField.count() == 0) {
-			businessNameField = page.getByPlaceholder(Pattern.compile("(?i).*Nombre del Negocio.*"));
+			businessNameField = page.getByPlaceholder("Nombre del Negocio");
 		}
 		if (businessNameField.count() == 0) {
 			businessNameField = page.locator("input").filter(new Locator.FilterOptions().setHasText("Nombre del Negocio"));
