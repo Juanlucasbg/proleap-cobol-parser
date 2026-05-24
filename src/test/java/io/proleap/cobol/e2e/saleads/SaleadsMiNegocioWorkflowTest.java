@@ -184,8 +184,18 @@ public class SaleadsMiNegocioWorkflowTest {
 	}
 
 	private void openMiNegocioMenu(final Page page) {
-		clickByText(page, "Negocio");
-		clickByText(page, "Mi Negocio");
+		if (isVisible(page.locator("text=Agregar Negocio").first())
+				&& isVisible(page.locator("text=Administrar Negocios").first())) {
+			return;
+		}
+
+		if (isVisible(page.locator("text=Mi Negocio").first())) {
+			clickByText(page, "Mi Negocio");
+		} else {
+			clickByText(page, "Negocio");
+			clickByText(page, "Mi Negocio");
+		}
+
 		assertVisible(page, "text=Agregar Negocio", "expanded Mi Negocio menu");
 	}
 
@@ -321,10 +331,14 @@ public class SaleadsMiNegocioWorkflowTest {
 
 	private void clickFirstVisible(final Page page, final String... selectors) {
 		for (final String selector : selectors) {
-			final Locator locator = page.locator(selector).first();
-			if (isVisible(locator)) {
-				clickAndWait(page, locator);
-				return;
+			final Locator locator = page.locator(selector);
+			final int count = locator.count();
+			for (int i = 0; i < count; i++) {
+				final Locator candidate = locator.nth(i);
+				if (isVisible(candidate)) {
+					clickAndWait(page, candidate);
+					return;
+				}
 			}
 		}
 		throw new AssertionError("Could not find any visible element for selectors: " + String.join(", ", selectors));
