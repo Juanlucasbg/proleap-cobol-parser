@@ -1,0 +1,17 @@
+{
+  "name": "automation-tests",
+  "version": "1.0.0",
+  "description": "SaleADS cross-environment UI automation flows",
+  "main": "saleads_mi_negocio_full_test.js",
+  "scripts": {
+    "setup:browsers": "npx playwright install chromium",
+    "test:saleads:mi-negocio": "node saleads_mi_negocio_full_test.js",
+    "test": "npm run test:saleads:mi-negocio"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "playwright": "^1.60.0"
+  }
+}

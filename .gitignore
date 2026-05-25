@@ -41,3 +41,7 @@ target/
 
 ## Additional for IntelliJ
 out/
+
+# Node UI automation artifacts
+automation-tests/node_modules/
+automation-tests/artifacts/
