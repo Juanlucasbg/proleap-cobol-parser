@@ -1,0 +1,15 @@
+{
+  "name": "saleads-mi-negocio",
+  "version": "1.0.0",
+  "description": "SaleADS Mi Negocio full workflow validation runner",
+  "type": "module",
+  "scripts": {
+    "saleads:mi-negocio": "node scripts/saleads_mi_negocio_full_test.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "playwright": "^1.60.0"
+  }
+}
