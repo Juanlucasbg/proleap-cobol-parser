@@ -19,6 +19,7 @@ type StepResult = {
 };
 
 const GOOGLE_ACCOUNT_EMAIL = "juanlucasbarbiergarzon@gmail.com";
+const stripAnsi = (value: string): string => value.replace(/\u001b\[[0-9;]*m/g, "");
 
 async function waitForUiAfterClick(page: Page): Promise<void> {
   await Promise.race([
@@ -80,9 +81,14 @@ test("saleads_mi_negocio_full_test", async ({ page, context, baseURL }, testInfo
 
   const markFail = (field: StepField, check: string, error: unknown) => {
     report[field].status = "FAIL";
-    const message = error instanceof Error ? error.message : String(error);
+    const rawMessage = error instanceof Error ? error.message : String(error);
+    const message = stripAnsi(rawMessage);
     report[field].checks.push(`FAIL: ${check} -> ${message}`);
     hardFailures.push(`${field}: ${check} -> ${message}`);
+  };
+
+  const failForPrerequisite = (field: StepField, prerequisite: StepField) => {
+    markFail(field, "Prerequisite check", new Error(`Skipped because ${prerequisite} failed.`));
   };
 
   await test.step("Step 1 - Login with Google", async () => {
@@ -133,6 +139,11 @@ test("saleads_mi_negocio_full_test", async ({ page, context, baseURL }, testInfo
 
   await test.step("Step 2 - Open Mi Negocio menu", async () => {
     try {
+      if (report.Login.status === "FAIL") {
+        failForPrerequisite("Mi Negocio menu", "Login");
+        return;
+      }
+
       const negocioTrigger = await byVisibleText(page, /negocio|mi negocio/i);
       await clickAndWait(negocioTrigger, page);
 
@@ -153,6 +164,11 @@ test("saleads_mi_negocio_full_test", async ({ page, context, baseURL }, testInfo
 
   await test.step("Step 3 - Validate Agregar Negocio modal", async () => {
     try {
+      if (report["Mi Negocio menu"].status === "FAIL") {
+        failForPrerequisite("Agregar Negocio modal", "Mi Negocio menu");
+        return;
+      }
+
       const agregarNegocio = await byVisibleText(page, /agregar negocio/i);
       await clickAndWait(agregarNegocio, page);
 
@@ -186,6 +202,11 @@ test("saleads_mi_negocio_full_test", async ({ page, context, baseURL }, testInfo
 
   await test.step("Step 4 - Open Administrar Negocios", async () => {
     try {
+      if (report["Mi Negocio menu"].status === "FAIL") {
+        failForPrerequisite("Administrar Negocios view", "Mi Negocio menu");
+        return;
+      }
+
       if (!(await page.getByText(/administrar negocios/i).first().isVisible())) {
         const miNegocio = await byVisibleText(page, /mi negocio/i);
         await clickAndWait(miNegocio, page);
@@ -211,6 +232,11 @@ test("saleads_mi_negocio_full_test", async ({ page, context, baseURL }, testInfo
 
   await test.step("Step 5 - Validate Informacion General", async () => {
     try {
+      if (report["Administrar Negocios view"].status === "FAIL") {
+        failForPrerequisite("Informacion General", "Administrar Negocios view");
+        return;
+      }
+
       await expect(page.getByText(/@/).first()).toBeVisible();
       markPass("Informacion General", "User email is visible");
       await expect(page.getByText(/business plan/i).first()).toBeVisible();
@@ -228,6 +254,11 @@ test("saleads_mi_negocio_full_test", async ({ page, context, baseURL }, testInfo
 
   await test.step("Step 6 - Validate Detalles de la Cuenta", async () => {
     try {
+      if (report["Administrar Negocios view"].status === "FAIL") {
+        failForPrerequisite("Detalles de la Cuenta", "Administrar Negocios view");
+        return;
+      }
+
       await expect(page.getByText(/cuenta creada/i).first()).toBeVisible();
       await expect(page.getByText(/estado activo/i).first()).toBeVisible();
       await expect(page.getByText(/idioma seleccionado/i).first()).toBeVisible();
@@ -241,6 +272,11 @@ test("saleads_mi_negocio_full_test", async ({ page, context, baseURL }, testInfo
 
   await test.step("Step 7 - Validate Tus Negocios", async () => {
     try {
+      if (report["Administrar Negocios view"].status === "FAIL") {
+        failForPrerequisite("Tus Negocios", "Administrar Negocios view");
+        return;
+      }
+
       await expect(page.getByText(/tus negocios/i).first()).toBeVisible();
       markPass("Tus Negocios", "Business list is visible");
       await expect(page.getByRole("button", { name: /agregar negocio/i }).first()).toBeVisible();
@@ -259,6 +295,11 @@ test("saleads_mi_negocio_full_test", async ({ page, context, baseURL }, testInfo
     screenshotName: string,
   ) => {
     try {
+      if (report["Administrar Negocios view"].status === "FAIL") {
+        failForPrerequisite(field, "Administrar Negocios view");
+        return;
+      }
+
       const appPage = page;
       const appPageUrlBefore = appPage.url();
       const existingPages = context.pages().length;
