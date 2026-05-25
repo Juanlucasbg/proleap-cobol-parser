@@ -194,6 +194,29 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+SaleADS Mi Negocio E2E test
+---------------------------
+
+This repository also includes an environment-agnostic Selenium test that validates the SaleADS "Mi Negocio" workflow end to end.
+
+The test does not hardcode domains. Provide the login page URL for the target environment at runtime:
+
+```
+$ mvn -Dtest=SaleadsMiNegocioWorkflowTest test \
+    -Dsaleads.login.url=https://<your-saleads-login-page> \
+    -Dsaleads.browser=chrome \
+    -Dsaleads.headless=true
+```
+
+Environment variables are also supported:
+
+* `SALEADS_LOGIN_URL` (required)
+* `SALEADS_BROWSER` (`chrome` by default, also supports `firefox`)
+* `SALEADS_HEADLESS` (`true` by default)
+* `SALEADS_TIMEOUT_SECONDS` (`40` by default)
+
+Screenshots are saved under `target/saleads-screenshots/<timestamp>/`.
+
 
 Release process
 ---------------
