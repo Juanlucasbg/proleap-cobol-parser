@@ -342,21 +342,23 @@ public class SaleadsMiNegocioWorkflowTest {
 		if (legalPage == null) {
 			legalPage = appPage;
 		}
+		final Page resolvedLegalPage = legalPage;
 
-		waitForUi(legalPage);
-		assertVisible(firstVisibleOnPage(legalPage, linkText + " heading",
-				() -> legalPage.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName(Pattern.compile("(?i)^" + Pattern.quote(linkText) + "$"))),
-				() -> legalPage.getByText(Pattern.compile("(?i)^" + Pattern.quote(linkText) + "$"))),
+		waitForUi(resolvedLegalPage);
+		assertVisible(firstVisibleOnPage(resolvedLegalPage, linkText + " heading",
+				() -> resolvedLegalPage.getByRole(AriaRole.HEADING,
+						new Page.GetByRoleOptions().setName(Pattern.compile("(?i)^" + Pattern.quote(linkText) + "$"))),
+				() -> resolvedLegalPage.getByText(Pattern.compile("(?i)^" + Pattern.quote(linkText) + "$"))),
 				linkText + " heading should be visible.");
 
-		final String legalBody = legalPage.locator("body").innerText();
+		final String legalBody = resolvedLegalPage.locator("body").innerText();
 		Assert.assertTrue("Legal content should be visible for " + linkText + ".", legalBody != null && legalBody.trim().length() > 120);
 
-		captureScreenshot(legalPage, screenshotName, true);
-		final String finalUrl = legalPage.url();
+		captureScreenshot(resolvedLegalPage, screenshotName, true);
+		final String finalUrl = resolvedLegalPage.url();
 
-		if (legalPage != appPage) {
-			legalPage.close();
+		if (resolvedLegalPage != appPage) {
+			resolvedLegalPage.close();
 			appPage.bringToFront();
 			waitForUi(appPage);
 		} else {
