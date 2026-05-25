@@ -277,6 +277,7 @@ async function findBusinessNameInput(page) {
 async function run() {
   const report = createReport();
   await fs.mkdir(ARTIFACTS_DIR, { recursive: true });
+  let runnerError = null;
 
   const browser = await chromium.launch({
     headless: HEADLESS,
@@ -525,6 +526,11 @@ async function run() {
       const failShot = await screenshot(page, "privacidad-failure").catch(() => null);
       markStep(report, "Política de Privacidad", "FAIL", error.message, { screenshot: failShot });
     }
+  } catch (error) {
+    runnerError = error;
+    if (!report.results.Login.details.length) {
+      markStep(report, "Login", "FAIL", error.message);
+    }
   } finally {
     computeSummary(report);
 
@@ -538,6 +544,9 @@ async function run() {
     console.log(`Summary: ${report.summary.status} (passed: ${report.summary.passed}, failed: ${report.summary.failed})`);
     console.log(`Artifacts directory: ${ARTIFACTS_DIR}`);
     console.log(`Report file: ${reportPath}`);
+    if (runnerError) {
+      console.log(`Runner setup/runtime error: ${runnerError.message}`);
+    }
 
     await context.close().catch(() => {});
     await browser.close().catch(() => {});
