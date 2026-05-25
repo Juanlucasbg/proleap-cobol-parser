@@ -1,0 +1,15 @@
+{
+  "name": "saleads-mi-negocio-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Environment-agnostic SaleADS Mi Negocio workflow synthetic test",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.54.1",
+    "dotenv": "^17.2.2"
+  }
+}
