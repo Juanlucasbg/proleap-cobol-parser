@@ -1,0 +1,14 @@
+{
+  "name": "saleads-e2e",
+  "private": true,
+  "description": "Cross-environment SaleADS UI validation tests",
+  "scripts": {
+    "test": "playwright test",
+    "test:list": "playwright test --list",
+    "test:headed": "playwright test --headed",
+    "test:report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0"
+  }
+}
