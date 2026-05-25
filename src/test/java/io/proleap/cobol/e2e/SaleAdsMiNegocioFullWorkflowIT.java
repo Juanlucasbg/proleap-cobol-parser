@@ -78,16 +78,16 @@ public class SaleAdsMiNegocioFullWorkflowIT {
 		final String[] privacyUrlHolder = new String[] { "N/A" };
 		final String loginUrl = readConfig("saleads.login.url", "SALEADS_LOGIN_URL");
 
-		WebDriver driver = null;
-		try {
-			if (isBlank(loginUrl)) {
-				report.put(LOGIN,
-						StepResult.fail("Missing SALEADS_LOGIN_URL (or -Dsaleads.login.url). URL must be provided."));
-				throw new IllegalStateException(
-						"Provide SALEADS_LOGIN_URL (or -Dsaleads.login.url) to run against the desired environment.");
-			}
+		if (isBlank(loginUrl)) {
+			report.put(LOGIN,
+					StepResult.fail("Missing SALEADS_LOGIN_URL (or -Dsaleads.login.url). URL must be provided."));
+			printFinalReport(report, termsUrlHolder[0], privacyUrlHolder[0], screenshotDir);
+			fail("Provide SALEADS_LOGIN_URL (or -Dsaleads.login.url) to run against the desired environment.");
+			return;
+		}
 
-			driver = createChromeDriver();
+		final WebDriver driver = createChromeDriver();
+		try {
 			driver.get(loginUrl);
 			waitForUiToLoad(driver, timeoutSeconds());
 
@@ -200,9 +200,7 @@ public class SaleAdsMiNegocioFullWorkflowIT {
 				report.put(LOGIN, StepResult.fail("Unexpected setup error: " + e.getMessage()));
 			}
 		} finally {
-			if (driver != null) {
-				driver.quit();
-			}
+			driver.quit();
 		}
 
 		printFinalReport(report, termsUrlHolder[0], privacyUrlHolder[0], screenshotDir);
