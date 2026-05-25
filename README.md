@@ -194,6 +194,28 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+SaleADS Mi Negocio UI workflow test
+-----------------------------------
+
+This repository also includes a Selenium-based end-to-end test for the SaleADS Mi Negocio module workflow:
+
+* Test class: `io.proleap.cobol.e2e.saleads.SaleadsMiNegocioWorkflowTest`
+* Required environment input:
+  * `SALEADS_BASE_URL` (or `-Dsaleads.baseUrl=...`) to point to the current SaleADS environment login page.
+* Optional configuration:
+  * `SALEADS_HEADLESS=true` (or `-Dsaleads.headless=true`) to run Chrome in headless mode.
+* Example command:
+
+```
+$ SALEADS_BASE_URL=https://your-saleads-env.example.com mvn -Dtest=SaleadsMiNegocioWorkflowTest test
+```
+
+The test captures screenshots in:
+
+```
+target/saleads-mi-negocio-evidence/<timestamp>/
+```
+
 
 Release process
 ---------------
