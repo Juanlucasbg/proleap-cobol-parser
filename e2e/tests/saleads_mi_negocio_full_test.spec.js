@@ -83,12 +83,23 @@ function markResult(report, field, status, details) {
   };
 }
 
+function normalizeError(error) {
+  const message = (error && error.message) || String(error);
+  const withoutAnsi = message.replace(/\u001b\[[0-9;]*m/g, "");
+  const compactLines = withoutAnsi
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  return compactLines.slice(0, 6).join(" | ");
+}
+
 async function executeStep(report, field, action) {
   try {
     await action();
     markResult(report, field, "PASS", "");
   } catch (error) {
-    markResult(report, field, "FAIL", error.message);
+    markResult(report, field, "FAIL", normalizeError(error));
   }
 }
 
