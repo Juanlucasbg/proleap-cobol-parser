@@ -58,6 +58,11 @@ public class SaleadsMiNegocioWorkflowTest {
 		options.addArguments("--disable-dev-shm-usage");
 		options.addArguments("--no-sandbox");
 
+		final String debuggerAddress = readConfig("saleads.debuggerAddress", "SALEADS_DEBUGGER_ADDRESS", "");
+		if (!debuggerAddress.isBlank()) {
+			options.setExperimentalOption("debuggerAddress", debuggerAddress);
+		}
+
 		if (Boolean.parseBoolean(readConfig("saleads.headless", "SALEADS_HEADLESS", "false"))) {
 			options.addArguments("--headless=new");
 		}
@@ -98,11 +103,14 @@ public class SaleadsMiNegocioWorkflowTest {
 
 	private void validateLoginWithGoogle() throws Exception {
 		final String baseUrl = readConfig("saleads.baseUrl", "SALEADS_BASE_URL", "");
+		final String currentUrl = safeCurrentUrl();
 		assertTrue(
-				"Provide saleads.baseUrl (system property) or SALEADS_BASE_URL (env var) for the current environment.",
-				!baseUrl.isBlank());
+				"Provide saleads.baseUrl/SALEADS_BASE_URL, or attach with saleads.debuggerAddress/SALEADS_DEBUGGER_ADDRESS to a browser already on the login page.",
+				!baseUrl.isBlank() || (!currentUrl.isBlank() && !"about:blank".equals(currentUrl) && !"data:,".equals(currentUrl)));
 
-		driver.get(baseUrl);
+		if (!baseUrl.isBlank()) {
+			driver.get(baseUrl);
+		}
 		waitForUiToLoad();
 
 		clickAndWait(By.xpath("//button[normalize-space()='Sign in with Google' or normalize-space()='Iniciar sesión con Google'"

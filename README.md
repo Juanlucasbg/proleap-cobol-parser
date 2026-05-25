@@ -201,7 +201,9 @@ This repository also includes a Selenium-based end-to-end test for the SaleADS M
 
 * Test class: `io.proleap.cobol.e2e.saleads.SaleadsMiNegocioWorkflowTest`
 * Required environment input:
-  * `SALEADS_BASE_URL` (or `-Dsaleads.baseUrl=...`) to point to the current SaleADS environment login page.
+  * Either:
+    * `SALEADS_BASE_URL` (or `-Dsaleads.baseUrl=...`) to point to the current SaleADS environment login page, or
+    * `SALEADS_DEBUGGER_ADDRESS` (or `-Dsaleads.debuggerAddress=host:port`) to attach to an existing Chrome session already on the login page.
 * Optional configuration:
   * `SALEADS_HEADLESS=true` (or `-Dsaleads.headless=true`) to run Chrome in headless mode.
 * Example command:
