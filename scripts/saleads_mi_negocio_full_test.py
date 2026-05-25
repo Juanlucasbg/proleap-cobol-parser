@@ -22,7 +22,6 @@ try:
     from playwright.sync_api import (
         Browser,
         BrowserContext,
-        Error as PlaywrightError,
         Page,
         TimeoutError as PlaywrightTimeoutError,
         sync_playwright,
@@ -40,6 +39,17 @@ except ImportError:
 WAIT_TIMEOUT_MS = int(os.getenv("SALEADS_WAIT_TIMEOUT_MS", "25000"))
 DEFAULT_EMAIL = "juanlucasbarbiergarzon@gmail.com"
 SCREENSHOT_ROOT = Path("artifacts") / "saleads_mi_negocio_full_test"
+REPORT_FIELDS = [
+    "Login",
+    "Mi Negocio menu",
+    "Agregar Negocio modal",
+    "Administrar Negocios view",
+    "Información General",
+    "Detalles de la Cuenta",
+    "Tus Negocios",
+    "Términos y Condiciones",
+    "Política de Privacidad",
+]
 
 
 @dataclass
@@ -75,15 +85,6 @@ def click_visible_text(page: Page, text: str, exact: bool = True) -> None:
     target.wait_for(state="visible", timeout=WAIT_TIMEOUT_MS)
     target.click()
     wait_for_ui(page)
-
-
-def click_role_button(page: Page, name: str) -> bool:
-    locator = page.get_by_role("button", name=re.compile(re.escape(name), re.IGNORECASE))
-    if locator.count() > 0 and locator.first.is_visible():
-        locator.first.click()
-        wait_for_ui(page)
-        return True
-    return False
 
 
 def ensure_visible_text(page: Page, text: str, exact: bool = False) -> None:
@@ -266,6 +267,7 @@ def main() -> int:
     app_page: Optional[Page] = None
     browser: Optional[Browser] = None
     owns_context = True
+    fatal_error: Optional[str] = None
 
     try:
         context, app_page, browser, owns_context = connect_browser()
@@ -430,13 +432,29 @@ def main() -> int:
         run_step(results, "Política de Privacidad", step_privacy)
 
     except Exception as exc:  # noqa: BLE001
-        print(f"Fatal error: {exc}", file=sys.stderr)
+        fatal_error = str(exc)
+        print(f"Fatal error: {fatal_error}", file=sys.stderr)
     finally:
+        collected = {item.name: item for item in results}
+        ordered_results: list[StepResult] = []
+        for field in REPORT_FIELDS:
+            if field in collected:
+                ordered_results.append(collected[field])
+            else:
+                reason = fatal_error or "Not executed due to a previous failed step."
+                ordered_results.append(
+                    StepResult(
+                        name=field,
+                        passed=False,
+                        details=reason,
+                    )
+                )
+
         report = {
             "name": "saleads_mi_negocio_full_test",
             "generated_at_utc": utc_stamp(),
             "artifacts_dir": str(artifacts_dir),
-            "results": [asdict(item) for item in results],
+            "results": [asdict(item) for item in ordered_results],
         }
 
         report_path = artifacts_dir / "final_report.json"
@@ -449,7 +467,7 @@ def main() -> int:
         if browser:
             browser.close()
 
-    all_passed = bool(results) and all(item.passed for item in results)
+    all_passed = all(item.passed for item in ordered_results)
     return 0 if all_passed else 1
 
 
