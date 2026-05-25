@@ -260,8 +260,15 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
     setStepResult(steps, "Login", "FAIL", cleanError(error));
   }
 
-  // Step 2: Open Mi Negocio menu.
-  try {
+  if (steps.Login.status === "FAIL") {
+    for (const field of REPORT_FIELDS) {
+      if (field !== "Login") {
+        setStepResult(steps, field, "FAIL", "Blocked because Login step did not complete successfully.");
+      }
+    }
+  } else {
+    // Step 2: Open Mi Negocio menu.
+    try {
     const negocioSection = await waitForVisible(
       [
         page.getByRole("button", { name: /^Negocio$/i }),
@@ -287,12 +294,12 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
     await takeCheckpoint(page, testInfo, "02-mi-negocio-expanded", false);
 
     setStepResult(steps, "Mi Negocio menu", "PASS", "Mi Negocio submenu expanded and both options were visible.");
-  } catch (error) {
+    } catch (error) {
     setStepResult(steps, "Mi Negocio menu", "FAIL", cleanError(error));
-  }
+    }
 
-  // Step 3: Validate Agregar Negocio modal.
-  try {
+    // Step 3: Validate Agregar Negocio modal.
+    try {
     const agregarNegocio = await waitForVisible(
       [
         page.getByRole("menuitem", { name: /^Agregar Negocio$/i }),
@@ -318,12 +325,12 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
     await clickAndWait(page.getByRole("button", { name: /^Cancelar$/i }), page);
 
     setStepResult(steps, "Agregar Negocio modal", "PASS", "Modal fields and actions were validated successfully.");
-  } catch (error) {
+    } catch (error) {
     setStepResult(steps, "Agregar Negocio modal", "FAIL", cleanError(error));
-  }
+    }
 
-  // Step 4: Open Administrar Negocios and validate account sections.
-  try {
+    // Step 4: Open Administrar Negocios and validate account sections.
+    try {
     const administrarNegocios = await waitForVisible(
       [
         page.getByRole("menuitem", { name: /^Administrar Negocios$/i }),
@@ -342,12 +349,12 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
 
     await takeCheckpoint(page, testInfo, "04-administrar-negocios-view", true);
     setStepResult(steps, "Administrar Negocios view", "PASS", "All required account sections were displayed.");
-  } catch (error) {
+    } catch (error) {
     setStepResult(steps, "Administrar Negocios view", "FAIL", cleanError(error));
-  }
+    }
 
-  // Step 5: Validate Información General.
-  try {
+    // Step 5: Validate Información General.
+    try {
     const generalSection = sectionFromHeading(page, /Información General/i);
     await expect(generalSection).toBeVisible();
 
@@ -369,12 +376,12 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
     expect(hasLikelyName).toBeTruthy();
 
     setStepResult(steps, "Información General", "PASS", "User identity, email, plan and plan-change action were visible.");
-  } catch (error) {
+    } catch (error) {
     setStepResult(steps, "Información General", "FAIL", cleanError(error));
-  }
+    }
 
-  // Step 6: Validate Detalles de la Cuenta.
-  try {
+    // Step 6: Validate Detalles de la Cuenta.
+    try {
     const detailsSection = sectionFromHeading(page, /Detalles de la Cuenta/i);
     await expect(detailsSection).toBeVisible();
     await expect(detailsSection.getByText(/Cuenta creada/i)).toBeVisible();
@@ -382,12 +389,12 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
     await expect(detailsSection.getByText(/Idioma seleccionado/i)).toBeVisible();
 
     setStepResult(steps, "Detalles de la Cuenta", "PASS", "Account details section contains created date, status and language.");
-  } catch (error) {
+    } catch (error) {
     setStepResult(steps, "Detalles de la Cuenta", "FAIL", cleanError(error));
-  }
+    }
 
-  // Step 7: Validate Tus Negocios.
-  try {
+    // Step 7: Validate Tus Negocios.
+    try {
     const businessSection = sectionFromHeading(page, /Tus Negocios/i);
     await expect(businessSection).toBeVisible();
     await expect(businessSection.getByRole("button", { name: /Agregar Negocio/i })).toBeVisible();
@@ -400,12 +407,12 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
     expect(hasBusinessContent).toBeTruthy();
 
     setStepResult(steps, "Tus Negocios", "PASS", "Business list, add button and business-count text are visible.");
-  } catch (error) {
+    } catch (error) {
     setStepResult(steps, "Tus Negocios", "FAIL", cleanError(error));
-  }
+    }
 
-  // Step 8: Validate Términos y Condiciones.
-  try {
+    // Step 8: Validate Términos y Condiciones.
+    try {
     terminosUrl = await openLegalPageAndValidate({
       context,
       appPage: page,
@@ -416,12 +423,12 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
     });
 
     setStepResult(steps, "Términos y Condiciones", "PASS", `Validated legal page at URL: ${terminosUrl}`);
-  } catch (error) {
+    } catch (error) {
     setStepResult(steps, "Términos y Condiciones", "FAIL", cleanError(error));
-  }
+    }
 
-  // Step 9: Validate Política de Privacidad.
-  try {
+    // Step 9: Validate Política de Privacidad.
+    try {
     privacidadUrl = await openLegalPageAndValidate({
       context,
       appPage: page,
@@ -432,8 +439,9 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
     });
 
     setStepResult(steps, "Política de Privacidad", "PASS", `Validated legal page at URL: ${privacidadUrl}`);
-  } catch (error) {
+    } catch (error) {
     setStepResult(steps, "Política de Privacidad", "FAIL", cleanError(error));
+    }
   }
 
   // Step 10: Final report.
