@@ -267,9 +267,9 @@ public class SaleadsMiNegocioFullTest {
 		try {
 			action.run();
 			stepResults.put(stepName, "PASS");
-		} catch (final Exception e) {
+		} catch (final Throwable throwable) {
 			stepResults.put(stepName, "FAIL");
-			failures.add(stepName + ": " + normalizeMessage(e));
+			failures.add(stepName + ": " + normalizeMessage(throwable));
 		}
 	}
 
@@ -445,15 +445,15 @@ public class SaleadsMiNegocioFullTest {
 		System.out.println("Evidence directory: " + evidenceDirectory.toAbsolutePath());
 	}
 
-	private String normalizeMessage(final Exception exception) {
-		final Throwable cause = exception.getCause();
+	private String normalizeMessage(final Throwable throwable) {
+		final Throwable cause = throwable.getCause();
 		if (cause != null && cause.getMessage() != null && !cause.getMessage().isBlank()) {
 			return cause.getMessage();
 		}
-		if (exception.getMessage() != null && !exception.getMessage().isBlank()) {
-			return exception.getMessage();
+		if (throwable.getMessage() != null && !throwable.getMessage().isBlank()) {
+			return throwable.getMessage();
 		}
-		return exception.getClass().getSimpleName();
+		return throwable.getClass().getSimpleName();
 	}
 
 	@FunctionalInterface
