@@ -233,7 +233,30 @@ test('saleads_mi_negocio_full_test', async ({ page, context }, testInfo) => {
   });
 
   await runStep('Información General', async () => {
-    await expect(page.getByText(headingRegex('@')).first()).toBeVisible();
+    const generalSection = page
+      .locator('section, article, div')
+      .filter({ has: page.getByText(headingRegex('Información General')).first() })
+      .first();
+
+    await expect(generalSection).toBeVisible();
+
+    const sectionText = await generalSection.innerText();
+    expect(
+      sectionText,
+      'Expected a visible user email inside Información General.',
+    ).toMatch(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
+
+    const cleanedLines = sectionText
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
+    const possibleName = cleanedLines.find(
+      (line) =>
+        !line.includes('@') &&
+        !/información general|business plan|cambiar plan|cuenta creada|estado activo|idioma/i.test(line),
+    );
+    expect(possibleName, 'Expected a visible user name inside Información General.').toBeTruthy();
+
     await expect(page.getByText(headingRegex('BUSINESS PLAN')).first()).toBeVisible();
     await expect(page.getByRole('button', { name: headingRegex('Cambiar Plan') }).first()).toBeVisible();
   });
@@ -245,7 +268,15 @@ test('saleads_mi_negocio_full_test', async ({ page, context }, testInfo) => {
   });
 
   await runStep('Tus Negocios', async () => {
-    await expect(page.getByText(headingRegex('Tus Negocios')).first()).toBeVisible();
+    const businessesSection = page
+      .locator('section, article, div')
+      .filter({ has: page.getByText(headingRegex('Tus Negocios')).first() })
+      .first();
+
+    await expect(businessesSection).toBeVisible();
+    await expect(
+      businessesSection.locator('ul li, [role="listitem"], [role="row"]').first(),
+    ).toBeVisible();
     await expect(page.getByText(headingRegex('Agregar Negocio')).first()).toBeVisible();
     await expect(page.getByText(headingRegex('Tienes 2 de 3 negocios')).first()).toBeVisible();
   });
