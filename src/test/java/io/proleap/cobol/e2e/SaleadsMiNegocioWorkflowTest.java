@@ -117,8 +117,9 @@ public class SaleadsMiNegocioWorkflowTest {
 
 	private void stepLoginWithGoogle() {
 		clickByVisibleText("Sign in with Google", "Iniciar sesión con Google", "Iniciar con Google", "Continuar con Google",
-				"Google");
+				"Google", "GOOGLE");
 		handleGoogleAccountSelectorIfPresent();
+		assertNotStillInLoginScreen();
 		assertAnyTextVisible("Mi Negocio", "Negocio");
 		assertSidebarIsVisible();
 		takeScreenshot("01-dashboard-loaded");
@@ -322,11 +323,22 @@ public class SaleadsMiNegocioWorkflowTest {
 	private boolean isTextVisible(final String text, final Duration timeout) {
 		try {
 			new WebDriverWait(driver, timeout)
-					.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[contains(normalize-space(.), "
-							+ asXpathLiteral(text) + ") and not(self::script) and not(self::style)]")));
+					.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*["
+							+ caseInsensitiveContainsExpression("normalize-space(.)", text)
+							+ " and not(self::script) and not(self::style)]")));
 			return true;
 		} catch (final TimeoutException timeoutException) {
 			return false;
+		}
+	}
+
+	private void assertNotStillInLoginScreen() {
+		final boolean loginTitleVisible = isTextVisible("Sign in to your account", Duration.ofSeconds(3));
+		final boolean googleButtonVisible = isTextVisible("GOOGLE", Duration.ofSeconds(3))
+				|| isTextVisible("Google", Duration.ofSeconds(3));
+		if (loginTitleVisible && googleButtonVisible) {
+			throw new IllegalStateException(
+					"Google authentication did not complete. Login screen is still visible, likely due missing/blocked Google session.");
 		}
 	}
 
@@ -398,9 +410,16 @@ public class SaleadsMiNegocioWorkflowTest {
 	}
 
 	private String clickableElementXpathContains(final String text) {
-		final String literal = asXpathLiteral(text);
-		return "(//*[self::button or self::a or self::li or self::div or self::span or @role='button' or @role='menuitem'][contains(normalize-space(.), "
-				+ literal + ")])[1]";
+		return "(//*[self::button or self::a or self::li or self::div or self::span or @role='button' or @role='menuitem']["
+				+ caseInsensitiveContainsExpression("normalize-space(.)", text) + "])[1]";
+	}
+
+	private String caseInsensitiveContainsExpression(final String sourceExpression, final String expectedText) {
+		final String uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+		final String lowercase = "abcdefghijklmnopqrstuvwxyz";
+		final String expectedLower = expectedText.toLowerCase(Locale.ROOT);
+		return "contains(translate(" + sourceExpression + ", " + asXpathLiteral(uppercase) + ", "
+				+ asXpathLiteral(lowercase) + "), " + asXpathLiteral(expectedLower) + ")";
 	}
 
 	private String quote(final String value) {
