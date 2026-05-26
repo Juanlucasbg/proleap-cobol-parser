@@ -140,14 +140,19 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
 
   const loginUrl = process.env.SALEADS_LOGIN_URL || process.env.SALEADS_URL;
-  if (!loginUrl) {
-    throw new Error(
-      "Set SALEADS_LOGIN_URL or SALEADS_URL to the login page URL of the current SaleADS environment."
-    );
+  if (loginUrl) {
+    await page.goto(loginUrl, { waitUntil: "domcontentloaded" });
+    await waitForUi(page, 1000);
+  } else {
+    // Supports orchestrations where the browser is already positioned on login page.
+    const current = page.url();
+    if (!current || current === "about:blank") {
+      throw new Error(
+        "Provide SALEADS_LOGIN_URL/SALEADS_URL or start with an already opened SaleADS login page."
+      );
+    }
+    await waitForUi(page, 1000);
   }
-
-  await page.goto(loginUrl, { waitUntil: "domcontentloaded" });
-  await waitForUi(page, 1000);
 
   // Step 1: Login with Google
   try {
@@ -168,7 +173,8 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
     const authPage = (await popupPromise) || page;
     await waitForUi(authPage, 1000);
 
-    const accountCandidate = authPage.getByText("juanlucasbarbiergarzon@gmail.com", { exact: true });
+    const accountEmail = process.env.SALEADS_GOOGLE_EMAIL || "juanlucasbarbiergarzon@gmail.com";
+    const accountCandidate = authPage.getByText(accountEmail, { exact: true });
     if ((await accountCandidate.count()) > 0 && (await accountCandidate.first().isVisible().catch(() => false))) {
       await accountCandidate.first().click();
       await waitForUi(authPage, 1000);

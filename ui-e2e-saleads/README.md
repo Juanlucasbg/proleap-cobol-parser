@@ -36,6 +36,12 @@ Set the login URL for the target environment:
 export SALEADS_LOGIN_URL="https://<current-environment>/login"
 ```
 
+Optional account selector override:
+
+```bash
+export SALEADS_GOOGLE_EMAIL="juanlucasbarbiergarzon@gmail.com"
+```
+
 Then run:
 
 ```bash
@@ -47,6 +53,11 @@ Headed mode:
 ```bash
 npm run test:headed
 ```
+
+## Already-open login page mode
+
+If an external orchestrator opens the browser directly on the SaleADS login page, you can run without `SALEADS_LOGIN_URL`.
+In this mode, the test uses the current page as the starting point.
 
 ## Evidence outputs
 
