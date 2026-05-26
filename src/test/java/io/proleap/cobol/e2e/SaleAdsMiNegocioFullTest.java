@@ -208,9 +208,8 @@ public class SaleAdsMiNegocioFullTest {
 		Page legalPage = appPage;
 
 		try {
-			legalPage = context.waitForPage(() -> clickAndWaitForUi(appPage,
-					firstVisibleByText(appPage, DEFAULT_WAIT_MS, linkText)),
-					new BrowserContext.WaitForPageOptions().setTimeout(8000));
+			legalPage = context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(8000),
+					() -> clickAndWaitForUi(appPage, firstVisibleByText(appPage, DEFAULT_WAIT_MS, linkText)));
 			legalPage.waitForLoadState(LoadState.DOMCONTENTLOADED);
 		} catch (final PlaywrightException timeoutOrSameTab) {
 			clickAndWaitForUi(appPage, firstVisibleByText(appPage, DEFAULT_WAIT_MS, linkText));
