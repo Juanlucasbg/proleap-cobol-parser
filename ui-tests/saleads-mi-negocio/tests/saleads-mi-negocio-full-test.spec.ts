@@ -155,16 +155,18 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
 
   if (startUrl) {
     await page.goto(startUrl, { waitUntil: "domcontentloaded" });
-  } else if (page.url() === "about:blank") {
-    throw new Error(
-      "No start URL available. Set SALEADS_START_URL (or SALEADS_LOGIN_URL / BASE_URL) to begin from the login page."
-    );
   }
 
   let termsUrl = "";
   let privacyUrl = "";
 
   try {
+    if (!startUrl && page.url() === "about:blank") {
+      throw new Error(
+        "No start URL available. Set SALEADS_START_URL (or SALEADS_LOGIN_URL / BASE_URL) to begin from the login page."
+      );
+    }
+
     const loginButton = await firstVisibleLocator(loginButtonCandidates(page), 30_000);
     const popupPromise = page.context().waitForEvent("page", { timeout: 8_000 }).catch(() => null);
     await clickAndWaitForUi(page, loginButton);
