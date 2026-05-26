@@ -194,6 +194,31 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+Optional SaleADS Mi Negocio E2E workflow test
+---------------------------------------------
+
+The repository includes an optional Selenium-based E2E test for the SaleADS "Mi Negocio" workflow:
+
+* Test class: `io.proleap.saleads.e2e.SaleadsMiNegocioWorkflowTest`
+* The test is **skipped by default**. Enable it explicitly with `SALEADS_E2E_ENABLED=true` (or `-Dsaleads.e2e.enabled=true`).
+* It does not hardcode a SaleADS domain. Provide environment-specific runtime values via configuration.
+* Artifacts (screenshots and final report) are written to `target/saleads-e2e-artifacts/<timestamp>/`.
+
+Supported settings:
+
+* `SALEADS_LOGIN_URL` or `-Dsaleads.login.url=...` (optional; login page URL for the target environment)
+* `SALEADS_REMOTE_WEBDRIVER_URL` or `-Dsaleads.remote.webdriver.url=...` (optional Selenium Grid URL)
+* `SALEADS_HEADLESS` or `-Dsaleads.headless=true|false` (defaults to `true`)
+* `SALEADS_UI_TIMEOUT_SECONDS` or `-Dsaleads.ui.timeout.seconds=...` (defaults to `30`)
+* `SALEADS_EXPECTED_USER_NAME` or `-Dsaleads.expected.user.name=...` (optional strict username check)
+
+Example:
+
+```
+$ SALEADS_E2E_ENABLED=true SALEADS_LOGIN_URL=https://<your-saleads-env>/login \
+  mvn -Dtest=io.proleap.saleads.e2e.SaleadsMiNegocioWorkflowTest test
+```
+
 
 Release process
 ---------------
