@@ -1,0 +1,12 @@
+{
+  "name": "saleads-e2e-automation",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Playwright automation for SaleADS Mi Negocio workflow validation",
+  "scripts": {
+    "saleads:mi-negocio": "node saleads_mi_negocio_full_test.js"
+  },
+  "devDependencies": {
+    "playwright": "^1.60.0"
+  }
+}
