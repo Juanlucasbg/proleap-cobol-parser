@@ -293,13 +293,25 @@ public class SaleadsMiNegocioWorkflowTest {
 	}
 
 	private void selectGoogleAccountIfPresented(final String accountEmail) {
-		final Set<String> handlesBefore = new LinkedHashSet<>(driver.getWindowHandles());
-		waitForUiToLoad();
+		final String originalHandle = driver.getWindowHandle();
+		final Set<String> handles = new LinkedHashSet<>(driver.getWindowHandles());
+		if (handles.size() > 1) {
+			final String latestHandle = new ArrayList<>(handles).get(handles.size() - 1);
+			if (!Objects.equals(latestHandle, originalHandle)) {
+				driver.switchTo().window(latestHandle);
+				waitForUiToLoad();
+			}
+		}
 
-		switchToNewTab(handlesBefore, driver.getWindowHandles());
+		waitForUiToLoad();
 		final boolean selectedFromCurrentPage = clickByVisibleTextIfPresent(8, accountEmail);
 
 		if (selectedFromCurrentPage) {
+			waitForUiToLoad();
+		}
+
+		if (!Objects.equals(driver.getWindowHandle(), originalHandle) && driver.getWindowHandles().contains(originalHandle)) {
+			driver.switchTo().window(originalHandle);
 			waitForUiToLoad();
 		}
 	}
