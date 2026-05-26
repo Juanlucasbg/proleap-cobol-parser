@@ -41,3 +41,8 @@ target/
 
 ## Additional for IntelliJ
 out/
+
+# Node-based UI automation artifacts
+ui-tests/saleads-mi-negocio/node_modules/
+ui-tests/saleads-mi-negocio/playwright-report/
+ui-tests/saleads-mi-negocio/test-results/
