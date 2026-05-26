@@ -9,6 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.OffsetDateTime;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -25,6 +26,7 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.TakesScreenshot;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -308,9 +310,20 @@ public class SaleadsMiNegocioFullTest {
 	}
 
 	private void clickByText(final String text) {
-		final By locator = By.xpath("//*[normalize-space()=" + xpathString(text) + " or contains(normalize-space(),"
-				+ xpathString(text) + ")]");
-		final WebElement textElement = waitForVisible(locator, 20);
+		final By primaryLocator = By.xpath(
+				"//*[normalize-space()=" + xpathString(text)
+						+ " and (self::button or self::a or self::span or self::div or self::li or self::p or @role='button')]"
+						+ " | //*[(self::button or self::a or @role='button') and contains(normalize-space(),"
+						+ xpathString(text) + ")]");
+		final By fallbackLocator = By.xpath("//*[normalize-space()=" + xpathString(text)
+				+ " or contains(normalize-space()," + xpathString(text) + ")]");
+
+		WebElement textElement;
+		try {
+			textElement = waitForVisible(primaryLocator, 10);
+		} catch (final TimeoutException timeoutException) {
+			textElement = waitForVisible(fallbackLocator, 20);
+		}
 
 		WebElement clickable = textElement;
 		try {
@@ -343,9 +356,12 @@ public class SaleadsMiNegocioFullTest {
 			if (line.isBlank()) {
 				continue;
 			}
-			final String lower = line.toLowerCase(Locale.ROOT);
-			if (lower.contains("@") || lower.contains("informacion general") || lower.contains("business plan")
-					|| lower.contains("cambiar plan")) {
+			final String normalized = normalizeForComparison(line);
+			if (normalized.contains("@") || normalized.contains("informacion general")
+					|| normalized.contains("business plan") || normalized.contains("cambiar plan")
+					|| normalized.contains("cuenta creada") || normalized.contains("estado activo")
+					|| normalized.contains("idioma seleccionado") || normalized.contains("agregar negocio")
+					|| normalized.contains("tienes 2 de 3 negocios")) {
 				continue;
 			}
 			if (line.matches(".*[A-Za-zÁÉÍÓÚáéíóúÑñ].*") && line.length() >= 3) {
@@ -492,6 +508,11 @@ public class SaleadsMiNegocioFullTest {
 			return "";
 		}
 		return raw.replace("\\", "\\\\").replace("\"", "\\\"");
+	}
+
+	private String normalizeForComparison(final String value) {
+		final String normalized = Normalizer.normalize(value, Normalizer.Form.NFD);
+		return normalized.replaceAll("\\p{M}", "").toLowerCase(Locale.ROOT);
 	}
 
 	private interface StepAction {
