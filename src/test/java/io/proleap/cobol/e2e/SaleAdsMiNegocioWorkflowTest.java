@@ -244,20 +244,25 @@ public class SaleAdsMiNegocioWorkflowTest {
 				By.xpath("//div[@data-identifier and contains(normalize-space(.), " + xpathLiteral(email) + ")]"));
 
 		try {
-			wait.withTimeout(Duration.ofSeconds(10))
+			new WebDriverWait(driver, Duration.ofSeconds(10))
 					.until(drv -> hasAnyVisibleElement(selectors) || drv.getWindowHandles().size() > 1);
 		} catch (final TimeoutException ignored) {
 			// Account picker did not appear. This can happen when session is already authenticated.
 		}
 
 		final String currentHandle = driver.getWindowHandle();
+		boolean accountClicked = false;
 		for (final String handle : driver.getWindowHandles()) {
 			driver.switchTo().window(handle);
 			for (final By selector : selectors) {
 				if (clickIfVisible(selector)) {
 					waitForPageLoad();
+					accountClicked = true;
 					break;
 				}
+			}
+			if (accountClicked) {
+				break;
 			}
 		}
 		driver.switchTo().window(currentHandle);
