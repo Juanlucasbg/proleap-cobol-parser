@@ -23,6 +23,7 @@ import org.junit.Test;
 
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
+import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
@@ -66,7 +67,7 @@ public class SaleadsMiNegocioFullWorkflowTest {
 		final WorkflowReport report = new WorkflowReport(saleadsUrl);
 
 		try (Playwright playwright = Playwright.create()) {
-			final Browser browser = playwright.chromium().launch(new Browser.LaunchOptions().setHeadless(headless));
+			final Browser browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(headless));
 			final BrowserContext context = browser.newContext();
 			final Page appPage = context.newPage();
 			appPage.navigate(saleadsUrl);
@@ -155,7 +156,8 @@ public class SaleadsMiNegocioFullWorkflowTest {
 
 		Page googlePopup = null;
 		try {
-			googlePopup = context.waitForPage(() -> loginButton.click(), new BrowserContext.WaitForPageOptions().setTimeout(SHORT_TIMEOUT_MS));
+			googlePopup = context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(SHORT_TIMEOUT_MS),
+					() -> loginButton.click());
 		} catch (final TimeoutError timeout) {
 			waitForUiToLoad(appPage);
 		}
@@ -193,14 +195,16 @@ public class SaleadsMiNegocioFullWorkflowTest {
 	}
 
 	private void validateLegalLink(final Page appPage, final BrowserContext context, final WorkflowReport report,
-			final Path screenshotDirectory, final String fieldName, final String linkText, final String expectedHeading) {
+			final Path screenshotDirectory, final String fieldName, final String linkText, final String expectedHeading)
+			throws IOException {
 		final Locator legalLink = waitForAnyVisible("Legal link '" + linkText + "'",
 				appPage.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName(Pattern.compile("(?i).*" + Pattern.quote(linkText) + ".*"))),
 				appPage.getByText(Pattern.compile("(?i).*" + Pattern.quote(linkText) + ".*")));
 
 		Page openedPage = null;
 		try {
-			openedPage = context.waitForPage(() -> legalLink.click(), new BrowserContext.WaitForPageOptions().setTimeout(SHORT_TIMEOUT_MS));
+			openedPage = context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(SHORT_TIMEOUT_MS),
+					() -> legalLink.click());
 		} catch (final TimeoutError timeout) {
 			waitForUiToLoad(appPage);
 		}
