@@ -182,18 +182,19 @@ async function openLegalDocumentAndValidate(options: {
 }
 
 test("saleads_mi_negocio_full_test", async ({ page }) => {
-  const loginUrl = process.env.SALEADS_LOGIN_URL;
+  const loginUrl =
+    process.env.SALEADS_LOGIN_URL ?? process.env.SALEADS_BASE_URL ?? process.env.BASE_URL;
   const results = createDefaultResults();
   const legalUrls: Record<string, string> = {};
 
-  if (!loginUrl) {
+  if (loginUrl) {
+    await page.goto(loginUrl, { waitUntil: "domcontentloaded" });
+    await waitForUi(page);
+  } else if (page.url() === "about:blank") {
     throw new Error(
-      "SALEADS_LOGIN_URL is required. Set it to the login page for dev/staging/production."
+      "Set SALEADS_LOGIN_URL (or SALEADS_BASE_URL/BASE_URL) to the current environment login page."
     );
   }
-
-  await page.goto(loginUrl, { waitUntil: "domcontentloaded" });
-  await waitForUi(page);
 
   const executeStep = async (field: ReportField, action: () => Promise<StepResult | void>) => {
     try {
