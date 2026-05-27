@@ -385,7 +385,7 @@ public class SaleadsMiNegocioFullTest {
 	}
 
 	private Pattern pattern(final String regex) {
-		return Pattern.compile(regex, Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+		return Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
 	}
 
 	private interface CheckedAction {
