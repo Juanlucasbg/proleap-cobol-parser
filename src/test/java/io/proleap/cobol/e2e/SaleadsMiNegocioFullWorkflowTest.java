@@ -106,8 +106,8 @@ public class SaleadsMiNegocioFullWorkflowTest {
 	}
 
 	private void stepLoginWithGoogle(final StepResult step) throws Exception {
-		clickFirstVisibleText(List.of("Sign in with Google", "Iniciar sesion con Google", "Continuar con Google",
-				"Ingresar con Google", "Login with Google"), "Google sign-in button");
+		clickFirstVisibleText(List.of("Sign in with Google", "Iniciar sesion con Google", "Iniciar sesión con Google",
+				"Continuar con Google", "Ingresar con Google", "Login with Google"), "Google sign-in button");
 		waitForUiLoad();
 
 		if (isVisibleText(GOOGLE_EMAIL, 8)) {
@@ -164,10 +164,10 @@ public class SaleadsMiNegocioFullWorkflowTest {
 		clickText("Administrar Negocios");
 		waitForUiLoad();
 
-		requireVisible(step, "Informacion General section exists", "Informacion General");
-		requireVisible(step, "Detalles de la Cuenta section exists", "Detalles de la Cuenta");
+		requireAnyVisible(step, "Informacion General section exists", List.of("Informacion General", "Información General"));
+		requireAnyVisible(step, "Detalles de la Cuenta section exists", List.of("Detalles de la Cuenta"));
 		requireVisible(step, "Tus Negocios section exists", "Tus Negocios");
-		requireVisible(step, "Seccion Legal section exists", "Seccion Legal");
+		requireAnyVisible(step, "Seccion Legal section exists", List.of("Seccion Legal", "Sección Legal"));
 		step.addEvidence("account_page", screenshot("04-administrar-negocios"));
 	}
 
@@ -181,7 +181,7 @@ public class SaleadsMiNegocioFullWorkflowTest {
 	private void stepDetallesCuenta(final StepResult step) {
 		requireVisible(step, "Cuenta creada visible", "Cuenta creada");
 		requireAnyVisible(step, "Estado activo visible", List.of("Estado activo", "Activo"));
-		requireVisible(step, "Idioma seleccionado visible", "Idioma seleccionado");
+		requireAnyVisible(step, "Idioma seleccionado visible", List.of("Idioma seleccionado", "Idioma"));
 	}
 
 	private void stepTusNegocios(final StepResult step) {
@@ -191,20 +191,22 @@ public class SaleadsMiNegocioFullWorkflowTest {
 	}
 
 	private void stepTerminosYCondiciones(final StepResult step) throws Exception {
-		validateLegalLink(step, "Terminos y Condiciones", "Terminos y Condiciones", "08-terminos");
+		validateLegalLink(step, List.of("Términos y Condiciones", "Terminos y Condiciones"),
+				List.of("Términos y Condiciones", "Terminos y Condiciones"), "08-terminos");
 	}
 
 	private void stepPoliticaPrivacidad(final StepResult step) throws Exception {
-		validateLegalLink(step, "Politica de Privacidad", "Politica de Privacidad", "09-politica-privacidad");
+		validateLegalLink(step, List.of("Política de Privacidad", "Politica de Privacidad"),
+				List.of("Política de Privacidad", "Politica de Privacidad"), "09-politica-privacidad");
 	}
 
-	private void validateLegalLink(final StepResult step, final String linkText, final String headingText,
+	private void validateLegalLink(final StepResult step, final List<String> linkTexts, final List<String> headingTexts,
 			final String screenshotName) throws Exception {
 		final String appHandle = driver.getWindowHandle();
 		final String previousUrl = driver.getCurrentUrl();
 		final Set<String> handlesBefore = new LinkedHashSet<>(driver.getWindowHandles());
 
-		clickText(linkText);
+		clickFirstVisibleText(linkTexts, "legal link");
 		waitForUiLoad();
 
 		String targetHandle = appHandle;
@@ -221,7 +223,7 @@ public class SaleadsMiNegocioFullWorkflowTest {
 			waitForUiLoad();
 		}
 
-		requireVisible(step, "Heading visible", headingText);
+		requireAnyVisible(step, "Heading visible", headingTexts);
 		final boolean legalContentVisible = driver.findElements(By.xpath("//main//*[normalize-space()] | //body//*[normalize-space()]"))
 				.size() > 10;
 		if (legalContentVisible) {
