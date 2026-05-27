@@ -1,0 +1,19 @@
+{
+  "name": "saleads-e2e",
+  "version": "1.0.0",
+  "description": "Environment-agnostic SaleADS end-to-end tests",
+  "scripts": {
+    "test": "npm run test:saleads-mi-negocio",
+    "test:saleads-mi-negocio": "playwright test tests/saleads-mi-negocio.spec.js",
+    "install:browsers": "playwright install chromium"
+  },
+  "keywords": [
+    "playwright",
+    "saleads",
+    "e2e"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.60.0"
+  }
+}
