@@ -224,8 +224,8 @@ public class SaleadsMiNegocioFullWorkflowTest {
 		Page popupPage = null;
 		try {
 			popupPage = page.waitForPopup(
-					() -> loginButton.click(new Locator.ClickOptions().setTimeout(DEFAULT_TIMEOUT_MS)),
-					new Page.WaitForPopupOptions().setTimeout(8_000));
+					new Page.WaitForPopupOptions().setTimeout(8_000),
+					() -> loginButton.click(new Locator.ClickOptions().setTimeout(DEFAULT_TIMEOUT_MS)));
 		} catch (PlaywrightException e) {
 			// The login flow may stay in the same tab or open too quickly.
 		}
@@ -306,8 +306,8 @@ public class SaleadsMiNegocioFullWorkflowTest {
 		Page legalPage = null;
 		try {
 			legalPage = context.waitForPage(
-					() -> legalLink.click(new Locator.ClickOptions().setTimeout(DEFAULT_TIMEOUT_MS)),
-					new BrowserContext.WaitForPageOptions().setTimeout(7_000));
+					new BrowserContext.WaitForPageOptions().setTimeout(7_000),
+					() -> legalLink.click(new Locator.ClickOptions().setTimeout(DEFAULT_TIMEOUT_MS)));
 		} catch (PlaywrightException e) {
 			// Link can navigate in the same tab.
 		}
@@ -476,6 +476,14 @@ public class SaleadsMiNegocioFullWorkflowTest {
 			}
 		}
 		return null;
+	}
+
+	private boolean isHeadless() {
+		final String value = System.getenv("SALEADS_HEADLESS");
+		if (value == null || value.trim().isEmpty()) {
+			return true;
+		}
+		return !"false".equalsIgnoreCase(value.trim());
 	}
 
 	private void writeReport(
