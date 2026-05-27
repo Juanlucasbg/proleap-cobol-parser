@@ -1,0 +1,21 @@
+{
+  "name": "e2e",
+  "version": "1.0.0",
+  "description": "SaleADS.ai end-to-end browser automation tests",
+  "scripts": {
+    "test": "playwright test",
+    "test:saleads-mi-negocio": "playwright test tests/saleads-mi-negocio-full.spec.js",
+    "test:headed": "playwright test --headed",
+    "install:browsers": "playwright install"
+  },
+  "keywords": [
+    "playwright",
+    "e2e",
+    "saleads"
+  ],
+  "author": "automation",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.60.0"
+  }
+}
