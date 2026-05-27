@@ -153,9 +153,12 @@ async function run() {
       await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
       await waitForUiIdle(page);
     } else if (page.url() === "about:blank") {
-      throw new Error(
-        "No login page is available. Set SALEADS_BASE_URL (or SALEADS_URL) or connect with SALEADS_CDP_URL to an already-open SaleADS login page.",
+      setResult(
+        "Login",
+        false,
+        "No login page is available. Set SALEADS_BASE_URL/SALEADS_URL or connect with SALEADS_CDP_URL.",
       );
+      return;
     }
 
     // Step 1: Login with Google.
@@ -166,7 +169,8 @@ async function run() {
     ], 12000);
 
     if (!loginButton) {
-      throw new Error("Could not find the Google login button on the current page.");
+      setResult("Login", false, "Could not find the Google login button on the current page.");
+      return;
     }
 
     const loginPopupPromise = context.waitForEvent("page", { timeout: 7000 }).catch(() => null);
@@ -216,7 +220,8 @@ async function run() {
     ], 12000);
 
     if (!negocioMenu) {
-      throw new Error("Could not find Negocio/Mi Negocio in the left sidebar.");
+      setResult("Mi Negocio menu", false, "Could not find Negocio/Mi Negocio in the left sidebar.");
+      return;
     }
 
     await clickAndWait(negocioMenu, page);
@@ -244,44 +249,45 @@ async function run() {
 
     // Step 3: Validate Agregar Negocio modal.
     if (!agregarNegocioInMenu) {
-      throw new Error("Agregar Negocio option is not available to validate the modal.");
+      setResult("Agregar Negocio modal", false, "Agregar Negocio option is not available.");
+    } else {
+      await clickAndWait(agregarNegocioInMenu, page);
+
+      const modalTitleVisible = await isVisible(page.getByText(/^Crear Nuevo Negocio$/i), 10000);
+      const businessNameInput = await findVisibleLocator([
+        page.getByLabel(/Nombre del Negocio/i),
+        page.getByPlaceholder(/Nombre del Negocio/i),
+        page.locator("input").filter({ hasText: /Nombre del Negocio/i }),
+        page.locator("input[name*='nombre'], input[id*='nombre']"),
+      ], 6000);
+      const quotaTextVisible = await isVisible(page.getByText(/Tienes\s+2\s+de\s+3\s+negocios/i), 5000);
+      const cancelButton = await findVisibleLocator([
+        page.getByRole("button", { name: /^Cancelar$/i }),
+        page.getByText(/^Cancelar$/i),
+      ], 5000);
+      const createButton = await findVisibleLocator([
+        page.getByRole("button", { name: /^Crear Negocio$/i }),
+        page.getByText(/^Crear Negocio$/i),
+      ], 5000);
+
+      await safeScreenshot(page, "step-3-agregar-negocio-modal.png", true);
+
+      if (businessNameInput) {
+        await businessNameInput.click();
+        await businessNameInput.fill("Negocio Prueba Automatización");
+      }
+      if (cancelButton) {
+        await clickAndWait(cancelButton, page);
+      }
+
+      setResult(
+        "Agregar Negocio modal",
+        modalTitleVisible && Boolean(businessNameInput) && quotaTextVisible && Boolean(cancelButton) && Boolean(createButton),
+        modalTitleVisible && businessNameInput && quotaTextVisible && cancelButton && createButton
+          ? "Modal title, field, quota, and action buttons validated."
+          : "One or more expected modal elements are missing.",
+      );
     }
-    await clickAndWait(agregarNegocioInMenu, page);
-
-    const modalTitleVisible = await isVisible(page.getByText(/^Crear Nuevo Negocio$/i), 10000);
-    const businessNameInput = await findVisibleLocator([
-      page.getByLabel(/Nombre del Negocio/i),
-      page.getByPlaceholder(/Nombre del Negocio/i),
-      page.locator("input").filter({ hasText: /Nombre del Negocio/i }),
-      page.locator("input[name*='nombre'], input[id*='nombre']"),
-    ], 6000);
-    const quotaTextVisible = await isVisible(page.getByText(/Tienes\s+2\s+de\s+3\s+negocios/i), 5000);
-    const cancelButton = await findVisibleLocator([
-      page.getByRole("button", { name: /^Cancelar$/i }),
-      page.getByText(/^Cancelar$/i),
-    ], 5000);
-    const createButton = await findVisibleLocator([
-      page.getByRole("button", { name: /^Crear Negocio$/i }),
-      page.getByText(/^Crear Negocio$/i),
-    ], 5000);
-
-    await safeScreenshot(page, "step-3-agregar-negocio-modal.png", true);
-
-    if (businessNameInput) {
-      await businessNameInput.click();
-      await businessNameInput.fill("Negocio Prueba Automatización");
-    }
-    if (cancelButton) {
-      await clickAndWait(cancelButton, page);
-    }
-
-    setResult(
-      "Agregar Negocio modal",
-      modalTitleVisible && Boolean(businessNameInput) && quotaTextVisible && Boolean(cancelButton) && Boolean(createButton),
-      modalTitleVisible && businessNameInput && quotaTextVisible && cancelButton && createButton
-        ? "Modal title, field, quota, and action buttons validated."
-        : "One or more expected modal elements are missing.",
-    );
 
     // Step 4: Open Administrar Negocios.
     let administrarNegocios = administrarNegociosInMenu;
@@ -302,7 +308,8 @@ async function run() {
     }
 
     if (!administrarNegocios) {
-      throw new Error("Administrar Negocios option was not found.");
+      setResult("Administrar Negocios view", false, "Administrar Negocios option was not found.");
+      return;
     }
 
     await clickAndWait(administrarNegocios, page);
