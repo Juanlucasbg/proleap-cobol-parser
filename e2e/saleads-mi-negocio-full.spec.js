@@ -268,7 +268,7 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   await runValidation("Información General", async () => {
     const infoSection = page
       .locator("section, article, div")
-      .filter({ hasText: /^Información General$/i })
+      .filter({ hasText: /Información General/i })
       .first();
     await expect(infoSection).toBeVisible();
 
@@ -304,7 +304,7 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   await runValidation("Tus Negocios", async () => {
     const negociosSection = page
       .locator("section, article, div")
-      .filter({ hasText: /^Tus Negocios$/i })
+      .filter({ hasText: /Tus Negocios/i })
       .first();
     await expect(negociosSection).toBeVisible();
     await expect(page.getByText(/Tienes\s*2\s*de\s*3\s*negocios/i).first()).toBeVisible();
