@@ -54,6 +54,15 @@ function recordCheck(field, description, passed, details = "") {
   }
 }
 
+function recordPresence(field, description, present, missingDetails) {
+  recordCheck(
+    field,
+    description,
+    Boolean(present),
+    present ? "" : missingDetails,
+  );
+}
+
 function finalizeFieldStatuses() {
   for (const field of REPORT_FIELDS) {
     const target = report[field];
@@ -155,7 +164,7 @@ async function validateLikelyUserName(page, field) {
     return false;
   });
 
-  recordCheck(
+  recordPresence(
     field,
     "User name is visible",
     nameFound,
@@ -172,10 +181,24 @@ async function openLegalDocument({
   metadataKey,
 }) {
   const context = appPage.context();
+  const legalSection = await findVisible(appPage, [
+    appPage.locator("section, article, div").filter({ hasText: /secci[oó]n legal/i }),
+  ]);
+
+  if (!legalSection) {
+    recordCheck(
+      field,
+      "Sección Legal container is visible",
+      false,
+      "No se encontró la Sección Legal en la vista de cuenta",
+    );
+    return;
+  }
+
   const link = await findVisible(appPage, [
-    appPage.getByRole("link", { name: new RegExp(linkLabel, "i") }),
-    appPage.getByRole("button", { name: new RegExp(linkLabel, "i") }),
-    appPage.getByText(new RegExp(linkLabel, "i")),
+    legalSection.getByRole("link", { name: new RegExp(linkLabel, "i") }),
+    legalSection.getByRole("button", { name: new RegExp(linkLabel, "i") }),
+    legalSection.getByText(new RegExp(linkLabel, "i")),
   ]);
 
   if (!link) {
@@ -208,10 +231,10 @@ async function openLegalDocument({
     legalPage.getByText(headingRegex),
   ]);
 
-  recordCheck(
+  recordPresence(
     field,
     `Heading ${headingRegex} is visible`,
-    Boolean(heading),
+    heading,
     `No se encontró heading ${headingRegex}`,
   );
 
@@ -224,7 +247,7 @@ async function openLegalDocument({
     return paragraphLike.length > 0;
   });
 
-  recordCheck(
+  recordPresence(
     field,
     "Legal content text is visible",
     legalContentFound,
@@ -286,10 +309,10 @@ async function run() {
       page.getByText(/sign in with google|iniciar sesi[oó]n con google|continuar con google|google/i),
     ]);
 
-    recordCheck(
+    recordPresence(
       "Login",
       "Login button or Google sign in is visible",
-      Boolean(loginButton),
+      loginButton,
       "No se encontró botón de login con Google",
     );
 
@@ -313,20 +336,27 @@ async function run() {
     }
 
     const sidebar = await findVisible(page, [
-      page.locator("aside:has-text('Negocio')"),
-      page.locator("nav:has-text('Negocio')"),
-      page.locator("aside"),
-      page.locator("nav"),
+      page.locator("aside").filter({ hasText: /mi negocio|administrar negocios|agregar negocio/i }),
+      page.locator("nav").filter({ hasText: /mi negocio|administrar negocios|agregar negocio/i }),
     ]);
 
     const appMain = await findVisible(page, [
-      page.locator("main"),
-      page.locator("[role='main']"),
-      page.getByText(/dashboard|inicio|negocio|mi negocio/i),
+      page.getByText(/mi negocio|administrar negocios|informaci[oó]n general|tus negocios/i),
+      page.locator("main").filter({ hasText: /mi negocio|informaci[oó]n general|tus negocios/i }),
     ]);
 
-    recordCheck("Login", "Main application interface appears", Boolean(appMain));
-    recordCheck("Login", "Left sidebar navigation is visible", Boolean(sidebar));
+    recordPresence(
+      "Login",
+      "Main application interface appears",
+      appMain,
+      "No se detectó la interfaz principal",
+    );
+    recordPresence(
+      "Login",
+      "Left sidebar navigation is visible",
+      sidebar,
+      "No se detectó la barra lateral izquierda",
+    );
     await screenshot(page, "Login", "01-dashboard.png");
 
     // Step 2: Open Mi Negocio menu
