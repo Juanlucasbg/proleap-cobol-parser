@@ -1,0 +1,14 @@
+{
+  "name": "saleads-mi-negocio-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "description": "End-to-end workflow validation for SaleADS Mi Negocio module",
+  "type": "module",
+  "scripts": {
+    "test:mi-negocio": "node run-saleads-mi-negocio-full-test.mjs",
+    "install:browsers": "playwright install chromium"
+  },
+  "dependencies": {
+    "playwright": "^1.55.0"
+  }
+}
