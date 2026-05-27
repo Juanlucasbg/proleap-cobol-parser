@@ -99,11 +99,15 @@ async function clickFirstVisible(page, texts, options = {}) {
     for (const locator of candidateLocatorsByText(page, text)) {
       const first = locator.first();
       if (await first.isVisible().catch(() => false)) {
-        await first.click();
-        if (waitAfterClick) {
-          await waitForUiLoad(page);
+        try {
+          await first.click({ timeout: 4000 });
+          if (waitAfterClick) {
+            await waitForUiLoad(page);
+          }
+          return text;
+        } catch {
+          // Try next matching locator if this node is not clickable.
         }
-        return text;
       }
     }
   }
