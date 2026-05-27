@@ -1,0 +1,13 @@
+{
+  "name": "saleads-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Environment-agnostic SaleADS end-to-end workflows",
+  "type": "module",
+  "scripts": {
+    "saleads:mi-negocio": "node saleads-mi-negocio-full-test.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.60.0"
+  }
+}
