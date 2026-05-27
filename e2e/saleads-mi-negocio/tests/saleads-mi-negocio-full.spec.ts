@@ -181,18 +181,18 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
   };
 
   try {
-    if (configuredLoginUrl) {
-      await page.goto(configuredLoginUrl, { waitUntil: "domcontentloaded" });
-      await waitForUi(page);
-    } else if (page.url() === "about:blank") {
-      throw new Error(
-        "No hay SALEADS_LOGIN_URL configurada. Define SALEADS_LOGIN_URL para ejecutar este flujo en cualquier entorno.",
-      );
-    }
-
-    report.environment.currentHost = new URL(page.url()).host;
-
     await runStep(report, "Login", async () => {
+      if (configuredLoginUrl) {
+        await page.goto(configuredLoginUrl, { waitUntil: "domcontentloaded" });
+        await waitForUi(page);
+      } else if (page.url() === "about:blank") {
+        throw new Error(
+          "No hay SALEADS_LOGIN_URL configurada. Define SALEADS_LOGIN_URL para ejecutar este flujo en cualquier entorno.",
+        );
+      }
+
+      report.environment.currentHost = new URL(page.url()).host;
+
       const popupPromise = page.waitForEvent("popup", { timeout: 8_000 }).catch(() => null);
       const loginCandidates = [
         "Sign in with Google",
@@ -235,103 +235,112 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
       report.evidence.dashboardScreenshot = await screenshotCheckpoint(page, testInfo, "01-dashboard-loaded");
     });
 
-    await runStep(report, "Mi Negocio menu", async () => {
-      await expect(page.locator("aside, nav").first()).toBeVisible();
+    if (report.results.Login === "PASS") {
+      await runStep(report, "Mi Negocio menu", async () => {
+        await expect(page.locator("aside, nav").first()).toBeVisible();
 
-      await clickByVisibleText(page, "Mi Negocio");
-      await expect(page.getByText(/Agregar Negocio/i)).toBeVisible();
-      await expect(page.getByText(/Administrar Negocios/i)).toBeVisible();
-
-      report.evidence.menuScreenshot = await screenshotCheckpoint(page, testInfo, "02-mi-negocio-menu-expanded");
-    });
-
-    await runStep(report, "Agregar Negocio modal", async () => {
-      await clickByVisibleText(page, "Agregar Negocio");
-      const modal = page.getByRole("dialog").filter({ hasText: /Crear Nuevo Negocio/i }).first();
-      await expect(modal).toBeVisible();
-      await expect(modal.getByText(/Crear Nuevo Negocio/i)).toBeVisible();
-      await expect(modal.getByLabel(/Nombre del Negocio/i)).toBeVisible();
-      await expect(modal.getByText(/Tienes\s+2\s+de\s+3\s+negocios/i)).toBeVisible();
-      await expect(modal.getByRole("button", { name: /Cancelar/i })).toBeVisible();
-      await expect(modal.getByRole("button", { name: /Crear Negocio/i })).toBeVisible();
-
-      await modal.getByLabel(/Nombre del Negocio/i).fill("Negocio Prueba Automatización");
-      report.evidence.modalScreenshot = await screenshotCheckpoint(page, testInfo, "03-agregar-negocio-modal");
-      await modal.getByRole("button", { name: /Cancelar/i }).click();
-      await expect(modal).toBeHidden();
-      await waitForUi(page);
-    });
-
-    await runStep(report, "Administrar Negocios view", async () => {
-      if (!(await firstVisible(page.getByText(/Administrar Negocios/i), 1_500))) {
         await clickByVisibleText(page, "Mi Negocio");
-      }
+        await expect(page.getByText(/Agregar Negocio/i)).toBeVisible();
+        await expect(page.getByText(/Administrar Negocios/i)).toBeVisible();
 
-      await clickByVisibleText(page, "Administrar Negocios");
-      await expect(page.getByRole("heading", { name: /Informaci[oó]n General/i })).toBeVisible();
-      await expect(page.getByRole("heading", { name: /Detalles de la Cuenta/i })).toBeVisible();
-      await expect(page.getByRole("heading", { name: /Tus Negocios/i })).toBeVisible();
-      await expect(page.getByRole("heading", { name: /Secci[oó]n Legal/i })).toBeVisible();
-
-      report.evidence.accountPageScreenshot = await screenshotCheckpoint(page, testInfo, "04-account-page", {
-        fullPage: true,
+        report.evidence.menuScreenshot = await screenshotCheckpoint(page, testInfo, "02-mi-negocio-menu-expanded");
       });
-    });
 
-    await runStep(report, "Información General", async () => {
-      const generalSection = sectionByHeading(page, /Informaci[oó]n General/i);
-      await expect(generalSection).toBeVisible();
-      await expect(generalSection.getByText(/BUSINESS PLAN/i)).toBeVisible();
-      await expect(generalSection.getByRole("button", { name: /Cambiar Plan/i })).toBeVisible();
+      await runStep(report, "Agregar Negocio modal", async () => {
+        await clickByVisibleText(page, "Agregar Negocio");
+        const modal = page.getByRole("dialog").filter({ hasText: /Crear Nuevo Negocio/i }).first();
+        await expect(modal).toBeVisible();
+        await expect(modal.getByText(/Crear Nuevo Negocio/i)).toBeVisible();
+        await expect(modal.getByLabel(/Nombre del Negocio/i)).toBeVisible();
+        await expect(modal.getByText(/Tienes\s+2\s+de\s+3\s+negocios/i)).toBeVisible();
+        await expect(modal.getByRole("button", { name: /Cancelar/i })).toBeVisible();
+        await expect(modal.getByRole("button", { name: /Crear Negocio/i })).toBeVisible();
 
-      await assertAnyVisibleText(generalSection, [/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i]);
-      await assertAnyVisibleText(generalSection, [/[A-Za-zÀ-ÿ]{2,}\s+[A-Za-zÀ-ÿ]{2,}/]);
-    });
+        await modal.getByLabel(/Nombre del Negocio/i).fill("Negocio Prueba Automatización");
+        report.evidence.modalScreenshot = await screenshotCheckpoint(page, testInfo, "03-agregar-negocio-modal");
+        await modal.getByRole("button", { name: /Cancelar/i }).click();
+        await expect(modal).toBeHidden();
+        await waitForUi(page);
+      });
 
-    await runStep(report, "Detalles de la Cuenta", async () => {
-      const accountDetailsSection = sectionByHeading(page, /Detalles de la Cuenta/i);
-      await expect(accountDetailsSection).toBeVisible();
-      await expect(accountDetailsSection.getByText(/Cuenta creada/i)).toBeVisible();
-      await expect(accountDetailsSection.getByText(/Estado activo/i)).toBeVisible();
-      await expect(accountDetailsSection.getByText(/Idioma seleccionado/i)).toBeVisible();
-    });
+      await runStep(report, "Administrar Negocios view", async () => {
+        if (!(await firstVisible(page.getByText(/Administrar Negocios/i), 1_500))) {
+          await clickByVisibleText(page, "Mi Negocio");
+        }
 
-    await runStep(report, "Tus Negocios", async () => {
-      const businessesSection = sectionByHeading(page, /Tus Negocios/i);
-      await expect(businessesSection).toBeVisible();
-      await expect(businessesSection.getByRole("button", { name: /Agregar Negocio/i })).toBeVisible();
-      await expect(businessesSection.getByText(/Tienes\s+2\s+de\s+3\s+negocios/i)).toBeVisible();
+        await clickByVisibleText(page, "Administrar Negocios");
+        await expect(page.getByRole("heading", { name: /Informaci[oó]n General/i })).toBeVisible();
+        await expect(page.getByRole("heading", { name: /Detalles de la Cuenta/i })).toBeVisible();
+        await expect(page.getByRole("heading", { name: /Tus Negocios/i })).toBeVisible();
+        await expect(page.getByRole("heading", { name: /Secci[oó]n Legal/i })).toBeVisible();
 
-      const visibleItems =
-        (await businessesSection.locator("li:visible, article:visible, tr:visible, [role='row']:visible").count()) > 0;
-      if (!visibleItems) {
-        throw new Error("No se detectó una lista visible de negocios.");
+        report.evidence.accountPageScreenshot = await screenshotCheckpoint(page, testInfo, "04-account-page", {
+          fullPage: true,
+        });
+      });
+
+      await runStep(report, "Información General", async () => {
+        const generalSection = sectionByHeading(page, /Informaci[oó]n General/i);
+        await expect(generalSection).toBeVisible();
+        await expect(generalSection.getByText(/BUSINESS PLAN/i)).toBeVisible();
+        await expect(generalSection.getByRole("button", { name: /Cambiar Plan/i })).toBeVisible();
+
+        await assertAnyVisibleText(generalSection, [/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i]);
+        await assertAnyVisibleText(generalSection, [/[A-Za-zÀ-ÿ]{2,}\s+[A-Za-zÀ-ÿ]{2,}/]);
+      });
+
+      await runStep(report, "Detalles de la Cuenta", async () => {
+        const accountDetailsSection = sectionByHeading(page, /Detalles de la Cuenta/i);
+        await expect(accountDetailsSection).toBeVisible();
+        await expect(accountDetailsSection.getByText(/Cuenta creada/i)).toBeVisible();
+        await expect(accountDetailsSection.getByText(/Estado activo/i)).toBeVisible();
+        await expect(accountDetailsSection.getByText(/Idioma seleccionado/i)).toBeVisible();
+      });
+
+      await runStep(report, "Tus Negocios", async () => {
+        const businessesSection = sectionByHeading(page, /Tus Negocios/i);
+        await expect(businessesSection).toBeVisible();
+        await expect(businessesSection.getByRole("button", { name: /Agregar Negocio/i })).toBeVisible();
+        await expect(businessesSection.getByText(/Tienes\s+2\s+de\s+3\s+negocios/i)).toBeVisible();
+
+        const visibleItems =
+          (await businessesSection.locator("li:visible, article:visible, tr:visible, [role='row']:visible").count()) >
+          0;
+        if (!visibleItems) {
+          throw new Error("No se detectó una lista visible de negocios.");
+        }
+      });
+
+      await runStep(report, "Términos y Condiciones", async () => {
+        const result = await clickLegalLinkAndValidate(
+          page,
+          testInfo,
+          "Términos y Condiciones",
+          /T[eé]rminos y Condiciones/i,
+          "05-terminos-y-condiciones",
+        );
+        report.evidence.termsUrl = result.finalUrl;
+        report.evidence.termsScreenshot = result.screenshotPath;
+      });
+
+      await runStep(report, "Política de Privacidad", async () => {
+        const result = await clickLegalLinkAndValidate(
+          page,
+          testInfo,
+          "Política de Privacidad",
+          /Pol[ií]tica de Privacidad/i,
+          "06-politica-de-privacidad",
+        );
+        report.evidence.privacyUrl = result.finalUrl;
+        report.evidence.privacyScreenshot = result.screenshotPath;
+      });
+    } else {
+      for (const field of REPORT_FIELDS) {
+        if (field !== "Login" && !report.errors[field]) {
+          report.errors[field] = "Blocked: Login did not complete successfully.";
+        }
       }
-    });
-
-    await runStep(report, "Términos y Condiciones", async () => {
-      const result = await clickLegalLinkAndValidate(
-        page,
-        testInfo,
-        "Términos y Condiciones",
-        /T[eé]rminos y Condiciones/i,
-        "05-terminos-y-condiciones",
-      );
-      report.evidence.termsUrl = result.finalUrl;
-      report.evidence.termsScreenshot = result.screenshotPath;
-    });
-
-    await runStep(report, "Política de Privacidad", async () => {
-      const result = await clickLegalLinkAndValidate(
-        page,
-        testInfo,
-        "Política de Privacidad",
-        /Pol[ií]tica de Privacidad/i,
-        "06-politica-de-privacidad",
-      );
-      report.evidence.privacyUrl = result.finalUrl;
-      report.evidence.privacyScreenshot = result.screenshotPath;
-    });
+    }
   } finally {
     const reportDirectory = path.join(process.cwd(), "artifacts");
     fs.mkdirSync(reportDirectory, { recursive: true });
