@@ -96,8 +96,7 @@ public class SaleadsMiNegocioFullTest {
 			});
 
 			recordStep(outcomes, "Información General", () -> {
-				final String accountToken = googleAccount.split("@")[0];
-				assertVisibleText(appPage, Pattern.quote(accountToken));
+				assertVisibleText(appPage, "Nombre");
 				assertVisibleText(appPage, Pattern.quote(googleAccount));
 				assertVisibleText(appPage, "@");
 				assertVisibleText(appPage, "BUSINESS\\s*PLAN");
@@ -212,6 +211,14 @@ public class SaleadsMiNegocioFullTest {
 		final Locator accountChoice = page.getByText(pattern("^\\s*" + Pattern.quote(email) + "\\s*$")).first();
 		if (isVisible(accountChoice, SHORT_TIMEOUT_MS)) {
 			accountChoice.click();
+			waitForUi(page);
+			return;
+		}
+
+		final Locator directEmailInput = page.locator("input[type='email']").first();
+		if (isVisible(directEmailInput, SHORT_TIMEOUT_MS)) {
+			directEmailInput.fill(email);
+			directEmailInput.press("Enter");
 			waitForUi(page);
 			return;
 		}
