@@ -77,6 +77,7 @@ test("saleads_mi_negocio_full_test", async ({ browser }, testInfo) => {
     });
 
     await runStep("Mi Negocio menu", async () => {
+      requirePassed(report, "Login", "Mi Negocio menu");
       const negocioSection = await findClickableByAnyText(page, ["Negocio"]);
       await clickWithUiWait(page, negocioSection);
 
@@ -89,6 +90,7 @@ test("saleads_mi_negocio_full_test", async ({ browser }, testInfo) => {
     });
 
     await runStep("Agregar Negocio modal", async () => {
+      requirePassed(report, "Mi Negocio menu", "Agregar Negocio modal");
       const agregarNegocio = await findClickableByAnyText(page, ["Agregar Negocio"]);
       await clickWithUiWait(page, agregarNegocio);
 
@@ -123,6 +125,7 @@ test("saleads_mi_negocio_full_test", async ({ browser }, testInfo) => {
     });
 
     await runStep("Administrar Negocios view", async () => {
+      requirePassed(report, "Mi Negocio menu", "Administrar Negocios view");
       const administrarVisible = await page.getByText(/Administrar Negocios/i).first().isVisible().catch(() => false);
       if (!administrarVisible) {
         const miNegocioOption = await findClickableByAnyText(page, ["Mi Negocio"]);
@@ -140,6 +143,7 @@ test("saleads_mi_negocio_full_test", async ({ browser }, testInfo) => {
     });
 
     await runStep("Información General", async () => {
+      requirePassed(report, "Administrar Negocios view", "Información General");
       const section = await sectionByHeading(page, /Información General/i);
       const sectionText = await section.innerText();
       const emailMatches = sectionText.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi) || [];
@@ -167,6 +171,7 @@ test("saleads_mi_negocio_full_test", async ({ browser }, testInfo) => {
     });
 
     await runStep("Detalles de la Cuenta", async () => {
+      requirePassed(report, "Administrar Negocios view", "Detalles de la Cuenta");
       const section = await sectionByHeading(page, /Detalles de la Cuenta/i);
       const sectionText = await section.innerText();
       assertContains(sectionText, /Cuenta creada/i, "Missing 'Cuenta creada' in Detalles de la Cuenta.");
@@ -175,6 +180,7 @@ test("saleads_mi_negocio_full_test", async ({ browser }, testInfo) => {
     });
 
     await runStep("Tus Negocios", async () => {
+      requirePassed(report, "Administrar Negocios view", "Tus Negocios");
       const section = await sectionByHeading(page, /Tus Negocios/i);
       const sectionText = await section.innerText();
 
@@ -192,6 +198,7 @@ test("saleads_mi_negocio_full_test", async ({ browser }, testInfo) => {
     });
 
     await runStep("Términos y Condiciones", async () => {
+      requirePassed(report, "Administrar Negocios view", "Términos y Condiciones");
       const finalUrl = await validateLegalNavigation({
         page,
         context,
@@ -204,6 +211,7 @@ test("saleads_mi_negocio_full_test", async ({ browser }, testInfo) => {
     });
 
     await runStep("Política de Privacidad", async () => {
+      requirePassed(report, "Administrar Negocios view", "Política de Privacidad");
       const finalUrl = await validateLegalNavigation({
         page,
         context,
@@ -356,4 +364,10 @@ function toSlug(value) {
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+function requirePassed(report, prerequisiteField, currentField) {
+  if (report[prerequisiteField]?.status !== "PASS") {
+    throw new Error(`Blocked '${currentField}' because prerequisite '${prerequisiteField}' did not pass.`);
+  }
 }
