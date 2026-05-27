@@ -54,6 +54,22 @@ function recordCheck(field, description, passed, details = "") {
   }
 }
 
+function finalizeFieldStatuses() {
+  for (const field of REPORT_FIELDS) {
+    const target = report[field];
+    if (target.checks.length === 0) {
+      target.status = "FAIL";
+      if (!target.errors.includes("Step not executed")) {
+        target.errors.push("Step not executed");
+      }
+      continue;
+    }
+
+    const hasFailures = target.checks.some((check) => !check.passed);
+    target.status = hasFailures ? "FAIL" : "PASS";
+  }
+}
+
 async function ensureArtifactsDir() {
   await fs.mkdir(ARTIFACTS_DIR, { recursive: true });
 }
@@ -560,6 +576,7 @@ async function run() {
   }
 
   metadata.finishedAt = new Date().toISOString();
+  finalizeFieldStatuses();
   const overallPass = REPORT_FIELDS.every((field) => report[field].status === "PASS");
 
   const finalPayload = {
@@ -577,6 +594,7 @@ async function run() {
 }
 
 run().catch(async (error) => {
+  finalizeFieldStatuses();
   const failedPayload = {
     name: "saleads_mi_negocio_full_test",
     overallStatus: "FAIL",
