@@ -33,6 +33,7 @@ public class SaleadsMiNegocioFullWorkflowTest {
 
 	private static final int DEFAULT_TIMEOUT_MS = 20_000;
 	private static final String GOOGLE_ACCOUNT_EMAIL = "juanlucasbarbiergarzon@gmail.com";
+	private static final Pattern GOOGLE_ACCOUNT_EMAIL_PATTERN = Pattern.compile("(?i)juanlucasbarbiergarzon@gmail\\.com");
 	private static final Pattern EMAIL_PATTERN = Pattern.compile("[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}", Pattern.CASE_INSENSITIVE);
 	private static final Pattern NEGOCIO_TEXT = Pattern.compile("(?i)negocio");
 	private static final Pattern MI_NEGOCIO_TEXT = Pattern.compile("(?i)mi\\s+negocio");
@@ -53,9 +54,9 @@ public class SaleadsMiNegocioFullWorkflowTest {
 		final Map<String, String> detailByStep = new LinkedHashMap<>();
 		final Map<String, String> legalUrls = new LinkedHashMap<>();
 
-		try (Playwright playwright = Playwright.create()) {
-			final Browser browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(isHeadless()));
-			try (BrowserContext context = browser.newContext(new Browser.NewContextOptions().setViewportSize(1600, 1000))) {
+		try (Playwright playwright = Playwright.create();
+			 Browser browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(isHeadless()));
+			 BrowserContext context = browser.newContext(new Browser.NewContextOptions().setViewportSize(1600, 1000))) {
 				final Page page = context.newPage();
 				page.navigate(loginUrl);
 				waitForUiToLoad(page);
@@ -154,7 +155,7 @@ public class SaleadsMiNegocioFullWorkflowTest {
 							page.getByText(Pattern.compile("(?i)nombre"))
 					), 5_000, "user name marker"));
 					assertVisible("user email", firstVisible(Arrays.asList(
-							page.getByText(Pattern.compile(Pattern.quote(GOOGLE_ACCOUNT_EMAIL), Pattern.CASE_INSENSITIVE)),
+							page.getByText(GOOGLE_ACCOUNT_EMAIL_PATTERN),
 							page.getByText(EMAIL_PATTERN)
 					), 8_000, "user email"));
 					assertVisible("BUSINESS PLAN label", page.getByText(Pattern.compile("(?i)business\\s+plan")).first());
@@ -206,7 +207,6 @@ public class SaleadsMiNegocioFullWorkflowTest {
 							artifactsDir.resolve("09-politica-de-privacidad.png"));
 					legalUrls.put("politicaDePrivacidadUrl", legalUrl);
 				});
-			}
 		}
 
 		writeReport(reportPath, statusByStep, detailByStep, legalUrls, artifactsDir);
@@ -223,11 +223,13 @@ public class SaleadsMiNegocioFullWorkflowTest {
 
 		Page popupPage = null;
 		try {
-			popupPage = page.waitForPopup(() -> clickAndWait(page, loginButton, "Google login"), new Page.WaitForPopupOptions().setTimeout(8_000));
+			popupPage = page.waitForPopup(
+					() -> loginButton.click(new Locator.ClickOptions().setTimeout(DEFAULT_TIMEOUT_MS)),
+					new Page.WaitForPopupOptions().setTimeout(8_000));
 		} catch (PlaywrightException e) {
-			// The login flow may stay in the same tab.
-			clickAndWait(page, loginButton, "Google login");
+			// The login flow may stay in the same tab or open too quickly.
 		}
+		waitForUiToLoad(page);
 
 		if (popupPage != null) {
 			waitForUiToLoad(popupPage);
@@ -241,9 +243,9 @@ public class SaleadsMiNegocioFullWorkflowTest {
 	private void selectGoogleAccountIfVisible(final Page candidatePage) {
 		try {
 			final Locator accountOption = firstVisible(Arrays.asList(
-					candidatePage.getByText(Pattern.compile(Pattern.quote(GOOGLE_ACCOUNT_EMAIL), Pattern.CASE_INSENSITIVE)),
-					candidatePage.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName(Pattern.compile(Pattern.quote(GOOGLE_ACCOUNT_EMAIL), Pattern.CASE_INSENSITIVE))),
-					candidatePage.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(Pattern.compile(Pattern.quote(GOOGLE_ACCOUNT_EMAIL), Pattern.CASE_INSENSITIVE)))
+					candidatePage.getByText(GOOGLE_ACCOUNT_EMAIL_PATTERN),
+					candidatePage.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName(GOOGLE_ACCOUNT_EMAIL_PATTERN)),
+					candidatePage.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(GOOGLE_ACCOUNT_EMAIL_PATTERN))
 			), 5_000, "Google account selector");
 			clickAndWait(candidatePage, accountOption, GOOGLE_ACCOUNT_EMAIL);
 		} catch (AssertionError ignored) {
@@ -303,10 +305,13 @@ public class SaleadsMiNegocioFullWorkflowTest {
 
 		Page legalPage = null;
 		try {
-			legalPage = context.waitForPage(() -> clickAndWait(appPage, legalLink, linkPattern.pattern()), new BrowserContext.WaitForPageOptions().setTimeout(7_000));
+			legalPage = context.waitForPage(
+					() -> legalLink.click(new Locator.ClickOptions().setTimeout(DEFAULT_TIMEOUT_MS)),
+					new BrowserContext.WaitForPageOptions().setTimeout(7_000));
 		} catch (PlaywrightException e) {
-			clickAndWait(appPage, legalLink, linkPattern.pattern());
+			// Link can navigate in the same tab.
 		}
+		waitForUiToLoad(appPage);
 
 		if (legalPage != null) {
 			waitForUiToLoad(legalPage);
