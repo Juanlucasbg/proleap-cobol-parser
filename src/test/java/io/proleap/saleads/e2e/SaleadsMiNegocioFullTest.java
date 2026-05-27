@@ -19,6 +19,7 @@ import org.junit.Test;
 
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
+import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
@@ -44,7 +45,7 @@ public class SaleadsMiNegocioFullTest {
 
 		try (Playwright playwright = Playwright.create()) {
 			final Browser browser = playwright.chromium()
-					.launch(new Browser.LaunchOptions().setHeadless(headless).setSlowMo(250));
+					.launch(new BrowserType.LaunchOptions().setHeadless(headless).setSlowMo(250));
 			final BrowserContext context = browser.newContext(new Browser.NewContextOptions().setViewportSize(1680, 1050));
 			final Page appPage = context.newPage();
 			appPage.setDefaultTimeout(DEFAULT_TIMEOUT_MS);
@@ -143,8 +144,8 @@ public class SaleadsMiNegocioFullTest {
 
 		Page authPage = null;
 		try {
-			authPage = context.waitForPage(() -> googleLoginButton.click(), new BrowserContext.WaitForPageOptions()
-					.setTimeout(SHORT_TIMEOUT_MS));
+			authPage = context.waitForPage(new BrowserContext.WaitForPageOptions()
+					.setTimeout(SHORT_TIMEOUT_MS), () -> googleLoginButton.click());
 		} catch (final TimeoutError ignored) {
 			waitForUi(appPage);
 		}
@@ -154,10 +155,9 @@ public class SaleadsMiNegocioFullTest {
 
 		if (authPage != null) {
 			waitForUi(authPage);
-			try {
-				authPage.waitForClose(new Page.WaitForCloseOptions().setTimeout(DEFAULT_TIMEOUT_MS));
-			} catch (final TimeoutError ignored) {
-				// Some environments keep auth in-tab until explicit redirect.
+			final long closeWaitDeadline = System.currentTimeMillis() + DEFAULT_TIMEOUT_MS;
+			while (!authPage.isClosed() && System.currentTimeMillis() < closeWaitDeadline) {
+				authPage.waitForTimeout(250);
 			}
 			appPage.bringToFront();
 		}
@@ -183,8 +183,8 @@ public class SaleadsMiNegocioFullTest {
 		Page legalPage = null;
 		boolean openedNewTab = false;
 		try {
-			legalPage = context.waitForPage(() -> link.click(), new BrowserContext.WaitForPageOptions()
-					.setTimeout(SHORT_TIMEOUT_MS));
+			legalPage = context.waitForPage(new BrowserContext.WaitForPageOptions()
+					.setTimeout(SHORT_TIMEOUT_MS), () -> link.click());
 			openedNewTab = true;
 		} catch (final TimeoutError ignored) {
 			waitForUi(appPage);
