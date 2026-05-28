@@ -16,6 +16,19 @@ const REPORT_FIELDS = [
   "Política de Privacidad",
 ];
 
+function stripAnsi(value) {
+  return value.replace(/\u001b\[[0-9;]*m/g, "");
+}
+
+function slugify(value) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 function resolveLoginUrl() {
   return (
     process.env.SALEADS_LOGIN_URL ||
@@ -75,9 +88,18 @@ test(TEST_NAME, async ({ page, context }) => {
       await task();
       results[stepName] = { status: "PASS" };
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
+      const rawMessage = error instanceof Error ? error.message : String(error);
+      const message = stripAnsi(rawMessage);
       results[stepName] = { status: "FAIL", error: message };
       failures.push(`[${stepName}] ${message}`);
+
+      try {
+        const failureScreenshot = path.join(artifactDir, `failed-${slugify(stepName)}.png`);
+        await page.screenshot({ path: failureScreenshot, fullPage: true });
+        evidence.screenshots.push(failureScreenshot);
+      } catch (screenshotError) {
+        // Ignore screenshot capture errors to preserve original failure.
+      }
     }
   }
 

@@ -45,3 +45,5 @@ out/
 # E2E automation
 e2e/node_modules/
 e2e/artifacts/
+e2e/test-results/
+e2e/playwright-report/
