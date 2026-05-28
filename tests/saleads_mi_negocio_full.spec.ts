@@ -285,11 +285,11 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
     await expect(modal.getByText(/Tienes 2 de 3 negocios/i)).toBeVisible();
     await expect(modal.getByRole("button", { name: /Cancelar/i })).toBeVisible();
     await expect(modal.getByRole("button", { name: /Crear Negocio/i })).toBeVisible();
+    await page.screenshot({ path: testInfo.outputPath("03-agregar-negocio-modal.png"), fullPage: true });
 
     await businessNameField.click();
     await businessNameField.fill("Negocio Prueba Automatizacion");
     await clickAndWaitForUi(page, modal.getByRole("button", { name: /Cancelar/i }));
-    await page.screenshot({ path: testInfo.outputPath("03-agregar-negocio-modal.png"), fullPage: true });
 
     markPass(report, "Agregar Negocio modal", ["Modal fields and controls validated successfully."]);
   } catch (error) {
