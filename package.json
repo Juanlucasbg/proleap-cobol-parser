@@ -1,0 +1,12 @@
+{
+  "name": "saleads-mi-negocio-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cross-environment SaleADS Mi Negocio workflow automation",
+  "scripts": {
+    "saleads:mi-negocio:test": "node e2e/saleads-mi-negocio-workflow.js"
+  },
+  "devDependencies": {
+    "playwright": "^1.60.0"
+  }
+}
