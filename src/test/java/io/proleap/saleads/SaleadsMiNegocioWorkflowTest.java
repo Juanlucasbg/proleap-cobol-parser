@@ -94,10 +94,18 @@ public class SaleadsMiNegocioWorkflowTest {
 	private WebDriver buildDriver() {
 		final String debuggerAddress = System.getProperty("saleads.debuggerAddress", "localhost:9222");
 		final boolean attachToExisting = Boolean.parseBoolean(System.getProperty("saleads.attachToExisting", "true"));
+		final boolean headless = Boolean
+				.parseBoolean(System.getProperty("saleads.headless", attachToExisting ? "false" : "true"));
 
 		final ChromeOptions options = new ChromeOptions();
 		options.addArguments("--disable-notifications");
 		options.addArguments("--start-maximized");
+		if (headless) {
+			options.addArguments("--headless=new");
+			options.addArguments("--window-size=1920,1080");
+			options.addArguments("--no-sandbox");
+			options.addArguments("--disable-dev-shm-usage");
+		}
 
 		if (attachToExisting) {
 			options.setExperimentalOption("debuggerAddress", debuggerAddress);
