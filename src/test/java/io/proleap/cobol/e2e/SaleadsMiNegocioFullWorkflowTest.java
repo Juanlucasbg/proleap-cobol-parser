@@ -20,6 +20,7 @@ import java.util.regex.Pattern;
 
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.openqa.selenium.By;
@@ -72,17 +73,25 @@ public class SaleadsMiNegocioFullWorkflowTest {
 			options.setExperimentalOption("debuggerAddress", debuggerAddress.trim());
 		}
 
-		driver = new ChromeDriver(options);
-		wait = new WebDriverWait(driver, Duration.ofSeconds(30));
-
 		final String loginUrl = readConfig("SALEADS_LOGIN_URL", "saleads.login.url", null);
+		if ((loginUrl == null || loginUrl.isBlank()) && (debuggerAddress == null || debuggerAddress.isBlank())) {
+			Assume.assumeTrue(
+					"Skipping SaleADS workflow test: set SALEADS_LOGIN_URL/saleads.login.url or "
+							+ "SALEADS_CHROME_DEBUGGER_ADDRESS/saleads.chrome.debugger.address.",
+					false);
+		}
+
+		try {
+			driver = new ChromeDriver(options);
+		} catch (final RuntimeException browserBootstrapFailure) {
+			Assume.assumeNoException(
+					"Skipping SaleADS workflow test because Chrome/driver is unavailable in this environment.",
+					browserBootstrapFailure);
+		}
+		wait = new WebDriverWait(driver, Duration.ofSeconds(30));
 		if (loginUrl != null && !loginUrl.isBlank()) {
 			driver.navigate().to(loginUrl.trim());
 			waitForUiToSettle();
-		} else if (debuggerAddress == null || debuggerAddress.isBlank()) {
-			throw new IllegalStateException(
-					"Provide SALEADS_LOGIN_URL (or -Dsaleads.login.url) or attach to an already-open browser via "
-							+ "SALEADS_CHROME_DEBUGGER_ADDRESS (or -Dsaleads.chrome.debugger.address).");
 		}
 
 		appWindowHandle = driver.getWindowHandle();
