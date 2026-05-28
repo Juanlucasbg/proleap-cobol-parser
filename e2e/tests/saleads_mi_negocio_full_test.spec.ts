@@ -141,6 +141,10 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     if (loginUrl) {
       await page.goto(loginUrl, { waitUntil: "domcontentloaded" });
       await waitForUi(page);
+    } else if (page.url() === "about:blank") {
+      throw new Error(
+        "SALEADS_LOGIN_URL is required when running this test in a new browser session."
+      );
     }
 
     const loginButton = await findClickable(page, [
