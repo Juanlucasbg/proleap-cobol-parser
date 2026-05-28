@@ -130,6 +130,12 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
   }
 
   await runStep("Login", async () => {
+    if (!loginUrl && page.url() === "about:blank") {
+      throw new Error(
+        "Precondition not met: browser must already be on SaleADS login page, or SALEADS_LOGIN_URL must be provided.",
+      );
+    }
+
     if (!(await isSidebarVisible(page))) {
       const loginButton = await firstVisibleLocator(
         [
