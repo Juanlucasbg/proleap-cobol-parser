@@ -11,7 +11,7 @@ const HEADLESS = String(process.env.SALEADS_HEADLESS || "false") === "true";
 const START_URL = process.env.SALEADS_LOGIN_URL;
 const RUN_STAMP = new Date().toISOString().replaceAll(":", "-");
 const ARTIFACT_DIR = path.resolve(
-  process.env.SALEADS_ARTIFACT_DIR || path.join("qa", "artifacts", RUN_STAMP),
+  process.env.SALEADS_ARTIFACT_DIR || path.join(__dirname, "artifacts", RUN_STAMP),
 );
 
 const REPORT_KEYS = [
