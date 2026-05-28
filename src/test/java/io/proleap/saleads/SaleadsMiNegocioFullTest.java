@@ -385,7 +385,7 @@ public class SaleadsMiNegocioFullTest {
 	private static Page clickAndMaybeCaptureNewPage(final BrowserContext context, final Runnable clickAction,
 			final double timeoutMs) {
 		try {
-			return context.waitForPage(clickAction, new BrowserContext.WaitForPageOptions().setTimeout(timeoutMs));
+			return context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(timeoutMs), clickAction);
 		} catch (PlaywrightException ignored) {
 			return null;
 		}
