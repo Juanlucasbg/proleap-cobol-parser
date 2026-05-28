@@ -1,0 +1,21 @@
+{
+  "name": "e2e",
+  "version": "1.0.0",
+  "description": "SaleADS.ai end-to-end workflow tests",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "test:saleads:mi-negocio": "playwright test tests/saleads-mi-negocio-full-test.spec.ts",
+    "test:headed": "playwright test --headed",
+    "report": "playwright show-report"
+  },
+  "keywords": [
+    "playwright",
+    "saleads",
+    "e2e"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.60.0"
+  }
+}
