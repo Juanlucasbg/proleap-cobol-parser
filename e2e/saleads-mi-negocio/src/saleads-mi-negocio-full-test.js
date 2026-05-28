@@ -176,13 +176,28 @@ async function validateLegalPage({
   };
 }
 
-async function run() {
-  if (!LOGIN_URL) {
-    throw new Error(
-      "Missing login URL. Provide SALEADS_LOGIN_URL (or SALEADS_BASE_URL / BASE_URL) for the target environment.",
-    );
-  }
+async function writeFinalReport(report, artifactsDir) {
+  report.finishedAt = new Date().toISOString();
+  const hasFailures = Object.values(report.results).some((entry) => entry.status === "FAIL");
+  report.summary = {
+    overallStatus: hasFailures ? "FAIL" : "PASS",
+    failedFields: Object.entries(report.results)
+      .filter(([, result]) => result.status === "FAIL")
+      .map(([key]) => key),
+  };
 
+  const reportPath = path.join(artifactsDir, "final-report.json");
+  await fs.writeFile(reportPath, JSON.stringify(report, null, 2), "utf8");
+
+  console.log("FINAL_REPORT_PATH:", reportPath);
+  console.log("FINAL_REPORT_START");
+  console.log(JSON.stringify(report, null, 2));
+  console.log("FINAL_REPORT_END");
+
+  process.exitCode = hasFailures ? 1 : 0;
+}
+
+async function run() {
   const runId = new Date().toISOString().replace(/[:.]/g, "-");
   const artifactsDir = path.resolve(process.cwd(), "artifacts", runId);
   const screenshotsDir = path.join(artifactsDir, "screenshots");
@@ -204,6 +219,16 @@ async function run() {
       },
     },
   };
+
+  if (!LOGIN_URL) {
+    const reason =
+      "Missing login URL. Provide SALEADS_LOGIN_URL (or SALEADS_BASE_URL / BASE_URL) for the target environment.";
+    for (const field of REQUIRED_REPORT_FIELDS) {
+      report.results[field] = toStepResult(false, reason);
+    }
+    await writeFinalReport(report, artifactsDir);
+    return;
+  }
 
   let browser;
   try {
@@ -465,24 +490,7 @@ async function run() {
     }
   }
 
-  report.finishedAt = new Date().toISOString();
-  const hasFailures = Object.values(report.results).some((entry) => entry.status === "FAIL");
-  report.summary = {
-    overallStatus: hasFailures ? "FAIL" : "PASS",
-    failedFields: Object.entries(report.results)
-      .filter(([, result]) => result.status === "FAIL")
-      .map(([key]) => key),
-  };
-
-  const reportPath = path.join(artifactsDir, "final-report.json");
-  await fs.writeFile(reportPath, JSON.stringify(report, null, 2), "utf8");
-
-  console.log("FINAL_REPORT_PATH:", reportPath);
-  console.log("FINAL_REPORT_START");
-  console.log(JSON.stringify(report, null, 2));
-  console.log("FINAL_REPORT_END");
-
-  process.exitCode = hasFailures ? 1 : 0;
+  await writeFinalReport(report, artifactsDir);
 }
 
 run().catch((error) => {
