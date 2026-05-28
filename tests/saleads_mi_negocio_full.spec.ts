@@ -178,6 +178,11 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   try {
     if (START_URL) {
       await page.goto(START_URL, { waitUntil: "domcontentloaded" });
+    } else if (page.url() === "about:blank") {
+      throw new Error(
+        "No SALEADS_START_URL/SALEADS_URL was provided and the browser started on about:blank. " +
+          "Provide the login URL for the target environment through SALEADS_START_URL (or SALEADS_URL).",
+      );
     }
 
     const googleButton = await getVisibleLocator(page, [
