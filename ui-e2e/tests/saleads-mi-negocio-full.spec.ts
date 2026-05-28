@@ -129,6 +129,17 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
     }
   }
 
+  async function runDependentStep(field: Exclude<ReportField, "Login">, stepFn: () => Promise<void>): Promise<void> {
+    if (report["Login"].status !== "PASS") {
+      const blockedReason = `Blocked because Login failed: ${report["Login"].details}`;
+      report[field] = { status: "FAIL", details: blockedReason };
+      failures.push(`${field}: ${blockedReason}`);
+      return;
+    }
+
+    await runStep(field, stepFn);
+  }
+
   await runStep("Login", async () => {
     if (!loginUrl && page.url() === "about:blank") {
       throw new Error(
@@ -177,7 +188,7 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
     await takeCheckpoint(page, screenshotsDir, "01-dashboard-loaded.png");
   });
 
-  await runStep("Mi Negocio menu", async () => {
+  await runDependentStep("Mi Negocio menu", async () => {
     const negocioSection = await firstVisibleLocator(
       [
         page.getByRole("button", { name: /^Negocio$/i }),
@@ -236,7 +247,7 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
     await takeCheckpoint(page, screenshotsDir, "02-mi-negocio-menu-expanded.png");
   });
 
-  await runStep("Agregar Negocio modal", async () => {
+  await runDependentStep("Agregar Negocio modal", async () => {
     const addBusinessOption = await firstVisibleLocator(
       [
         page.getByRole("button", { name: /^Agregar Negocio$/i }),
@@ -289,7 +300,7 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
     await clickAndWait(page, cancelButton);
   });
 
-  await runStep("Administrar Negocios view", async () => {
+  await runDependentStep("Administrar Negocios view", async () => {
     const manageOptionVisible = await firstVisibleLocator(
       [
         page.getByRole("button", { name: /^Administrar Negocios$/i }),
@@ -339,7 +350,7 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
     await takeCheckpoint(page, screenshotsDir, "04-administrar-negocios.png", true);
   });
 
-  await runStep("Información General", async () => {
+  await runDependentStep("Información General", async () => {
     const checks: Array<[string, Locator[]]> = [
       ["User name", [page.locator("[data-testid='user-name']"), page.locator("h1, h2, h3").filter({ hasText: /\S+/ })]],
       ["User email", [page.getByText(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)]],
@@ -355,7 +366,7 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
     }
   });
 
-  await runStep("Detalles de la Cuenta", async () => {
+  await runDependentStep("Detalles de la Cuenta", async () => {
     const requiredTexts = [/Cuenta creada/i, /Estado activo/i, /Idioma seleccionado/i];
     for (const requiredText of requiredTexts) {
       const visible = await page.getByText(requiredText).first().isVisible().catch(() => false);
@@ -365,7 +376,7 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
     }
   });
 
-  await runStep("Tus Negocios", async () => {
+  await runDependentStep("Tus Negocios", async () => {
     const tusNegociosVisible = await page.getByText(/Tus Negocios/i).first().isVisible().catch(() => false);
     if (!tusNegociosVisible) {
       throw new Error("Section heading 'Tus Negocios' is not visible.");
@@ -430,7 +441,7 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
     }
   }
 
-  await runStep("Términos y Condiciones", async () => {
+  await runDependentStep("Términos y Condiciones", async () => {
     await validateLegalLink(
       "Términos y Condiciones",
       /T[ée]rminos y Condiciones/i,
@@ -439,7 +450,7 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
     );
   });
 
-  await runStep("Política de Privacidad", async () => {
+  await runDependentStep("Política de Privacidad", async () => {
     await validateLegalLink(
       "Política de Privacidad",
       /Pol[íi]tica de Privacidad/i,
