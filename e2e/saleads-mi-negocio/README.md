@@ -21,12 +21,12 @@ This suite implements `saleads_mi_negocio_full_test` using Playwright and valida
 
 ## Runtime inputs
 
-Set one of these variables:
+Optional (recommended for unattended runs): set one of these variables:
 
 - `SALEADS_LOGIN_URL` (preferred)
 - `SALEADS_APP_URL` (fallback)
 
-The test starts on this URL and then runs the entire workflow end-to-end.
+If a URL is provided, the test opens it first. If no URL is provided, the suite assumes the browser is already on the SaleADS login page and continues from the current page.
 
 ## Install
 

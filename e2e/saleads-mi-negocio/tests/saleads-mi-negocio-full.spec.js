@@ -177,9 +177,7 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
     await waitForUiToLoad(page);
   } else {
-    throw new Error(
-      "No login URL configured. Provide SALEADS_LOGIN_URL (or SALEADS_APP_URL) to open the environment login page."
-    );
+    await waitForUiToLoad(page);
   }
 
   async function executeStep(reportField, action) {
@@ -220,102 +218,113 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     await captureCheckpoint(appPage, testInfo, "checkpoint-01-dashboard.png");
   });
 
-  await executeStep("Mi Negocio menu", async () => {
-    await clickVisibleText(appPage, ["Negocio"], "open Negocio section");
-    await clickVisibleText(appPage, ["Mi Negocio"], "open Mi Negocio menu");
-    await expectVisibleText(appPage, "Agregar Negocio");
-    await expectVisibleText(appPage, "Administrar Negocios");
-    await captureCheckpoint(appPage, testInfo, "checkpoint-02-mi-negocio-menu.png");
-  });
+  if (report.Login === "PASS") {
+    await executeStep("Mi Negocio menu", async () => {
+      await clickVisibleText(appPage, ["Negocio"], "open Negocio section");
+      await clickVisibleText(appPage, ["Mi Negocio"], "open Mi Negocio menu");
+      await expectVisibleText(appPage, "Agregar Negocio");
+      await expectVisibleText(appPage, "Administrar Negocios");
+      await captureCheckpoint(appPage, testInfo, "checkpoint-02-mi-negocio-menu.png");
+    });
 
-  await executeStep("Agregar Negocio modal", async () => {
-    await clickVisibleText(appPage, ["Agregar Negocio"], "open Agregar Negocio modal");
-    await expectVisibleText(appPage, "Crear Nuevo Negocio");
-    await expectVisibleText(appPage, "Nombre del Negocio");
-    await expectVisibleText(appPage, "Tienes 2 de 3 negocios");
-    await expectVisibleText(appPage, "Cancelar");
-    await expectVisibleText(appPage, "Crear Negocio");
-    await captureCheckpoint(appPage, testInfo, "checkpoint-03-agregar-negocio-modal.png");
+    await executeStep("Agregar Negocio modal", async () => {
+      await clickVisibleText(appPage, ["Agregar Negocio"], "open Agregar Negocio modal");
+      await expectVisibleText(appPage, "Crear Nuevo Negocio");
+      await expectVisibleText(appPage, "Nombre del Negocio");
+      await expectVisibleText(appPage, "Tienes 2 de 3 negocios");
+      await expectVisibleText(appPage, "Cancelar");
+      await expectVisibleText(appPage, "Crear Negocio");
+      await captureCheckpoint(appPage, testInfo, "checkpoint-03-agregar-negocio-modal.png");
 
-    const nameInputCandidates = [
-      appPage.getByLabel(/Nombre del Negocio/i).first(),
-      appPage.getByPlaceholder(/Nombre del Negocio/i).first(),
-      appPage.getByRole("textbox", { name: /Nombre del Negocio/i }).first()
-    ];
-    for (const locator of nameInputCandidates) {
-      const visible = await locator.isVisible().catch(() => false);
-      if (visible) {
-        await locator.click();
-        await locator.fill("Negocio Prueba Automatización");
-        break;
+      const nameInputCandidates = [
+        appPage.getByLabel(/Nombre del Negocio/i).first(),
+        appPage.getByPlaceholder(/Nombre del Negocio/i).first(),
+        appPage.getByRole("textbox", { name: /Nombre del Negocio/i }).first()
+      ];
+      for (const locator of nameInputCandidates) {
+        const visible = await locator.isVisible().catch(() => false);
+        if (visible) {
+          await locator.click();
+          await locator.fill("Negocio Prueba Automatización");
+          break;
+        }
       }
-    }
 
-    await clickVisibleText(appPage, ["Cancelar"], "close Agregar Negocio modal");
-  });
-
-  await executeStep("Administrar Negocios view", async () => {
-    const administrarVisible = await appPage.getByText(/Administrar Negocios/i).first().isVisible().catch(() => false);
-    if (!administrarVisible) {
-      await clickVisibleText(appPage, ["Mi Negocio"], "expand Mi Negocio menu again");
-    }
-
-    await clickVisibleText(appPage, ["Administrar Negocios"], "open Administrar Negocios");
-    await expectVisibleText(appPage, "Información General", 45000);
-    await expectVisibleText(appPage, "Detalles de la Cuenta");
-    await expectVisibleText(appPage, "Tus Negocios");
-    await expectVisibleText(appPage, "Sección Legal");
-    await captureCheckpoint(appPage, testInfo, "checkpoint-04-administrar-negocios.png", true);
-  });
-
-  await executeStep("Información General", async () => {
-    await expectVisibleText(appPage, "Información General");
-    await expectVisibleText(appPage, "BUSINESS PLAN");
-    await expectVisibleText(appPage, "Cambiar Plan");
-
-    const userNameVisible = await appPage.getByText(/^[A-Za-zÀ-ÿ]+(?:\s+[A-Za-zÀ-ÿ]+)+$/).first().isVisible().catch(() => false);
-    if (!userNameVisible) {
-      throw new Error("User name was not detected in Información General.");
-    }
-
-    const userEmailVisible = await appPage.getByText(/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/).first().isVisible().catch(() => false);
-    if (!userEmailVisible) {
-      throw new Error("User email was not detected in Información General.");
-    }
-  });
-
-  await executeStep("Detalles de la Cuenta", async () => {
-    await expectVisibleText(appPage, "Detalles de la Cuenta");
-    await expectVisibleText(appPage, "Cuenta creada");
-    await expectVisibleText(appPage, "Estado activo");
-    await expectVisibleText(appPage, "Idioma seleccionado");
-  });
-
-  await executeStep("Tus Negocios", async () => {
-    await expectVisibleText(appPage, "Tus Negocios");
-    await expectVisibleText(appPage, "Agregar Negocio");
-    await expectVisibleText(appPage, "Tienes 2 de 3 negocios");
-  });
-
-  await executeStep("Términos y Condiciones", async () => {
-    finalUrls["Términos y Condiciones"] = await openAndValidateLegalDocument({
-      appPage,
-      linkText: "Términos y Condiciones",
-      expectedHeading: "Términos y Condiciones",
-      screenshotName: "checkpoint-05-terminos-y-condiciones.png",
-      testInfo
+      await clickVisibleText(appPage, ["Cancelar"], "close Agregar Negocio modal");
     });
-  });
 
-  await executeStep("Política de Privacidad", async () => {
-    finalUrls["Política de Privacidad"] = await openAndValidateLegalDocument({
-      appPage,
-      linkText: "Política de Privacidad",
-      expectedHeading: "Política de Privacidad",
-      screenshotName: "checkpoint-06-politica-de-privacidad.png",
-      testInfo
+    await executeStep("Administrar Negocios view", async () => {
+      const administrarVisible = await appPage.getByText(/Administrar Negocios/i).first().isVisible().catch(() => false);
+      if (!administrarVisible) {
+        await clickVisibleText(appPage, ["Mi Negocio"], "expand Mi Negocio menu again");
+      }
+
+      await clickVisibleText(appPage, ["Administrar Negocios"], "open Administrar Negocios");
+      await expectVisibleText(appPage, "Información General", 45000);
+      await expectVisibleText(appPage, "Detalles de la Cuenta");
+      await expectVisibleText(appPage, "Tus Negocios");
+      await expectVisibleText(appPage, "Sección Legal");
+      await captureCheckpoint(appPage, testInfo, "checkpoint-04-administrar-negocios.png", true);
     });
-  });
+
+    await executeStep("Información General", async () => {
+      await expectVisibleText(appPage, "Información General");
+      await expectVisibleText(appPage, "BUSINESS PLAN");
+      await expectVisibleText(appPage, "Cambiar Plan");
+
+      const userNameVisible = await appPage.getByText(/^[A-Za-zÀ-ÿ]+(?:\s+[A-Za-zÀ-ÿ]+)+$/).first().isVisible().catch(() => false);
+      if (!userNameVisible) {
+        throw new Error("User name was not detected in Información General.");
+      }
+
+      const userEmailVisible = await appPage.getByText(/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/).first().isVisible().catch(() => false);
+      if (!userEmailVisible) {
+        throw new Error("User email was not detected in Información General.");
+      }
+    });
+
+    await executeStep("Detalles de la Cuenta", async () => {
+      await expectVisibleText(appPage, "Detalles de la Cuenta");
+      await expectVisibleText(appPage, "Cuenta creada");
+      await expectVisibleText(appPage, "Estado activo");
+      await expectVisibleText(appPage, "Idioma seleccionado");
+    });
+
+    await executeStep("Tus Negocios", async () => {
+      await expectVisibleText(appPage, "Tus Negocios");
+      await expectVisibleText(appPage, "Agregar Negocio");
+      await expectVisibleText(appPage, "Tienes 2 de 3 negocios");
+    });
+
+    await executeStep("Términos y Condiciones", async () => {
+      finalUrls["Términos y Condiciones"] = await openAndValidateLegalDocument({
+        appPage,
+        linkText: "Términos y Condiciones",
+        expectedHeading: "Términos y Condiciones",
+        screenshotName: "checkpoint-05-terminos-y-condiciones.png",
+        testInfo
+      });
+    });
+
+    await executeStep("Política de Privacidad", async () => {
+      finalUrls["Política de Privacidad"] = await openAndValidateLegalDocument({
+        appPage,
+        linkText: "Política de Privacidad",
+        expectedHeading: "Política de Privacidad",
+        screenshotName: "checkpoint-06-politica-de-privacidad.png",
+        testInfo
+      });
+    });
+  } else {
+    for (const field of REPORT_FIELDS) {
+      if (field === "Login") {
+        continue;
+      }
+
+      report[field] = "FAIL";
+      failures.push(`${field}: Skipped because the login step did not reach the application.`);
+    }
+  }
 
   const finalReport = {
     generatedAtUtc: new Date().toISOString(),
