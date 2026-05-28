@@ -1,0 +1,12 @@
+{
+  "name": "saleads-qa",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Portable SaleADS browser workflow checks",
+  "scripts": {
+    "saleads:mi-negocio": "node saleads_mi_negocio_full_test.js"
+  },
+  "devDependencies": {
+    "playwright": "^1.60.0"
+  }
+}

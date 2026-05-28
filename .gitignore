@@ -41,3 +41,7 @@ target/
 
 ## Additional for IntelliJ
 out/
+
+# Node-based QA artifacts
+qa/node_modules/
+qa/artifacts/
