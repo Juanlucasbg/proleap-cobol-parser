@@ -1,0 +1,20 @@
+{
+  "name": "saleads-e2e",
+  "version": "1.0.0",
+  "description": "Environment-agnostic SaleADS UI end-to-end tests",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "test:mi-negocio": "playwright test tests/saleads_mi_negocio_full_test.spec.ts",
+    "test:headed": "playwright test --headed",
+    "install:browsers": "playwright install"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "@types/node": "^25.9.1",
+    "typescript": "^6.0.3"
+  }
+}
