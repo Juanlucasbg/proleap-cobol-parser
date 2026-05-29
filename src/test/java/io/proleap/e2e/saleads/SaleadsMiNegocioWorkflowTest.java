@@ -41,14 +41,15 @@ public class SaleadsMiNegocioWorkflowTest {
 			"Mi Negocio menu",
 			"Agregar Negocio modal",
 			"Administrar Negocios view",
-			"Informacion General",
+			"Informaci\u00F3n General",
 			"Detalles de la Cuenta",
 			"Tus Negocios",
-			"Terminos y Condiciones",
-			"Politica de Privacidad");
+			"T\u00E9rminos y Condiciones",
+			"Pol\u00EDtica de Privacidad");
 
 	private static final String GOOGLE_ACCOUNT = "juanlucasbarbiergarzon@gmail.com";
 	private static final int DEFAULT_TIMEOUT_SECONDS = 30;
+	private static final int SHORT_TIMEOUT_SECONDS = 5;
 
 	private final Map<String, String> stepStatus = new LinkedHashMap<>();
 	private final Map<String, String> stepDetails = new LinkedHashMap<>();
@@ -76,6 +77,8 @@ public class SaleadsMiNegocioWorkflowTest {
 			driver.get(loginUrl);
 			waitForUiToLoad();
 		}
+
+		captureScreenshot("00-initial-page.png");
 	}
 
 	@After
@@ -125,7 +128,7 @@ public class SaleadsMiNegocioWorkflowTest {
 			captureFullPageScreenshot("04-administrar-negocios-view-full.png");
 		});
 
-		runStep("Informacion General", () -> {
+		runStep("Informaci\u00F3n General", () -> {
 			assertVisibleText("Informacion General", "Informaci\u00F3n General");
 			assertAnyVisible(By.xpath("//*[contains(normalize-space(),'@')]"), "User email");
 			assertAnyVisible(By.xpath("//*[contains(normalize-space(),'Nombre') or contains(normalize-space(),'Usuario')]"),
@@ -149,20 +152,20 @@ public class SaleadsMiNegocioWorkflowTest {
 			assertVisibleText("Tienes 2 de 3 negocios");
 		});
 
-		runStep("Terminos y Condiciones", () -> {
+		runStep("T\u00E9rminos y Condiciones", () -> {
 			final String finalUrl = openLegalLinkAndReturn(
 					"Terminos y Condiciones",
 					"T\u00E9rminos y Condiciones",
 					"05-terminos-y-condiciones.png");
-			capturedUrls.put("Terminos y Condiciones", finalUrl);
+			capturedUrls.put("T\u00E9rminos y Condiciones", finalUrl);
 		});
 
-		runStep("Politica de Privacidad", () -> {
+		runStep("Pol\u00EDtica de Privacidad", () -> {
 			final String finalUrl = openLegalLinkAndReturn(
 					"Politica de Privacidad",
 					"Pol\u00EDtica de Privacidad",
 					"06-politica-de-privacidad.png");
-			capturedUrls.put("Politica de Privacidad", finalUrl);
+			capturedUrls.put("Pol\u00EDtica de Privacidad", finalUrl);
 		});
 
 		writeFinalReportSafely();
@@ -182,6 +185,7 @@ public class SaleadsMiNegocioWorkflowTest {
 		} catch (final Throwable throwable) {
 			stepStatus.put(stepName, "FAIL");
 			stepDetails.put(stepName, sanitize(throwable.getMessage()));
+			captureFailureScreenshot(stepName);
 		}
 	}
 
@@ -338,6 +342,7 @@ public class SaleadsMiNegocioWorkflowTest {
 	private void clickByVisibleText(final String... textOptions) {
 		AssertionError lastError = null;
 		for (final String text : textOptions) {
+			final WebDriverWait shortWait = new WebDriverWait(driver, Duration.ofSeconds(SHORT_TIMEOUT_SECONDS));
 			final List<By> locators = List.of(
 					By.xpath("//button[normalize-space(.)='" + text + "']"),
 					By.xpath("//a[normalize-space(.)='" + text + "']"),
@@ -347,7 +352,7 @@ public class SaleadsMiNegocioWorkflowTest {
 
 			for (final By locator : locators) {
 				try {
-					final WebElement element = wait.until(ExpectedConditions.elementToBeClickable(locator));
+					final WebElement element = shortWait.until(ExpectedConditions.elementToBeClickable(locator));
 					element.click();
 					waitForUiToLoad();
 					return;
@@ -362,7 +367,7 @@ public class SaleadsMiNegocioWorkflowTest {
 	private void assertVisibleText(final String... textOptions) {
 		for (final String text : textOptions) {
 			final By locator = By.xpath("//*[normalize-space(.)='" + text + "']");
-			if (isVisible(locator, 5)) {
+			if (isVisible(locator, SHORT_TIMEOUT_SECONDS)) {
 				return;
 			}
 		}
@@ -425,6 +430,14 @@ public class SaleadsMiNegocioWorkflowTest {
 			screenshotFiles.add(output.toString());
 		} catch (final IOException ioException) {
 			throw new AssertionError("Failed to capture screenshot " + filename + ": " + ioException.getMessage());
+		}
+	}
+
+	private void captureFailureScreenshot(final String stepName) {
+		try {
+			captureScreenshot("failure-" + sanitizeFileName(stepName) + ".png");
+		} catch (final Throwable ignored) {
+			// Keep the original assertion detail as the primary error signal.
 		}
 	}
 
@@ -524,6 +537,13 @@ public class SaleadsMiNegocioWorkflowTest {
 
 	private String escapePipes(final String input) {
 		return input.replace("|", "\\|");
+	}
+
+	private String sanitizeFileName(final String value) {
+		return value
+				.toLowerCase()
+				.replaceAll("[^a-z0-9]+", "-")
+				.replaceAll("(^-|-$)", "");
 	}
 
 	private interface CheckedRunnable {
