@@ -154,14 +154,16 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
     }
     await settleUi(page);
 
-    if (page.url() === "about:blank") {
-      throw new Error(
-        "Set SALEADS_START_URL (or SALEADS_URL/BASE_URL) so the test starts on the login page."
-      );
-    }
+    const startupBlockedReason =
+      page.url() === "about:blank"
+        ? "Set SALEADS_START_URL (or SALEADS_URL/BASE_URL) so the test starts on the login page."
+        : null;
 
     // Step 1: Login with Google.
     try {
+      if (startupBlockedReason) {
+        throw new Error(startupBlockedReason);
+      }
       const loginMatcher = /sign in with google|continuar con google|iniciar sesión con google|google/i;
       const maybePopup = page.waitForEvent("popup", { timeout: 7000 }).catch(() => null);
       await clickVisible(page, loginMatcher, page);
@@ -196,6 +198,9 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
 
     // Step 2: Open Mi Negocio menu.
     try {
+      if (report["Login"] !== "PASS") {
+        throw new Error("Prerequisite failed: Login step did not pass.");
+      }
       await clickVisible(page, /mi negocio/i, page);
       const hasAgregar = await textExists(page, /agregar negocio/i);
       const hasAdministrar = await textExists(page, /administrar negocios/i);
@@ -209,6 +214,9 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
 
     // Step 3: Validate Agregar Negocio modal.
     try {
+      if (report["Mi Negocio menu"] !== "PASS") {
+        throw new Error("Prerequisite failed: Mi Negocio menu step did not pass.");
+      }
       await clickVisible(page, /agregar negocio/i, page);
       const modalTitle = await visibleByText(page, /crear nuevo negocio/i);
       expect(modalTitle).toBeTruthy();
@@ -236,6 +244,9 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
 
     // Step 4: Open Administrar Negocios view.
     try {
+      if (report["Mi Negocio menu"] !== "PASS") {
+        throw new Error("Prerequisite failed: Mi Negocio menu step did not pass.");
+      }
       if (!(await textExists(page, /administrar negocios/i))) {
         await clickVisible(page, /mi negocio/i, page);
       }
@@ -259,6 +270,9 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
 
     // Step 5: Validate Información General.
     try {
+      if (report["Administrar Negocios view"] !== "PASS") {
+        throw new Error("Prerequisite failed: Administrar Negocios view step did not pass.");
+      }
       const hasEmail = await textExists(page, /@/);
       const hasPlan = await textExists(page, /business plan/i);
       const hasCambiarPlan = await textExists(page, /cambiar plan/i);
@@ -274,6 +288,9 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
 
     // Step 6: Validate Detalles de la Cuenta.
     try {
+      if (report["Administrar Negocios view"] !== "PASS") {
+        throw new Error("Prerequisite failed: Administrar Negocios view step did not pass.");
+      }
       const hasCuentaCreada = await textExists(page, /cuenta creada/i);
       const hasEstadoActivo = await textExists(page, /estado activo/i);
       const hasIdioma = await textExists(page, /idioma seleccionado/i);
@@ -285,6 +302,9 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
 
     // Step 7: Validate Tus Negocios.
     try {
+      if (report["Administrar Negocios view"] !== "PASS") {
+        throw new Error("Prerequisite failed: Administrar Negocios view step did not pass.");
+      }
       const hasList = await textExists(page, /tus negocios/i);
       const hasAgregar = await textExists(page, /agregar negocio/i);
       const hasLimit = await textExists(page, /tienes\s*2\s*de\s*3\s*negocios/i);
@@ -296,6 +316,9 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
 
     // Step 8: Validate Términos y Condiciones.
     try {
+      if (report["Administrar Negocios view"] !== "PASS") {
+        throw new Error("Prerequisite failed: Administrar Negocios view step did not pass.");
+      }
       const termsLink = await visibleByText(page, /términos y condiciones/i);
       if (!termsLink) {
         throw new Error("No se encontró el enlace 'Términos y Condiciones'.");
@@ -327,6 +350,9 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
 
     // Step 9: Validate Política de Privacidad.
     try {
+      if (report["Administrar Negocios view"] !== "PASS") {
+        throw new Error("Prerequisite failed: Administrar Negocios view step did not pass.");
+      }
       const privacyLink = await visibleByText(page, /política de privacidad/i);
       if (!privacyLink) {
         throw new Error("No se encontró el enlace 'Política de Privacidad'.");
