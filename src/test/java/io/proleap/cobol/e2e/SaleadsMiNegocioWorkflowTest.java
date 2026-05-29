@@ -14,6 +14,7 @@ import java.util.Map;
 
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -76,7 +77,13 @@ public class SaleadsMiNegocioWorkflowTest {
 			context = browser.newContext(new Browser.NewContextOptions().setViewportSize(1920, 1080));
 		}
 
-		appPage = resolveInitialPage(env("SALEADS_LOGIN_URL"));
+		final String loginUrl = env("SALEADS_LOGIN_URL");
+		if (loginUrl == null && !hasNonBlankOpenPage()) {
+			Assume.assumeTrue(
+					"No start page available. Provide SALEADS_LOGIN_URL, or SALEADS_CDP_URL with an already opened login tab.",
+					false);
+		}
+		appPage = resolveInitialPage(loginUrl);
 		appPage.setDefaultTimeout(15000);
 
 		initializeReport();
@@ -153,7 +160,8 @@ public class SaleadsMiNegocioWorkflowTest {
 		assertTextVisible(appPage, "Crear Nuevo Negocio");
 		assertVisibleAny(appPage, "Nombre del Negocio", "Nombre negocio");
 		assertTextVisible(appPage, "Tienes 2 de 3 negocios");
-		assertVisibleAny(appPage, "Cancelar", "Crear Negocio");
+		assertTextVisible(appPage, "Cancelar");
+		assertTextVisible(appPage, "Crear Negocio");
 
 		fillIfVisible(appPage, "Nombre del Negocio", "Negocio Prueba Automatización");
 		takeScreenshot("03-agregar-negocio-modal", appPage, false);
@@ -205,8 +213,8 @@ public class SaleadsMiNegocioWorkflowTest {
 		boolean openedNewTab = false;
 
 		try {
-			legalPage = context.waitForPage(() -> clickByVisibleText(startingPage, linkText),
-					new BrowserContext.WaitForPageOptions().setTimeout(7000));
+			legalPage = context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(7000),
+					() -> clickByVisibleText(startingPage, linkText));
 			openedNewTab = true;
 		} catch (TimeoutError ignored) {
 			clickByVisibleText(startingPage, linkText);
@@ -368,6 +376,15 @@ public class SaleadsMiNegocioWorkflowTest {
 
 		throw new IllegalStateException(
 				"No start page available. Provide SALEADS_LOGIN_URL, or SALEADS_CDP_URL with an already opened login tab.");
+	}
+
+	private boolean hasNonBlankOpenPage() {
+		for (Page page : context.pages()) {
+			if (page != null && !page.isClosed() && !"about:blank".equals(page.url())) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private boolean runStep(final Step step) {
