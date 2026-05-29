@@ -2,6 +2,7 @@ const { test, expect } = require("@playwright/test");
 const fs = require("node:fs/promises");
 
 const ACCOUNT_EMAIL = "juanlucasbarbiergarzon@gmail.com";
+const CHECK_TIMEOUT_MS = 8_000;
 const REPORT_FIELDS = [
   "Login",
   "Mi Negocio menu",
@@ -44,9 +45,16 @@ test.describe("SaleADS Mi Negocio workflow", () => {
 
     const recordValidation = (step, label, passed) => {
       report[step].validations.push({ label, status: passed ? "PASS" : "FAIL" });
+      if (!passed) {
+        report[step].status = "FAIL";
+      }
     };
 
     const waitForUiToLoad = async (targetPage) => {
+      if (!targetPage || targetPage.isClosed()) {
+        return;
+      }
+
       await targetPage
         .waitForLoadState("domcontentloaded", { timeout: 30_000 })
         .catch(() => {});
@@ -55,22 +63,49 @@ test.describe("SaleADS Mi Negocio workflow", () => {
         .catch(() => {});
     };
 
-    const clickAndWait = async (locator) => {
-      await locator.click();
-      await waitForUiToLoad(appPage);
+    const isVisible = async (locator, timeout = CHECK_TIMEOUT_MS) => {
+      if (!locator) {
+        return false;
+      }
+
+      return locator
+        .first()
+        .isVisible({ timeout })
+        .catch(() => false);
+    };
+
+    const pickVisible = async (locators) => {
+      for (const locator of locators) {
+        if (await isVisible(locator, 2_500)) {
+          return locator.first();
+        }
+      }
+      return locators[0].first();
+    };
+
+    const clickAndWait = async (step, label, locator) => {
+      if (!(await isVisible(locator))) {
+        markFail(step, `${label} no es visible para click.`);
+        return false;
+      }
+
+      try {
+        await locator.first().click();
+        await waitForUiToLoad(appPage);
+        return true;
+      } catch (error) {
+        markFail(step, `Error al hacer click en '${label}'.`);
+        note(step, String(error).split("\n")[0]);
+        return false;
+      }
     };
 
     const validateVisible = async (step, label, locator) => {
-      let passed = false;
-      try {
-        await expect(locator).toBeVisible({ timeout: 20_000 });
-        passed = true;
-      } catch (error) {
-        markFail(step, `${label} no visible.`);
-        note(step, String(error).split("\n")[0]);
-      }
-
+      const passed = await isVisible(locator);
       recordValidation(step, label, passed);
+      if (!passed) {
+        note(step, `${label} no visible.`);
+      }
       return passed;
     };
 
@@ -81,11 +116,32 @@ test.describe("SaleADS Mi Negocio workflow", () => {
       fullPage = false,
     ) => {
       const screenshotPath = testInfo.outputPath(filename);
-      await targetPage.screenshot({ path: screenshotPath, fullPage });
-      report[step].evidence.push(screenshotPath);
+      try {
+        if (!targetPage || targetPage.isClosed()) {
+          markFail(step, `No se pudo tomar screenshot '${filename}': página cerrada.`);
+          return;
+        }
+
+        await targetPage.screenshot({ path: screenshotPath, fullPage });
+        report[step].evidence.push(screenshotPath);
+      } catch (error) {
+        markFail(step, `No se pudo tomar screenshot '${filename}'.`);
+        note(step, String(error).split("\n")[0]);
+      }
+    };
+
+    const finalizeReport = () => {
+      for (const field of REPORT_FIELDS) {
+        if (report[field].validations.length === 0 && report[field].notes.length === 0) {
+          report[field].status = "FAIL";
+          report[field].notes.push("Step was not executed.");
+        }
+      }
     };
 
     const writeFinalReport = async () => {
+      finalizeReport();
+
       const reportPath = testInfo.outputPath("saleads-mi-negocio-report.json");
       await fs.writeFile(reportPath, JSON.stringify(report, null, 2), "utf8");
       await testInfo.attach("saleads-mi-negocio-report", {
@@ -116,25 +172,27 @@ test.describe("SaleADS Mi Negocio workflow", () => {
       await waitForUiToLoad(appPage);
 
       // Step 1 - Login with Google
-      const googleLoginButton = appPage
-        .locator(
-          "button:has-text('Google'), [role='button']:has-text('Google'), a:has-text('Google')",
-        )
-        .first();
+      const googleLoginButton = await pickVisible([
+        appPage.getByRole("button", { name: /sign in with google/i }),
+        appPage.getByRole("button", { name: /iniciar sesión con google/i }),
+        appPage.getByRole("button", { name: /continuar con google/i }),
+        appPage.locator("button:has-text('Google')"),
+        appPage.locator("a:has-text('Google')"),
+      ]);
 
-      if (await googleLoginButton.isVisible().catch(() => false)) {
+      if (await isVisible(googleLoginButton)) {
         const popupPromise = context
           .waitForEvent("page", { timeout: 8_000 })
           .catch(() => null);
-        await clickAndWait(googleLoginButton);
+        await clickAndWait("Login", "Google login", googleLoginButton);
         const popup = await popupPromise;
 
         const loginFlowPage = popup ?? appPage;
         await waitForUiToLoad(loginFlowPage);
 
         const accountSelector = loginFlowPage.getByText(ACCOUNT_EMAIL).first();
-        if (await accountSelector.isVisible().catch(() => false)) {
-          await accountSelector.click();
+        if (await isVisible(accountSelector, 5_000)) {
+          await accountSelector.click().catch(() => {});
           await waitForUiToLoad(loginFlowPage);
         }
 
@@ -155,46 +213,40 @@ test.describe("SaleADS Mi Negocio workflow", () => {
         .filter({ hasText: /negocio|mi negocio/i })
         .first();
 
-      await validateVisible("Login", "Main application interface appears", appPage.locator("main, [role='main']").first());
+      await validateVisible(
+        "Login",
+        "Main application interface appears",
+        appPage.locator("main, [role='main']").first(),
+      );
       await validateVisible("Login", "Left sidebar navigation is visible", leftSidebar);
       await saveScreenshot("Login", appPage, "01-dashboard-loaded.png", true);
 
       // Step 2 - Open Mi Negocio menu
-      const negocioSection = appPage
-        .getByText(/^Negocio$/i)
-        .or(appPage.getByRole("button", { name: /negocio/i }))
-        .first();
+      const negocioSection = await pickVisible([
+        appPage.getByRole("button", { name: /^Negocio$/i }),
+        appPage.getByText(/^Negocio$/i),
+      ]);
+      await clickAndWait("Mi Negocio menu", "Negocio", negocioSection);
 
-      if (await negocioSection.isVisible().catch(() => false)) {
-        await clickAndWait(negocioSection);
-      } else {
-        note("Mi Negocio menu", "No se encontró item exacto 'Negocio'.");
-      }
+      const miNegocioOption = await pickVisible([
+        appPage.getByRole("button", { name: /^Mi Negocio$/i }),
+        appPage.getByText(/^Mi Negocio$/i),
+      ]);
+      await clickAndWait("Mi Negocio menu", "Mi Negocio", miNegocioOption);
 
-      const miNegocioOption = appPage
-        .getByText(/^Mi Negocio$/i)
-        .or(appPage.getByRole("button", { name: /mi negocio/i }))
-        .first();
-
-      if (await miNegocioOption.isVisible().catch(() => false)) {
-        await clickAndWait(miNegocioOption);
-      } else {
-        markFail("Mi Negocio menu", "No se encontró opción 'Mi Negocio'.");
-      }
-
-      const agregarNegocioItem = appPage
-        .getByText(/^Agregar Negocio$/i)
-        .or(appPage.getByRole("button", { name: /agregar negocio/i }))
-        .first();
-      const administrarNegociosItem = appPage
-        .getByText(/^Administrar Negocios$/i)
-        .or(appPage.getByRole("button", { name: /administrar negocios/i }))
-        .first();
+      const agregarNegocioItem = await pickVisible([
+        appPage.getByRole("button", { name: /^Agregar Negocio$/i }),
+        appPage.getByText(/^Agregar Negocio$/i),
+      ]);
+      const administrarNegociosItem = await pickVisible([
+        appPage.getByRole("button", { name: /^Administrar Negocios$/i }),
+        appPage.getByText(/^Administrar Negocios$/i),
+      ]);
 
       await validateVisible(
         "Mi Negocio menu",
         "Confirm submenu expands",
-        appPage.locator("text=Agregar Negocio").first(),
+        appPage.getByText(/Agregar Negocio/i).first(),
       );
       await validateVisible(
         "Mi Negocio menu",
@@ -209,23 +261,20 @@ test.describe("SaleADS Mi Negocio workflow", () => {
       await saveScreenshot("Mi Negocio menu", appPage, "02-mi-negocio-expanded.png");
 
       // Step 3 - Validate Agregar Negocio modal
-      if (await agregarNegocioItem.isVisible().catch(() => false)) {
-        await clickAndWait(agregarNegocioItem);
-      } else {
-        markFail("Agregar Negocio modal", "No se pudo clickear 'Agregar Negocio'.");
-      }
+      await clickAndWait("Agregar Negocio modal", "Agregar Negocio", agregarNegocioItem);
 
       const modal = appPage.getByRole("dialog").first();
       await validateVisible(
         "Agregar Negocio modal",
         "Modal title 'Crear Nuevo Negocio' is visible",
-        modal.getByText(/Crear Nuevo Negocio/i),
+        modal.getByText(/Crear Nuevo Negocio/i).first(),
       );
-      const nombreNegocioInput = modal
-        .getByRole("textbox", { name: /Nombre del Negocio/i })
-        .or(modal.getByLabel(/Nombre del Negocio/i))
-        .or(modal.locator("input[placeholder*='Nombre del Negocio']"))
-        .first();
+
+      const nombreNegocioInput = await pickVisible([
+        modal.getByRole("textbox", { name: /Nombre del Negocio/i }),
+        modal.getByLabel(/Nombre del Negocio/i),
+        modal.locator("input[placeholder*='Nombre del Negocio']"),
+      ]);
 
       await validateVisible(
         "Agregar Negocio modal",
@@ -235,50 +284,36 @@ test.describe("SaleADS Mi Negocio workflow", () => {
       await validateVisible(
         "Agregar Negocio modal",
         "Text 'Tienes 2 de 3 negocios' is visible",
-        modal.getByText(/Tienes 2 de 3 negocios/i),
+        modal.getByText(/Tienes 2 de 3 negocios/i).first(),
       );
       await validateVisible(
         "Agregar Negocio modal",
         "Button 'Cancelar' is present",
-        modal.getByRole("button", { name: /Cancelar/i }),
+        modal.getByRole("button", { name: /Cancelar/i }).first(),
       );
       await validateVisible(
         "Agregar Negocio modal",
         "Button 'Crear Negocio' is present",
-        modal.getByRole("button", { name: /Crear Negocio/i }),
+        modal.getByRole("button", { name: /Crear Negocio/i }).first(),
       );
       await saveScreenshot("Agregar Negocio modal", appPage, "03-agregar-negocio-modal.png");
 
-      if (await nombreNegocioInput.isVisible().catch(() => false)) {
-        await nombreNegocioInput.fill("Negocio Prueba Automatización");
+      if (await isVisible(nombreNegocioInput, 2_500)) {
+        await nombreNegocioInput.fill("Negocio Prueba Automatización").catch(() => {});
       }
 
-      const cancelarButton = modal.getByRole("button", { name: /Cancelar/i });
-      if (await cancelarButton.isVisible().catch(() => false)) {
-        await clickAndWait(cancelarButton);
-      } else {
-        markFail("Agregar Negocio modal", "No se encontró botón 'Cancelar'.");
-      }
+      const cancelarButton = modal.getByRole("button", { name: /Cancelar/i }).first();
+      await clickAndWait("Agregar Negocio modal", "Cancelar", cancelarButton);
 
       // Step 4 - Open Administrar Negocios
-      if (!(await administrarNegociosItem.isVisible().catch(() => false))) {
-        const reopenMiNegocio = appPage
-          .getByText(/^Mi Negocio$/i)
-          .or(appPage.getByRole("button", { name: /mi negocio/i }))
-          .first();
-        if (await reopenMiNegocio.isVisible().catch(() => false)) {
-          await clickAndWait(reopenMiNegocio);
-        }
+      if (!(await isVisible(administrarNegociosItem, 2_500))) {
+        await clickAndWait("Administrar Negocios view", "Mi Negocio", miNegocioOption);
       }
-
-      if (await administrarNegociosItem.isVisible().catch(() => false)) {
-        await clickAndWait(administrarNegociosItem);
-      } else {
-        markFail(
-          "Administrar Negocios view",
-          "No se encontró opción 'Administrar Negocios'.",
-        );
-      }
+      await clickAndWait(
+        "Administrar Negocios view",
+        "Administrar Negocios",
+        administrarNegociosItem,
+      );
 
       await validateVisible(
         "Administrar Negocios view",
@@ -310,15 +345,16 @@ test.describe("SaleADS Mi Negocio workflow", () => {
       // Step 5 - Validate Información General
       const infoGeneralSection = appPage
         .locator("section, div")
-        .filter({ has: appPage.getByText(/Información General/i) })
+        .filter({ has: appPage.getByText(/Información General/i).first() })
         .first();
 
       await validateVisible(
         "Información General",
         "User name is visible",
-        infoGeneralSection.locator("h1, h2, h3, p, span").filter({
-          hasNotText: /Información General|BUSINESS PLAN|Cambiar Plan/i,
-        }).first(),
+        infoGeneralSection
+          .locator("h1, h2, h3, p, span")
+          .filter({ hasNotText: /Información General|BUSINESS PLAN|Cambiar Plan/i })
+          .first(),
       );
       await validateVisible(
         "Información General",
@@ -330,40 +366,40 @@ test.describe("SaleADS Mi Negocio workflow", () => {
       await validateVisible(
         "Información General",
         "Text 'BUSINESS PLAN' is visible",
-        infoGeneralSection.getByText(/BUSINESS PLAN/i),
+        infoGeneralSection.getByText(/BUSINESS PLAN/i).first(),
       );
       await validateVisible(
         "Información General",
         "Button 'Cambiar Plan' is visible",
-        infoGeneralSection.getByRole("button", { name: /Cambiar Plan/i }),
+        infoGeneralSection.getByRole("button", { name: /Cambiar Plan/i }).first(),
       );
 
       // Step 6 - Validate Detalles de la Cuenta
       const detallesSection = appPage
         .locator("section, div")
-        .filter({ has: appPage.getByText(/Detalles de la Cuenta/i) })
+        .filter({ has: appPage.getByText(/Detalles de la Cuenta/i).first() })
         .first();
 
       await validateVisible(
         "Detalles de la Cuenta",
         "'Cuenta creada' is visible",
-        detallesSection.getByText(/Cuenta creada/i),
+        detallesSection.getByText(/Cuenta creada/i).first(),
       );
       await validateVisible(
         "Detalles de la Cuenta",
         "'Estado activo' is visible",
-        detallesSection.getByText(/Estado activo/i),
+        detallesSection.getByText(/Estado activo/i).first(),
       );
       await validateVisible(
         "Detalles de la Cuenta",
         "'Idioma seleccionado' is visible",
-        detallesSection.getByText(/Idioma seleccionado/i),
+        detallesSection.getByText(/Idioma seleccionado/i).first(),
       );
 
       // Step 7 - Validate Tus Negocios
       const tusNegociosSection = appPage
         .locator("section, div")
-        .filter({ has: appPage.getByText(/Tus Negocios/i) })
+        .filter({ has: appPage.getByText(/Tus Negocios/i).first() })
         .first();
 
       await validateVisible(
@@ -383,36 +419,42 @@ test.describe("SaleADS Mi Negocio workflow", () => {
       await validateVisible(
         "Tus Negocios",
         "Text 'Tienes 2 de 3 negocios' is visible",
-        tusNegociosSection.getByText(/Tienes 2 de 3 negocios/i),
+        tusNegociosSection.getByText(/Tienes 2 de 3 negocios/i).first(),
       );
 
-      const openLegalLinkAndValidate = async (step, linkText, headingRegex, screenshot) => {
-        const legalLink = appPage
-          .getByRole("link", { name: new RegExp(linkText, "i") })
-          .or(appPage.getByText(new RegExp(linkText, "i")))
-          .first();
-
-        if (!(await legalLink.isVisible().catch(() => false))) {
-          markFail(step, `No se encontró link '${linkText}'.`);
-          return;
-        }
+      const openLegalLinkAndValidate = async (
+        step,
+        linkText,
+        headingRegex,
+        screenshot,
+      ) => {
+        const legalLink = await pickVisible([
+          appPage.getByRole("link", { name: new RegExp(linkText, "i") }),
+          appPage.getByText(new RegExp(linkText, "i")),
+        ]);
 
         const newTabPromise = context
           .waitForEvent("page", { timeout: 8_000 })
           .catch(() => null);
-        await clickAndWait(legalLink);
+
+        if (!(await clickAndWait(step, linkText, legalLink))) {
+          return;
+        }
+
         const newTab = await newTabPromise;
 
         const targetPage = newTab ?? appPage;
         await waitForUiToLoad(targetPage);
 
+        const headingLocator = await pickVisible([
+          targetPage.getByRole("heading", { name: headingRegex }),
+          targetPage.getByText(headingRegex),
+        ]);
+
         await validateVisible(
           step,
           `The page contains the heading '${linkText}'`,
-          targetPage
-            .getByRole("heading", { name: headingRegex })
-            .or(targetPage.getByText(headingRegex))
-            .first(),
+          headingLocator,
         );
         await validateVisible(
           step,
@@ -420,14 +462,12 @@ test.describe("SaleADS Mi Negocio workflow", () => {
           targetPage.locator("main p, article p, p").first(),
         );
 
-        const legalUrl = targetPage.url();
-        note(step, `Final URL: ${legalUrl}`);
-
+        note(step, `Final URL: ${targetPage.url()}`);
         await saveScreenshot(step, targetPage, screenshot, true);
 
         if (newTab) {
           await newTab.close().catch(() => {});
-          await appPage.bringToFront();
+          await appPage.bringToFront().catch(() => {});
           await waitForUiToLoad(appPage);
         } else {
           await appPage.goBack({ waitUntil: "domcontentloaded" }).catch(() => {});
