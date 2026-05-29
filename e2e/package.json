@@ -1,0 +1,13 @@
+{
+  "name": "saleads-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "SaleADS Mi Negocio end-to-end workflow automation.",
+  "scripts": {
+    "test:saleads-mi-negocio": "node ./saleads-mi-negocio-workflow.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.60.0"
+  }
+}
