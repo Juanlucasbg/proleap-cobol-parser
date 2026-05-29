@@ -194,6 +194,39 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+### SaleADS E2E workflow test (Mi Negocio)
+
+This repository now includes an environment-driven Selenium/JUnit test that validates the full
+SaleADS "Mi Negocio" workflow, including login, submenu navigation, modal validation,
+account sections, legal links, new-tab handling, and screenshot evidence.
+
+Test class:
+
+```
+src/test/java/io/proleap/saleads/e2e/SaleadsMiNegocioFullTest.java
+```
+
+Run only this E2E test:
+
+```
+$ mvn -Pskip.nist.tests -Dtest=io.proleap.saleads.e2e.SaleadsMiNegocioFullTest test \
+  -Dsaleads.e2e.enabled=true \
+  -Dsaleads.start.url=https://<your-saleads-login-url>
+```
+
+Useful configuration keys:
+
+* `SALEADS_E2E_ENABLED` / `saleads.e2e.enabled` (required, set to `true`)
+* `SALEADS_START_URL` / `saleads.start.url` (optional if browser session is already on login page)
+* `SELENIUM_REMOTE_URL` / `saleads.selenium.remote.url` (optional Selenium Grid URL)
+* `SALEADS_HEADLESS` / `saleads.headless` (default: `true`)
+
+Screenshots and evidence are saved under:
+
+```
+target/saleads-evidence/<timestamp>/
+```
+
 
 Release process
 ---------------
