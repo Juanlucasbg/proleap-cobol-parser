@@ -119,15 +119,19 @@ test("SaleADS Mi Negocio full workflow", async ({ page }, testInfo) => {
   const notes: string[] = [];
   const legalUrls: Record<string, string> = {};
 
+  const skipNavigation = process.env.SALEADS_SKIP_NAVIGATION === "true";
   const loginUrl = process.env.SALEADS_LOGIN_URL ?? process.env.SALEADS_BASE_URL;
-  if (!loginUrl) {
-    throw new Error(
-      "Missing target URL. Set SALEADS_LOGIN_URL (or SALEADS_BASE_URL) so this test can run on the desired environment."
-    );
-  }
 
-  await page.goto(loginUrl, { waitUntil: "domcontentloaded" });
-  await waitForUi(page);
+  if (!skipNavigation) {
+    if (!loginUrl) {
+      throw new Error(
+        "Missing target URL. Set SALEADS_LOGIN_URL (or SALEADS_BASE_URL), or use SALEADS_SKIP_NAVIGATION=true to start from an already-open login page."
+      );
+    }
+
+    await page.goto(loginUrl, { waitUntil: "domcontentloaded" });
+    await waitForUi(page);
+  }
 
   const runStep = async (step: keyof WorkflowReport, fn: () => Promise<void>): Promise<void> => {
     try {

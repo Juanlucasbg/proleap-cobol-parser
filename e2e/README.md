@@ -38,6 +38,12 @@ Alternative variable accepted:
 SALEADS_BASE_URL="https://<your-env>/login" npm test
 ```
 
+If your runner already opens the login page before the test starts, skip explicit navigation:
+
+```bash
+SALEADS_SKIP_NAVIGATION=true npm test
+```
+
 For headed debugging:
 
 ```bash
