@@ -253,6 +253,12 @@ test("SaleADS Google login and Mi Negocio full workflow", async ({ page }, testI
 
       await waitForUi(page);
 
+      if (!DEFAULT_START_URL && page.url() === "about:blank") {
+        throw new Error(
+          "No application page is open. Set SALEADS_START_URL or run the test with a preloaded SaleADS login page."
+        );
+      }
+
       const loginButton = await assertVisible(
         page,
         [
