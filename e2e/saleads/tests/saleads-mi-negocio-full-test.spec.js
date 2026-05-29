@@ -54,24 +54,30 @@ async function isVisible(locator) {
   }
 }
 
-async function firstVisibleLocator(page, texts) {
-  for (const text of texts) {
-    const matcher = new RegExp(escapeRegex(text), "i");
-    const candidates = [
-      page.getByRole("button", { name: matcher }).first(),
-      page.getByRole("link", { name: matcher }).first(),
-      page.locator("button", { hasText: matcher }).first(),
-      page.locator("a", { hasText: matcher }).first(),
-      page.locator("[role='button']", { hasText: matcher }).first(),
-      page.locator("[role='menuitem']", { hasText: matcher }).first(),
-      page.getByText(matcher).first(),
-    ];
+async function firstVisibleLocator(page, texts, timeoutMs = 20000) {
+  const deadline = Date.now() + timeoutMs;
 
-    for (const candidate of candidates) {
-      if (await isVisible(candidate)) {
-        return candidate;
+  while (Date.now() < deadline) {
+    for (const text of texts) {
+      const matcher = new RegExp(escapeRegex(text), "i");
+      const candidates = [
+        page.getByRole("button", { name: matcher }).first(),
+        page.getByRole("link", { name: matcher }).first(),
+        page.locator("button", { hasText: matcher }).first(),
+        page.locator("a", { hasText: matcher }).first(),
+        page.locator("[role='button']", { hasText: matcher }).first(),
+        page.locator("[role='menuitem']", { hasText: matcher }).first(),
+        page.getByText(matcher).first(),
+      ];
+
+      for (const candidate of candidates) {
+        if (await isVisible(candidate)) {
+          return candidate;
+        }
       }
     }
+
+    await page.waitForTimeout(300);
   }
 
   return null;
