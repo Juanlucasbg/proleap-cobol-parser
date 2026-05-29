@@ -244,6 +244,8 @@ test("SaleADS Google login and Mi Negocio full workflow", async ({ page }, testI
   const report = buildInitialReport();
   const artifactDirectory = testInfo.outputPath("artifacts");
   const reportPath = testInfo.outputPath("saleads-mi-negocio-final-report.json");
+  let loginCompleted = false;
+  let administrarNegociosLoaded = false;
 
   try {
     await runValidationStep(report, "Login", async () => {
@@ -299,9 +301,14 @@ test("SaleADS Google login and Mi Negocio full workflow", async ({ page }, testI
       );
 
       await takeCheckpointScreenshot(page, report, artifactDirectory, "01-dashboard-loaded.png", true);
+      loginCompleted = true;
     });
 
     await runValidationStep(report, "Mi Negocio menu", async () => {
+      if (!loginCompleted) {
+        throw new Error("Login step failed; skipping dependent validation.");
+      }
+
       const sidebar = await assertVisible(
         page,
         [page.locator("aside"), page.getByRole("navigation"), page.locator('[class*="sidebar"]')],
@@ -355,6 +362,10 @@ test("SaleADS Google login and Mi Negocio full workflow", async ({ page }, testI
     });
 
     await runValidationStep(report, "Agregar Negocio modal", async () => {
+      if (!loginCompleted) {
+        throw new Error("Login step failed; skipping dependent validation.");
+      }
+
       const agregarNegocio = await assertVisible(
         page,
         [
@@ -411,6 +422,10 @@ test("SaleADS Google login and Mi Negocio full workflow", async ({ page }, testI
     });
 
     await runValidationStep(report, "Administrar Negocios view", async () => {
+      if (!loginCompleted) {
+        throw new Error("Login step failed; skipping dependent validation.");
+      }
+
       const miNegocio = await assertVisible(
         page,
         [
@@ -443,9 +458,14 @@ test("SaleADS Google login and Mi Negocio full workflow", async ({ page }, testI
       );
 
       await takeCheckpointScreenshot(page, report, artifactDirectory, "04-administrar-negocios-page.png", true);
+      administrarNegociosLoaded = true;
     });
 
     await runValidationStep(report, "Información General", async () => {
+      if (!administrarNegociosLoaded) {
+        throw new Error("Administrar Negocios view not loaded; skipping dependent validation.");
+      }
+
       const nombre = await assertVisible(
         page,
         [page.locator("section").filter({ hasText: /informaci[oó]n general/i }).locator("h4, h5, p, span").nth(1)],
@@ -467,12 +487,20 @@ test("SaleADS Google login and Mi Negocio full workflow", async ({ page }, testI
     });
 
     await runValidationStep(report, "Detalles de la Cuenta", async () => {
+      if (!administrarNegociosLoaded) {
+        throw new Error("Administrar Negocios view not loaded; skipping dependent validation.");
+      }
+
       await assertVisible(page, [page.getByText(/cuenta creada/i)], "Cuenta creada label");
       await assertVisible(page, [page.getByText(/estado activo/i)], "Estado activo label");
       await assertVisible(page, [page.getByText(/idioma seleccionado/i)], "Idioma seleccionado label");
     });
 
     await runValidationStep(report, "Tus Negocios", async () => {
+      if (!administrarNegociosLoaded) {
+        throw new Error("Administrar Negocios view not loaded; skipping dependent validation.");
+      }
+
       await assertVisible(page, [page.getByText(/tus negocios/i)], "Tus Negocios title");
       await assertVisible(
         page,
@@ -483,6 +511,10 @@ test("SaleADS Google login and Mi Negocio full workflow", async ({ page }, testI
     });
 
     await runValidationStep(report, "Términos y Condiciones", async () => {
+      if (!administrarNegociosLoaded) {
+        throw new Error("Administrar Negocios view not loaded; skipping dependent validation.");
+      }
+
       const finalUrl = await openAndValidateLegalPage({
         appPage: page,
         labelPattern: /t[eé]rminos y condiciones/i,
@@ -496,6 +528,10 @@ test("SaleADS Google login and Mi Negocio full workflow", async ({ page }, testI
     });
 
     await runValidationStep(report, "Política de Privacidad", async () => {
+      if (!administrarNegociosLoaded) {
+        throw new Error("Administrar Negocios view not loaded; skipping dependent validation.");
+      }
+
       const finalUrl = await openAndValidateLegalPage({
         appPage: page,
         labelPattern: /pol[ií]tica de privacidad/i,
