@@ -1,0 +1,13 @@
+{
+  "name": "saleads-e2e-automation",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "install:browsers": "playwright install chromium",
+    "test:saleads-mi-negocio": "node ./saleads-mi-negocio-full-test.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0"
+  }
+}
