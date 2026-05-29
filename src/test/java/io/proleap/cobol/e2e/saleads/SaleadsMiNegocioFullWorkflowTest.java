@@ -264,8 +264,12 @@ public class SaleadsMiNegocioFullWorkflowTest {
 			}
 			waitForUiToLoad();
 		}
+		require(!driver.getCurrentUrl().equals(appUrlBefore) || "new-tab".equals(navigationType),
+				"Legal page did not navigate to a new tab or URL.");
 
-		waitForVisible(By.xpath("//*[contains(normalize-space(.),'" + linkText + "')]"));
+		waitForVisible(By.xpath("//h1[contains(normalize-space(.),'" + linkText + "')]"
+				+ "|//h2[contains(normalize-space(.),'" + linkText + "')]"
+				+ "|//h3[contains(normalize-space(.),'" + linkText + "')]"));
 		final String legalText = driver.findElement(By.tagName("body")).getText();
 		require(legalText.length() > 120, "Legal page content looks incomplete.");
 
