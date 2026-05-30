@@ -162,10 +162,11 @@ public class SaleadsMiNegocioFullWorkflowTest {
 		ensureAdminMenuVisible();
 		clickByAnyText(Arrays.asList("Administrar Negocios"));
 
-		assertVisibleAnyText(Arrays.asList("Informacion General", "Informacion general", "Informacion"));
+		assertVisibleAnyText(Arrays.asList("Informacion General", "Informacion general", "Informacion",
+				"Informaci\u00f3n General", "Informaci\u00f3n general"));
 		assertVisibleAnyText(Arrays.asList("Detalles de la Cuenta", "Detalles de la cuenta"));
 		assertVisibleAnyText(Arrays.asList("Tus Negocios"));
-		assertVisibleAnyText(Arrays.asList("Seccion Legal", "Legal"));
+		assertVisibleAnyText(Arrays.asList("Seccion Legal", "Secci\u00f3n Legal", "Legal"));
 		captureFullPageScreenshot("administrar-negocios");
 	}
 
