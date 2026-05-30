@@ -7,11 +7,11 @@ const report = {
   "Mi Negocio menu": "FAIL",
   "Agregar Negocio modal": "FAIL",
   "Administrar Negocios view": "FAIL",
-  "Informacion General": "FAIL",
+  "Información General": "FAIL",
   "Detalles de la Cuenta": "FAIL",
   "Tus Negocios": "FAIL",
-  "Terminos y Condiciones": "FAIL",
-  "Politica de Privacidad": "FAIL"
+  "Términos y Condiciones": "FAIL",
+  "Política de Privacidad": "FAIL"
 };
 
 const evidence = {
@@ -32,8 +32,26 @@ function sanitize(name) {
 }
 
 function textRegex(value) {
-  const escaped = value.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return new RegExp(escaped, "i");
+  const accentMap = {
+    a: "[aáàäâã]",
+    e: "[eéèëê]",
+    i: "[iíìïî]",
+    o: "[oóòöôõ]",
+    u: "[uúùüû]",
+    n: "[nñ]"
+  };
+
+  const pattern = [...value]
+    .map((char) => {
+      const lower = char.toLowerCase();
+      if (accentMap[lower]) {
+        return accentMap[lower];
+      }
+      return char.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    })
+    .join("");
+
+  return new RegExp(pattern, "i");
 }
 
 async function waitForUi(page) {
@@ -322,8 +340,8 @@ async function main() {
       await clickAndWait(page, adminTarget);
 
       await ensureVisible(page, "Seccion Informacion General", [
-        (p) => p.getByRole("heading", { name: /informacion general/i }),
-        (p) => p.getByText(/informacion general/i)
+        (p) => p.getByRole("heading", { name: textRegex("Información General") }),
+        (p) => p.getByText(textRegex("Información General"))
       ], 20000);
       await ensureVisible(page, "Seccion Detalles de la Cuenta", [
         (p) => p.getByRole("heading", { name: /detalles de la cuenta/i }),
@@ -342,7 +360,7 @@ async function main() {
       report["Administrar Negocios view"] = "PASS";
     });
 
-    await runStep("Validate Informacion General", async () => {
+    await runStep("Validate Información General", async () => {
       if (!adminOk && !loginOk && !addBusinessModalOk) {
         throw new Error("No se alcanzo la vista de Administrar Negocios.");
       }
@@ -361,7 +379,7 @@ async function main() {
         (p) => p.getByText(/cambiar plan/i)
       ]);
 
-      report["Informacion General"] = "PASS";
+      report["Información General"] = "PASS";
     });
 
     await runStep("Validate Detalles de la Cuenta", async () => {
@@ -388,26 +406,26 @@ async function main() {
       report["Tus Negocios"] = "PASS";
     });
 
-    await runStep("Validate Terminos y Condiciones", async () => {
+    await runStep("Validate Términos y Condiciones", async () => {
       evidence.terminosUrl = await openLegalDocument({
         appPage: page,
         screenshotDir,
-        linkText: "Terminos y Condiciones",
-        expectedHeading: "Terminos y Condiciones",
+        linkText: "Términos y Condiciones",
+        expectedHeading: "Términos y Condiciones",
         screenshotName: "05-terminos-y-condiciones"
       });
-      report["Terminos y Condiciones"] = "PASS";
+      report["Términos y Condiciones"] = "PASS";
     });
 
-    await runStep("Validate Politica de Privacidad", async () => {
+    await runStep("Validate Política de Privacidad", async () => {
       evidence.privacidadUrl = await openLegalDocument({
         appPage: page,
         screenshotDir,
-        linkText: "Politica de Privacidad",
-        expectedHeading: "Politica de Privacidad",
+        linkText: "Política de Privacidad",
+        expectedHeading: "Política de Privacidad",
         screenshotName: "06-politica-de-privacidad"
       });
-      report["Politica de Privacidad"] = "PASS";
+      report["Política de Privacidad"] = "PASS";
     });
   } finally {
     await browser.close();
@@ -427,8 +445,8 @@ async function main() {
   for (const [key, value] of Object.entries(report)) {
     console.log(`- ${key}: ${value}`);
   }
-  console.log(`- Terminos y Condiciones URL: ${evidence.terminosUrl ?? "N/A"}`);
-  console.log(`- Politica de Privacidad URL: ${evidence.privacidadUrl ?? "N/A"}`);
+  console.log(`- Términos y Condiciones URL: ${evidence.terminosUrl ?? "N/A"}`);
+  console.log(`- Política de Privacidad URL: ${evidence.privacidadUrl ?? "N/A"}`);
   console.log(`- Evidencia: ${evidence.screenshotDir}`);
   console.log(`- JSON: ${reportPath}`);
 

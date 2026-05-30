@@ -47,8 +47,8 @@ Including:
   - Mi Negocio menu
   - Agregar Negocio modal
   - Administrar Negocios view
-  - Informacion General
+  - Información General
   - Detalles de la Cuenta
   - Tus Negocios
-  - Terminos y Condiciones
-  - Politica de Privacidad
+  - Términos y Condiciones
+  - Política de Privacidad
