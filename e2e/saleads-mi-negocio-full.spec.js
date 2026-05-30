@@ -8,11 +8,11 @@ const REPORT_FIELDS = [
   "Mi Negocio menu",
   "Agregar Negocio modal",
   "Administrar Negocios view",
-  "Informacion General",
+  "Informaci\u00f3n General",
   "Detalles de la Cuenta",
   "Tus Negocios",
-  "Terminos y Condiciones",
-  "Politica de Privacidad"
+  "T\u00e9rminos y Condiciones",
+  "Pol\u00edtica de Privacidad"
 ];
 
 function sanitizeName(value) {
@@ -210,7 +210,7 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
     await checkpoint(page, "administrar-negocios-account-page", true);
   });
 
-  await runStep("Informacion General", async () => {
+  await runStep("Informaci\u00f3n General", async () => {
     await expectVisibleText(page, /BUSINESS PLAN/i);
     await expectVisibleText(page, /Cambiar Plan/i);
     await expectVisibleText(page, /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
@@ -229,7 +229,7 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
     await expectVisibleText(page, /Tienes 2 de 3 negocios/i);
   });
 
-  await runStep("Terminos y Condiciones", async () => {
+  await runStep("T\u00e9rminos y Condiciones", async () => {
     await openLegalPageAndValidate(
       /Terminos y Condiciones|T[eé]rminos y Condiciones/i,
       /Terminos y Condiciones|T[eé]rminos y Condiciones/i,
@@ -238,7 +238,7 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
     );
   });
 
-  await runStep("Politica de Privacidad", async () => {
+  await runStep("Pol\u00edtica de Privacidad", async () => {
     await openLegalPageAndValidate(
       /Politica de Privacidad|Pol[ií]tica de Privacidad/i,
       /Politica de Privacidad|Pol[ií]tica de Privacidad/i,
