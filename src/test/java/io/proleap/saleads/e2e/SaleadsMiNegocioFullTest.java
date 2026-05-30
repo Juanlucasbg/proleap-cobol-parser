@@ -140,7 +140,12 @@ public class SaleadsMiNegocioFullTest {
 			requireVisible(page, "Cancelar");
 			requireVisible(page, "Crear Negocio");
 
-			clickAndWait(page, page.getByText("Nombre del Negocio").first());
+			final Locator nameInput = page.getByLabel("Nombre del Negocio").first();
+			if (nameInput.count() > 0) {
+				clickAndWait(page, nameInput);
+			} else {
+				clickAndWait(page, page.getByText("Nombre del Negocio").first());
+			}
 			page.keyboard().type("Negocio Prueba Automatizacion");
 			screenshot(page, "03-agregar-negocio-modal", true);
 			clickAndWait(page, page.getByText("Cancelar").first());
@@ -175,7 +180,7 @@ public class SaleadsMiNegocioFullTest {
 			requireVisible(page, "BUSINESS PLAN");
 			requireVisible(page, "Cambiar Plan");
 			requireTextPattern(page, Pattern.compile(".+@.+\\..+"), "user email");
-			requireTextPattern(page, Pattern.compile("(?i)(hola|bienvenido|perfil|cuenta|usuario|nombre)"), "user name");
+			requireTextPattern(page, Pattern.compile("(?i)juan"), "user name");
 			step.pass("Información General contains user, plan and action controls.");
 		} catch (final Exception e) {
 			safeErrorScreenshot(page, "05-informacion-general-failed");
