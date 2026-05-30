@@ -29,6 +29,7 @@ import com.microsoft.playwright.PlaywrightException;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.LoadState;
 import com.microsoft.playwright.options.WaitForSelectorState;
+import com.microsoft.playwright.options.WaitUntilState;
 
 public class SaleadsMiNegocioFullWorkflowTest {
 
@@ -64,7 +65,7 @@ public class SaleadsMiNegocioFullWorkflowTest {
 			final BrowserContext context = browser.newContext(new Browser.NewContextOptions().setViewportSize(1920, 1080));
 			final Page appPage = context.newPage();
 
-			appPage.navigate(startUrl, new Page.NavigateOptions().setWaitUntil(LoadState.DOMCONTENTLOADED));
+			appPage.navigate(startUrl, new Page.NavigateOptions().setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
 			waitForUi(appPage);
 
 			runLoginStep(appPage, googleAccount, evidenceDir);
@@ -99,7 +100,8 @@ public class SaleadsMiNegocioFullWorkflowTest {
 
 			Page googlePage = null;
 			try {
-				googlePage = appPage.waitForPopup(() -> clickAndWait(appPage, loginButton), new Page.WaitForPopupOptions().setTimeout(8000));
+				googlePage = appPage.waitForPopup(new Page.WaitForPopupOptions().setTimeout(8000),
+						() -> clickAndWait(appPage, loginButton));
 			} catch (final PlaywrightException noPopup) {
 				clickAndWait(appPage, loginButton);
 			}
@@ -254,7 +256,8 @@ public class SaleadsMiNegocioFullWorkflowTest {
 			boolean openedNewTab = false;
 
 			try {
-				legalPage = appPage.waitForPopup(() -> clickAndWait(appPage, link), new Page.WaitForPopupOptions().setTimeout(5000));
+				legalPage = appPage.waitForPopup(new Page.WaitForPopupOptions().setTimeout(5000),
+						() -> clickAndWait(appPage, link));
 				openedNewTab = true;
 			} catch (final PlaywrightException noPopup) {
 				clickAndWait(appPage, link);
@@ -277,7 +280,7 @@ public class SaleadsMiNegocioFullWorkflowTest {
 				appPage.bringToFront();
 				waitForUi(appPage);
 			} else {
-				appPage.navigate(originalAppUrl, new Page.NavigateOptions().setWaitUntil(LoadState.DOMCONTENTLOADED));
+				appPage.navigate(originalAppUrl, new Page.NavigateOptions().setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
 				waitForUi(appPage);
 			}
 		} catch (final Exception ex) {
