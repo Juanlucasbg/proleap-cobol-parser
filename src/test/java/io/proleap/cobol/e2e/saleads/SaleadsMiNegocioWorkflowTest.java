@@ -95,7 +95,7 @@ public class SaleadsMiNegocioWorkflowTest {
     trySelectGoogleAccount(authPage);
 
     if (popup != null) {
-      popup.waitForClose(new Page.WaitForCloseOptions().setTimeout(20_000));
+      popup.waitForClose(new Page.WaitForCloseOptions().setTimeout(20_000), () -> {});
     }
 
     waitForUiToLoad(page);
@@ -328,8 +328,8 @@ public class SaleadsMiNegocioWorkflowTest {
   private Page clickAndCapturePopup(final BrowserContext context, final Locator locator) {
     try {
       return context.waitForPage(
-          () -> clickAndWaitForUi(locator.page(), locator),
-          new BrowserContext.WaitForPageOptions().setTimeout(8_000));
+          new BrowserContext.WaitForPageOptions().setTimeout(8_000),
+          () -> clickAndWaitForUi(locator.page(), locator));
     } catch (PlaywrightException ignored) {
       return null;
     }
