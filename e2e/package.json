@@ -1,0 +1,21 @@
+{
+  "name": "e2e",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "playwright test tests/saleads-mi-negocio.spec.js",
+    "test:saleads-mi-negocio": "playwright test tests/saleads-mi-negocio.spec.js",
+    "test:saleads-mi-negocio:headed": "playwright test tests/saleads-mi-negocio.spec.js --headed",
+    "install:browsers": "playwright install --with-deps chromium"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.60.0"
+  }
+}
