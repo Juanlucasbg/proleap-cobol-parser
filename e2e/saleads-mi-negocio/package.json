@@ -1,0 +1,21 @@
+{
+  "name": "saleads-mi-negocio",
+  "version": "1.0.0",
+  "description": "Playwright E2E for SaleADS Mi Negocio workflow",
+  "main": "playwright.config.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:saleads": "playwright test tests/saleads-mi-negocio.spec.js --project=chromium",
+    "test:saleads:headed": "PW_HEADLESS=false playwright test tests/saleads-mi-negocio.spec.js --project=chromium"
+  },
+  "keywords": [
+    "playwright",
+    "saleads",
+    "e2e"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.60.0"
+  }
+}
