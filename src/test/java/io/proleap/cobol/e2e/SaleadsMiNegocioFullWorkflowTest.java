@@ -120,7 +120,7 @@ public class SaleadsMiNegocioFullWorkflowTest {
 		assertAnyTextVisible(
 				Arrays.asList("Negocio", "Mi Negocio", "Dashboard", "Inicio", "Administrar Negocios"),
 				"Main application interface was not detected after Google login.");
-		assertSidebarVisible();
+		ensureSidebarIsVisible();
 		takeScreenshot("01-dashboard-loaded");
 	}
 
