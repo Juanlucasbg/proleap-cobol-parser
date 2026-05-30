@@ -41,6 +41,7 @@ const report = {
   startedAt: now.toISOString(),
   environment: {
     loginUrl: process.env.SALEADS_LOGIN_URL ?? null,
+    cdpUrl: process.env.SALEADS_CDP_URL ?? null,
     headless: process.env.HEADLESS ?? "true",
     locale: process.env.SALEADS_LOCALE ?? "es-ES",
   },
@@ -48,20 +49,30 @@ const report = {
 };
 
 let browserContext;
+let attachedBrowser;
+let closeContextOnFinish = true;
 let appPage;
 
 await fs.mkdir(screenshotsDir, { recursive: true });
 
 try {
-  browserContext = await chromium.launchPersistentContext(
-    path.resolve(process.env.SALEADS_USER_DATA_DIR ?? ".saleads-browser-profile"),
-    {
-      channel: process.env.PLAYWRIGHT_BROWSER_CHANNEL,
-      headless: process.env.HEADLESS !== "false",
-      locale: process.env.SALEADS_LOCALE ?? "es-ES",
-      viewport: { width: 1440, height: 900 },
-    },
-  );
+  if (process.env.SALEADS_CDP_URL) {
+    attachedBrowser = await chromium.connectOverCDP(process.env.SALEADS_CDP_URL);
+    browserContext =
+      attachedBrowser.contexts()[0] ?? (await attachedBrowser.newContext());
+    closeContextOnFinish = false;
+  } else {
+    browserContext = await chromium.launchPersistentContext(
+      path.resolve(process.env.SALEADS_USER_DATA_DIR ?? ".saleads-browser-profile"),
+      {
+        channel: process.env.PLAYWRIGHT_BROWSER_CHANNEL,
+        headless: process.env.HEADLESS !== "false",
+        locale: process.env.SALEADS_LOCALE ?? "es-ES",
+        viewport: { width: 1440, height: 900 },
+      },
+    );
+    closeContextOnFinish = true;
+  }
 
   appPage = browserContext.pages()[0] ?? (await browserContext.newPage());
 
@@ -349,8 +360,9 @@ try {
   });
 } catch (error) {
   report.globalError = error instanceof Error ? error.message : String(error);
+  markBlockedSteps(report.globalError);
 } finally {
-  if (browserContext) {
+  if (browserContext && closeContextOnFinish) {
     await browserContext.close();
   }
 }
@@ -621,4 +633,17 @@ function pause(ms) {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
+}
+
+function markBlockedSteps(reason) {
+  for (const fieldName of REPORT_FIELDS) {
+    if (statusByField[fieldName].details === "Not executed") {
+      statusByField[fieldName] = {
+        status: "FAIL",
+        details: `Blocked: ${reason}`,
+        evidence: [],
+        metadata: {},
+      };
+    }
+  }
 }

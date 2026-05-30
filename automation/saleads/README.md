@@ -32,6 +32,12 @@ SALEADS_LOGIN_URL="https://<your-saleads-login>" npm run test:saleads-mi-negocio
 
 If `SALEADS_LOGIN_URL` is not set, the script expects the first browser tab in the persistent context to already be on the SaleADS login page.
 
+You can also attach to an already opened browser (for orchestrators that preload the login tab) using CDP:
+
+```bash
+SALEADS_CDP_URL="http://127.0.0.1:9222" npm run test:saleads-mi-negocio
+```
+
 ## Environment variables
 
 - `SALEADS_LOGIN_URL` (optional): login URL for the current environment.
@@ -40,6 +46,7 @@ If `SALEADS_LOGIN_URL` is not set, the script expects the first browser tab in t
 - `SALEADS_ARTIFACTS_DIR` (optional): custom report/screenshots output directory.
 - `PLAYWRIGHT_BROWSER_CHANNEL` (optional): browser channel.
 - `SALEADS_LOCALE` (optional): locale, default `es-ES`.
+- `SALEADS_CDP_URL` (optional): connect to an existing Chromium browser via CDP.
 
 ## Output artifacts
 
