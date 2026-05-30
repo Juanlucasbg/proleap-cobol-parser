@@ -298,16 +298,19 @@ test('SaleADS Mi Negocio full workflow', async ({ page }, testInfo) => {
   });
 
   const report = {
-    login: results.Login,
-    miNegocioMenu: results['Mi Negocio menu'],
-    agregarNegocioModal: results['Agregar Negocio modal'],
-    administrarNegociosView: results['Administrar Negocios view'],
-    informacionGeneral: results['Informacion General'],
-    detallesDeLaCuenta: results['Detalles de la Cuenta'],
-    tusNegocios: results['Tus Negocios'],
-    terminosYCondiciones: results['Terminos y Condiciones'],
-    politicaDePrivacidad: results['Politica de Privacidad'],
-    urls,
+    Login: results.Login,
+    'Mi Negocio menu': results['Mi Negocio menu'],
+    'Agregar Negocio modal': results['Agregar Negocio modal'],
+    'Administrar Negocios view': results['Administrar Negocios view'],
+    'Informacion General': results['Informacion General'],
+    'Detalles de la Cuenta': results['Detalles de la Cuenta'],
+    'Tus Negocios': results['Tus Negocios'],
+    'Terminos y Condiciones': results['Terminos y Condiciones'],
+    'Politica de Privacidad': results['Politica de Privacidad'],
+    legalUrls: {
+      terminosYCondiciones: urls.terms ?? null,
+      politicaDePrivacidad: urls.privacy ?? null,
+    },
     failures,
   };
 
