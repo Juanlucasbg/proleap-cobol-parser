@@ -194,6 +194,28 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+### Run the SaleADS Mi Negocio end-to-end workflow test
+
+The repository also includes an environment-agnostic Selenium test for the SaleADS "Mi Negocio" workflow:
+
+`src/test/java/io/proleap/saleads/e2e/SaleadsMiNegocioWorkflowTest.java`
+
+Run it by passing the SaleADS login URL as a runtime property (no domain is hardcoded):
+
+```
+$ mvn -Dtest=SaleadsMiNegocioWorkflowTest -Dsaleads.baseUrl="<saleads-login-url>" test
+```
+
+Optional flags:
+
+```
+-Dsaleads.headless=true|false
+```
+
+Evidence (checkpoint screenshots + final PASS/FAIL report + legal URLs) is written to:
+
+`target/saleads-mi-negocio-evidence/<timestamp>/`
+
 
 Release process
 ---------------
