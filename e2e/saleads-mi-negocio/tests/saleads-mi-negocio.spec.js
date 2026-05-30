@@ -79,14 +79,12 @@ test.describe("SaleADS Mi Negocio full workflow", () => {
       }
     }
 
-    if (!loginUrl) {
-      throw new Error(
-        "Set SALEADS_LOGIN_URL (or SALEADS_BASE_URL) to the login page of the active SaleADS environment.",
-      );
-    }
-
     await runValidation("Login", async () => {
-      await page.goto(loginUrl, { waitUntil: "domcontentloaded" });
+      if (loginUrl) {
+        await page.goto(loginUrl, { waitUntil: "domcontentloaded" });
+      } else {
+        await page.waitForLoadState("domcontentloaded");
+      }
 
       const googleLoginButton = await firstVisible(page, [
         page.getByRole("button", {
@@ -101,7 +99,9 @@ test.describe("SaleADS Mi Negocio full workflow", () => {
       ]);
 
       if (!googleLoginButton) {
-        throw new Error("Google login button was not found.");
+        throw new Error(
+          "Google login button was not found. If you are not reusing an already-open login page, set SALEADS_LOGIN_URL.",
+        );
       }
 
       const popupPromise = context.waitForEvent("page", { timeout: 10000 }).catch(() => null);

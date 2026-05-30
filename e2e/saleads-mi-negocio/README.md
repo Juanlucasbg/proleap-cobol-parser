@@ -17,7 +17,10 @@ This test automates the full workflow requested for SaleADS:
 
 ## Environment-agnostic usage
 
-No domain is hardcoded. Set the environment URL at runtime:
+No domain is hardcoded. You can run in either mode:
+
+- If browser/session already starts on the SaleADS login page, no URL variable is required.
+- Or set the environment URL at runtime:
 
 - `SALEADS_LOGIN_URL` (preferred), or
 - `SALEADS_BASE_URL`
