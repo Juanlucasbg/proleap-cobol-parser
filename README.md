@@ -201,6 +201,37 @@ Release process
 * Milestones of the grammar are published in the [ANTLR grammars repo](https://github.com/antlr/grammars-v4).
 
 
+SaleADS end-to-end workflow automation
+--------------------------------------
+
+This repository now includes a Playwright test to validate the SaleADS.ai "Mi Negocio"
+workflow end-to-end (Google login, sidebar navigation, modal checks, account sections,
+legal links, screenshots, and final PASS/FAIL report).
+
+Install test dependencies:
+
+```
+npm install
+```
+
+Run in headless mode:
+
+```
+SALEADS_START_URL="https://<current-environment-login-page>" npm run e2e -- e2e/saleads-mi-negocio-full.spec.ts
+```
+
+Optional environment variables:
+
+* `SALEADS_START_URL`: login page URL for the current environment (dev/staging/prod).
+* `SALEADS_GOOGLE_ACCOUNT`: Google account to select in the account chooser.
+
+Reports and evidence:
+
+* Screenshots are saved under `test-results/`.
+* HTML report is saved under `playwright-report/`.
+* Final workflow status and legal URLs are attached as `final-report` in Playwright output.
+
+
 License
 -------
 
