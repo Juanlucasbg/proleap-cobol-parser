@@ -277,9 +277,11 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
   if (entryUrlEnvKey) {
     await page.goto(process.env[entryUrlEnvKey], { waitUntil: "domcontentloaded" });
     await waitForUi(page);
+  } else if (process.env.USE_CURRENT_PAGE === "true") {
+    await waitForUi(page);
   } else {
     throw new Error(
-      "No environment URL found. Provide SALEADS_LOGIN_URL (or SALEADS_URL/BASE_URL/TARGET_URL).",
+      "No environment URL found. Provide SALEADS_LOGIN_URL (or SALEADS_URL/BASE_URL/TARGET_URL), or set USE_CURRENT_PAGE=true when page is preloaded externally.",
     );
   }
 

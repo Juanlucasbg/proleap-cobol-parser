@@ -29,6 +29,7 @@ Optional:
 
 - `GOOGLE_ACCOUNT_EMAIL` (defaults to `juanlucasbarbiergarzon@gmail.com`)
 - `GOOGLE_PASSWORD` (only used if Google asks for a password input in the test flow)
+- `USE_CURRENT_PAGE=true` (skip `page.goto` when the login page is preloaded by an external runner)
 
 ## Install and run
 
