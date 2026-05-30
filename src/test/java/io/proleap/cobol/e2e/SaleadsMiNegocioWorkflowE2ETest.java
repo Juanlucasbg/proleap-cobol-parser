@@ -84,15 +84,15 @@ public class SaleadsMiNegocioWorkflowE2ETest {
     stepResults.put("Mi Negocio menu", stepOpenMiNegocioMenu());
     stepResults.put("Agregar Negocio modal", stepValidateAgregarNegocioModal());
     stepResults.put("Administrar Negocios view", stepOpenAdministrarNegociosView());
-    stepResults.put("Informacion General", stepValidateInformacionGeneral());
+    stepResults.put("Información General", stepValidateInformacionGeneral());
     stepResults.put("Detalles de la Cuenta", stepValidateDetallesCuenta());
     stepResults.put("Tus Negocios", stepValidateTusNegocios());
-    stepResults.put("Terminos y Condiciones", stepValidateLegalLink("Términos y Condiciones",
+    stepResults.put("Términos y Condiciones", stepValidateLegalLink("Términos y Condiciones",
         new String[] {"Términos y Condiciones", "Terminos y Condiciones"}, "08-terminos-y-condiciones.png",
-        "Terminos y Condiciones URL"));
-    stepResults.put("Politica de Privacidad",
+        "Términos y Condiciones URL"));
+    stepResults.put("Política de Privacidad",
         stepValidateLegalLink("Política de Privacidad", new String[] {"Política de Privacidad", "Politica de Privacidad"},
-            "09-politica-de-privacidad.png", "Politica de Privacidad URL"));
+            "09-politica-de-privacidad.png", "Política de Privacidad URL"));
 
     writeReport();
     final boolean allPassed = stepResults.values().stream().allMatch(Boolean::booleanValue);
