@@ -194,6 +194,43 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+### Optional: SaleADS Mi Negocio end-to-end test
+
+This repository now includes an opt-in UI workflow test at:
+
+`src/test/java/io/proleap/saleads/e2e/SaleadsMiNegocioFullWorkflowTest.java`
+
+The test is disabled by default and only runs when explicitly enabled. It validates:
+
+- Google login flow
+- Mi Negocio menu expansion
+- Agregar Negocio modal checks
+- Administrar Negocios sections
+- Informacion General / Detalles / Tus Negocios validations
+- Terminos and Politica legal links (including new-tab handling)
+- Final PASS/FAIL report generation with screenshots
+
+Run it in any environment by passing the login URL at runtime (no hardcoded domain):
+
+```
+$ mvn -Dtest=io.proleap.saleads.e2e.SaleadsMiNegocioFullWorkflowTest \
+      -Dsaleads.e2e.enabled=true \
+      -Dsaleads.login.url="<current-environment-login-url>" test
+```
+
+Useful optional variables/properties:
+
+- `SALEADS_E2E_ENABLED` / `-Dsaleads.e2e.enabled`
+- `SALEADS_LOGIN_URL` / `-Dsaleads.login.url`
+- `SALEADS_EXPECTED_USER_EMAIL` / `-Dsaleads.expected.user.email`
+- `SALEADS_HEADLESS` / `-Dsaleads.headless`
+- `SELENIUM_REMOTE_URL` / `-Dselenium.remote.url`
+
+Evidence artifacts are written to:
+
+- `target/saleads-e2e/screenshots/<timestamp>/`
+- `target/saleads-e2e/reports/saleads-mi-negocio-full-report-<timestamp>.md`
+
 
 Release process
 ---------------
