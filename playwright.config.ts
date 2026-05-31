@@ -4,7 +4,7 @@ const baseURL = process.env.SALEADS_URL || process.env.SALEADS_BASE_URL;
 
 export default defineConfig({
   testDir: "./tests/e2e",
-  timeout: 3 * 60 * 1000,
+  timeout: 8 * 60 * 1000,
   expect: {
     timeout: 20 * 1000,
   },

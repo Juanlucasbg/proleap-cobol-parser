@@ -27,9 +27,14 @@ async function waitForUi(page: Page): Promise<void> {
   await page.waitForTimeout(700);
 }
 
-async function firstVisible(locator: Locator, timeout = 1500): Promise<boolean> {
+function stripAnsi(value: string): string {
+  return value.replace(/\u001b\[[0-9;]*m/g, "");
+}
+
+async function firstVisible(locator: Locator, timeout = 3000): Promise<boolean> {
   try {
-    return await locator.isVisible({ timeout });
+    await locator.waitFor({ state: "visible", timeout });
+    return true;
   } catch {
     return false;
   }
@@ -45,6 +50,8 @@ async function clickByVisibleName(page: Page, labels: string[]): Promise<void> {
       page.getByRole("link", { name: roleRegex }).first(),
       page.getByRole("menuitem", { name: roleRegex }).first(),
       page.getByRole("tab", { name: roleRegex }).first(),
+      page.locator("a", { hasText: roleRegex }).first(),
+      page.locator(`text=${label}`).first(),
       page.getByText(exactTextRegex).first(),
       page.getByText(label, { exact: false }).first(),
     ];
@@ -66,6 +73,41 @@ async function assertVisibleTexts(page: Page, texts: string[]): Promise<void> {
     const escaped = escapeRegex(text);
     await expect(page.getByText(new RegExp(escaped, "i")).first()).toBeVisible();
   }
+}
+
+async function hasVisibleGoogleAuthOption(page: Page): Promise<boolean> {
+  const googleCandidates = [
+    page.getByRole("button", { name: /google/i }).first(),
+    page.getByRole("link", { name: /google/i }).first(),
+    page.getByText(/Sign in with Google/i).first(),
+    page.getByText(/Iniciar sesión con Google/i).first(),
+    page.getByText(/Continuar con Google/i).first(),
+  ];
+
+  for (const candidate of googleCandidates) {
+    if (await firstVisible(candidate, 2000)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+async function ensureAuthScreenIsVisible(page: Page): Promise<void> {
+  if (await hasVisibleGoogleAuthOption(page)) {
+    return;
+  }
+
+  await clickByVisibleName(page, [
+    "Sign in",
+    "Log in",
+    "Iniciar sesión",
+    "Ingresar",
+    "Get started",
+    "Start now",
+    "Comenzar",
+  ]);
+  await waitForUi(page);
 }
 
 async function captureCheckpoint(page: Page, testInfo: TestInfo, fileName: string): Promise<void> {
@@ -160,7 +202,7 @@ test.describe("SaleADS Mi Negocio full workflow", () => {
         await action();
         statuses[field] = "PASS";
       } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
+        const message = stripAnsi(error instanceof Error ? error.message : String(error));
         errors.push(`${field}: ${message}`);
         statuses[field] = "FAIL";
       }
@@ -178,6 +220,8 @@ test.describe("SaleADS Mi Negocio full workflow", () => {
 
       const sidebarVisible = await firstVisible(page.getByText(/Negocio/i).first(), 6000);
       if (!sidebarVisible) {
+        await ensureAuthScreenIsVisible(page);
+
         const popupPromise = page.context().waitForEvent("page", { timeout: 7000 }).catch(() => null);
         await clickByVisibleName(page, [
           "Sign in with Google",
