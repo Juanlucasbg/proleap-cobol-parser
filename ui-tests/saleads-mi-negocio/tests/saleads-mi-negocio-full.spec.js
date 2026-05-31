@@ -7,11 +7,11 @@ const REPORT_FIELDS = [
   "Mi Negocio menu",
   "Agregar Negocio modal",
   "Administrar Negocios view",
-  "Informacion General",
+  "Información General",
   "Detalles de la Cuenta",
   "Tus Negocios",
-  "Terminos y Condiciones",
-  "Politica de Privacidad",
+  "Términos y Condiciones",
+  "Política de Privacidad",
 ];
 
 function slugify(value) {
@@ -283,12 +283,12 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
       await expect(page.getByRole("button", { name: /Cambiar Plan/i })).toBeVisible();
 
       setResult(
-        "Informacion General",
+        "Información General",
         "PASS",
         "User details, plan label, and Cambiar Plan button are visible."
       );
     } catch (error) {
-      setResult("Informacion General", "FAIL", error.message);
+      setResult("Información General", "FAIL", error.message);
     }
 
     // Step 6: Validate Detalles de la Cuenta
@@ -330,25 +330,25 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
     // Step 8: Validate Terminos y Condiciones
     try {
       await runLegalValidation({
-        reportField: "Terminos y Condiciones",
+        reportField: "Términos y Condiciones",
         linkTextRegex: /Terminos y Condiciones|Términos y Condiciones/i,
         headingRegex: /Terminos y Condiciones|Términos y Condiciones/i,
         evidenceKey: "terminos-y-condiciones",
       });
     } catch (error) {
-      setResult("Terminos y Condiciones", "FAIL", error.message);
+      setResult("Términos y Condiciones", "FAIL", error.message);
     }
 
     // Step 9: Validate Politica de Privacidad
     try {
       await runLegalValidation({
-        reportField: "Politica de Privacidad",
+        reportField: "Política de Privacidad",
         linkTextRegex: /Politica de Privacidad|Política de Privacidad/i,
         headingRegex: /Politica de Privacidad|Política de Privacidad/i,
         evidenceKey: "politica-de-privacidad",
       });
     } catch (error) {
-      setResult("Politica de Privacidad", "FAIL", error.message);
+      setResult("Política de Privacidad", "FAIL", error.message);
     }
   } finally {
     const reportPayload = {
