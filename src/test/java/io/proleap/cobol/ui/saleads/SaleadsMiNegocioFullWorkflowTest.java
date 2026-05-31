@@ -88,10 +88,10 @@ public class SaleadsMiNegocioFullWorkflowTest {
 				assertVisibleText(appPage, "(?i)tienes\\s*2\\s*de\\s*3\\s*negocios", "Tienes 2 de 3 negocios");
 				assertVisibleText(appPage, "(?i)cancelar", "Cancelar button");
 				assertVisibleText(appPage, "(?i)crear negocio", "Crear Negocio button");
+				captureScreenshot(appPage, evidenceDir.resolve("03-agregar-negocio-modal.png"), false);
 
 				fillBusinessNameIfPresent(appPage, "Negocio Prueba Automatizacion");
 				clickByVisibleText(appPage, "(?i)cancelar", "Cancelar");
-				captureScreenshot(appPage, evidenceDir.resolve("03-agregar-negocio-modal.png"), false);
 			});
 
 			executeStep(report, failures, "Administrar Negocios view", () -> {
@@ -171,11 +171,20 @@ public class SaleadsMiNegocioFullWorkflowTest {
 	private static void performGoogleLogin(final Page appPage, final BrowserContext context, final String accountEmail) {
 		final String loginRegex = "(?i)(sign in with google|iniciar sesi[oó]n con google|continuar con google|google)";
 		Page googlePopup = null;
+		boolean clickedLogin = false;
 
 		try {
 			googlePopup = context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(6_000),
-					() -> clickByVisibleText(appPage, loginRegex, "Google login button"));
+					() -> {
+						clickByVisibleText(appPage, loginRegex, "Google login button");
+					});
+			clickedLogin = true;
 		} catch (final PlaywrightException ignored) {
+			// Callback click still runs when no popup is opened.
+			clickedLogin = true;
+		}
+
+		if (!clickedLogin) {
 			clickByVisibleText(appPage, loginRegex, "Google login button");
 		}
 
@@ -232,11 +241,21 @@ public class SaleadsMiNegocioFullWorkflowTest {
 	private static String openLegalLinkAndValidate(final Page appPage, final BrowserContext context, final String linkRegex,
 			final String headingRegex, final Path screenshotPath) {
 		Page targetPage = null;
+		boolean clickedLink = false;
 
 		try {
 			targetPage = context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(6_000),
-					() -> clickByVisibleText(appPage, linkRegex, "Legal link"));
+					() -> {
+						clickByVisibleText(appPage, linkRegex, "Legal link");
+					});
+			clickedLink = true;
 		} catch (final PlaywrightException ignored) {
+			targetPage = appPage;
+			// Callback click still runs when no popup is opened.
+			clickedLink = true;
+		}
+
+		if (!clickedLink) {
 			clickByVisibleText(appPage, linkRegex, "Legal link");
 			targetPage = appPage;
 		}
