@@ -205,3 +205,50 @@ License
 -------
 
 Licensed under the MIT License. See LICENSE for details.
+
+
+SaleADS Mi Negocio workflow E2E test
+------------------------------------
+
+This repository now includes a Selenium/JUnit end-to-end test that validates the
+SaleADS.ai "Mi Negocio" flow with evidence capture and a final PASS/FAIL report:
+
+* Test class: `src/test/java/io/proleap/cobol/e2e/SaleadsMiNegocioWorkflowTest.java`
+* Evidence output: `target/saleads-evidence/<timestamp>/`
+
+### Required configuration
+
+The test is environment-agnostic and does not hardcode any SaleADS domain.
+Provide the login page URL via environment variable or JVM property:
+
+* Environment variable: `SALEADS_LOGIN_URL`
+* JVM property: `-Dsaleads.login.url=...`
+
+Optional settings:
+
+* `SALEADS_GOOGLE_ACCOUNT_EMAIL` (default: `juanlucasbarbiergarzon@gmail.com`)
+* `SALEADS_EXPECTED_USER_NAME` (if provided, validates exact user name)
+* `SALEADS_TIMEOUT_SECONDS` (default: `25`)
+* `SALEADS_HEADLESS` (default: `true`)
+
+### Run the workflow test
+
+```bash
+mvn -Dtest=SaleadsMiNegocioWorkflowTest test
+```
+
+### Generated artifacts
+
+The test stores:
+
+* Checkpoint screenshots for dashboard, menu expansion, modal, account page, and legal pages
+* Final status report in `final-report.md` including:
+  * Login
+  * Mi Negocio menu
+  * Agregar Negocio modal
+  * Administrar Negocios view
+  * Información General
+  * Detalles de la Cuenta
+  * Tus Negocios
+  * Términos y Condiciones
+  * Política de Privacidad
