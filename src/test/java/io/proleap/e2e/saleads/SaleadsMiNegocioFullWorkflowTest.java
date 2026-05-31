@@ -47,11 +47,11 @@ public class SaleadsMiNegocioFullWorkflowTest {
 			"Mi Negocio menu",
 			"Agregar Negocio modal",
 			"Administrar Negocios view",
-			"Informacion General",
+			"Informaci\u00f3n General",
 			"Detalles de la Cuenta",
 			"Tus Negocios",
-			"Terminos y Condiciones",
-			"Politica de Privacidad");
+			"T\u00e9rminos y Condiciones",
+			"Pol\u00edtica de Privacidad");
 
 	private final Map<String, String> report = new LinkedHashMap<>();
 	private final Map<String, String> details = new LinkedHashMap<>();
@@ -108,11 +108,11 @@ public class SaleadsMiNegocioFullWorkflowTest {
 		runStep("Mi Negocio menu", this::stepOpenMiNegocioMenu);
 		runStep("Agregar Negocio modal", this::stepValidateAgregarNegocioModal);
 		runStep("Administrar Negocios view", this::stepOpenAdministrarNegocios);
-		runStep("Informacion General", this::stepValidateInformacionGeneral);
+		runStep("Informaci\u00f3n General", this::stepValidateInformacionGeneral);
 		runStep("Detalles de la Cuenta", this::stepValidateDetallesCuenta);
 		runStep("Tus Negocios", this::stepValidateTusNegocios);
-		runStep("Terminos y Condiciones", this::stepValidateTerminosYCondiciones);
-		runStep("Politica de Privacidad", this::stepValidatePoliticaPrivacidad);
+		runStep("T\u00e9rminos y Condiciones", this::stepValidateTerminosYCondiciones);
+		runStep("Pol\u00edtica de Privacidad", this::stepValidatePoliticaPrivacidad);
 
 		final List<String> failures = new ArrayList<>();
 		for (final Map.Entry<String, String> entry : report.entrySet()) {
