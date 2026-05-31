@@ -378,6 +378,7 @@ public class SaleadsMiNegocioWorkflowTest {
 			try {
 				scrollIntoView(element);
 				element.click();
+				waitForUiToLoad();
 				return true;
 			} catch (final Exception ignored) {
 				// Try next candidate.
