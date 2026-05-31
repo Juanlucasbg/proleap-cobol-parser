@@ -98,6 +98,26 @@ async function captureCheckpoint(page, artifactDir, testInfo, name, fullPage = f
   return filePath;
 }
 
+async function writeSummaryAndAssert(report, artifactDir, testInfo) {
+  const finalReport = finalizeReport(report);
+  const reportPath = path.join(artifactDir, "final-report.json");
+  fs.writeFileSync(reportPath, `${JSON.stringify(finalReport, null, 2)}\n`, "utf-8");
+  await testInfo.attach("final-report-json", { path: reportPath, contentType: "application/json" });
+
+  const summaryTable = REPORT_FIELDS.map((field) => ({
+    section: field,
+    status: finalReport[field].status,
+  }));
+  console.table(summaryTable);
+  console.log(`Final report written to: ${reportPath}`);
+
+  const failedSections = REPORT_FIELDS.filter((field) => finalReport[field].status === "FAIL");
+  expect(
+    failedSections,
+    `One or more workflow sections failed. Check the JSON report at ${reportPath}.`,
+  ).toEqual([]);
+}
+
 async function hasLegalContent(page) {
   const content = await page.locator("body").innerText().catch(() => "");
   return content.replace(/\s+/g, " ").trim().length > 250;
@@ -211,6 +231,19 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
       page.url() !== "about:blank",
       "Set SALEADS_LOGIN_URL (or SALEADS_URL) when running in a fresh browser context.",
     );
+  }
+
+  if (!loginUrl && page.url() === "about:blank") {
+    const reason =
+      "Workflow could not continue because no login page was available. Set SALEADS_LOGIN_URL (or SALEADS_URL).";
+    for (const section of REPORT_FIELDS) {
+      if (section !== "Login") {
+        recordValidation(report, section, "Prerequisite login page is available", false, reason);
+      }
+    }
+
+    await writeSummaryAndAssert(report, artifactDir, testInfo);
+    return;
   }
 
   const googleButton = await firstVisibleLocator(
@@ -474,21 +507,5 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
     testInfo,
   });
 
-  const finalReport = finalizeReport(report);
-  const reportPath = path.join(artifactDir, "final-report.json");
-  fs.writeFileSync(reportPath, `${JSON.stringify(finalReport, null, 2)}\n`, "utf-8");
-  await testInfo.attach("final-report-json", { path: reportPath, contentType: "application/json" });
-
-  const summaryTable = REPORT_FIELDS.map((field) => ({
-    section: field,
-    status: finalReport[field].status,
-  }));
-  console.table(summaryTable);
-  console.log(`Final report written to: ${reportPath}`);
-
-  const failedSections = REPORT_FIELDS.filter((field) => finalReport[field].status === "FAIL");
-  expect(
-    failedSections,
-    `One or more workflow sections failed. Check the JSON report at ${reportPath}.`,
-  ).toEqual([]);
+  await writeSummaryAndAssert(report, artifactDir, testInfo);
 });
