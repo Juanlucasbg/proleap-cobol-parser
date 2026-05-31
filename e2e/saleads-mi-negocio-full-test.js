@@ -337,15 +337,15 @@ async function bootstrap() {
       await waitForUi(page);
     }
   } else {
-    browser = await chromium.launch({ headless: HEADLESS });
-    launchedBrowserLocally = true;
-    context = await browser.newContext();
-    page = await context.newPage();
     if (!SALEADS_URL) {
       throw new Error(
         "SALEADS_URL is required when BROWSER_CDP_URL is not provided.",
       );
     }
+    browser = await chromium.launch({ headless: HEADLESS });
+    launchedBrowserLocally = true;
+    context = await browser.newContext();
+    page = await context.newPage();
     await page.goto(SALEADS_URL, { waitUntil: "domcontentloaded" });
     await waitForUi(page);
   }
