@@ -194,6 +194,34 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+### SaleADS "Mi Negocio" workflow UI automation
+
+A dedicated end-to-end validation test is available at:
+
+`src/test/java/io/proleap/cobol/e2e/SaleadsMiNegocioWorkflowTest.java`
+
+This test is environment-agnostic and does not hardcode any SaleADS domain.
+
+Required environment variable:
+
+- `SALEADS_START_URL`: Login URL for the target SaleADS environment (dev/staging/prod).
+
+Optional environment variables:
+
+- `SALEADS_GOOGLE_EMAIL` (default: `juanlucasbarbiergarzon@gmail.com`)
+- `SALEADS_EXPECTED_USER_NAME` (if you want strict username validation)
+- `SALEADS_HEADLESS` (`true` by default)
+- `SALEADS_EVIDENCE_DIR` (default under `target/saleads-evidence/<timestamp>`)
+
+Run only this workflow test:
+
+```
+$ SALEADS_START_URL="https://<your-environment-login>" \
+  mvn -Dtest=io.proleap.cobol.e2e.SaleadsMiNegocioWorkflowTest test
+```
+
+Evidence is saved as screenshots plus `final-report.txt` in the evidence directory.
+
 
 Release process
 ---------------
