@@ -364,9 +364,13 @@ public class SaleadsMiNegocioFullWorkflowTest {
 		page.waitForTimeout(400);
 	}
 
-	private static void captureScreenshot(final Page page, final Path destination, final boolean fullPage) throws Exception {
-		Files.createDirectories(destination.getParent());
-		page.screenshot(new Page.ScreenshotOptions().setPath(destination).setFullPage(fullPage));
+	private static void captureScreenshot(final Page page, final Path destination, final boolean fullPage) {
+		try {
+			Files.createDirectories(destination.getParent());
+			page.screenshot(new Page.ScreenshotOptions().setPath(destination).setFullPage(fullPage));
+		} catch (final Exception exception) {
+			throw new IllegalStateException("Unable to capture screenshot: " + destination, exception);
+		}
 	}
 
 	private static String readConfig(final String sysPropKey, final String envKey) {
