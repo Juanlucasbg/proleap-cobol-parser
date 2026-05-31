@@ -1,0 +1,17 @@
+{
+  "name": "e2e",
+  "version": "1.0.0",
+  "description": "SaleADS.ai E2E automation",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:saleads-mi-negocio": "playwright test tests/saleads-mi-negocio.spec.js",
+    "test:list": "playwright test --list"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.60.0"
+  }
+}
