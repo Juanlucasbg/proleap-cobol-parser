@@ -1,0 +1,16 @@
+{
+  "name": "saleads-mi-negocio",
+  "version": "1.0.0",
+  "description": "Playwright workflow for validating SaleADS Mi Negocio module",
+  "main": "run-saleads-mi-negocio-workflow.js",
+  "scripts": {
+    "install:browsers": "playwright install --with-deps chromium",
+    "run:workflow": "node run-saleads-mi-negocio-workflow.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "playwright": "^1.60.0"
+  }
+}
