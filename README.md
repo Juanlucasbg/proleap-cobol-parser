@@ -201,6 +201,34 @@ Release process
 * Milestones of the grammar are published in the [ANTLR grammars repo](https://github.com/antlr/grammars-v4).
 
 
+SaleADS Mi Negocio end-to-end workflow test
+-------------------------------------------
+
+A dedicated end-to-end test is available at:
+
+* `src/test/java/io/proleap/cobol/e2e/SaleadsMiNegocioFullWorkflowTest.java`
+
+The test automates:
+
+* Login with Google
+* Mi Negocio sidebar workflow
+* Agregar Negocio modal validations
+* Administrar Negocios account sections
+* Legal documents (Terminos y Condiciones / Politica de Privacidad), including popup handling
+* Evidence capture (screenshots) and final PASS/FAIL report
+
+Run only this workflow test with environment-specific URL and optional settings:
+
+```
+SALEADS_LOGIN_URL="https://<current-environment-login-url>" \
+SALEADS_GOOGLE_ACCOUNT_EMAIL="juanlucasbarbiergarzon@gmail.com" \
+SALEADS_HEADLESS="true" \
+mvn -Dtest=SaleadsMiNegocioFullWorkflowTest test
+```
+
+Evidence is written under `target/saleads-evidence/...`.
+
+
 License
 -------
 
