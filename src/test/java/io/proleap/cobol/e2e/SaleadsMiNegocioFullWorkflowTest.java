@@ -141,7 +141,7 @@ public class SaleadsMiNegocioFullWorkflowTest {
         screenshot(page, evidenceDir.resolve("04-administrar-negocios-full-page.png"), true);
       });
 
-      runStep(results, "Informacion General", () -> {
+      runStep(results, "Información General", () -> {
         assertVisibleText(page, "Informacion General");
         assertTrue("Expected an email in Informacion General.",
             EMAIL_PATTERN.matcher(page.content()).find());
@@ -161,20 +161,20 @@ public class SaleadsMiNegocioFullWorkflowTest {
         assertVisibleText(page, "Tienes 2 de 3 negocios");
       });
 
-      runStep(results, "Terminos y Condiciones", () -> {
+      runStep(results, "Términos y Condiciones", () -> {
         final String url = openAndValidateLegalDocument(page, evidenceDir,
             "Terminos y Condiciones",
             "Terminos y Condiciones",
             "08-terminos-y-condiciones.png");
-        results.get("Terminos y Condiciones").details = "URL: " + url;
+        results.get("Términos y Condiciones").details = "URL: " + url;
       });
 
-      runStep(results, "Politica de Privacidad", () -> {
+      runStep(results, "Política de Privacidad", () -> {
         final String url = openAndValidateLegalDocument(page, evidenceDir,
             "Politica de Privacidad",
             "Politica de Privacidad",
             "09-politica-de-privacidad.png");
-        results.get("Politica de Privacidad").details = "URL: " + url;
+        results.get("Política de Privacidad").details = "URL: " + url;
       });
 
       context.close();
@@ -194,11 +194,11 @@ public class SaleadsMiNegocioFullWorkflowTest {
     results.put("Mi Negocio menu", StepResult.pending());
     results.put("Agregar Negocio modal", StepResult.pending());
     results.put("Administrar Negocios view", StepResult.pending());
-    results.put("Informacion General", StepResult.pending());
+    results.put("Información General", StepResult.pending());
     results.put("Detalles de la Cuenta", StepResult.pending());
     results.put("Tus Negocios", StepResult.pending());
-    results.put("Terminos y Condiciones", StepResult.pending());
-    results.put("Politica de Privacidad", StepResult.pending());
+    results.put("Términos y Condiciones", StepResult.pending());
+    results.put("Política de Privacidad", StepResult.pending());
     return results;
   }
 
@@ -210,7 +210,7 @@ public class SaleadsMiNegocioFullWorkflowTest {
       if (result.details == null || result.details.isBlank()) {
         result.details = "Validated successfully.";
       }
-    } catch (final Exception error) {
+    } catch (final Throwable error) {
       result.status = "FAIL";
       result.details = sanitizeError(error);
     }
