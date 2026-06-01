@@ -275,7 +275,7 @@ public class SaleadsMiNegocioWorkflowTest {
 	}
 
 	private boolean hasSubstantialParagraphText() {
-		return driver.findElements(By.xpath("//p[normalize-space(string-length(.)) >= 40]")).stream().anyMatch(WebElement::isDisplayed);
+		return driver.findElements(By.xpath("//p[string-length(normalize-space(.)) >= 40]")).stream().anyMatch(WebElement::isDisplayed);
 	}
 
 	private void executeStep(final String stepName, final ThrowingRunnable step) {
