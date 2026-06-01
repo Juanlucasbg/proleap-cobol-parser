@@ -129,9 +129,9 @@ public class SaleadsMiNegocioWorkflowTest {
 		boolean openedPopup = false;
 
 		try {
-			authPage = context.waitForPage(() -> {
+			authPage = context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(7000), () -> {
 				loginButton.click();
-			}, new BrowserContext.WaitForPageOptions().setTimeout(7000));
+			});
 			openedPopup = true;
 		} catch (PlaywrightException ignored) {
 			// No popup was opened. The click still happened on the app page.
@@ -257,9 +257,9 @@ public class SaleadsMiNegocioWorkflowTest {
 		boolean openedNewTab = false;
 
 		try {
-			legalPage = context.waitForPage(() -> {
+			legalPage = context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(7000), () -> {
 				clickByVisibleTextNoWait(appPage, linkText);
-			}, new BrowserContext.WaitForPageOptions().setTimeout(7000));
+			});
 			openedNewTab = true;
 		} catch (PlaywrightException ignored) {
 			// If no new tab appears, the click navigated in the same tab.
