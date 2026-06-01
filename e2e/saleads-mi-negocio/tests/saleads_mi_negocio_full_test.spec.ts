@@ -96,8 +96,13 @@ async function selectGoogleAccountIfVisible(page: Page): Promise<void> {
   const accountIsVisible = await accountOption.isVisible().catch(() => false);
   const chooserIsVisible = await chooserHeader.isVisible().catch(() => false);
 
-  if (accountIsVisible || chooserIsVisible) {
+  if (accountIsVisible) {
     await clickAndWait(page, accountOption);
+    return;
+  }
+
+  if (chooserIsVisible) {
+    throw new Error(`Google account chooser is visible but account ${GOOGLE_ACCOUNT_EMAIL} was not found.`);
   }
 }
 
@@ -232,7 +237,7 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
     await expect(page.getByText(/crear nuevo negocio/i)).toBeVisible({ timeout: 30000 });
     const businessNameInput = await findFirstVisible(
       page,
-      [page.getByLabel(/nombre del negocio/i), page.getByPlaceholder(/nombre del negocio/i), page.locator("input").filter({ hasText: "" })],
+      [page.getByLabel(/nombre del negocio/i), page.getByPlaceholder(/nombre del negocio/i), page.locator("input[type='text']")],
       30000
     );
     await expect(businessNameInput).toBeVisible();
@@ -290,7 +295,12 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
 
     expect(hasNameCandidate).toBeTruthy();
     await expect(page.getByText(/business plan/i)).toBeVisible({ timeout: 20000 });
-    await expect(page.getByRole("button", { name: /cambiar plan/i })).toBeVisible({ timeout: 20000 });
+    const changePlanControl = await findFirstVisible(
+      page,
+      [page.getByRole("button", { name: /cambiar plan/i }), page.getByRole("link", { name: /cambiar plan/i }), page.getByText(/cambiar plan/i)],
+      20000
+    );
+    await expect(changePlanControl).toBeVisible();
   });
 
   await runStep("Detalles de la Cuenta", async () => {
