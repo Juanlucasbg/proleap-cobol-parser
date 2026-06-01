@@ -60,6 +60,11 @@ async function captureScreenshot(page, fileName, fullPage = true) {
   return screenshotPath;
 }
 
+function sanitizeErrorMessage(error) {
+  const rawMessage = error instanceof Error ? error.message : String(error);
+  return rawMessage.replace(/\u001b\[[0-9;]*m/g, "").trim();
+}
+
 async function runValidationStep(report, field, callback) {
   try {
     await callback();
@@ -68,7 +73,7 @@ async function runValidationStep(report, field, callback) {
     report.results[field] = "FAIL";
     report.errors.push({
       field,
-      message: error instanceof Error ? error.message : String(error)
+      message: sanitizeErrorMessage(error)
     });
   }
 }
