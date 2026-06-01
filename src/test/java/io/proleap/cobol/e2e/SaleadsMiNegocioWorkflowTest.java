@@ -20,7 +20,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -61,8 +60,8 @@ public class SaleadsMiNegocioWorkflowTest {
 
 	private static final String ACCOUNT_EMAIL = "juanlucasbarbiergarzon@gmail.com";
 	private static final List<String> REPORT_FIELDS = Arrays.asList("Login", "Mi Negocio menu", "Agregar Negocio modal",
-			"Administrar Negocios view", "Informacion General", "Detalles de la Cuenta", "Tus Negocios",
-			"Terminos y Condiciones", "Politica de Privacidad");
+			"Administrar Negocios view", "Informaci\u00f3n General", "Detalles de la Cuenta", "Tus Negocios",
+			"T\u00e9rminos y Condiciones", "Pol\u00edtica de Privacidad");
 
 	private static final Pattern EMAIL_PATTERN = Pattern
 			.compile("(?i)\\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}\\b");
@@ -106,12 +105,12 @@ public class SaleadsMiNegocioWorkflowTest {
 		runStepIfPreviousPassed("Mi Negocio menu", "Login", this::stepOpenMiNegocioMenu);
 		runStepIfPreviousPassed("Agregar Negocio modal", "Mi Negocio menu", this::stepValidateAgregarNegocioModal);
 		runStepIfPreviousPassed("Administrar Negocios view", "Mi Negocio menu", this::stepOpenAdministrarNegocios);
-		runStepIfPreviousPassed("Informacion General", "Administrar Negocios view", this::stepValidateInformacionGeneral);
+		runStepIfPreviousPassed("Informaci\u00f3n General", "Administrar Negocios view", this::stepValidateInformacionGeneral);
 		runStepIfPreviousPassed("Detalles de la Cuenta", "Administrar Negocios view",
 				this::stepValidateDetallesCuenta);
 		runStepIfPreviousPassed("Tus Negocios", "Administrar Negocios view", this::stepValidateTusNegocios);
-		runStepIfPreviousPassed("Terminos y Condiciones", "Administrar Negocios view", this::stepValidateTerminos);
-		runStepIfPreviousPassed("Politica de Privacidad", "Terminos y Condiciones",
+		runStepIfPreviousPassed("T\u00e9rminos y Condiciones", "Administrar Negocios view", this::stepValidateTerminos);
+		runStepIfPreviousPassed("Pol\u00edtica de Privacidad", "Administrar Negocios view",
 				this::stepValidatePoliticaPrivacidad);
 
 		writeFinalReport();
@@ -181,7 +180,7 @@ public class SaleadsMiNegocioWorkflowTest {
 		waitForAnyVisibleText(Duration.ofSeconds(20), "Cambiar Plan");
 
 		final String bodyText = normalizedPageText();
-		Assert.assertTrue("User email is not visible in Informacion General.",
+		Assert.assertTrue("User email is not visible in Informaci\u00f3n General.",
 				EMAIL_PATTERN.matcher(bodyText).find());
 		Assert.assertTrue("User name was not detected near account data.", findLikelyUserName(bodyText).isPresent());
 	}
@@ -426,23 +425,51 @@ public class SaleadsMiNegocioWorkflowTest {
 	}
 
 	private Optional<String> findLikelyUserName(final String pageText) {
-		final String normalized = normalizeAccents(pageText.toLowerCase(Locale.ROOT));
-		final List<String> lines = Arrays.stream(normalized.split("\\R")).map(String::trim).filter(line -> !line.isEmpty())
-				.collect(Collectors.toList());
+		final String normalized = normalizeAccents(pageText);
+		final String[] lines = normalized.split("\\R");
+
+		for (int i = 0; i < lines.length; i++) {
+			if (!EMAIL_PATTERN.matcher(lines[i]).find()) {
+				continue;
+			}
+
+			for (int j = Math.max(0, i - 4); j < i; j++) {
+				final String candidate = lines[j].trim();
+				if (isLikelyName(candidate)) {
+					return Optional.of(candidate);
+				}
+			}
+		}
 
 		for (final String line : lines) {
-			if (line.contains("@")) {
-				continue;
-			}
-			if (line.contains("business plan") || line.contains("cambiar plan") || line.contains("informacion general")) {
-				continue;
-			}
-			if (line.matches(".*[a-z].*") && line.length() >= 3) {
-				return Optional.of(line);
+			final String candidate = line.trim();
+			if (isLikelyName(candidate)) {
+				return Optional.of(candidate);
 			}
 		}
 
 		return Optional.empty();
+	}
+
+	private boolean isLikelyName(final String candidate) {
+		if (candidate.isEmpty()) {
+			return false;
+		}
+
+		final String lowered = normalizeAccents(candidate).toLowerCase(Locale.ROOT);
+		if (lowered.contains("@")) {
+			return false;
+		}
+		if (lowered.contains("business plan") || lowered.contains("cambiar plan")
+				|| lowered.contains("informacion general") || lowered.contains("detalles de la cuenta")
+				|| lowered.contains("tus negocios") || lowered.contains("seccion legal")
+				|| lowered.contains("terminos y condiciones") || lowered.contains("politica de privacidad")
+				|| lowered.contains("agregar negocio") || lowered.contains("administrar negocios")
+				|| lowered.contains("mi negocio")) {
+			return false;
+		}
+
+		return lowered.matches(".*[a-z].*") && candidate.length() >= 3;
 	}
 
 	private String normalizedPageText() {
@@ -507,10 +534,10 @@ public class SaleadsMiNegocioWorkflowTest {
 			summary.append(System.lineSeparator());
 		}
 		if (!termsUrl.isEmpty()) {
-			summary.append("- Terminos y Condiciones URL: ").append(termsUrl).append(System.lineSeparator());
+			summary.append("- T\u00e9rminos y Condiciones URL: ").append(termsUrl).append(System.lineSeparator());
 		}
 		if (!privacyUrl.isEmpty()) {
-			summary.append("- Politica de Privacidad URL: ").append(privacyUrl).append(System.lineSeparator());
+			summary.append("- Pol\u00edtica de Privacidad URL: ").append(privacyUrl).append(System.lineSeparator());
 		}
 		return summary.toString();
 	}
