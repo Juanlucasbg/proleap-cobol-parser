@@ -182,10 +182,10 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
     report.failures.push(`${key}: ${buildUserFacingError(error)}`);
   };
 
-  await ensureLoginPageAvailable(page);
-
   // Step 1: Login with Google
   try {
+    await ensureLoginPageAvailable(page);
+
     const popupPromise = context.waitForEvent("page", { timeout: 7_000 }).catch(() => null);
 
     const loginButton = await firstVisibleOrThrow(
@@ -269,11 +269,12 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
       "No se encontró el botón 'Crear Negocio'.",
     );
 
+    await saveScreenshot(page, testInfo, "03-agregar-negocio-modal.png", true);
+
     await negocioInput.click();
     await negocioInput.fill("Negocio Prueba Automatización");
     await clickAndWait(page.getByRole("button", { name: /Cancelar/i }).first(), page);
 
-    await saveScreenshot(page, testInfo, "03-agregar-negocio-modal.png", true);
     setPass("Agregar Negocio modal");
   } catch (error) {
     setFail("Agregar Negocio modal", error);
