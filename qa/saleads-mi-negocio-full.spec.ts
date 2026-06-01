@@ -49,10 +49,11 @@ function textRegex(text: string): RegExp {
 }
 
 function errorMessage(error: unknown): string {
+  const stripAnsi = (value: string): string => value.replace(/\u001B\[[0-9;]*m/g, "");
   if (error instanceof Error) {
-    return error.message;
+    return stripAnsi(error.message);
   }
-  return String(error);
+  return stripAnsi(String(error));
 }
 
 async function waitForUiToLoad(page: Page): Promise<void> {
@@ -184,6 +185,8 @@ async function openLegalDocument(args: {
 test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   const report = createReport();
   let appPage = page;
+  let loginSucceeded = false;
+  let administrarNegociosSucceeded = false;
 
   async function runSection(name: SectionName, fn: (result: StepResult) => Promise<void>): Promise<void> {
     const result = report[name];
@@ -257,9 +260,13 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
     await expect(appPage.locator("aside, nav").first()).toBeVisible({ timeout: 30_000 });
     result.details.push("Main application shell loaded and sidebar is visible.");
     result.evidence.push(await captureCheckpoint(appPage, testInfo, "01-dashboard-loaded.png", true));
+    loginSucceeded = true;
   });
 
   await runSection("Mi Negocio menu", async (result) => {
+    if (!loginSucceeded) {
+      throw new Error("Blocked by Login failure; Mi Negocio menu cannot be validated.");
+    }
     await openMiNegocioMenu(appPage);
     await assertTextVisible(appPage, "Agregar Negocio");
     await assertTextVisible(appPage, "Administrar Negocios");
@@ -268,6 +275,9 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   });
 
   await runSection("Agregar Negocio modal", async (result) => {
+    if (!loginSucceeded) {
+      throw new Error("Blocked by Login failure; Agregar Negocio modal cannot be validated.");
+    }
     await clickByVisibleText(appPage, ["Agregar Negocio"], 12_000);
     await assertTextVisible(appPage, "Crear Nuevo Negocio");
     await assertTextVisible(appPage, "Nombre del Negocio");
@@ -294,6 +304,9 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   });
 
   await runSection("Administrar Negocios view", async (result) => {
+    if (!loginSucceeded) {
+      throw new Error("Blocked by Login failure; Administrar Negocios view cannot be validated.");
+    }
     const administrarVisible = await firstVisibleByText(appPage, ["Administrar Negocios"], 4_000);
     if (!administrarVisible) {
       await openMiNegocioMenu(appPage);
@@ -306,9 +319,13 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
     await assertTextVisible(appPage, "Sección Legal");
     result.details.push("Administrar Negocios page loaded with all required sections.");
     result.evidence.push(await captureCheckpoint(appPage, testInfo, "04-administrar-negocios-view-full.png", true));
+    administrarNegociosSucceeded = true;
   });
 
   await runSection("Información General", async (result) => {
+    if (!administrarNegociosSucceeded) {
+      throw new Error("Blocked by Administrar Negocios view failure; Información General cannot be validated.");
+    }
     await assertTextVisible(appPage, "BUSINESS PLAN");
     await assertTextVisible(appPage, "Cambiar Plan");
 
@@ -339,6 +356,9 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   });
 
   await runSection("Detalles de la Cuenta", async (result) => {
+    if (!administrarNegociosSucceeded) {
+      throw new Error("Blocked by Administrar Negocios view failure; Detalles de la Cuenta cannot be validated.");
+    }
     await assertTextVisible(appPage, "Cuenta creada");
     await assertTextVisible(appPage, "Estado activo");
     await assertTextVisible(appPage, "Idioma seleccionado");
@@ -346,6 +366,9 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   });
 
   await runSection("Tus Negocios", async (result) => {
+    if (!administrarNegociosSucceeded) {
+      throw new Error("Blocked by Administrar Negocios view failure; Tus Negocios cannot be validated.");
+    }
     await assertTextVisible(appPage, "Tus Negocios");
     await assertTextVisible(appPage, "Agregar Negocio");
     await assertTextVisible(appPage, "Tienes 2 de 3 negocios");
@@ -353,6 +376,9 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   });
 
   await runSection("Términos y Condiciones", async (result) => {
+    if (!administrarNegociosSucceeded) {
+      throw new Error("Blocked by Administrar Negocios view failure; Términos y Condiciones cannot be validated.");
+    }
     const terms = await openLegalDocument({
       appPage,
       context,
@@ -367,6 +393,9 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   });
 
   await runSection("Política de Privacidad", async (result) => {
+    if (!administrarNegociosSucceeded) {
+      throw new Error("Blocked by Administrar Negocios view failure; Política de Privacidad cannot be validated.");
+    }
     const privacy = await openLegalDocument({
       appPage,
       context,
