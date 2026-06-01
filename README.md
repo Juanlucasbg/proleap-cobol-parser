@@ -205,3 +205,26 @@ License
 -------
 
 Licensed under the MIT License. See LICENSE for details.
+
+SaleADS Mi Negocio E2E workflow test
+------------------------------------
+
+This repository now includes an environment-agnostic Selenium E2E workflow test for the SaleADS "Mi Negocio" module:
+
+* Test class: `io.proleap.cobol.e2e.SaleadsMiNegocioWorkflowTest`
+* Artifacts: screenshots and step report logs in `target/saleads-mi-negocio-artifacts`
+
+Run only this workflow test with:
+
+```
+export SALEADS_LOGIN_URL="<current environment login URL>"
+export SALEADS_GOOGLE_ACCOUNT="juanlucasbarbiergarzon@gmail.com"
+mvn -Dtest=io.proleap.cobol.e2e.SaleadsMiNegocioWorkflowTest test
+```
+
+Optional runtime configuration:
+
+* `SALEADS_EXPECTED_USER_NAME` for strict name validation in "Información General"
+* `SALEADS_HEADLESS` (`true`/`false`)
+* `SALEADS_WAIT_SECONDS` (explicit wait timeout, default `30`)
+* `SALEADS_ARTIFACTS_DIR` (custom screenshot directory)
