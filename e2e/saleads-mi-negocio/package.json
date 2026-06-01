@@ -1,0 +1,21 @@
+{
+  "name": "saleads-mi-negocio",
+  "version": "1.0.0",
+  "description": "Environment-agnostic Playwright workflow for SaleADS Mi Negocio module.",
+  "scripts": {
+    "install:browsers": "playwright install chromium",
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:saleads-mi-negocio": "playwright test tests/saleads_mi_negocio_full_test.spec.ts"
+  },
+  "keywords": [
+    "playwright",
+    "e2e",
+    "saleads"
+  ],
+  "author": "Cursor Automation",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.60.0"
+  }
+}
