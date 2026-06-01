@@ -1,0 +1,13 @@
+{
+  "name": "saleads-tests",
+  "version": "1.0.0",
+  "description": "End-to-end workflow validation for SaleADS Mi Negocio module",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:mi-negocio": "node mi-negocio-workflow.js"
+  },
+  "dependencies": {
+    "playwright": "latest"
+  }
+}
