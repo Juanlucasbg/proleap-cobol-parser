@@ -194,6 +194,19 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+* To run the opt-in SaleADS Mi Negocio E2E workflow test (Google login + full module validation):
+
+```
+$ export RUN_SALEADS_E2E=true
+$ export SALEADS_ENTRY_URL="https://<current-saleads-environment>/login"
+$ export SALEADS_GOOGLE_EMAIL="juanlucasbarbiergarzon@gmail.com"   # optional, default is this account
+$ export SALEADS_HEADLESS=true                                      # optional, default true
+$ mvn -Dtest=SaleadsMiNegocioFullWorkflowTest test
+```
+
+  The E2E test does not hardcode a domain and works with any SaleADS environment URL provided via `SALEADS_ENTRY_URL`.
+  Evidence screenshots are saved under `target/saleads-evidence/<timestamp>/`.
+
 
 Release process
 ---------------
