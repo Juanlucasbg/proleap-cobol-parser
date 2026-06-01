@@ -42,3 +42,4 @@ target/
 ## Additional for IntelliJ
 out/
 artifacts/
+__pycache__/
