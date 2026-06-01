@@ -173,18 +173,27 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
     process.env.SALEADS_LOGIN_URL || process.env.SALEADS_BASE_URL || process.env.BASE_URL;
 
   if (configuredUrl) {
-    await page.goto(configuredUrl, { waitUntil: "domcontentloaded" });
+    try {
+      await page.goto(configuredUrl, { waitUntil: "domcontentloaded" });
+    } catch (error) {
+      report.errors.push({
+        field: "bootstrap",
+        message: `No fue posible abrir la URL configurada (${configuredUrl}): ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      });
+    }
   }
 
-  await waitForUi(page);
-
-  if (page.url() === "about:blank") {
-    throw new Error(
-      "No hay URL de login configurada. Defina SALEADS_LOGIN_URL, SALEADS_BASE_URL o BASE_URL."
-    );
-  }
+  await waitForUi(page).catch(() => {});
 
   await runValidationStep(report, "Login", async () => {
+    if (page.url() === "about:blank") {
+      throw new Error(
+        "No hay URL de login activa. Defina SALEADS_LOGIN_URL / SALEADS_BASE_URL / BASE_URL o abra manualmente la pantalla de login."
+      );
+    }
+
     const loginButton = await firstVisible(
       [
         ...buildTextLocatorCandidates(page, /sign in with google/i),
@@ -291,7 +300,13 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
     const cancelButton = await firstVisible(buildTextLocatorCandidates(page, /^cancelar$/i), 8_000);
     const createButton = await firstVisible(buildTextLocatorCandidates(page, /crear negocio/i), 8_000);
 
-    if (!modalTitle || !(await isVisible(businessNameInput, 8_000)) || !businessLimitText || !cancelButton || !createButton) {
+    if (
+      !modalTitle ||
+      !(await isVisible(businessNameInput, 8_000)) ||
+      !businessLimitText ||
+      !cancelButton ||
+      !createButton
+    ) {
       throw new Error("El modal 'Crear Nuevo Negocio' no contiene todos los elementos esperados.");
     }
 
