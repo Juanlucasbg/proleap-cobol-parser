@@ -1,0 +1,15 @@
+{
+  "name": "saleads-mi-negocio",
+  "version": "1.0.0",
+  "description": "Environment-agnostic SaleADS Mi Negocio end-to-end workflow validation",
+  "type": "module",
+  "scripts": {
+    "test:saleads-mi-negocio": "node saleads-mi-negocio-workflow.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "playwright": "^1.60.0"
+  }
+}
