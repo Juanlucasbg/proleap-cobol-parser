@@ -156,6 +156,11 @@ async function main() {
 
   const openLegalLink = async ({ linkText, headingRegex, reportField, screenshotStem }) => {
     await step(reportField, async ({ passCheck }) => {
+      const legalSectionVisible = await hasVisible(page.getByText(/sección legal|seccion legal/i).first());
+      if (!legalSectionVisible) {
+        throw new Error("App legal section is not visible, so legal-link validation cannot proceed.");
+      }
+
       const legalLink = await mustFindVisible(
         [
           page.getByRole("link", { name: new RegExp(linkText, "i") }),
@@ -217,14 +222,42 @@ async function main() {
       await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
       await waitForUi(page, 40000);
 
-      const loginButton = await mustFindVisible(
-        [
-          page.getByRole("button", { name: /sign in with google|iniciar sesión con google|continuar con google|google/i }),
-          page.getByRole("link", { name: /sign in with google|iniciar sesión con google|continuar con google|google/i }),
-          page.getByText(/sign in with google|iniciar sesión con google|continuar con google/i),
-        ],
-        "Google login button is not visible."
-      );
+      let loginButton = null;
+      try {
+        loginButton = await mustFindVisible(
+          [
+            page.getByRole("button", { name: /sign in with google|iniciar sesión con google|continuar con google|google/i }),
+            page.getByRole("link", { name: /sign in with google|iniciar sesión con google|continuar con google|google/i }),
+            page.getByText(/sign in with google|iniciar sesión con google|continuar con google|^google$/i),
+          ],
+          "Google login button is not visible."
+        );
+      } catch {
+        // Fallback to environments where landing page is shown first.
+      }
+
+      if (!loginButton) {
+        const loginEntry = await mustFindVisible(
+          [
+            page.getByRole("link", { name: /inicia sesión|iniciar sesión|inicia sesion|login|acceder/i }),
+            page.getByRole("button", { name: /inicia sesión|iniciar sesión|inicia sesion|login|acceder/i }),
+            page.getByText(/inicia sesión|iniciar sesión|inicia sesion|login|acceder/i),
+          ],
+          "Neither Google login nor a login entry point is visible."
+        );
+
+        await loginEntry.click();
+        await waitForUi(page, 40000);
+
+        loginButton = await mustFindVisible(
+          [
+            page.getByRole("button", { name: /sign in with google|iniciar sesión con google|continuar con google|google/i }),
+            page.getByRole("link", { name: /sign in with google|iniciar sesión con google|continuar con google|google/i }),
+            page.getByText(/sign in with google|iniciar sesión con google|continuar con google|^google$/i),
+          ],
+          "Google login button is not visible."
+        );
+      }
 
       const popupPromise = page.waitForEvent("popup", { timeout: 7000 }).catch(() => null);
       await loginButton.click();
@@ -236,6 +269,13 @@ async function main() {
       if (await hasVisible(accountOption)) {
         await accountOption.click();
         passCheck(`Selected Google account ${googleAccountEmail}.`);
+      } else if (
+        /accounts\.google\.com/i.test(authPage.url()) &&
+        (await hasVisible(authPage.getByText(/email or phone|correo electrónico|correo electronico/i)))
+      ) {
+        throw new Error(
+          `Google sign-in requires interactive credentials. Account selector did not show ${googleAccountEmail}.`
+        );
       } else {
         passCheck("Google account chooser did not appear or account was pre-selected.");
       }
@@ -250,15 +290,19 @@ async function main() {
 
       const sidebar = await mustFindVisible(
         [
-          page.locator("aside").filter({ hasText: /negocio|mi negocio|dashboard|inicio/i }),
-          page.locator("nav").filter({ hasText: /negocio|mi negocio|dashboard|inicio/i }),
-          page.getByText(/mi negocio|negocio/i),
+          page.locator("aside").filter({ hasText: /mi negocio/i }),
+          page.locator("nav").filter({ hasText: /mi negocio/i }),
+          page.getByText(/mi negocio/i),
         ],
         "Main application interface did not load after login."
       );
 
       if (!(await hasVisible(sidebar))) {
         throw new Error("Left sidebar navigation is not visible.");
+      }
+
+      if (!(await hasVisible(page.getByText(/mi negocio/i).first()))) {
+        throw new Error("Sidebar loaded but 'Mi Negocio' is not visible.");
       }
 
       await capture(page, "01-dashboard-loaded", true);
