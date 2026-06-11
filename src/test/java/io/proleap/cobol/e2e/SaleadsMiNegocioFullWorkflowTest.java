@@ -145,8 +145,9 @@ public class SaleadsMiNegocioFullWorkflowTest {
 
 		Assert.assertTrue("Expected text 'Tienes 2 de 3 negocios' is missing.",
 				hasVisibleTextIn(modal, "Tienes 2 de 3 negocios"));
-		Assert.assertTrue("Button 'Cancelar' is missing.", hasDisplayedElementIn(modal, textLocator("Cancelar")));
-		Assert.assertTrue("Button 'Crear Negocio' is missing.", hasDisplayedElementIn(modal, textLocator("Crear Negocio")));
+		Assert.assertTrue("Button 'Cancelar' is missing.", hasDisplayedElementIn(modal, relativeTextLocator("Cancelar")));
+		Assert.assertTrue("Button 'Crear Negocio' is missing.",
+				hasDisplayedElementIn(modal, relativeTextLocator("Crear Negocio")));
 
 		captureScreenshot("03-agregar-negocio-modal");
 
@@ -174,10 +175,10 @@ public class SaleadsMiNegocioFullWorkflowTest {
 		waitForVisibleText("Cambiar Plan");
 
 		final WebElement section = findSectionContaining("Información General");
-		final String sectionText = normalizeWhitespace(section.getText());
+		final String sectionText = section.getText();
 
 		Assert.assertTrue("User email is not visible in 'Información General'.",
-				EMAIL_PATTERN.matcher(sectionText).find());
+				EMAIL_PATTERN.matcher(normalizeWhitespace(sectionText)).find());
 
 		final List<String> lines = sectionText.lines().map(String::trim).filter(line -> !line.isBlank()).collect(Collectors.toList());
 		Assert.assertTrue("User name is not clearly visible in 'Información General'.", lines.size() >= 3);
@@ -194,7 +195,7 @@ public class SaleadsMiNegocioFullWorkflowTest {
 		Assert.assertTrue("Business list is not visible in 'Tus Negocios'.",
 				hasDisplayedElementIn(section, By.xpath(".//ul | .//table | .//div[contains(@class,'list') or contains(@class,'card')]")));
 		Assert.assertTrue("Button 'Agregar Negocio' is missing in 'Tus Negocios'.",
-				hasDisplayedElementIn(section, textLocator("Agregar Negocio")));
+				hasDisplayedElementIn(section, relativeTextLocator("Agregar Negocio")));
 		Assert.assertTrue("Text 'Tienes 2 de 3 negocios' is missing in 'Tus Negocios'.",
 				hasVisibleTextIn(section, "Tienes 2 de 3 negocios"));
 	}
