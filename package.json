@@ -1,0 +1,11 @@
+{
+  "name": "saleads-automation",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "saleads:mi-negocio": "node ./scripts/saleads_mi_negocio_full_test.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.60.0"
+  }
+}
