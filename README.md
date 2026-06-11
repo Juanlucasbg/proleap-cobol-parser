@@ -194,6 +194,33 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+SaleADS Mi Negocio E2E workflow test
+------------------------------------
+
+The repository now includes an optional browser E2E test for the SaleADS "Mi Negocio" workflow:
+
+* Class: `io.proleap.e2e.saleads.SaleadsMiNegocioWorkflowTest`
+* Report output: `target/saleads-mi-negocio/report.md`
+* Screenshots: `target/saleads-mi-negocio/screenshots/`
+
+The test is disabled by default to avoid impacting normal parser CI.
+Enable and run it with:
+
+```
+$ SALEADS_E2E_ENABLED=true SALEADS_LOGIN_URL="<current environment login URL>" mvn -Dtest=SaleadsMiNegocioWorkflowTest test
+```
+
+Alternative startup (already-open browser session):
+
+```
+$ SALEADS_E2E_ENABLED=true SALEADS_CDP_URL="http://127.0.0.1:9222" mvn -Dtest=SaleadsMiNegocioWorkflowTest test
+```
+
+Notes:
+
+* The workflow does not hardcode a specific SaleADS domain.
+* It continues past login and validates Mi Negocio navigation, modal checks, account sections, legal links, screenshots, and final PASS/FAIL reporting.
+
 
 Release process
 ---------------
