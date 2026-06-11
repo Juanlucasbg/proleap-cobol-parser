@@ -1,0 +1,16 @@
+{
+  "name": "qa",
+  "version": "1.0.0",
+  "description": "SaleADS Mi Negocio end-to-end QA scenarios",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:saleads-mi-negocio": "playwright test tests/saleads-mi-negocio.full.spec.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.60.0"
+  }
+}
