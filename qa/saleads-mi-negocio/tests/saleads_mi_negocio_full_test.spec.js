@@ -183,8 +183,8 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     await page.goto(START_URL, { waitUntil: "domcontentloaded" });
     await waitForUiLoad(page);
   } else if (page.url() === "about:blank") {
-    throw new Error(
-      "Set SALEADS_START_URL (or SALEADS_LOGIN_URL/BASE_URL) so the test starts on SaleADS login."
+    console.warn(
+      "No start URL configured. Expecting the runner to preload the SaleADS login page as requested."
     );
   }
 
