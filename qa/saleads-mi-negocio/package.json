@@ -1,0 +1,21 @@
+{
+  "name": "saleads-mi-negocio",
+  "version": "1.0.0",
+  "description": "Portable Playwright E2E for SaleADS Mi Negocio workflow",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:report": "playwright show-report"
+  },
+  "keywords": [
+    "playwright",
+    "saleads",
+    "e2e"
+  ],
+  "author": "cursor-automation",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.60.0"
+  }
+}
