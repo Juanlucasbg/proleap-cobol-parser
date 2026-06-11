@@ -396,7 +396,8 @@ public class SaleadsMiNegocioFullTest {
 			details.forEach((key, value) -> sb.append("  * ").append(key).append(": ").append(value)
 					.append(System.lineSeparator()));
 		}
-		sb.append("Screenshots: ").append(screenshotsDir).append(System.lineSeparator());
+		sb.append("Screenshots: ").append(screenshotsDir == null ? "N/A (test skipped before setup)" : screenshotsDir)
+				.append(System.lineSeparator());
 		return sb.toString();
 	}
 
