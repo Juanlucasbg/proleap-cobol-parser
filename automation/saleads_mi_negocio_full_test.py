@@ -83,6 +83,37 @@ def click_visible_text(page: Page, text: str, exact: bool = False, timeout_ms: i
         return False
 
 
+def iter_page_scopes(page: Page):
+    yield ("page", page)
+    for index, frame in enumerate(page.frames):
+        if frame == page.main_frame:
+            continue
+        yield (f"frame[{index}]", frame)
+
+
+def click_google_entry_in_page_or_frames(page: Page, step: StepResult, timeout_ms: int = 10000) -> bool:
+    google_regex = re.compile(r"google", re.IGNORECASE)
+    for scope_name, scope in iter_page_scopes(page):
+        candidates = [
+            scope.get_by_text(google_regex).first,
+            scope.get_by_role("button", name=google_regex).first,
+            scope.get_by_role("link", name=google_regex).first,
+        ]
+        for candidate in candidates:
+            try:
+                if candidate.count() == 0:
+                    continue
+                candidate.wait_for(state="visible", timeout=timeout_ms)
+                candidate.click()
+                wait_for_ui(page)
+                append_detail(step, f"Clicked Google entry point in {scope_name}.")
+                return True
+            except Exception:  # pylint: disable=broad-except
+                continue
+    append_detail(step, "Google entry point was not found in page or iframes.")
+    return False
+
+
 def visible_text_present(page: Page, pattern: str, timeout_ms: int = 10000) -> bool:
     locator = page.get_by_text(re.compile(pattern, re.IGNORECASE)).first
     try:
@@ -108,39 +139,40 @@ def detect_google_selector_and_choose_email(page: Page, target_email: str, step:
     except Exception:  # pylint: disable=broad-except
         pass
 
-    account_choice = page.get_by_text(target_email, exact=True).first
-    if account_choice.count() > 0:
+    for scope_name, scope in iter_page_scopes(page):
+        account_choice = scope.get_by_text(target_email, exact=True).first
         try:
-            account_choice.click()
-            wait_for_ui(page)
-            append_detail(step, f"Selected Google account: {target_email}")
-            return True
+            if account_choice.count() > 0:
+                account_choice.click()
+                wait_for_ui(page)
+                append_detail(step, f"Selected Google account in {scope_name}: {target_email}")
+                return True
         except Exception as exc:  # pylint: disable=broad-except
-            append_detail(step, f"Unable to click account chooser item ({target_email}): {exc}")
+            append_detail(step, f"Unable to click account chooser item in {scope_name} ({target_email}): {exc}")
 
-    email_input_candidates = [
-        page.locator('input[type="email"]').first,
-        page.locator('input[name="identifier"]').first,
-        page.get_by_label(re.compile(r"email|correo", re.IGNORECASE)).first,
-    ]
-    for email_input in email_input_candidates:
-        try:
-            if email_input.count() > 0:
-                email_input.click()
-                email_input.fill(target_email)
-                append_detail(step, f"Entered Google email: {target_email}")
-                if click_visible_text(page, "Next", exact=True) or click_visible_text(page, "Siguiente", exact=True):
-                    append_detail(step, "Clicked next after entering Google email.")
-                    return True
-                try:
-                    page.keyboard.press("Enter")
-                    wait_for_ui(page)
-                    append_detail(step, "Submitted Google email with Enter key.")
-                    return True
-                except Exception as exc:  # pylint: disable=broad-except
-                    append_detail(step, f"Could not submit Google email with keyboard Enter: {exc}")
-        except Exception:  # pylint: disable=broad-except
-            continue
+        email_input_candidates = [
+            scope.locator('input[type="email"]').first,
+            scope.locator('input[name="identifier"]').first,
+            scope.get_by_label(re.compile(r"email|correo", re.IGNORECASE)).first,
+        ]
+        for email_input in email_input_candidates:
+            try:
+                if email_input.count() > 0:
+                    email_input.click()
+                    email_input.fill(target_email)
+                    append_detail(step, f"Entered Google email in {scope_name}: {target_email}")
+                    if click_visible_text(page, "Next", exact=True) or click_visible_text(page, "Siguiente", exact=True):
+                        append_detail(step, "Clicked next after entering Google email.")
+                        return True
+                    try:
+                        page.keyboard.press("Enter")
+                        wait_for_ui(page)
+                        append_detail(step, "Submitted Google email with Enter key.")
+                        return True
+                    except Exception as exc:  # pylint: disable=broad-except
+                        append_detail(step, f"Could not submit Google email with keyboard Enter: {exc}")
+            except Exception:  # pylint: disable=broad-except
+                continue
 
     append_detail(step, "Google account chooser or email input was not detected.")
     return False
@@ -148,13 +180,21 @@ def detect_google_selector_and_choose_email(page: Page, target_email: str, step:
 
 def attempt_google_password_if_available(page: Page, step: StepResult) -> bool:
     password = os.getenv("GOOGLE_ACCOUNT_PASSWORD", "").strip()
-    password_input = page.locator('input[type="password"]').first
+    password_input = None
+    password_scope_name = None
 
-    try:
-        if password_input.count() == 0:
-            append_detail(step, "Google password input not detected at this moment.")
-            return False
-    except Exception:  # pylint: disable=broad-except
+    for scope_name, scope in iter_page_scopes(page):
+        try:
+            candidate = scope.locator('input[type="password"]').first
+            if candidate.count() > 0:
+                password_input = candidate
+                password_scope_name = scope_name
+                break
+        except Exception:  # pylint: disable=broad-except
+            continue
+
+    if password_input is None:
+        append_detail(step, "Google password input not detected at this moment.")
         return False
 
     if not password:
@@ -167,7 +207,7 @@ def attempt_google_password_if_available(page: Page, step: StepResult) -> bool:
     try:
         password_input.click()
         password_input.fill(password)
-        append_detail(step, "Entered Google password from GOOGLE_ACCOUNT_PASSWORD.")
+        append_detail(step, f"Entered Google password from GOOGLE_ACCOUNT_PASSWORD in {password_scope_name}.")
         if click_visible_text(page, "Next", exact=True) or click_visible_text(page, "Siguiente", exact=True):
             append_detail(step, "Clicked next after entering Google password.")
             return True
@@ -294,15 +334,20 @@ def run() -> int:
                         or click_visible_text(page, "Sign in")
                         or click_visible_text(page, "Inicia sesi\u00f3n")
                         or click_visible_text(page, "Iniciar sesi\u00f3n")
-                        or click_visible_text(page, "Google")
                     )
                     if not login_clicked:
                         raise AssertionError("Could not locate a login button by visible text.")
 
                     append_detail(step1, "Clicked login entry point.")
-                    detect_google_selector_and_choose_email(page, google_email, step1)
-                    attempt_google_password_if_available(page, step1)
                     wait_for_ui(page)
+
+                    auth_page = context.pages[-1] if context.pages else page
+                    click_google_entry_in_page_or_frames(auth_page, step1)
+                    auth_page = context.pages[-1] if context.pages else page
+
+                    detect_google_selector_and_choose_email(auth_page, google_email, step1)
+                    attempt_google_password_if_available(auth_page, step1)
+                    wait_for_ui(auth_page)
 
                     main_interface_ok = (
                         visible_text_present(page, r"Negocio", timeout_ms=15000)
