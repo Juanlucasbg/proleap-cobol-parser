@@ -1,0 +1,13 @@
+{
+  "name": "saleads-e2e-automation",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "test:saleads-mi-negocio": "playwright test tests/saleads-mi-negocio-full.spec.js",
+    "test:list": "playwright test --list",
+    "test:headed": "playwright test tests/saleads-mi-negocio-full.spec.js --headed"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0"
+  }
+}
