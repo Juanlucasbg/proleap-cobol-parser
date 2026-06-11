@@ -223,10 +223,16 @@ public class SaleadsMiNegocioFullWorkflowTest {
 	}
 
 	private void validateTusNegocios() {
-		assertVisible("Tus Negocios section", appPage.getByText(Pattern.compile("(?iu).*tus negocios.*")));
+		final Locator negociosSection = appPage.locator("section, div")
+				.filter(new Locator.FilterOptions().setHasText(Pattern.compile("(?iu).*tus negocios.*"))).first();
+		assertVisible("Tus Negocios section", negociosSection);
 		assertVisible("Agregar Negocio button",
 				appPage.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(Pattern.compile("(?iu).*agregar negocio.*"))));
 		assertVisible("Business count text", appPage.getByText(Pattern.compile("(?iu).*tienes\\s*2\\s*de\\s*3\\s*negocios.*")));
+
+		final Locator businessListCandidates = negociosSection
+				.locator("ul, ol, table, [role='list'], [role='table'], [data-testid*='business'], [class*='business']");
+		assertTrue("Expected visible business list in 'Tus Negocios' section.", hasAnyElement(businessListCandidates));
 	}
 
 	private void validateTerminosYCondiciones() {
@@ -416,6 +422,14 @@ public class SaleadsMiNegocioFullWorkflowTest {
 			}
 		}
 		return false;
+	}
+
+	private boolean hasAnyElement(final Locator locator) {
+		try {
+			return locator.count() > 0 && locator.first().isVisible();
+		} catch (final PlaywrightException ex) {
+			return false;
+		}
 	}
 
 	private Locator findFirstVisible(final String label, final Locator... candidates) {
