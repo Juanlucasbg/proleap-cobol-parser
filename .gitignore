@@ -44,3 +44,7 @@ out/
 
 # Browser automation artifacts
 artifacts/
+
+# Python cache
+__pycache__/
+*.pyc
