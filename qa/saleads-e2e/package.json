@@ -1,0 +1,17 @@
+{
+  "name": "saleads-e2e",
+  "version": "1.0.0",
+  "description": "Portable Playwright E2E workflow for SaleADS Mi Negocio module.",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "test:saleads": "playwright test tests/saleads-mi-negocio.spec.js",
+    "test:saleads:headed": "HEADLESS=false playwright test tests/saleads-mi-negocio.spec.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.60.0"
+  }
+}
