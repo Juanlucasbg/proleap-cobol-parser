@@ -173,8 +173,8 @@ public class SaleadsMiNegocioWorkflowE2ETest {
 
 		Page popup = null;
 		try {
-			popup = appPage.waitForPopup(() -> loginButton.click(),
-					new Page.WaitForPopupOptions().setTimeout(POPUP_TIMEOUT_MS));
+			popup = appPage.waitForPopup(new Page.WaitForPopupOptions().setTimeout(POPUP_TIMEOUT_MS),
+					() -> loginButton.click());
 		} catch (final PlaywrightException ignored) {
 			// If no popup opens, login likely continues in the same tab.
 			waitForUi(appPage);
@@ -190,11 +190,15 @@ public class SaleadsMiNegocioWorkflowE2ETest {
 		}
 
 		if (popup != null) {
-			try {
-				popup.waitForClose(new Page.WaitForCloseOptions().setTimeout(STEP_TIMEOUT_MS));
-			} catch (final PlaywrightException ignored) {
-				// Popup can remain open in some identity flows; bring app tab to front anyway.
+			final long popupDeadline = System.currentTimeMillis() + (long) STEP_TIMEOUT_MS;
+			while (System.currentTimeMillis() <= popupDeadline && !popup.isClosed()) {
+				popup.waitForTimeout(200);
 			}
+
+			if (!popup.isClosed()) {
+				popup.close();
+			}
+
 			appPage.bringToFront();
 			waitForUi(appPage);
 		}
@@ -257,8 +261,8 @@ public class SaleadsMiNegocioWorkflowE2ETest {
 		boolean openedInNewTab = false;
 
 		try {
-			targetPage = context.waitForPage(() -> legalLink.click(),
-					new BrowserContext.WaitForPageOptions().setTimeout(POPUP_TIMEOUT_MS));
+			targetPage = context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(POPUP_TIMEOUT_MS),
+					() -> legalLink.click());
 			openedInNewTab = true;
 		} catch (final PlaywrightException ignored) {
 			// If no new tab opens, we stay in the application tab.
