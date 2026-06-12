@@ -1,0 +1,16 @@
+{
+  "name": "browser-tests",
+  "version": "1.0.0",
+  "description": "Environment-agnostic SaleADS E2E browser validations",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:saleads": "playwright test tests/saleads_mi_negocio_full_test.spec.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.60.0"
+  }
+}
