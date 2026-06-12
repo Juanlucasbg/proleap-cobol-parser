@@ -11,11 +11,11 @@ const REPORT_FIELDS = [
   "Mi Negocio menu",
   "Agregar Negocio modal",
   "Administrar Negocios view",
-  "Informacion General",
+  "Información General",
   "Detalles de la Cuenta",
   "Tus Negocios",
-  "Terminos y Condiciones",
-  "Politica de Privacidad",
+  "Términos y Condiciones",
+  "Política de Privacidad",
 ] as const;
 
 type ReportField = (typeof REPORT_FIELDS)[number];
@@ -203,7 +203,7 @@ test.describe("SaleADS Mi Negocio full workflow", () => {
         }
 
         const loginPopupPromise = context.waitForEvent("page", { timeout: 8_000 }).catch(() => null);
-        await clickByVisibleText(page, /google|sign in with google|continuar con google|iniciar sesion/i);
+        await clickByVisibleText(page, /google|sign in with google|continuar con google|iniciar sesi[oó]n/i);
         const loginPopup = await loginPopupPromise;
         await chooseGoogleAccountIfVisible(page, context, loginPopup);
 
@@ -264,10 +264,10 @@ test.describe("SaleADS Mi Negocio full workflow", () => {
 
             await clickByVisibleText(page, /administrar negocios/i);
 
-            await expect(page.getByText(/informacion general/i).first()).toBeVisible({ timeout: 30_000 });
+            await expect(page.getByText(/informaci[oó]n general/i).first()).toBeVisible({ timeout: 30_000 });
             await expect(page.getByText(/detalles de la cuenta/i).first()).toBeVisible({ timeout: 30_000 });
             await expect(page.getByText(/tus negocios/i).first()).toBeVisible({ timeout: 30_000 });
-            await expect(page.getByText(/seccion legal/i).first()).toBeVisible({ timeout: 30_000 });
+            await expect(page.getByText(/secci[oó]n legal/i).first()).toBeVisible({ timeout: 30_000 });
 
             const shot = await screenshot(page, "04-administrar-negocios-view.png", true);
             return [shot];
@@ -275,8 +275,11 @@ test.describe("SaleADS Mi Negocio full workflow", () => {
         : (markBlocked("Administrar Negocios view", results, "Login step failed."), false);
 
       const infoOk = adminViewOk
-        ? await runStep("Informacion General", results, async () => {
-            const infoSection = page.locator("section, div, article").filter({ hasText: /informacion general/i }).first();
+        ? await runStep("Información General", results, async () => {
+            const infoSection = page
+              .locator("section, div, article")
+              .filter({ hasText: /informaci[oó]n general/i })
+              .first();
             await expect(infoSection).toBeVisible({ timeout: 20_000 });
 
             const emailLocator = infoSection.getByText(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i).first();
@@ -285,11 +288,11 @@ test.describe("SaleADS Mi Negocio full workflow", () => {
             const sectionText = (await infoSection.innerText()).split("\n").map((line) => line.trim()).filter(Boolean);
             const likelyName = sectionText.find(
               (line) =>
-                !/informacion general|business plan|cambiar plan|@|cuenta|idioma|estado/i.test(line) &&
+                !/informaci[oó]n general|business plan|cambiar plan|@|cuenta|idioma|estado/i.test(line) &&
                 line.length > 2,
             );
             if (!likelyName) {
-              throw new Error("Could not confidently identify user name in Informacion General section.");
+              throw new Error("Could not confidently identify user name in Información General section.");
             }
 
             await expect(infoSection.getByText(/business plan/i).first()).toBeVisible({ timeout: 15_000 });
@@ -299,7 +302,7 @@ test.describe("SaleADS Mi Negocio full workflow", () => {
 
             return [];
           })
-        : (markBlocked("Informacion General", results, "Administrar Negocios view step failed."), false);
+        : (markBlocked("Información General", results, "Administrar Negocios view step failed."), false);
 
       const detailsOk = adminViewOk
         ? await runStep("Detalles de la Cuenta", results, async () => {
@@ -342,32 +345,32 @@ test.describe("SaleADS Mi Negocio full workflow", () => {
         : (markBlocked("Tus Negocios", results, "Administrar Negocios view step failed."), false);
 
       const termsOk = adminViewOk
-        ? await runStep("Terminos y Condiciones", results, async () => {
+        ? await runStep("Términos y Condiciones", results, async () => {
             const termsData = await validateLegalPage(
               page,
               context,
-              /terminos y condiciones/i,
-              /terminos y condiciones/i,
+              /t[eé]rminos y condiciones/i,
+              /t[eé]rminos y condiciones/i,
               "05-terminos-y-condiciones.png",
             );
-            legalUrls["Terminos y Condiciones"] = termsData.finalUrl;
+            legalUrls["Términos y Condiciones"] = termsData.finalUrl;
             return [termsData.screenshotPath, termsData.finalUrl];
           })
-        : (markBlocked("Terminos y Condiciones", results, "Administrar Negocios view step failed."), false);
+        : (markBlocked("Términos y Condiciones", results, "Administrar Negocios view step failed."), false);
 
       const privacyOk = adminViewOk
-        ? await runStep("Politica de Privacidad", results, async () => {
+        ? await runStep("Política de Privacidad", results, async () => {
             const privacyData = await validateLegalPage(
               page,
               context,
-              /politica de privacidad/i,
-              /politica de privacidad/i,
+              /pol[ií]tica de privacidad/i,
+              /pol[ií]tica de privacidad/i,
               "06-politica-de-privacidad.png",
             );
-            legalUrls["Politica de Privacidad"] = privacyData.finalUrl;
+            legalUrls["Política de Privacidad"] = privacyData.finalUrl;
             return [privacyData.screenshotPath, privacyData.finalUrl];
           })
-        : (markBlocked("Politica de Privacidad", results, "Administrar Negocios view step failed."), false);
+        : (markBlocked("Política de Privacidad", results, "Administrar Negocios view step failed."), false);
 
       const finalReport = {
         name: "saleads_mi_negocio_full_test",
