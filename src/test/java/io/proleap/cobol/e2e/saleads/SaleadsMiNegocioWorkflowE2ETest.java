@@ -41,11 +41,11 @@ public class SaleadsMiNegocioWorkflowE2ETest {
 	private static final String MI_NEGOCIO_MENU = "Mi Negocio menu";
 	private static final String AGREGAR_NEGOCIO_MODAL = "Agregar Negocio modal";
 	private static final String ADMINISTRAR_NEGOCIOS_VIEW = "Administrar Negocios view";
-	private static final String INFORMACION_GENERAL = "Informacion General";
+	private static final String INFORMACION_GENERAL = "Información General";
 	private static final String DETALLES_DE_LA_CUENTA = "Detalles de la Cuenta";
 	private static final String TUS_NEGOCIOS = "Tus Negocios";
-	private static final String TERMINOS_Y_CONDICIONES = "Terminos y Condiciones";
-	private static final String POLITICA_DE_PRIVACIDAD = "Politica de Privacidad";
+	private static final String TERMINOS_Y_CONDICIONES = "Términos y Condiciones";
+	private static final String POLITICA_DE_PRIVACIDAD = "Política de Privacidad";
 
 	@Test
 	public void saleadsMiNegocioFullWorkflow() throws Exception {
