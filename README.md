@@ -201,6 +201,38 @@ Release process
 * Milestones of the grammar are published in the [ANTLR grammars repo](https://github.com/antlr/grammars-v4).
 
 
+SaleADS Mi Negocio E2E workflow test
+------------------------------------
+
+This repository includes a gated Playwright-based integration test for validating the SaleADS "Mi Negocio" workflow:
+
+* Test class: `io.proleap.cobol.integration.SaleadsMiNegocioWorkflowE2ETest`
+* It does not hardcode an environment URL.
+* It validates login (Google), Mi Negocio navigation, Agregar Negocio modal, Administrar Negocios sections, and legal links.
+* It captures checkpoint screenshots under `target/saleads-mi-negocio-e2e/<timestamp>/`.
+* It prints a final PASS/FAIL report for:
+  * Login
+  * Mi Negocio menu
+  * Agregar Negocio modal
+  * Administrar Negocios view
+  * Informacion General
+  * Detalles de la Cuenta
+  * Tus Negocios
+  * Terminos y Condiciones
+  * Politica de Privacidad
+
+Run it explicitly with:
+
+```
+mvn -Dtest=io.proleap.cobol.integration.SaleadsMiNegocioWorkflowE2ETest \
+    -Dsaleads.e2e.enabled=true \
+    -Dsaleads.startUrl="$SALEADS_START_URL" \
+    -Dsaleads.accountEmail="juanlucasbarbiergarzon@gmail.com" \
+    -Dsaleads.headless=true \
+    test
+```
+
+
 License
 -------
 
