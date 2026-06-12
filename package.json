@@ -1,0 +1,13 @@
+{
+  "name": "saleads-mi-negocio-workflow",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:saleads-mi-negocio": "node automation/saleads/mi-negocio-full-workflow.mjs",
+    "check:saleads-mi-negocio": "node --check automation/saleads/mi-negocio-full-workflow.mjs"
+  },
+  "dependencies": {
+    "playwright": "^1.60.0"
+  }
+}
