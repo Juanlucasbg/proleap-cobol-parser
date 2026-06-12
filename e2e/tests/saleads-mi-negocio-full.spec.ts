@@ -421,11 +421,11 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
     "Mi Negocio menu": finalReport["Mi Negocio menu"],
     "Agregar Negocio modal": finalReport["Agregar Negocio modal"],
     "Administrar Negocios view": finalReport["Administrar Negocios view"],
-    "Informacion General": finalReport["Informacion General"],
+    "Información General": finalReport["Informacion General"],
     "Detalles de la Cuenta": finalReport["Detalles de la Cuenta"],
     "Tus Negocios": finalReport["Tus Negocios"],
-    "Terminos y Condiciones": finalReport["Terminos y Condiciones"],
-    "Politica de Privacidad": finalReport["Politica de Privacidad"],
+    "Términos y Condiciones": finalReport["Terminos y Condiciones"],
+    "Política de Privacidad": finalReport["Politica de Privacidad"],
     ...legalUrls,
   };
 
