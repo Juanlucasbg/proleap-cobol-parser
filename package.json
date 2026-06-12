@@ -1,0 +1,15 @@
+{
+  "name": "saleads-e2e-workflows",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Environment-agnostic SaleADS.ai end-to-end workflow tests",
+  "scripts": {
+    "test:e2e:saleads": "playwright test tests/e2e/saleads-mi-negocio-full.spec.ts",
+    "test:e2e:saleads:headed": "playwright test tests/e2e/saleads-mi-negocio-full.spec.ts --headed"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.54.1",
+    "@types/node": "^25.9.3",
+    "typescript": "^6.0.3"
+  }
+}
