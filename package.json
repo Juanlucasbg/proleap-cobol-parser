@@ -1,0 +1,22 @@
+{
+  "name": "proleap-cobol-parser-e2e",
+  "version": "1.0.0",
+  "description": "ProLeap ANTLR4-based parser for COBOL =====================================",
+  "scripts": {
+    "playwright:install": "playwright install --with-deps chromium",
+    "test:e2e:saleads-mi-negocio": "playwright test tests/e2e/saleads-mi-negocio.spec.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Juanlucasbg/proleap-cobol-parser.git"
+  },
+  "keywords": [],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Juanlucasbg/proleap-cobol-parser/issues"
+  },
+  "homepage": "https://github.com/Juanlucasbg/proleap-cobol-parser#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.60.0"
+  }
+}
