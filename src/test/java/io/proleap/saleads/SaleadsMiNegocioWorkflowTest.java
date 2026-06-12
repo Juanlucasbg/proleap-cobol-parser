@@ -190,7 +190,8 @@ public class SaleadsMiNegocioWorkflowTest {
 
 		Page googlePage = null;
 		try {
-			googlePage = context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(8000), googleLoginButton::click);
+			googlePage = context.waitForPage(googleLoginButton::click,
+					new BrowserContext.WaitForPageOptions().setTimeout(8000));
 		} catch (PlaywrightException popupTimeout) {
 			waitForUi(page);
 		}
@@ -201,7 +202,7 @@ public class SaleadsMiNegocioWorkflowTest {
 			try {
 				googlePage.waitForClose(new Page.WaitForCloseOptions().setTimeout(LOGIN_TIMEOUT_MS));
 			} catch (PlaywrightException ignored) {
-				googlePage.close();
+				page.waitForTimeout(500);
 			}
 			page.bringToFront();
 		} else {
@@ -244,7 +245,7 @@ public class SaleadsMiNegocioWorkflowTest {
 
 		Page legalPage = null;
 		try {
-			legalPage = context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(8000), legalLink::click);
+			legalPage = context.waitForPage(legalLink::click, new BrowserContext.WaitForPageOptions().setTimeout(8000));
 		} catch (PlaywrightException noNewPage) {
 			waitForUi(appPage);
 		}
