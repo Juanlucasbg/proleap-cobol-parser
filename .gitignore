@@ -41,3 +41,10 @@ target/
 
 ## Additional for IntelliJ
 out/
+
+# Browser automation artifacts
+artifacts/
+
+# Python cache
+__pycache__/
+*.pyc
