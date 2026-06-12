@@ -22,6 +22,7 @@ import org.junit.Test;
 
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
+import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
@@ -76,7 +77,7 @@ public class SaleadsMiNegocioFullWorkflowTest {
 		final Map<String, StepResult> results = initResultsMap();
 
 		try (Playwright playwright = Playwright.create()) {
-			final Browser browser = playwright.chromium().launch(new Browser.LaunchOptions().setHeadless(HEADLESS));
+			final Browser browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(HEADLESS));
 			final BrowserContext context = browser.newContext(new Browser.NewContextOptions().setViewportSize(1920, 1080));
 			final Page page = context.newPage();
 			page.setDefaultTimeout(ACTION_TIMEOUT_MS);
@@ -168,8 +169,8 @@ public class SaleadsMiNegocioFullWorkflowTest {
 	private void executeLogin(final Page appPage) {
 		Page activePage = appPage;
 		try {
-			activePage = appPage.context().waitForPage(() -> clickGoogleSignIn(appPage),
-					new BrowserContext.WaitForPageOptions().setTimeout(6000));
+			activePage = appPage.context().waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(6000),
+					() -> clickGoogleSignIn(appPage));
 			waitForUiLoad(activePage);
 		} catch (final PlaywrightException popupNotOpened) {
 			clickGoogleSignIn(appPage);
@@ -179,11 +180,7 @@ public class SaleadsMiNegocioFullWorkflowTest {
 		selectGoogleAccountIfVisible(activePage);
 
 		if (activePage != appPage) {
-			try {
-				activePage.waitForClose(new Page.WaitForCloseOptions().setTimeout(60000));
-			} catch (final PlaywrightException ignored) {
-				// Some environments keep auth tab open. Continue with app tab checks.
-			}
+			activePage.waitForTimeout(1500);
 			appPage.bringToFront();
 		}
 		waitForUiLoad(appPage);
@@ -248,8 +245,8 @@ public class SaleadsMiNegocioFullWorkflowTest {
 		boolean openedNewTab = false;
 
 		try {
-			targetPage = appPage.context().waitForPage(() -> clickByText(appPage, linkLabel),
-					new BrowserContext.WaitForPageOptions().setTimeout(7000));
+			targetPage = appPage.context().waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(7000),
+					() -> clickByText(appPage, linkLabel));
 			openedNewTab = true;
 		} catch (final PlaywrightException noNewTab) {
 			clickByText(appPage, linkLabel);
