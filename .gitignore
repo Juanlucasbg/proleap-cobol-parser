@@ -41,3 +41,9 @@ target/
 
 ## Additional for IntelliJ
 out/
+
+# SaleADS Playwright QA assets
+qa/saleads-mi-negocio/node_modules/
+qa/saleads-mi-negocio/playwright-report/
+qa/saleads-mi-negocio/test-results/
+qa/saleads-mi-negocio/artifacts/
