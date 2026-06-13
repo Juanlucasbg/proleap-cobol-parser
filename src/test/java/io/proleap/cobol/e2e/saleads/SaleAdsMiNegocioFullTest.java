@@ -27,6 +27,7 @@ import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.TimeoutError;
 import com.microsoft.playwright.options.LoadState;
+import com.microsoft.playwright.options.WaitUntilState;
 
 /**
  * Full workflow test for SaleADS "Mi Negocio" module.
@@ -182,7 +183,7 @@ public class SaleAdsMiNegocioFullTest {
 		Page activePage = initialPage;
 
 		try {
-			activePage.navigate(loginUrl, new Page.NavigateOptions().setWaitUntil(LoadState.DOMCONTENTLOADED));
+			activePage.navigate(loginUrl, new Page.NavigateOptions().setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
 			waitForUiLoad(activePage);
 			step.evidence.add(captureScreenshot(activePage, screenshotsDir, "step0_initial_login_page.png", true));
 		} catch (final Exception ex) {
