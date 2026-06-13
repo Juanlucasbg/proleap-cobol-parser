@@ -377,8 +377,8 @@ public class SaleAdsMiNegocioFullTest {
 		final Page[] popupHolder = new Page[1];
 
 		try {
-			popupHolder[0] = context.waitForPage(() -> clickAnyVisibleText(appPage, Arrays.asList(legalLinkRegex)),
-					new BrowserContext.WaitForPageOptions().setTimeout(SHORT_WAIT_MS));
+			popupHolder[0] = context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(SHORT_WAIT_MS),
+					() -> clickAnyVisibleText(appPage, Arrays.asList(legalLinkRegex)));
 		} catch (final TimeoutError timeout) {
 			clickAnyVisibleText(appPage, Arrays.asList(legalLinkRegex));
 		}
