@@ -410,7 +410,7 @@ public class SaleadsMiNegocioFullTest {
 	}
 
 	private Pattern caseInsensitivePattern(final String literalText) {
-		return Pattern.compile(Pattern.quote(literalText), Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+		return Pattern.compile(Pattern.quote(literalText), Pattern.CASE_INSENSITIVE);
 	}
 
 	private void runStep(final String stepName, final Map<String, Boolean> report, final List<String> failures,
