@@ -1,0 +1,14 @@
+{
+  "name": "saleads-e2e",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Cross-environment SaleADS.ai end-to-end UI tests.",
+  "scripts": {
+    "test": "playwright test",
+    "test:saleads-mi-negocio": "playwright test tests/saleads.mi-negocio.full.spec.ts",
+    "test:saleads-mi-negocio:headed": "playwright test tests/saleads.mi-negocio.full.spec.ts --headed"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0"
+  }
+}
