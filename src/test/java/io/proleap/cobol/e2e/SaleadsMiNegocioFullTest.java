@@ -55,21 +55,21 @@ public class SaleadsMiNegocioFullTest {
 				waitForUiLoad(page);
 			}
 
-			runStep("Login", report, failures, () -> {
+			runStep("Login", page, evidenceDir, report, failures, () -> {
 				assertLoginPageAvailable(page, loginUrl);
 				loginWithGoogle(page, context);
 				assertMainInterfaceVisible(page);
 				captureScreenshot(page, evidenceDir.resolve("01-dashboard-loaded.png"), false);
 			});
 
-			runStep("Mi Negocio menu", report, failures, () -> {
+			runStep("Mi Negocio menu", page, evidenceDir, report, failures, () -> {
 				openMiNegocioMenu(page);
 				assertTextVisible(page, "Agregar Negocio");
 				assertTextVisible(page, "Administrar Negocios");
 				captureScreenshot(page, evidenceDir.resolve("02-mi-negocio-menu-expanded.png"), false);
 			});
 
-			runStep("Agregar Negocio modal", report, failures, () -> {
+			runStep("Agregar Negocio modal", page, evidenceDir, report, failures, () -> {
 				clickByVisibleText(page, "Agregar Negocio", true);
 				assertTextVisible(page, "Crear Nuevo Negocio");
 				assertBusinessNameInputExists(page);
@@ -82,7 +82,7 @@ public class SaleadsMiNegocioFullTest {
 				clickByVisibleText(page, "Cancelar", true);
 			});
 
-			runStep("Administrar Negocios view", report, failures, () -> {
+			runStep("Administrar Negocios view", page, evidenceDir, report, failures, () -> {
 				if (!isTextVisible(page, "Administrar Negocios", 2500d)) {
 					openMiNegocioMenu(page);
 				}
@@ -95,7 +95,7 @@ public class SaleadsMiNegocioFullTest {
 				captureScreenshot(page, evidenceDir.resolve("04-administrar-negocios.png"), true);
 			});
 
-			runStep("Información General", report, failures, () -> {
+			runStep("Información General", page, evidenceDir, report, failures, () -> {
 				assertAnyEmailVisible(page);
 				assertTrue("Expected user name to be visible in account summary.",
 						isAnyTextVisible(page, List.of("Nombre", "Usuario", "Perfil"), 5000d) || isAnyHeadingVisible(page));
@@ -103,24 +103,24 @@ public class SaleadsMiNegocioFullTest {
 				assertTextVisible(page, "Cambiar Plan");
 			});
 
-			runStep("Detalles de la Cuenta", report, failures, () -> {
+			runStep("Detalles de la Cuenta", page, evidenceDir, report, failures, () -> {
 				assertTextVisible(page, "Cuenta creada");
 				assertTextVisible(page, "Estado activo");
 				assertTextVisible(page, "Idioma seleccionado");
 			});
 
-			runStep("Tus Negocios", report, failures, () -> {
+			runStep("Tus Negocios", page, evidenceDir, report, failures, () -> {
 				assertTextVisible(page, "Tus Negocios");
 				assertTextVisible(page, "Agregar Negocio");
 				assertTextVisible(page, "Tienes 2 de 3 negocios");
 			});
 
-			runStep("Términos y Condiciones", report, failures, () -> {
+			runStep("Términos y Condiciones", page, evidenceDir, report, failures, () -> {
 				legalUrls[0] = openLegalLinkAndReturn(page, context, "Términos y Condiciones", "Términos y Condiciones",
 						evidenceDir.resolve("08-terminos-y-condiciones.png"));
 			});
 
-			runStep("Política de Privacidad", report, failures, () -> {
+			runStep("Política de Privacidad", page, evidenceDir, report, failures, () -> {
 				legalUrls[1] = openLegalLinkAndReturn(page, context, "Política de Privacidad", "Política de Privacidad",
 						evidenceDir.resolve("09-politica-de-privacidad.png"));
 			});
@@ -413,17 +413,26 @@ public class SaleadsMiNegocioFullTest {
 		return Pattern.compile(Pattern.quote(literalText), Pattern.CASE_INSENSITIVE);
 	}
 
-	private void runStep(final String stepName, final Map<String, Boolean> report, final List<String> failures,
-			final StepAction action) {
+	private void runStep(final String stepName, final Page page, final Path evidenceDir, final Map<String, Boolean> report,
+			final List<String> failures, final StepAction action) {
 		try {
 			action.run();
 			report.put(stepName, Boolean.TRUE);
 		} catch (final Throwable stepError) {
 			report.put(stepName, Boolean.FALSE);
+			try {
+				captureScreenshot(page, evidenceDir.resolve("failure-" + slugify(stepName) + ".png"), true);
+			} catch (final IOException ignored) {
+				// Failure evidence screenshot is best effort.
+			}
 			final String message = stepError.getMessage() == null ? stepError.getClass().getSimpleName()
 					: stepError.getMessage();
 			failures.add(stepName + ": " + message);
 		}
+	}
+
+	private String slugify(final String text) {
+		return text.toLowerCase().replaceAll("[^a-z0-9]+", "-").replaceAll("(^-|-$)", "");
 	}
 
 	@FunctionalInterface
