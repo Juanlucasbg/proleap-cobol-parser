@@ -1,0 +1,20 @@
+{
+  "name": "saleads-e2e",
+  "version": "1.0.0",
+  "description": "Cross-environment SaleADS Mi Negocio workflow E2E tests",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:list": "playwright test --list",
+    "report": "playwright show-report"
+  },
+  "keywords": [
+    "playwright",
+    "e2e",
+    "saleads"
+  ],
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.60.0"
+  }
+}
