@@ -1,7 +1,5 @@
 package io.proleap.cobol.e2e.saleads;
 
-import static org.junit.Assert.assertTrue;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -153,9 +151,10 @@ public class SaleAdsMiNegocioFullTest {
 		} finally {
 			writeMarkdownReport(markdownReportPath, runId, report);
 			writeJsonReport(jsonReportPath, runId, report);
+			if (!allPass(report)) {
+				throw new AssertionError(buildFailureSummary(report));
+			}
 		}
-
-		assertTrue(buildFailureSummary(report), allPass(report));
 	}
 
 	private Map<String, StepResult> initializeReport() {
