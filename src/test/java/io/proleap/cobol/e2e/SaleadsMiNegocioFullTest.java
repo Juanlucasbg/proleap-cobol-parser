@@ -132,8 +132,8 @@ public class SaleadsMiNegocioFullTest {
 		Page activePage = page;
 
 		try {
-			activePage = context.waitForPage(() -> clickGoogleSignInButton(page),
-					new BrowserContext.WaitForPageOptions().setTimeout(6000d));
+			activePage = context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(6000d),
+					() -> clickGoogleSignInButton(page));
 		} catch (final PlaywrightException popupNotOpened) {
 			clickGoogleSignInButton(page);
 		}
@@ -183,8 +183,8 @@ public class SaleadsMiNegocioFullTest {
 		boolean openedNewTab = false;
 
 		try {
-			legalPage = context.waitForPage(() -> clickByVisibleText(appPage, linkText, false),
-					new BrowserContext.WaitForPageOptions().setTimeout(6000d));
+			legalPage = context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(6000d),
+					() -> clickByVisibleText(appPage, linkText, false));
 			openedNewTab = true;
 		} catch (final PlaywrightException noPopupDetected) {
 			clickByVisibleText(appPage, linkText, true);
