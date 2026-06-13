@@ -357,8 +357,26 @@ public class SaleadsMiNegocioFullWorkflowTest {
 	}
 
 	private void takeScreenshot(final Page page, final String filename, final boolean fullPage) {
-		Files.createDirectories(OUTPUT_DIR);
+		try {
+			Files.createDirectories(OUTPUT_DIR);
+		} catch (IOException ioException) {
+			throw new RuntimeException("Failed to create evidence directory: " + OUTPUT_DIR, ioException);
+		}
 		page.screenshot(new Page.ScreenshotOptions().setPath(OUTPUT_DIR.resolve(filename)).setFullPage(fullPage));
+	}
+
+	private void waitForUi(final Page page) {
+		try {
+			page.waitForLoadState(LoadState.DOMCONTENTLOADED, new Page.WaitForLoadStateOptions().setTimeout(15000));
+		} catch (PlaywrightException ignored) {
+			// Some transitions do not trigger DOMContentLoaded; continue with best effort waits.
+		}
+		try {
+			page.waitForLoadState(LoadState.NETWORKIDLE, new Page.WaitForLoadStateOptions().setTimeout(5000));
+		} catch (PlaywrightException ignored) {
+			// Network idle is not guaranteed in SPA flows.
+		}
+		page.waitForTimeout(500);
 	}
 
 	private void writeFinalReport() throws IOException {
