@@ -61,21 +61,22 @@ public class SaleadsMiNegocioFullTest {
 
 		Throwable failure = null;
 		boolean preconditionsMet = true;
+		final String loginUrl = resolveLoginUrl();
 
-		try (Playwright playwright = Playwright.create()) {
-			final Browser browser = playwright.chromium().launch(new BrowserType.LaunchOptions()
-					.setHeadless(resolveHeadless()).setSlowMo(resolveSlowMoMillis()));
-			final BrowserContext context = browser.newContext(new Browser.NewContextOptions().setViewportSize(1920, 1080));
-			final Page appPage = context.newPage();
+		if (loginUrl == null || loginUrl.isBlank()) {
+			preconditionsMet = false;
+			markFail(results, STEP_LOGIN,
+					"Missing login URL. Set SALEADS_LOGIN_URL or -Dsaleads.login.url to the current environment login page.");
+			markPrerequisiteFailures(results, STEP_MI_NEGOCIO_MENU, STEP_AGREGAR_MODAL, STEP_ADMIN_VIEW, STEP_INFO_GENERAL,
+					STEP_DETALLES_CUENTA, STEP_TUS_NEGOCIOS, STEP_TERMINOS, STEP_PRIVACIDAD);
+		} else {
+			try (Playwright playwright = Playwright.create()) {
+				final Browser browser = playwright.chromium().launch(new BrowserType.LaunchOptions()
+						.setHeadless(resolveHeadless()).setSlowMo(resolveSlowMoMillis()));
+				final BrowserContext context = browser
+						.newContext(new Browser.NewContextOptions().setViewportSize(1920, 1080));
+				final Page appPage = context.newPage();
 
-			final String loginUrl = resolveLoginUrl();
-			if (loginUrl == null || loginUrl.isBlank()) {
-				preconditionsMet = false;
-				markFail(results, STEP_LOGIN,
-						"Missing login URL. Set SALEADS_LOGIN_URL or -Dsaleads.login.url to the current environment login page.");
-				markPrerequisiteFailures(results, STEP_MI_NEGOCIO_MENU, STEP_AGREGAR_MODAL, STEP_ADMIN_VIEW, STEP_INFO_GENERAL,
-						STEP_DETALLES_CUENTA, STEP_TUS_NEGOCIOS, STEP_TERMINOS, STEP_PRIVACIDAD);
-			} else {
 				appPage.navigate(loginUrl);
 				waitForUi(appPage);
 				captureScreenshot(appPage, outputDir, "step0_login_page.png", true);
@@ -109,9 +110,9 @@ public class SaleadsMiNegocioFullTest {
 						}
 					}
 				}
+			} catch (final Throwable t) {
+				failure = t;
 			}
-		} catch (final Throwable t) {
-			failure = t;
 		} finally {
 			writeReports(results, outputDir);
 		}
