@@ -194,6 +194,34 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+SaleADS E2E workflow test
+-------------------------
+
+A dedicated UI workflow test was added for SaleADS "Mi Negocio":
+
+* Test class: `src/test/java/io/proleap/cobol/e2e/saleads/SaleadsMiNegocioFullTest.java`
+* It validates:
+  * Google sign-in flow entry
+  * "Mi Negocio" menu expansion
+  * "Agregar Negocio" modal
+  * "Administrar Negocios" account view sections
+  * Legal links (`T\u00E9rminos y Condiciones`, `Pol\u00EDtica de Privacidad`) including final URLs
+* It captures screenshots and writes reports under:
+  * `target/saleads-evidence/<timestamp>/report.md`
+  * `target/saleads-evidence/<timestamp>/report.json`
+
+Run it by providing the login URL of the current environment:
+
+```
+$ SALEADS_LOGIN_URL="https://<current-env>/login" mvn -Dtest=io.proleap.cobol.e2e.saleads.SaleadsMiNegocioFullTest test
+```
+
+Notes:
+
+* The test is environment-agnostic and does not hardcode a domain.
+* If `SALEADS_LOGIN_URL` is not provided, the test is skipped.
+* Use `SALEADS_HEADLESS=false` to run with a visible browser.
+
 
 Release process
 ---------------
