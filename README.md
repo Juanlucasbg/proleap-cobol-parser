@@ -194,6 +194,40 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+SaleADS Mi Negocio E2E workflow test
+------------------------------------
+
+This repository now includes an optional Playwright-based end-to-end test for the
+SaleADS.ai "Mi Negocio" workflow:
+
+`io.proleap.cobol.e2e.saleads.SaleAdsMiNegocioWorkflowE2ETest`
+
+The test is URL-agnostic and works against any SaleADS environment (dev/staging/prod)
+using environment variables.
+
+Required environment variable:
+
+```
+SALEADS_START_URL=<current-environment-login-url>
+```
+
+Optional environment variables:
+
+```
+SALEADS_GOOGLE_EMAIL=juanlucasbarbiergarzon@gmail.com
+SALEADS_HEADLESS=true
+```
+
+Run only this workflow test with:
+
+```
+$ mvn -Dtest=SaleAdsMiNegocioWorkflowE2ETest test
+```
+
+Artifacts (screenshots + textual PASS/FAIL report output) are generated under:
+
+`target/e2e-artifacts/saleads-mi-negocio-<timestamp>/`
+
 
 Release process
 ---------------
