@@ -63,55 +63,57 @@ public class SaleadsMiNegocioFullTest {
 		boolean preconditionsMet = true;
 		final String loginUrl = resolveLoginUrl();
 
-		if (loginUrl == null || loginUrl.isBlank()) {
-			preconditionsMet = false;
-			markFail(results, STEP_LOGIN,
-					"Missing login URL. Set SALEADS_LOGIN_URL or -Dsaleads.login.url to the current environment login page.");
-			markPrerequisiteFailures(results, STEP_MI_NEGOCIO_MENU, STEP_AGREGAR_MODAL, STEP_ADMIN_VIEW, STEP_INFO_GENERAL,
-					STEP_DETALLES_CUENTA, STEP_TUS_NEGOCIOS, STEP_TERMINOS, STEP_PRIVACIDAD);
-		} else {
-			try (Playwright playwright = Playwright.create()) {
-				final Browser browser = playwright.chromium().launch(new BrowserType.LaunchOptions()
-						.setHeadless(resolveHeadless()).setSlowMo(resolveSlowMoMillis()));
-				final BrowserContext context = browser
-						.newContext(new Browser.NewContextOptions().setViewportSize(1920, 1080));
-				final Page appPage = context.newPage();
+		try {
+			if (loginUrl == null || loginUrl.isBlank()) {
+				preconditionsMet = false;
+				markFail(results, STEP_LOGIN,
+						"Missing login URL. Set SALEADS_LOGIN_URL or -Dsaleads.login.url to the current environment login page.");
+				markPrerequisiteFailures(results, STEP_MI_NEGOCIO_MENU, STEP_AGREGAR_MODAL, STEP_ADMIN_VIEW,
+						STEP_INFO_GENERAL, STEP_DETALLES_CUENTA, STEP_TUS_NEGOCIOS, STEP_TERMINOS, STEP_PRIVACIDAD);
+			} else {
+				try (Playwright playwright = Playwright.create()) {
+					final Browser browser = playwright.chromium().launch(new BrowserType.LaunchOptions()
+							.setHeadless(resolveHeadless()).setSlowMo(resolveSlowMoMillis()));
+					final BrowserContext context = browser
+							.newContext(new Browser.NewContextOptions().setViewportSize(1920, 1080));
+					final Page appPage = context.newPage();
 
-				appPage.navigate(loginUrl);
-				waitForUi(appPage);
-				captureScreenshot(appPage, outputDir, "step0_login_page.png", true);
+					appPage.navigate(loginUrl);
+					waitForUi(appPage);
+					captureScreenshot(appPage, outputDir, "step0_login_page.png", true);
 
-				final boolean loginPassed = runLoginStep(appPage, outputDir, results);
-				if (!loginPassed) {
-					markPrerequisiteFailures(results, STEP_MI_NEGOCIO_MENU, STEP_AGREGAR_MODAL, STEP_ADMIN_VIEW,
-							STEP_INFO_GENERAL, STEP_DETALLES_CUENTA, STEP_TUS_NEGOCIOS, STEP_TERMINOS, STEP_PRIVACIDAD);
-				} else {
-					final boolean miNegocioMenuPassed = runMiNegocioMenuStep(appPage, outputDir, results);
-					if (!miNegocioMenuPassed) {
-						markPrerequisiteFailures(results, STEP_AGREGAR_MODAL, STEP_ADMIN_VIEW, STEP_INFO_GENERAL,
-								STEP_DETALLES_CUENTA, STEP_TUS_NEGOCIOS, STEP_TERMINOS, STEP_PRIVACIDAD);
+					final boolean loginPassed = runLoginStep(appPage, outputDir, results);
+					if (!loginPassed) {
+						markPrerequisiteFailures(results, STEP_MI_NEGOCIO_MENU, STEP_AGREGAR_MODAL, STEP_ADMIN_VIEW,
+								STEP_INFO_GENERAL, STEP_DETALLES_CUENTA, STEP_TUS_NEGOCIOS, STEP_TERMINOS, STEP_PRIVACIDAD);
 					} else {
-						final boolean agregarModalPassed = runAgregarNegocioModalStep(appPage, outputDir, results);
-						if (!agregarModalPassed) {
-							markPrerequisiteFailures(results, STEP_ADMIN_VIEW, STEP_INFO_GENERAL, STEP_DETALLES_CUENTA,
-									STEP_TUS_NEGOCIOS, STEP_TERMINOS, STEP_PRIVACIDAD);
+						final boolean miNegocioMenuPassed = runMiNegocioMenuStep(appPage, outputDir, results);
+						if (!miNegocioMenuPassed) {
+							markPrerequisiteFailures(results, STEP_AGREGAR_MODAL, STEP_ADMIN_VIEW, STEP_INFO_GENERAL,
+									STEP_DETALLES_CUENTA, STEP_TUS_NEGOCIOS, STEP_TERMINOS, STEP_PRIVACIDAD);
 						} else {
-							final boolean adminViewPassed = runAdministrarNegociosStep(appPage, outputDir, results);
-							if (!adminViewPassed) {
-								markPrerequisiteFailures(results, STEP_INFO_GENERAL, STEP_DETALLES_CUENTA, STEP_TUS_NEGOCIOS,
-										STEP_TERMINOS, STEP_PRIVACIDAD);
+							final boolean agregarModalPassed = runAgregarNegocioModalStep(appPage, outputDir, results);
+							if (!agregarModalPassed) {
+								markPrerequisiteFailures(results, STEP_ADMIN_VIEW, STEP_INFO_GENERAL, STEP_DETALLES_CUENTA,
+										STEP_TUS_NEGOCIOS, STEP_TERMINOS, STEP_PRIVACIDAD);
 							} else {
-								runInformacionGeneralStep(appPage, results);
-								runDetallesCuentaStep(appPage, results);
-								runTusNegociosStep(appPage, results);
-								runLegalPageStep(appPage, outputDir, results, STEP_TERMINOS, "Términos y Condiciones");
-								runLegalPageStep(appPage, outputDir, results, STEP_PRIVACIDAD, "Política de Privacidad");
+								final boolean adminViewPassed = runAdministrarNegociosStep(appPage, outputDir, results);
+								if (!adminViewPassed) {
+									markPrerequisiteFailures(results, STEP_INFO_GENERAL, STEP_DETALLES_CUENTA,
+											STEP_TUS_NEGOCIOS, STEP_TERMINOS, STEP_PRIVACIDAD);
+								} else {
+									runInformacionGeneralStep(appPage, results);
+									runDetallesCuentaStep(appPage, results);
+									runTusNegociosStep(appPage, results);
+									runLegalPageStep(appPage, outputDir, results, STEP_TERMINOS, "Términos y Condiciones");
+									runLegalPageStep(appPage, outputDir, results, STEP_PRIVACIDAD, "Política de Privacidad");
+								}
 							}
 						}
 					}
+				} catch (final Throwable t) {
+					failure = t;
 				}
-			} catch (final Throwable t) {
-				failure = t;
 			}
 		} finally {
 			writeReports(results, outputDir);
