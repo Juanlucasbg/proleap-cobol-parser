@@ -49,10 +49,14 @@ public class SaleadsMiNegocioFullTest {
 				BrowserContext context = browser.newContext(new Browser.NewContextOptions().setViewportSize(1600, 1200));
 				Page page = context.newPage()) {
 
-			page.navigate(resolveLoginUrl());
-			waitForUiLoad(page);
+			final String loginUrl = resolveLoginUrl();
+			if (loginUrl != null) {
+				page.navigate(loginUrl);
+				waitForUiLoad(page);
+			}
 
 			runStep("Login", report, failures, () -> {
+				assertLoginPageAvailable(page, loginUrl);
 				loginWithGoogle(page, context);
 				assertMainInterfaceVisible(page);
 				captureScreenshot(page, evidenceDir.resolve("01-dashboard-loaded.png"), false);
@@ -379,6 +383,18 @@ public class SaleadsMiNegocioFullTest {
 				System.getenv().getOrDefault("SALEADS_HEADLESS", "true")));
 	}
 
+	private void assertLoginPageAvailable(final Page page, final String loginUrl) {
+		if (loginUrl != null) {
+			return;
+		}
+
+		final String currentUrl = page.url();
+		if (currentUrl == null || currentUrl.isBlank() || currentUrl.startsWith("about:blank")) {
+			throw new AssertionError(
+					"Missing SaleADS login URL/session. Set -Dsaleads.login.url or SALEADS_LOGIN_URL.");
+		}
+	}
+
 	private String resolveLoginUrl() {
 		final String fromProperty = System.getProperty("saleads.login.url");
 		if (fromProperty != null && !fromProperty.isBlank()) {
@@ -390,8 +406,7 @@ public class SaleadsMiNegocioFullTest {
 			return fromEnvironment.trim();
 		}
 
-		throw new IllegalArgumentException(
-				"Missing SaleADS login URL. Set -Dsaleads.login.url or SALEADS_LOGIN_URL.");
+		return null;
 	}
 
 	private Pattern caseInsensitivePattern(final String literalText) {
