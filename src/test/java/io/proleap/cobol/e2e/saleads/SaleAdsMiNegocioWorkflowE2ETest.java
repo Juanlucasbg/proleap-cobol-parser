@@ -166,9 +166,8 @@ public class SaleAdsMiNegocioWorkflowE2ETest {
 
 		Page popup = null;
 		try {
-			popup = page.waitForPopup(
-					() -> loginButton.click(new Locator.ClickOptions().setTimeout(DEFAULT_TIMEOUT_MS)),
-					new Page.WaitForPopupOptions().setTimeout(SHORT_TIMEOUT_MS));
+			popup = page.waitForPopup(new Page.WaitForPopupOptions().setTimeout(SHORT_TIMEOUT_MS),
+					() -> loginButton.click(new Locator.ClickOptions().setTimeout(DEFAULT_TIMEOUT_MS)));
 		} catch (final PlaywrightException popupNotOpened) {
 			waitForUiToSettle(page);
 		}
@@ -220,8 +219,8 @@ public class SaleAdsMiNegocioWorkflowE2ETest {
 		Page legalPage = null;
 		boolean openedInNewTab = false;
 		try {
-			legalPage = context.waitForPage(() -> link.click(new Locator.ClickOptions().setTimeout(DEFAULT_TIMEOUT_MS)),
-					new BrowserContext.WaitForPageOptions().setTimeout(SHORT_TIMEOUT_MS));
+			legalPage = context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(SHORT_TIMEOUT_MS),
+					() -> link.click(new Locator.ClickOptions().setTimeout(DEFAULT_TIMEOUT_MS)));
 			openedInNewTab = true;
 		} catch (final PlaywrightException newTabNotOpened) {
 			link.click(new Locator.ClickOptions().setTimeout(DEFAULT_TIMEOUT_MS));
