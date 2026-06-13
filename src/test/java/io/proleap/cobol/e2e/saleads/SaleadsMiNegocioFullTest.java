@@ -108,7 +108,9 @@ public class SaleadsMiNegocioFullTest {
 	}
 
 	private void stepLogin() throws Exception {
-		clickByVisibleText("Sign in with Google", "Iniciar sesi\u00F3n con Google", "Continuar con Google");
+		clickByVisibleText("Sign in with Google", "Iniciar sesi\u00F3n con Google", "Continuar con Google", "Sign in",
+				"Iniciar sesi\u00F3n", "Inicia sesi\u00F3n", "Ingresar");
+		clickIfVisible(Duration.ofSeconds(8), "GOOGLE", "Google");
 		selectGoogleAccountIfVisible("juanlucasbarbiergarzon@gmail.com");
 		assertMainInterfaceVisible();
 		assertSidebarVisible();
@@ -229,6 +231,7 @@ public class SaleadsMiNegocioFullTest {
 		} catch (final Throwable throwable) {
 			stepResult.passed = false;
 			stepResult.message = safeMessage(throwable);
+			takeFailureScreenshot(stepName);
 		}
 
 		report.put(stepName, stepResult);
@@ -334,6 +337,23 @@ public class SaleadsMiNegocioFullTest {
 
 		throw notFound != null ? notFound
 				: new NoSuchElementException("Could not find a clickable element by visible text.");
+	}
+
+	private boolean clickIfVisible(final Duration timeout, final String... textOptions) {
+		for (final String textOption : textOptions) {
+			try {
+				final WebElement element = waitForVisible(By.xpath(
+						"//*[self::button or self::a or @role='button' or self::span or self::div][contains(normalize-space(.), "
+								+ toXpathLiteral(textOption) + ")]"),
+						timeout);
+				clickElement(element);
+				return true;
+			} catch (final NoSuchElementException ignored) {
+				// Try next text option.
+			}
+		}
+
+		return false;
 	}
 
 	private void clickElement(final WebElement element) {
@@ -469,6 +489,18 @@ public class SaleadsMiNegocioFullTest {
 		final Path filePath = evidenceDir.resolve(fileName);
 		final File screenshotFile = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
 		Files.copy(screenshotFile.toPath(), filePath, StandardCopyOption.REPLACE_EXISTING);
+	}
+
+	private void takeFailureScreenshot(final String stepName) {
+		if (driver == null || evidenceDir == null) {
+			return;
+		}
+
+		try {
+			takeScreenshot("failure-" + stepName);
+		} catch (final Exception ignored) {
+			// Best effort only: failure screenshot should not mask original step error.
+		}
 	}
 
 	private void takeFullPageScreenshot(final String name) throws IOException {
