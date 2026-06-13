@@ -1,0 +1,11 @@
+{
+  "name": "saleads-e2e-workflows",
+  "private": true,
+  "scripts": {
+    "test:saleads-mi-negocio": "playwright test tests/saleads-mi-negocio.spec.ts",
+    "test:saleads-mi-negocio:headed": "playwright test tests/saleads-mi-negocio.spec.ts --headed"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0"
+  }
+}
