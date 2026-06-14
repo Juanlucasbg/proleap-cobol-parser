@@ -33,7 +33,6 @@ import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.WindowType;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.firefox.FirefoxDriver;
@@ -101,8 +100,10 @@ public class SaleadsMiNegocioFullTest {
 			Files.createDirectories(reportPath.getParent());
 		}
 
-		driver = buildDriver();
-		wait = new WebDriverWait(driver, java.time.Duration.ofSeconds(waitSeconds));
+		if (!loginUrl.isEmpty()) {
+			driver = buildDriver();
+			wait = new WebDriverWait(driver, java.time.Duration.ofSeconds(waitSeconds));
+		}
 	}
 
 	@After
@@ -118,6 +119,9 @@ public class SaleadsMiNegocioFullTest {
 
 	@Test
 	public void saleadsMiNegocioWorkflow() throws IOException {
+		if (loginUrl.isEmpty()) {
+			markAllStepsFailed("Missing SALEADS_LOGIN_URL; workflow was not executed.");
+		}
 		Assume.assumeTrue("Set SALEADS_LOGIN_URL to execute this workflow.", !loginUrl.isEmpty());
 		driver.get(loginUrl);
 		waitForUiToLoad();
@@ -500,6 +504,12 @@ public class SaleadsMiNegocioFullTest {
 		return true;
 	}
 
+	private void markAllStepsFailed(final String reason) {
+		for (final String field : REPORT_FIELDS) {
+			results.get(field).fail(reason);
+		}
+	}
+
 	private void writeReport() throws IOException {
 		final StringBuilder json = new StringBuilder();
 		json.append("{\n");
@@ -560,12 +570,10 @@ public class SaleadsMiNegocioFullTest {
 	}
 
 	private static final class StepResult {
-		private final String field;
 		private boolean passed = true;
 		private final List<String> details = new ArrayList<>();
 
 		private StepResult(final String field) {
-			this.field = field;
 		}
 
 		private void note(final String message) {
