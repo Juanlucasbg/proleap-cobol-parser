@@ -41,3 +41,8 @@ target/
 
 ## Additional for IntelliJ
 out/
+
+# E2E generated/runtime artifacts
+e2e/node_modules/
+e2e/test-results/
+e2e/screenshots/
