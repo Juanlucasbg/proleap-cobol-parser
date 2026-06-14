@@ -147,8 +147,17 @@ public class SaleadsMiNegocioFullTest {
 	private boolean runLoginStep(final BrowserContext context, final Page page, final Path screenshotsDir,
 			final StepResult result) {
 		try {
-			clickFirstVisibleText(page, "(?iu)Sign\\s*in\\s*with\\s*Google", "(?iu)Inicia\\s+sesi[oó]n\\s+con\\s+Google",
-					"(?iu)^\\s*Google\\s*$", "(?iu)Sign\\s*in", "(?iu)Iniciar\\s*sesi[oó]n");
+			if (hasVisibleText(page, "(?i)^\\s*GOOGLE\\s*$")) {
+				clickFirstVisibleText(page, "(?i)^\\s*GOOGLE\\s*$");
+			} else {
+				clickFirstVisibleText(page, "(?iu)Sign\\s*in\\s*with\\s*Google",
+						"(?iu)Inicia\\s+sesi[oó]n\\s+con\\s+Google", "(?iu)^\\s*Google\\s*$", "(?iu)Sign\\s*in",
+						"(?iu)Iniciar\\s*sesi[oó]n", "(?iu)Inicia\\s+sesi[oó]n", "(?iu)Login|Log\\s*in",
+						"(?iu)Acceder|Entrar");
+				if (hasVisibleText(page, "(?i)^\\s*GOOGLE\\s*$")) {
+					clickFirstVisibleText(page, "(?i)^\\s*GOOGLE\\s*$");
+				}
+			}
 
 			// Optional Google account picker interaction.
 			for (final Page anyPage : context.pages()) {
@@ -396,7 +405,7 @@ public class SaleadsMiNegocioFullTest {
 				return;
 			}
 		}
-		throw new AssertionError("No clickable element found for text patterns: " + Arrays.toString(regexes));
+		throw new IllegalStateException("No clickable element found for text patterns: " + Arrays.toString(regexes));
 	}
 
 	private void clickIfVisibleText(final Page page, final String regex) {
