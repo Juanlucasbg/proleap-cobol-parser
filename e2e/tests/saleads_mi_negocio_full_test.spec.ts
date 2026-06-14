@@ -138,7 +138,17 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
   ensureArtifactFolders();
 
   if (!SALEADS_START_URL) {
-    throw new Error("Missing SALEADS_START_URL. Provide the current environment login URL at runtime.");
+    setFail("Login", "Missing SALEADS_START_URL. Provide the current environment login URL at runtime.");
+    setFail("Mi Negocio menu", "Skipped because login could not start.");
+    setFail("Agregar Negocio modal", "Skipped because login could not start.");
+    setFail("Administrar Negocios view", "Skipped because login could not start.");
+    setFail("Información General", "Skipped because login could not start.");
+    setFail("Detalles de la Cuenta", "Skipped because login could not start.");
+    setFail("Tus Negocios", "Skipped because login could not start.");
+    setFail("Términos y Condiciones", "Skipped because login could not start.");
+    setFail("Política de Privacidad", "Skipped because login could not start.");
+    await writeReport();
+    throw new Error("Missing SALEADS_START_URL. Final report generated with FAIL statuses.");
   }
 
   await page.goto(SALEADS_START_URL, { waitUntil: "domcontentloaded" });
