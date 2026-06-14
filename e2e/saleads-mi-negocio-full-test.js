@@ -157,6 +157,7 @@ async function run() {
   let browser;
   let context;
   let page;
+  let fatalError = null;
 
   try {
     if (process.env.PLAYWRIGHT_WS_ENDPOINT) {
@@ -376,6 +377,9 @@ async function run() {
       report.summary["Política de Privacidad"] = "FAIL";
       report.notes.push(`Política de Privacidad validation failed: ${error.message}`);
     }
+  } catch (error) {
+    fatalError = error;
+    report.notes.push(`Fatal setup error: ${error.message}`);
   } finally {
     const reportPath = path.join(ARTIFACTS_DIR, "report.json");
     await fs.writeFile(reportPath, JSON.stringify(report, null, 2), "utf8");
@@ -384,6 +388,9 @@ async function run() {
     console.log(JSON.stringify(report.summary, null, 2));
     console.log(`Report file: ${reportPath}`);
     console.log(`Artifacts dir: ${ARTIFACTS_DIR}`);
+    if (fatalError) {
+      console.error(`Fatal setup error: ${fatalError.message}`);
+    }
 
     if (browser) {
       await browser.close().catch(() => {});
@@ -395,6 +402,6 @@ async function run() {
 }
 
 run().catch((error) => {
-  console.error("Unhandled error while running SaleADS Mi Negocio workflow:", error);
+  console.error(`Unhandled error while running SaleADS Mi Negocio workflow: ${error.message}`);
   process.exitCode = 1;
 });
