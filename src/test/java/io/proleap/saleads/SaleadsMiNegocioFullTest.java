@@ -22,7 +22,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.Keys;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.StaleElementReferenceException;
@@ -251,6 +250,7 @@ public class SaleadsMiNegocioFullTest {
 	private String openLegalLinkAndValidate(final String[] linkTexts, final String[] headingTexts, final String screenshotName) {
 		final Set<String> beforeHandles = driver.getWindowHandles();
 		final String originalHandle = driver.getWindowHandle();
+		final String previousUrl = driver.getCurrentUrl();
 
 		clickByTextAndWait(linkTexts);
 
@@ -263,7 +263,10 @@ public class SaleadsMiNegocioFullTest {
 					}
 				}
 			}
-			return originalHandle;
+			if (!previousUrl.equals(d.getCurrentUrl())) {
+				return originalHandle;
+			}
+			return null;
 		});
 
 		driver.switchTo().window(targetHandle);
@@ -399,7 +402,7 @@ public class SaleadsMiNegocioFullTest {
 			action.run();
 			finalReport.put(reportField, "PASS");
 			return true;
-		} catch (final Exception e) {
+		} catch (final Throwable e) {
 			finalReport.put(reportField, "FAIL - " + safeMessage(e));
 			takeScreenshot(reportField.toLowerCase().replace(" ", "-") + "-failure");
 			return false;
@@ -482,10 +485,10 @@ public class SaleadsMiNegocioFullTest {
 		}
 	}
 
-	private String safeMessage(final Exception exception) {
-		final String message = exception.getMessage();
+	private String safeMessage(final Throwable throwable) {
+		final String message = throwable.getMessage();
 		if (isBlank(message)) {
-			return exception.getClass().getSimpleName();
+			return throwable.getClass().getSimpleName();
 		}
 
 		return message.lines().limit(1).collect(Collectors.joining(" "));
