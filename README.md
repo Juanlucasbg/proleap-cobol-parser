@@ -194,6 +194,19 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+* To run the SaleADS "Mi Negocio" end-to-end workflow test (Google login + module validations), provide the target environment URL at runtime:
+
+```
+$ SALEADS_LOGIN_URL="https://your-saleads-environment/login" \
+  SALEADS_GOOGLE_EMAIL="juanlucasbarbiergarzon@gmail.com" \
+  SALEADS_HEADLESS="true" \
+  mvn -Dtest=io.proleap.cobol.e2e.SaleadsMiNegocioWorkflowTest test
+```
+
+  * This test intentionally avoids hardcoding any domain and reads URL/account settings from environment variables (or equivalent JVM properties).
+  * Screenshots are stored in `target/saleads-evidence/<timestamp>/`.
+  * The test prints a PASS/FAIL final report for: Login, Mi Negocio menu, Agregar Negocio modal, Administrar Negocios view, Información General, Detalles de la Cuenta, Tus Negocios, Términos y Condiciones, and Política de Privacidad.
+
 
 Release process
 ---------------
