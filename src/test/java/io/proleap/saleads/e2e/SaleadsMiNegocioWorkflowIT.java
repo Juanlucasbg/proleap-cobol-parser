@@ -228,8 +228,7 @@ public class SaleadsMiNegocioWorkflowIT {
 
   private Page openLinkAndResolveTargetPage(final BrowserContext context, final Page appPage, final String linkText) {
     try {
-      final Page newPage = context.waitForPage(() -> clickByVisibleText(appPage, linkText),
-          new BrowserContext.WaitForPageOptions().setTimeout(8_000));
+      final Page newPage = context.waitForPage(() -> clickByVisibleText(appPage, linkText));
       waitForUi(newPage);
       return newPage;
     } catch (PlaywrightException ignored) {
