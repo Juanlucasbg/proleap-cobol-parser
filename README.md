@@ -194,6 +194,21 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+* To run the optional SaleADS "Mi Negocio" end-to-end workflow test (Google login + full module validation with screenshots):
+
+```
+$ mvn -Dtest=io.proleap.cobol.e2e.saleads.SaleAdsMiNegocioWorkflowTest \
+      -Dsaleads.e2e.enabled=true \
+      -Dsaleads.start.url="<saleads-login-url-of-current-environment>" \
+      -Dsaleads.headless=true test
+```
+
+  * The test does not hardcode domains; use `saleads.start.url` (or env var `SALEADS_START_URL`) for any dev/staging/prod environment.
+  * Checkpoints screenshots and the final PASS/FAIL report are written under `target/saleads-evidence/<timestamp>/`.
+  * You can optionally choose browser and timeout with:
+    * `-Dsaleads.browser=chrome|firefox`
+    * `-Dsaleads.timeout.seconds=30`
+
 
 Release process
 ---------------
