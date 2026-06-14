@@ -88,6 +88,7 @@ public class SaleadsMiNegocioFullTest {
 
 		driver.get(loginUrl);
 		waitForUiToLoad();
+		appWindowHandle = driver.getWindowHandle();
 	}
 
 	@After
@@ -138,6 +139,51 @@ public class SaleadsMiNegocioFullTest {
 		saveScreenshot("01-dashboard-loaded.png");
 		appWindowHandle = driver.getWindowHandle();
 		return "Dashboard y sidebar visibles";
+	}
+
+	private void handleGoogleAccountSelection(final String accountEmail) {
+		final String initialHandle = driver.getWindowHandle();
+		final Set<String> handlesBeforeSelection = driver.getWindowHandles();
+
+		try {
+			wait.until(drv -> drv.getWindowHandles().size() > handlesBeforeSelection.size() || isTextVisible(accountEmail));
+		} catch (final TimeoutException timeoutException) {
+			// Account selector is optional if the Google session is already active.
+		}
+
+		final Set<String> handlesAfterSelection = driver.getWindowHandles();
+		if (handlesAfterSelection.size() > handlesBeforeSelection.size()) {
+			for (final String handle : handlesAfterSelection) {
+				if (!handlesBeforeSelection.contains(handle)) {
+					driver.switchTo().window(handle);
+					break;
+				}
+			}
+		}
+
+		if (isTextVisible(accountEmail)) {
+			clickByText(accountEmail, false);
+			waitForUiToLoad();
+		}
+
+		try {
+			wait.until(drv -> {
+				for (final String handle : drv.getWindowHandles()) {
+					drv.switchTo().window(handle);
+					if (isTextVisible("Negocio")) {
+						appWindowHandle = handle;
+						return true;
+					}
+				}
+				return false;
+			});
+		} catch (final TimeoutException timeoutException) {
+			driver.switchTo().window(initialHandle);
+		}
+
+		if (appWindowHandle != null && driver.getWindowHandles().contains(appWindowHandle)) {
+			driver.switchTo().window(appWindowHandle);
+		}
 	}
 
 	private String openMiNegocioMenu() throws IOException {
@@ -229,7 +275,8 @@ public class SaleadsMiNegocioFullTest {
 
 	private String validateLegalDocument(final String linkText, final String screenshotFile) throws IOException {
 		waitForVisibleText("Sección Legal");
-		final String originalHandle = driver.getWindowHandle();
+		final String originalHandle = appWindowHandle != null ? appWindowHandle : driver.getWindowHandle();
+		driver.switchTo().window(originalHandle);
 		final Set<String> handlesBefore = driver.getWindowHandles();
 		final String currentUrlBeforeClick = driver.getCurrentUrl();
 
