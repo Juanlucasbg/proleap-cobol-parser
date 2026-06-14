@@ -41,3 +41,8 @@ target/
 
 ## Additional for IntelliJ
 out/
+
+# Node-based QA artifacts
+qa/saleads/node_modules/
+qa/saleads/playwright-report/
+qa/saleads/test-results/

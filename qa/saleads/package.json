@@ -1,0 +1,21 @@
+{
+  "name": "saleads",
+  "version": "1.0.0",
+  "description": "Environment-agnostic SaleADS Mi Negocio E2E automation",
+  "scripts": {
+    "test": "playwright test",
+    "test:saleads-mi-negocio": "playwright test tests/saleads_mi_negocio_full_test.spec.js",
+    "test:saleads-mi-negocio:headed": "playwright test tests/saleads_mi_negocio_full_test.spec.js --headed"
+  },
+  "keywords": [
+    "playwright",
+    "e2e",
+    "saleads"
+  ],
+  "author": "Cursor Automation",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "playwright": "^1.60.0"
+  }
+}
