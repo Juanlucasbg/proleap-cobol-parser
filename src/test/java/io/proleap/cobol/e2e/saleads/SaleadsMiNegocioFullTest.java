@@ -66,7 +66,7 @@ public class SaleadsMiNegocioFullTest {
 							"Missing SALEADS_LOGIN_URL (or -Dsaleads.login.url). This test is environment-agnostic and does not hardcode domains.");
 					markPrerequisiteFailures(results, "Mi Negocio menu", "Login did not complete.");
 					captureScreenshot(appPage, screenshotsDir, "step1_login_missing_url", false, results.get("Login"));
-					return;
+					throw new AssertionError("Missing SaleADS login URL input.");
 				}
 
 				appPage.navigate(loginUrl, new Page.NavigateOptions().setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
@@ -76,45 +76,45 @@ public class SaleadsMiNegocioFullTest {
 				final boolean loginOk = runLoginStep(context, appPage, screenshotsDir, results.get("Login"));
 				if (!loginOk) {
 					markPrerequisiteFailures(results, "Mi Negocio menu", "Login failed.");
-					return;
+					throw new AssertionError("Login step failed.");
 				}
 
 				final boolean menuOk = runMiNegocioMenuStep(appPage, screenshotsDir, results.get("Mi Negocio menu"));
 				if (!menuOk) {
 					markPrerequisiteFailures(results, "Agregar Negocio modal", "Mi Negocio menu validation failed.");
-					return;
+					throw new AssertionError("Mi Negocio menu step failed.");
 				}
 
 				final boolean agregarModalOk = runAgregarNegocioModalStep(appPage, screenshotsDir,
 						results.get("Agregar Negocio modal"));
 				if (!agregarModalOk) {
 					markPrerequisiteFailures(results, "Administrar Negocios view", "Agregar Negocio modal validation failed.");
-					return;
+					throw new AssertionError("Agregar Negocio modal step failed.");
 				}
 
 				final boolean administrarOk = runAdministrarNegociosStep(appPage, screenshotsDir,
 						results.get("Administrar Negocios view"));
 				if (!administrarOk) {
 					markPrerequisiteFailures(results, "Información General", "Administrar Negocios view validation failed.");
-					return;
+					throw new AssertionError("Administrar Negocios view step failed.");
 				}
 
 				final boolean infoOk = runInformacionGeneralStep(appPage, results.get("Información General"));
 				if (!infoOk) {
 					markPrerequisiteFailures(results, "Detalles de la Cuenta", "Información General validation failed.");
-					return;
+					throw new AssertionError("Información General step failed.");
 				}
 
 				final boolean detallesOk = runDetallesCuentaStep(appPage, results.get("Detalles de la Cuenta"));
 				if (!detallesOk) {
 					markPrerequisiteFailures(results, "Tus Negocios", "Detalles de la Cuenta validation failed.");
-					return;
+					throw new AssertionError("Detalles de la Cuenta step failed.");
 				}
 
 				final boolean negociosOk = runTusNegociosStep(appPage, results.get("Tus Negocios"));
 				if (!negociosOk) {
 					markPrerequisiteFailures(results, "Términos y Condiciones", "Tus Negocios validation failed.");
-					return;
+					throw new AssertionError("Tus Negocios step failed.");
 				}
 
 				final boolean terminosOk = runLegalLinkStep(context, appPage, screenshotsDir, "Términos y Condiciones",
@@ -122,7 +122,7 @@ public class SaleadsMiNegocioFullTest {
 				if (!terminosOk) {
 					markPrerequisiteFailures(results, "Política de Privacidad",
 							"Términos y Condiciones validation failed.");
-					return;
+					throw new AssertionError("Términos y Condiciones step failed.");
 				}
 
 				runLegalLinkStep(context, appPage, screenshotsDir, "Política de Privacidad",
@@ -533,7 +533,8 @@ public class SaleadsMiNegocioFullTest {
 	}
 
 	private static Pattern regex(final String regexValue) {
-		return Pattern.compile(regexValue, Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+		final String normalized = regexValue.replace("(?iu)", "(?i)").replace("(?ui)", "(?i)");
+		return Pattern.compile(normalized, Pattern.CASE_INSENSITIVE);
 	}
 
 	private void passStep(final StepResult result, final String details) {
