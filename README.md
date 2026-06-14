@@ -194,6 +194,41 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+### Optional: SaleADS Mi Negocio E2E workflow test
+
+This repository now includes an optional Selenium test at:
+
+`src/test/java/io/proleap/cobol/e2e/SaleadsMiNegocioFullTest.java`
+
+The test validates a full SaleADS.ai workflow:
+
+- Login with Google
+- Open **Mi Negocio** menu
+- Validate **Agregar Negocio** modal
+- Open **Administrar Negocios**
+- Validate account sections
+- Validate legal links (**Términos y Condiciones** and **Política de Privacidad**)
+- Capture screenshots at important checkpoints
+- Print a final PASS/FAIL report for each validation step
+
+Environment variables:
+
+- `SALEADS_LOGIN_URL` (required): login page URL for the current environment (dev/staging/prod).
+- `SALEADS_GOOGLE_ACCOUNT` (optional): defaults to `juanlucasbarbiergarzon@gmail.com`.
+- `SALEADS_HEADLESS` (optional): `true`/`false`, default `false`.
+- `SALEADS_CHROME_USER_DATA_DIR` (optional): Chrome profile directory if needed for Google session reuse.
+- `SALEADS_WAIT_SECONDS` (optional): explicit wait timeout in seconds, default `40`.
+
+Run only this test:
+
+```
+$ SALEADS_LOGIN_URL="https://<your-environment>/login" mvn -Dtest=SaleadsMiNegocioFullTest test
+```
+
+Evidence screenshots are written to:
+
+`target/saleads-evidence/<timestamp>/`
+
 
 Release process
 ---------------
