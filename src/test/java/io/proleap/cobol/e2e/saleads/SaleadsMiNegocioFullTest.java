@@ -331,9 +331,8 @@ public class SaleadsMiNegocioFullTest {
 
 		try {
 			try {
-				legalPage = context.waitForPage(
-						() -> clickFirstVisibleText(appPage, "(?iu)" + Pattern.quote(stepLabel)),
-						new BrowserContext.WaitForPageOptions().setTimeout(5000));
+				legalPage = context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(5000),
+						() -> clickFirstVisibleText(appPage, "(?iu)" + Pattern.quote(stepLabel)));
 				openedNewTab = true;
 			} catch (final PlaywrightException popupException) {
 				// Same-tab navigation is valid per workflow rules.
