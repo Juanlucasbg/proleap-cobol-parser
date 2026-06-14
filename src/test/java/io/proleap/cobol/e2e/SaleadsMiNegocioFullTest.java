@@ -2,6 +2,7 @@ package io.proleap.cobol.e2e;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -167,10 +168,10 @@ public class SaleadsMiNegocioFullTest {
 
     Page googlePage = appPage;
     try {
-      Page popup = context.waitForPage(() -> {
+      Page popup = context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(SHORT_TIMEOUT_MS), () -> {
         loginButton.click();
         waitForUiAfterClick(appPage);
-      }, new BrowserContext.WaitForPageOptions().setTimeout(SHORT_TIMEOUT_MS));
+      });
       popup.waitForLoadState(LoadState.DOMCONTENTLOADED);
       googlePage = popup;
     } catch (PlaywrightException ignored) {
@@ -203,10 +204,10 @@ public class SaleadsMiNegocioFullTest {
     boolean openedNewTab = false;
 
     try {
-      legalPage = context.waitForPage(() -> {
+      legalPage = context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(SHORT_TIMEOUT_MS), () -> {
         clickByText(appPage, linkText);
         waitForUiAfterClick(appPage);
-      }, new BrowserContext.WaitForPageOptions().setTimeout(SHORT_TIMEOUT_MS));
+      });
       openedNewTab = true;
     } catch (PlaywrightException ignored) {
       // Link opened in current tab.
@@ -262,7 +263,7 @@ public class SaleadsMiNegocioFullTest {
     if (!failures.isEmpty()) {
       StringBuilder message = new StringBuilder("Failed validation steps:\n");
       failures.forEach((step, error) -> message.append(" - ").append(step).append(": ").append(error).append('\n'));
-      assertTrue(message.toString(), false);
+      fail(message.toString());
     }
   }
 
