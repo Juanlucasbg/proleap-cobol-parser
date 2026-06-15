@@ -1,0 +1,13 @@
+{
+  "name": "saleads-e2e-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cross-environment SaleADS.ai E2E checks",
+  "scripts": {
+    "test:e2e:saleads-mi-negocio": "playwright test e2e/saleads-mi-negocio.full.spec.js",
+    "test:e2e:list": "playwright test --list"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.54.1"
+  }
+}
