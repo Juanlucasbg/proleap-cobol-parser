@@ -194,6 +194,33 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+Optional SaleADS Mi Negocio E2E workflow test
+---------------------------------------------
+
+An optional Selenium-based E2E test is available at:
+
+`src/test/java/io/proleap/saleads/e2e/SaleadsMiNegocioWorkflowE2ETest.java`
+
+The test is environment-agnostic and does not hardcode a SaleADS domain. Provide the current environment login page URL via environment variable:
+
+```
+export SALEADS_E2E_ENABLED=true
+export SALEADS_START_URL="https://<your-saleads-environment>/login"
+# optional (defaults shown)
+export SALEADS_HEADLESS=true
+export SALEADS_TIMEOUT_SECONDS=30
+```
+
+Run only this workflow test:
+
+```
+mvn -Dtest=SaleadsMiNegocioWorkflowE2ETest test
+```
+
+Evidence (screenshots + final report) is written to:
+
+`target/saleads-evidence/<timestamp>/`
+
 
 Release process
 ---------------
