@@ -121,9 +121,7 @@ public class SaleadsMiNegocioFullTest {
   private boolean runLoginStep(final Page page, final StepResult result, final Path outputDir) {
     final Locator loginButton = firstVisible(page,
         page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions()
-            .setName(Pattern.compile("(sign\\s*in|inicia\\s+sesi[oó]n|google)", Pattern.CASE_INSENSITIVE))),
-        page.getByText(Pattern.compile("sign\\s*in\\s*with\\s*google", Pattern.CASE_INSENSITIVE)),
-        page.getByText(Pattern.compile("inicia\\s+sesi[oó]n\\s+con\\s+google", Pattern.CASE_INSENSITIVE)),
+            .setName(Pattern.compile("(sign\\s*in|inicia\\s+sesi[oó]n)", Pattern.CASE_INSENSITIVE))),
         page.getByText(Pattern.compile("inicia\\s+sesi[oó]n", Pattern.CASE_INSENSITIVE)));
 
     if (loginButton == null) {
@@ -133,6 +131,17 @@ public class SaleadsMiNegocioFullTest {
 
     clickAndWait(page, loginButton);
 
+    final Locator googleButton = firstVisible(page,
+        page.getByRole(AriaRole.BUTTON,
+            new Page.GetByRoleOptions().setName(Pattern.compile("(google|sign\\s*in\\s*with\\s*google)", Pattern.CASE_INSENSITIVE))),
+        page.getByText(Pattern.compile("^\\s*google\\s*$", Pattern.CASE_INSENSITIVE)).first(),
+        page.getByText(Pattern.compile("sign\\s*in\\s*with\\s*google", Pattern.CASE_INSENSITIVE)).first(),
+        page.getByText(Pattern.compile("inicia\\s+sesi[oó]n\\s+con\\s+google", Pattern.CASE_INSENSITIVE)).first());
+
+    if (googleButton != null) {
+      clickAndWait(page, googleButton);
+    }
+
     final Locator accountChooser = page.getByText(Pattern.compile("juanlucasbarbiergarzon@gmail\\.com", Pattern.CASE_INSENSITIVE)).first();
     if (isVisible(accountChooser, 5_000)) {
       clickAndWait(page, accountChooser);
@@ -141,13 +150,16 @@ public class SaleadsMiNegocioFullTest {
     waitForUi(page);
     capture(page, outputDir, "step1_dashboard_after_login.png", true, result);
 
-    final boolean leftSidebarVisible = isVisible(page.locator("aside"), 10_000)
-        || isVisible(page.getByRole(AriaRole.NAVIGATION), 10_000)
-        || isVisible(page.getByText(Pattern.compile("Negocio", Pattern.CASE_INSENSITIVE)).first(), 10_000);
+    final boolean hasSidebarContainer = isVisible(page.locator("aside"), 10_000)
+        || isVisible(page.getByRole(AriaRole.NAVIGATION), 10_000);
+    final int sidebarActions = page.locator("aside a, aside button, nav a, nav button").count();
+    final boolean hasBusinessNavigation = isVisible(page.getByText(Pattern.compile("Mi\\s+Negocio", Pattern.CASE_INSENSITIVE)).first(), 5_000)
+        || isVisible(page.getByText(Pattern.compile("^\\s*Negocio\\s*$", Pattern.CASE_INSENSITIVE)).first(), 5_000)
+        || isVisible(page.getByText(Pattern.compile("Administrar\\s+Negocios", Pattern.CASE_INSENSITIVE)).first(), 5_000);
     final boolean stillAtIdentityProvider = page.url().contains("accounts.google.")
         || page.url().contains("keycloak");
 
-    if (leftSidebarVisible && !stillAtIdentityProvider) {
+    if (hasSidebarContainer && sidebarActions >= 3 && hasBusinessNavigation && !stillAtIdentityProvider) {
       passStep(result, "Main application UI and left sidebar are visible.");
       return true;
     }
@@ -157,6 +169,18 @@ public class SaleadsMiNegocioFullTest {
   }
 
   private boolean runMiNegocioMenuStep(final Page page, final StepResult result, final Path outputDir) {
+    final Locator negocioSection = firstVisible(page,
+        page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName(Pattern.compile("^\\s*Negocio\\s*$", Pattern.CASE_INSENSITIVE))),
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(Pattern.compile("^\\s*Negocio\\s*$", Pattern.CASE_INSENSITIVE))),
+        page.getByText(Pattern.compile("^\\s*Negocio\\s*$", Pattern.CASE_INSENSITIVE)).first());
+
+    if (negocioSection == null) {
+      failStep(result, "Could not find 'Negocio' section in the left sidebar.");
+      return false;
+    }
+
+    clickAndWait(page, negocioSection);
+
     final Locator miNegocio = firstVisible(page,
         page.getByRole(AriaRole.LINK,
             new Page.GetByRoleOptions().setName(Pattern.compile("Mi\\s+Negocio", Pattern.CASE_INSENSITIVE))),
