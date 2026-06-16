@@ -331,4 +331,10 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
   await fs.writeFile(REPORT_FILE, JSON.stringify(report, null, 2), "utf8");
   console.table(tabular);
   console.log(`Detailed report file: ${REPORT_FILE}`);
+
+  const failedSteps = tabular.filter((entry) => entry.status === "FAIL");
+  expect(
+    failedSteps,
+    `Failed validation steps: ${failedSteps.map((entry) => entry.step).join(", ") || "none"}`
+  ).toEqual([]);
 });
