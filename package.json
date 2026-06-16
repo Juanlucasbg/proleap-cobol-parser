@@ -1,0 +1,14 @@
+{
+  "name": "saleads-mi-negocio-e2e",
+  "version": "1.0.0",
+  "description": "Playwright E2E validation for SaleADS Mi Negocio workflow",
+  "private": true,
+  "scripts": {
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:debug": "playwright test --debug"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0"
+  }
+}
