@@ -1,0 +1,18 @@
+{
+  "name": "saleads-mi-negocio",
+  "version": "1.0.0",
+  "description": "Cross-environment Playwright E2E test for SaleADS Mi Negocio workflow",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "report": "playwright show-report"
+  },
+  "keywords": [],
+  "author": "Cursor Automation",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.61.0"
+  }
+}
