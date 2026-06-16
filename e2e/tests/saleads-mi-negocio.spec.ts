@@ -105,11 +105,28 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
   };
 
   let accountPageUrl = "";
+  let loginCompleted = false;
 
-  const runStep = async (field: ReportField, fn: () => Promise<void>) => {
+  const runStep = async (
+    field: ReportField,
+    fn: () => Promise<void>,
+    options?: { requiresLogin?: boolean },
+  ) => {
+    if (options?.requiresLogin && !loginCompleted) {
+      report[field] = {
+        status: "FAIL",
+        details: "Blocked because login step did not complete successfully.",
+      };
+      return;
+    }
+
     try {
       await fn();
       report[field] = { status: "PASS" };
+
+      if (field === "Login") {
+        loginCompleted = true;
+      }
     } catch (error) {
       report[field] = {
         status: "FAIL",
@@ -170,7 +187,9 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     await takeCheckpoint(page, "01-dashboard-loaded");
   });
 
-  await runStep("Mi Negocio menu", async () => {
+  await runStep(
+    "Mi Negocio menu",
+    async () => {
     const negocioSection = await getClickableByVisibleText(page, "Negocio");
     await clickAndWait(page, negocioSection);
 
@@ -180,9 +199,13 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     await expect(page.getByText("Agregar Negocio", { exact: false }).first()).toBeVisible();
     await expect(page.getByText("Administrar Negocios", { exact: false }).first()).toBeVisible();
     await takeCheckpoint(page, "02-mi-negocio-menu-expanded");
-  });
+    },
+    { requiresLogin: true },
+  );
 
-  await runStep("Agregar Negocio modal", async () => {
+  await runStep(
+    "Agregar Negocio modal",
+    async () => {
     const agregarNegocioMenuOption = await getClickableByVisibleText(page, "Agregar Negocio");
     await clickAndWait(page, agregarNegocioMenuOption);
 
@@ -198,9 +221,13 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     await takeCheckpoint(page, "03-crear-nuevo-negocio-modal");
 
     await clickAndWait(page, page.getByRole("button", { name: "Cancelar" }));
-  });
+    },
+    { requiresLogin: true },
+  );
 
-  await runStep("Administrar Negocios view", async () => {
+  await runStep(
+    "Administrar Negocios view",
+    async () => {
     const miNegocioOption = await getClickableByVisibleText(page, "Mi Negocio");
     if (await miNegocioOption.isVisible().catch(() => false)) {
       await clickAndWait(page, miNegocioOption);
@@ -215,30 +242,46 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     await expect(page.getByText("Sección Legal", { exact: false })).toBeVisible();
     await takeCheckpoint(page, "04-administrar-negocios-view", true);
     accountPageUrl = page.url();
-  });
+    },
+    { requiresLogin: true },
+  );
 
-  await runStep("Información General", async () => {
+  await runStep(
+    "Información General",
+    async () => {
     await expect(page.getByText("Información General", { exact: false })).toBeVisible();
     await expect(
       page.getByText(/juanlucasbarbiergarzon@gmail.com|[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i),
     ).toBeVisible();
     await expect(page.getByText(/BUSINESS PLAN/i)).toBeVisible();
     await expect(page.getByRole("button", { name: /Cambiar Plan/i })).toBeVisible();
-  });
+    },
+    { requiresLogin: true },
+  );
 
-  await runStep("Detalles de la Cuenta", async () => {
+  await runStep(
+    "Detalles de la Cuenta",
+    async () => {
     await expect(page.getByText("Cuenta creada", { exact: false })).toBeVisible();
     await expect(page.getByText("Estado activo", { exact: false })).toBeVisible();
     await expect(page.getByText("Idioma seleccionado", { exact: false })).toBeVisible();
-  });
+    },
+    { requiresLogin: true },
+  );
 
-  await runStep("Tus Negocios", async () => {
+  await runStep(
+    "Tus Negocios",
+    async () => {
     await expect(page.getByText("Tus Negocios", { exact: false })).toBeVisible();
     await expect(page.getByRole("button", { name: /Agregar Negocio/i })).toBeVisible();
     await expect(page.getByText("Tienes 2 de 3 negocios", { exact: false })).toBeVisible();
-  });
+    },
+    { requiresLogin: true },
+  );
 
-  await runStep("Términos y Condiciones", async () => {
+  await runStep(
+    "Términos y Condiciones",
+    async () => {
     const target = await getClickableByVisibleText(page, "Términos y Condiciones");
     const popupPromise = page.context().waitForEvent("page", { timeout: 8_000 }).catch(() => null);
 
@@ -271,9 +314,13 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
       await page.goto(accountPageUrl, { waitUntil: "domcontentloaded" });
       await waitForUiToLoad(page);
     }
-  });
+    },
+    { requiresLogin: true },
+  );
 
-  await runStep("Política de Privacidad", async () => {
+  await runStep(
+    "Política de Privacidad",
+    async () => {
     const target = await getClickableByVisibleText(page, "Política de Privacidad");
     const popupPromise = page.context().waitForEvent("page", { timeout: 8_000 }).catch(() => null);
 
@@ -306,7 +353,9 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
       await page.goto(accountPageUrl, { waitUntil: "domcontentloaded" });
       await waitForUiToLoad(page);
     }
-  });
+    },
+    { requiresLogin: true },
+  );
 
   const finalReportPath = path.join(reportsDir, "saleads-mi-negocio-final-report.json");
   fs.writeFileSync(finalReportPath, JSON.stringify(report, null, 2), "utf-8");
