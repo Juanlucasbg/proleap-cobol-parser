@@ -128,7 +128,11 @@ async function openLegalPageAndValidate(options: {
     await waitForUi(appPage);
   } else {
     await appPage.goBack({ waitUntil: "domcontentloaded" }).catch(async () => {
-      await appPage.goto(process.env.SALEADS_URL as string, { waitUntil: "domcontentloaded" });
+      const fallbackUrl = process.env.SALEADS_URL;
+      if (!fallbackUrl) {
+        throw new Error("Cannot recover app tab because SALEADS_URL is not defined.");
+      }
+      await appPage.goto(fallbackUrl, { waitUntil: "domcontentloaded" });
     });
     await waitForUi(appPage);
   }
@@ -162,15 +166,6 @@ test.describe("SaleADS Mi Negocio full workflow", () => {
       errors: []
     };
 
-    if (!environmentUrl) {
-      throw new Error(
-        "SALEADS_URL is required. This test is environment-agnostic and must be pointed to the current SaleADS login page at runtime."
-      );
-    }
-
-    await page.goto(environmentUrl, { waitUntil: "domcontentloaded" });
-    await waitForUi(page);
-
     const runStep = async (field: ReportField, handler: () => Promise<void>): Promise<void> => {
       try {
         await handler();
@@ -182,8 +177,23 @@ test.describe("SaleADS Mi Negocio full workflow", () => {
       }
     };
 
+    const requireLoginStepSuccess = (): void => {
+      if (report.status.Login !== "PASS") {
+        throw new Error("Blocked because the Login step did not complete successfully.");
+      }
+    };
+
     try {
       await runStep("Login", async () => {
+        if (!environmentUrl) {
+          throw new Error(
+            "SALEADS_URL is required. Provide the current SaleADS login page URL (works for dev/staging/prod)."
+          );
+        }
+
+        await page.goto(environmentUrl, { waitUntil: "domcontentloaded" });
+        await waitForUi(page);
+
         const loginButton = await firstVisible([
           page.getByRole("button", { name: /google/i }),
           page.getByRole("link", { name: /google/i }),
@@ -217,6 +227,8 @@ test.describe("SaleADS Mi Negocio full workflow", () => {
       });
 
       await runStep("Mi Negocio menu", async () => {
+        requireLoginStepSuccess();
+
         const negocioSection = await findByVisibleText(page, /negocio/i);
         await clickAndWait(page, negocioSection);
 
@@ -229,6 +241,8 @@ test.describe("SaleADS Mi Negocio full workflow", () => {
       });
 
       await runStep("Agregar Negocio modal", async () => {
+        requireLoginStepSuccess();
+
         const agregarNegocio = await findByVisibleText(page, /agregar negocio/i);
         await clickAndWait(page, agregarNegocio);
 
@@ -259,6 +273,8 @@ test.describe("SaleADS Mi Negocio full workflow", () => {
       });
 
       await runStep("Administrar Negocios view", async () => {
+        requireLoginStepSuccess();
+
         if ((await page.getByText(/administrar negocios/i).count()) === 0) {
           const miNegocio = await findByVisibleText(page, /mi negocio/i);
           await clickAndWait(page, miNegocio);
@@ -276,6 +292,8 @@ test.describe("SaleADS Mi Negocio full workflow", () => {
       });
 
       await runStep("Información General", async () => {
+        requireLoginStepSuccess();
+
         const infoSection = page.locator("section, div, article").filter({ hasText: /informaci[oó]n general/i }).first();
         await expect(infoSection.getByText(/@/)).toBeVisible();
         await expect(infoSection.getByText(/[a-z]/i)).toBeVisible();
@@ -284,6 +302,8 @@ test.describe("SaleADS Mi Negocio full workflow", () => {
       });
 
       await runStep("Detalles de la Cuenta", async () => {
+        requireLoginStepSuccess();
+
         const detailsSection = page
           .locator("section, div, article")
           .filter({ hasText: /detalles de la cuenta/i })
@@ -294,6 +314,8 @@ test.describe("SaleADS Mi Negocio full workflow", () => {
       });
 
       await runStep("Tus Negocios", async () => {
+        requireLoginStepSuccess();
+
         const businessesSection = page.locator("section, div, article").filter({ hasText: /tus negocios/i }).first();
         await expect(businessesSection).toBeVisible();
         await expect(businessesSection.getByRole("button", { name: /agregar negocio/i })).toBeVisible();
@@ -301,6 +323,8 @@ test.describe("SaleADS Mi Negocio full workflow", () => {
       });
 
       await runStep("Términos y Condiciones", async () => {
+        requireLoginStepSuccess();
+
         report.evidenceUrls.terminosYCondicionesUrl = await openLegalPageAndValidate({
           appPage: page,
           testInfo,
@@ -311,6 +335,8 @@ test.describe("SaleADS Mi Negocio full workflow", () => {
       });
 
       await runStep("Política de Privacidad", async () => {
+        requireLoginStepSuccess();
+
         report.evidenceUrls.politicaDePrivacidadUrl = await openLegalPageAndValidate({
           appPage: page,
           testInfo,
