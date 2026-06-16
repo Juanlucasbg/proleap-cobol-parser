@@ -131,6 +131,26 @@ async function runStep(
   }
 }
 
+async function writeReportAndAssert(report: Record<StepName, StepResult>): Promise<void> {
+  const tabular = Object.entries(report).map(([step, result]) => ({
+    step,
+    status: result.status,
+    details: result.details,
+    finalUrl: result.finalUrl ?? ""
+  }));
+
+  await fs.mkdir(path.dirname(REPORT_FILE), { recursive: true });
+  await fs.writeFile(REPORT_FILE, JSON.stringify(report, null, 2), "utf8");
+  console.table(tabular);
+  console.log(`Detailed report file: ${REPORT_FILE}`);
+
+  const failedSteps = tabular.filter((entry) => entry.status === "FAIL");
+  expect(
+    failedSteps,
+    `Failed validation steps: ${failedSteps.map((entry) => entry.step).join(", ") || "none"}`
+  ).toEqual([]);
+}
+
 async function clickLegalLinkAndValidate(
   page: Page,
   linkRegex: RegExp,
@@ -177,6 +197,19 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
   if (OPTIONAL_LOGIN_URL) {
     await page.goto(OPTIONAL_LOGIN_URL, { waitUntil: "domcontentloaded" });
     await waitForUi(page);
+  }
+
+  if (page.url() === "about:blank") {
+    const preconditionMessage =
+      "SaleADS login page is not loaded. Set SALEADS_LOGIN_URL or start from an already opened SaleADS login page.";
+
+    (Object.keys(report) as StepName[]).forEach((stepName) => {
+      report[stepName].status = "FAIL";
+      report[stepName].details = preconditionMessage;
+    });
+
+    await writeReportAndAssert(report);
+    return;
   }
 
   await runStep(report, "Login", async (result) => {
@@ -320,21 +353,5 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
     result.evidence.push(screenshotPath);
   });
 
-  const tabular = Object.entries(report).map(([step, result]) => ({
-    step,
-    status: result.status,
-    details: result.details,
-    finalUrl: result.finalUrl ?? ""
-  }));
-
-  await fs.mkdir(path.dirname(REPORT_FILE), { recursive: true });
-  await fs.writeFile(REPORT_FILE, JSON.stringify(report, null, 2), "utf8");
-  console.table(tabular);
-  console.log(`Detailed report file: ${REPORT_FILE}`);
-
-  const failedSteps = tabular.filter((entry) => entry.status === "FAIL");
-  expect(
-    failedSteps,
-    `Failed validation steps: ${failedSteps.map((entry) => entry.step).join(", ") || "none"}`
-  ).toEqual([]);
+  await writeReportAndAssert(report);
 });
