@@ -270,7 +270,8 @@ public class SaleadsMiNegocioFullTest {
 
 			for (final By locator : locators) {
 				try {
-					final WebElement element = wait.until(ExpectedConditions.elementToBeClickable(locator));
+					final WebElement element = new WebDriverWait(driver, Duration.ofSeconds(2))
+							.until(ExpectedConditions.elementToBeClickable(locator));
 					element.click();
 					waitForUiLoad();
 					return;
