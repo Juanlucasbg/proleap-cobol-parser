@@ -1,0 +1,12 @@
+{
+  "name": "saleads-e2e",
+  "private": true,
+  "description": "Environment-agnostic Playwright checks for SaleADS flows.",
+  "scripts": {
+    "test:saleads-mi-negocio": "playwright test tests/saleads-mi-negocio-full.spec.ts",
+    "test:saleads-mi-negocio:headed": "playwright test tests/saleads-mi-negocio-full.spec.ts --headed"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.61.0"
+  }
+}
