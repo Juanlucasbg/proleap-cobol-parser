@@ -145,12 +145,7 @@ test("saleads mi negocio full workflow", async ({ page, context }, testInfo) => 
 
   const loginUrl = process.env.SALEADS_LOGIN_URL;
 
-  if (page.url() === "about:blank") {
-    if (!loginUrl) {
-      throw new Error(
-        "No active SaleADS login page detected. Provide SALEADS_LOGIN_URL to run this test in any environment."
-      );
-    }
+  if (page.url() === "about:blank" && loginUrl) {
     await page.goto(loginUrl, { waitUntil: "domcontentloaded" });
     await waitForUiLoad(page);
   }
