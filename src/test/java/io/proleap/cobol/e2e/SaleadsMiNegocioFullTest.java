@@ -19,7 +19,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.junit.After;
-import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.openqa.selenium.By;
@@ -94,10 +93,10 @@ public class SaleadsMiNegocioFullTest {
 	@Test
 	public void saleadsMiNegocioFullWorkflow() throws IOException {
 		final String loginUrl = System.getenv("SALEADS_LOGIN_URL");
-		Assume.assumeTrue("SALEADS_LOGIN_URL must be provided for this test.", loginUrl != null && !loginUrl.isBlank());
-
-		driver.get(loginUrl);
-		waitForUiLoad();
+		if (loginUrl != null && !loginUrl.isBlank()) {
+			driver.get(loginUrl);
+			waitForUiLoad();
+		}
 
 		runStep(FIELD_LOGIN, this::stepLogin);
 		runStep(FIELD_MI_NEGOCIO_MENU, this::stepOpenMiNegocioMenu);

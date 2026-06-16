@@ -23,12 +23,9 @@ Validate the full "Mi Negocio" workflow after Google login, including:
 
 The test does not hardcode a specific domain.
 
-Required:
-
-- `SALEADS_LOGIN_URL`: login URL for the target SaleADS environment (dev/staging/prod)
-
 Optional:
 
+- `SALEADS_LOGIN_URL`: login URL for the target SaleADS environment (dev/staging/prod). If not set, the test continues from the browser's current page.
 - `SALEADS_SELENIUM_REMOTE_URL`: Selenium Grid endpoint (if remote browser is used)
 - `SALEADS_HEADLESS`: `true` (default) or `false`
 
