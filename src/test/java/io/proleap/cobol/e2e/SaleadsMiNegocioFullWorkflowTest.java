@@ -33,7 +33,6 @@ public class SaleadsMiNegocioFullWorkflowTest {
 	private static final String GOOGLE_EMAIL_ENV = "SALEADS_GOOGLE_EMAIL";
 	private static final String DEFAULT_GOOGLE_EMAIL = "juanlucasbarbiergarzon@gmail.com";
 	private static final int DEFAULT_TIMEOUT_MS = 30_000;
-	private static final Pattern LEGAL_CONTENT_PATTERN = Pattern.compile("(?is).{80,}");
 
 	@Test
 	public void saleadsMiNegocioFullTest() throws Exception {
@@ -220,8 +219,7 @@ public class SaleadsMiNegocioFullWorkflowTest {
 		waitForUiToLoad(legalPage);
 		assertVisible(findFirstVisible(legalPage, pageCandidatesForTexts(legalPage, List.of(linkText))),
 				"Legal page heading should contain '" + linkText + "'.");
-		assertVisible(legalPage.locator("body").filter(new Locator.FilterOptions().setHasText(LEGAL_CONTENT_PATTERN)),
-				"Legal content should be visible for '" + linkText + "'.");
+		assertBodyHasSubstantialContent(legalPage, linkText);
 		takeScreenshot(legalPage, evidenceDir, screenshotName, true);
 		final String legalUrl = legalPage.url();
 
@@ -258,8 +256,8 @@ public class SaleadsMiNegocioFullWorkflowTest {
 		final List<Locator> candidates = new ArrayList<>();
 		candidates.add(page.getByLabel(labelOrPlaceholder, new Page.GetByLabelOptions().setExact(true)));
 		candidates.add(page.getByPlaceholder(labelOrPlaceholder));
-		candidates.add(page.locator("input").filter(new Locator.FilterOptions().setHasText(Pattern.compile("(?i)"
-				+ Pattern.quote(labelOrPlaceholder)))));
+		candidates.add(page.getByRole(AriaRole.TEXTBOX,
+				new Page.GetByRoleOptions().setName(Pattern.compile("(?i)" + Pattern.quote(labelOrPlaceholder)))));
 		return findFirstVisible(page, candidates);
 	}
 
@@ -365,6 +363,13 @@ public class SaleadsMiNegocioFullWorkflowTest {
 	private static void assertVisible(final Locator locator, final String message) {
 		if (!isVisible(locator, DEFAULT_TIMEOUT_MS)) {
 			throw new AssertionError(message);
+		}
+	}
+
+	private static void assertBodyHasSubstantialContent(final Page page, final String legalName) {
+		final String bodyText = page.locator("body").first().innerText();
+		if (bodyText == null || bodyText.trim().length() < 80) {
+			throw new AssertionError("Legal content should be visible for '" + legalName + "'.");
 		}
 	}
 
