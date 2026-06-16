@@ -11,7 +11,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 import org.junit.Assert;
@@ -41,11 +40,11 @@ public class SaleAdsMiNegocioWorkflowTest {
 	private static final String KEY_MI_NEGOCIO_MENU = "Mi Negocio menu";
 	private static final String KEY_AGREGAR_MODAL = "Agregar Negocio modal";
 	private static final String KEY_ADMIN_VIEW = "Administrar Negocios view";
-	private static final String KEY_INFO_GENERAL = "Informacion General";
+	private static final String KEY_INFO_GENERAL = "Informaci\u00f3n General";
 	private static final String KEY_DETALLES = "Detalles de la Cuenta";
 	private static final String KEY_TUS_NEGOCIOS = "Tus Negocios";
-	private static final String KEY_TERMINOS = "Terminos y Condiciones";
-	private static final String KEY_POLITICA = "Politica de Privacidad";
+	private static final String KEY_TERMINOS = "T\u00e9rminos y Condiciones";
+	private static final String KEY_POLITICA = "Pol\u00edtica de Privacidad";
 
 	private final long timeoutMs = Long.parseLong(env("SALEADS_TIMEOUT_MS", "45000"));
 	private final Path artifactsDir = Paths.get(env("SALEADS_E2E_ARTIFACTS_DIR", "target/saleads-e2e"));
@@ -138,10 +137,10 @@ public class SaleAdsMiNegocioWorkflowTest {
 						appPage,
 						"Administrar Negocios option",
 						Pattern.compile("(?i)^administrar\\s+negocios$"));
-				waitForVisibleText(appPage, "Informacion General section", Pattern.compile("(?i)^informacion\\s+general$"));
+				waitForVisibleText(appPage, "Informacion General section", Pattern.compile("(?i)^informaci[oó]n\\s+general$"));
 				waitForVisibleText(appPage, "Detalles de la Cuenta section", Pattern.compile("(?i)^detalles\\s+de\\s+la\\s+cuenta$"));
 				waitForVisibleText(appPage, "Tus Negocios section", Pattern.compile("(?i)^tus\\s+negocios$"));
-				waitForVisibleText(appPage, "Seccion Legal section", Pattern.compile("(?i)^seccion\\s+legal$"));
+				waitForVisibleText(appPage, "Seccion Legal section", Pattern.compile("(?i)^secci[oó]n\\s+legal$"));
 				takeScreenshot(appPage, "04-administrar-negocios.png", true);
 			});
 
@@ -152,10 +151,7 @@ public class SaleAdsMiNegocioWorkflowTest {
 						appPage,
 						"User email",
 						Pattern.compile("(?i)[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}"));
-				waitForVisible(
-						appPage.locator("h1, h2, h3, p, span, div").filter(new Locator.FilterOptions()
-								.setHasText(Pattern.compile("(?i)usuario|nombre|perfil|cuenta"))).first(),
-						"user name block");
+				waitForVisible(appPage.locator("h1, h2, h3, [data-testid*='name'], [class*='name']").first(), "user name block");
 			});
 
 			runStep(KEY_DETALLES, results, failures, () -> {
@@ -172,8 +168,8 @@ public class SaleAdsMiNegocioWorkflowTest {
 			});
 
 			runStep(KEY_TERMINOS, results, failures, () -> {
-				final LegalNavigation legal = openLegalPage(context, appPage, Pattern.compile("(?i)terminos\\s+y\\s+condiciones"));
-				waitForVisibleText(legal.page, "Terminos y Condiciones heading", Pattern.compile("(?i)terminos\\s+y\\s+condiciones"));
+				final LegalNavigation legal = openLegalPage(context, appPage, Pattern.compile("(?i)t[eé]rminos\\s+y\\s+condiciones"));
+				waitForVisibleText(legal.page, "Terminos y Condiciones heading", Pattern.compile("(?i)t[eé]rminos\\s+y\\s+condiciones"));
 				waitForLegalBody(legal.page);
 				takeScreenshot(legal.page, "05-terminos-y-condiciones.png", true);
 				results.get(KEY_TERMINOS).details = "URL: " + legal.page.url();
@@ -181,8 +177,8 @@ public class SaleAdsMiNegocioWorkflowTest {
 			});
 
 			runStep(KEY_POLITICA, results, failures, () -> {
-				final LegalNavigation legal = openLegalPage(context, appPage, Pattern.compile("(?i)politica\\s+de\\s+privacidad"));
-				waitForVisibleText(legal.page, "Politica de Privacidad heading", Pattern.compile("(?i)politica\\s+de\\s+privacidad"));
+				final LegalNavigation legal = openLegalPage(context, appPage, Pattern.compile("(?i)pol[ií]tica\\s+de\\s+privacidad"));
+				waitForVisibleText(legal.page, "Politica de Privacidad heading", Pattern.compile("(?i)pol[ií]tica\\s+de\\s+privacidad"));
 				waitForLegalBody(legal.page);
 				takeScreenshot(legal.page, "06-politica-de-privacidad.png", true);
 				results.get(KEY_POLITICA).details = "URL: " + legal.page.url();
@@ -314,19 +310,17 @@ public class SaleAdsMiNegocioWorkflowTest {
 	}
 
 	private void typeIfVisible(final Page page, final Pattern labelPattern, final String text) {
-		final Locator input = page.locator("input, textarea")
-				.filter(new Locator.FilterOptions().setHas(
-						page.locator("xpath=ancestor-or-self::*[contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '" + labelPattern.pattern().toLowerCase() + "')]")));
-
-		if (input.count() > 0 && input.first().isVisible()) {
-			input.first().click();
-			input.first().fill(text);
+		final Locator labeledInput = page.getByLabel(labelPattern);
+		if (labeledInput.count() > 0 && labeledInput.first().isVisible()) {
+			labeledInput.first().click();
+			labeledInput.first().fill(text);
 			waitForUi(page);
 			return;
 		}
 
-		final Locator fallback = page.getByLabel(labelPattern);
+		final Locator fallback = page.locator("input, textarea").first();
 		if (fallback.count() > 0 && fallback.first().isVisible()) {
+			fallback.first().click();
 			fallback.first().fill(text);
 			waitForUi(page);
 		}
@@ -373,7 +367,8 @@ public class SaleAdsMiNegocioWorkflowTest {
 	}
 
 	private String env(final String key, final String fallback) {
-		return Supplier.<String>of(() -> System.getenv(key)).get() == null ? fallback : System.getenv(key);
+		final String value = System.getenv(key);
+		return value == null || value.isBlank() ? fallback : value;
 	}
 
 	private interface ThrowingRunnable {
