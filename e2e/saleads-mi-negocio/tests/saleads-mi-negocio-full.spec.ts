@@ -26,6 +26,11 @@ const reportFields: ReportField[] = [
   "Política de Privacidad",
 ];
 
+test.skip(
+  !process.env.SALEADS_LOGIN_URL,
+  "Set SALEADS_LOGIN_URL to the current environment login page.",
+);
+
 async function waitForUiToSettle(page: Page): Promise<void> {
   await page.waitForLoadState("domcontentloaded");
   await page.waitForTimeout(800);
@@ -104,11 +109,6 @@ async function openLegalPageAndValidate(
 }
 
 test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
-  test.skip(
-    !process.env.SALEADS_LOGIN_URL,
-    "Set SALEADS_LOGIN_URL to the current environment login page.",
-  );
-
   const report = Object.fromEntries(
     reportFields.map((field) => [field, "FAIL" as ReportStatus]),
   ) as Record<ReportField, ReportStatus>;
