@@ -1,0 +1,14 @@
+{
+  "name": "saleads-mi-negocio-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Environment-agnostic Playwright workflow for SaleADS Mi Negocio.",
+  "scripts": {
+    "test:saleads-mi-negocio": "playwright test tests/saleads-mi-negocio.spec.js",
+    "test:saleads-mi-negocio:headed": "playwright test tests/saleads-mi-negocio.spec.js --headed",
+    "playwright:install": "playwright install chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "latest"
+  }
+}
