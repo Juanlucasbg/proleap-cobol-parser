@@ -41,3 +41,8 @@ target/
 
 ## Additional for IntelliJ
 out/
+
+# QA browser automation assets
+qa/saleads-mi-negocio/node_modules/
+qa/saleads-mi-negocio/playwright-report/
+qa/saleads-mi-negocio/test-results/
