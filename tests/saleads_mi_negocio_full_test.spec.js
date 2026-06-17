@@ -109,13 +109,10 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
     "";
 
   await runStep("Login", async () => {
-    if (!loginUrl) {
-      throw new Error(
-        "No login URL provided. Set SALEADS_LOGIN_URL (or SALEADS_BASE_URL / BASE_URL) for an environment-agnostic run."
-      );
+    if (loginUrl) {
+      await page.goto(loginUrl, { waitUntil: "domcontentloaded" });
     }
 
-    await page.goto(loginUrl, { waitUntil: "domcontentloaded" });
     await waitForUi(page);
 
     const loginButton = await findFirstVisible([
