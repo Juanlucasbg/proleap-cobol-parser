@@ -194,6 +194,27 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+Browser E2E automation
+----------------------
+
+This repository now also includes a Playwright browser workflow test for SaleADS:
+
+* Test file: `tests/e2e/saleads-mi-negocio-full.spec.ts`
+* Config file: `playwright.config.ts`
+
+Run it with:
+
+```
+$ npm run e2e:install
+$ SALEADS_LOGIN_URL="https://<your-environment>/login" npm run e2e:test
+```
+
+Notes:
+
+* The test does not hardcode a specific SaleADS domain.
+* It can use an already-open login page, or navigate using `SALEADS_LOGIN_URL` / `SALEADS_BASE_URL`.
+* Screenshots and a `final-report.json` are attached in Playwright test artifacts.
+
 
 Release process
 ---------------
