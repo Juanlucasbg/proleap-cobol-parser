@@ -1,0 +1,16 @@
+{
+  "name": "qa",
+  "version": "1.0.0",
+  "description": "SaleADS Mi Negocio workflow automation",
+  "main": "saleads_mi_negocio_full_test.js",
+  "scripts": {
+    "test:saleads-mi-negocio": "node saleads_mi_negocio_full_test.js",
+    "install:browsers": "npx playwright install chromium"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "playwright": "^1.61.0"
+  }
+}
