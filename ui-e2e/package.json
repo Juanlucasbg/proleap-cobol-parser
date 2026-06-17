@@ -1,0 +1,21 @@
+{
+  "name": "ui-e2e",
+  "version": "1.0.0",
+  "description": "SaleADS.ai Mi Negocio E2E workflow automation",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:report": "playwright show-report",
+    "install:browsers": "playwright install chromium"
+  },
+  "keywords": [
+    "playwright",
+    "e2e",
+    "saleads"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.61.0"
+  }
+}
