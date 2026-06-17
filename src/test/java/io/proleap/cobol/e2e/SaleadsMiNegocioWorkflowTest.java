@@ -127,8 +127,7 @@ public class SaleadsMiNegocioWorkflowTest {
 
 		Page authPage = appPage;
 		try {
-			authPage = appPage.waitForPopup(() -> loginButton.click(),
-					new Page.WaitForPopupOptions().setTimeout(8_000));
+			authPage = appPage.waitForPopup(new Page.WaitForPopupOptions().setTimeout(8_000), () -> loginButton.click());
 		} catch (final PlaywrightException popupNotOpened) {
 			loginButton.click();
 		}
@@ -256,8 +255,8 @@ public class SaleadsMiNegocioWorkflowTest {
 		boolean openedNewTab = false;
 
 		try {
-			legalPage = context.waitForPage(() -> clickByText(appPage, linkText),
-					new BrowserContext.WaitForPageOptions().setTimeout(8_000));
+			legalPage = context.waitForPage(new BrowserContext.WaitForPageOptions().setTimeout(8_000),
+					() -> clickByText(appPage, linkText));
 			openedNewTab = true;
 		} catch (final PlaywrightException noNewTab) {
 			clickByText(appPage, linkText);
