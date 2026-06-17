@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.openqa.selenium.By;
@@ -66,6 +67,7 @@ public class SaleadsMiNegocioWorkflowTest {
 	private String termsUrl = "N/A";
 	private String privacyUrl = "N/A";
 	private String appHandle;
+	private String loginUrl;
 
 	@Before
 	public void setUp() throws IOException {
@@ -73,6 +75,15 @@ public class SaleadsMiNegocioWorkflowTest {
 		reportDir = Paths.get("target", "surefire-reports", "saleads-mi-negocio");
 		screenshotDir = reportDir.resolve("screenshots");
 		Files.createDirectories(screenshotDir);
+
+		boolean runUiTest = Boolean.parseBoolean(System.getenv().getOrDefault("SALEADS_RUN_UI_TEST", "false"));
+		Assume.assumeTrue(
+				"Skipping SaleADS UI workflow test. Set SALEADS_RUN_UI_TEST=true to enable execution.",
+				runUiTest);
+		loginUrl = System.getenv().getOrDefault("SALEADS_LOGIN_URL", "").trim();
+		Assume.assumeTrue(
+				"Skipping SaleADS UI workflow test. Set SALEADS_LOGIN_URL to the login page of the active environment.",
+				!loginUrl.isEmpty());
 
 		driver = createDriver();
 		driver.manage().window().setSize(new Dimension(1920, 1080));
@@ -219,16 +230,7 @@ public class SaleadsMiNegocioWorkflowTest {
 	}
 
 	private void navigateToLoginPageIfProvided() {
-		String loginUrl = System.getenv().getOrDefault("SALEADS_LOGIN_URL", "").trim();
-		if (!loginUrl.isEmpty()) {
-			driver.get(loginUrl);
-			return;
-		}
-		String current = safeCurrentUrl();
-		if (current == null || current.isBlank() || "about:blank".equalsIgnoreCase(current)) {
-			throw new IllegalStateException(
-					"SALEADS_LOGIN_URL is not set and browser is not on login page. Set SALEADS_LOGIN_URL for target environment.");
-		}
+		driver.get(loginUrl);
 	}
 
 	private void selectGoogleAccountIfShown(Set<String> handlesBeforeClick, String email) {
