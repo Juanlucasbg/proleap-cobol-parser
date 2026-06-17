@@ -102,7 +102,14 @@ function markPass(stepName) {
   console.log(`[PASS] ${stepName}`);
 }
 
-async function runStep(stepName, fn) {
+async function runStep(stepName, fn, options = {}) {
+  const dependsOn = options.dependsOn ?? [];
+  const failedDependency = dependsOn.find((dependency) => report.statuses[dependency] !== "PASS");
+  if (failedDependency) {
+    saveError(stepName, `Skipped because dependency "${failedDependency}" failed.`);
+    return;
+  }
+
   try {
     await fn();
     markPass(stepName);
@@ -256,6 +263,12 @@ async function run() {
 
   try {
     await runStep("Login", async () => {
+      if (!loginUrl && page.url() === "about:blank") {
+        throw new Error(
+          "No login page loaded. Provide SALEADS_LOGIN_URL for the current environment."
+        );
+      }
+
       if (loginUrl) {
         await page.goto(loginUrl, { waitUntil: "domcontentloaded", timeout: 60_000 });
       }
@@ -302,7 +315,9 @@ async function run() {
       await capture(page, "01-dashboard-loaded");
     });
 
-    await runStep("Mi Negocio menu", async () => {
+    await runStep(
+      "Mi Negocio menu",
+      async () => {
       const negocioMenu = await pickVisibleLocator(page, "Negocio menu", [
         (scope) => scope.getByRole("button", { name: /^Negocio$/i }),
         (scope) => scope.getByRole("link", { name: /^Negocio$/i }),
@@ -322,9 +337,13 @@ async function run() {
       await assertTextVisible(page, "Administrar Negocios", /Administrar Negocios/i);
 
       await capture(page, "02-mi-negocio-expanded-menu");
-    });
+      },
+      { dependsOn: ["Login"] }
+    );
 
-    await runStep("Agregar Negocio modal", async () => {
+    await runStep(
+      "Agregar Negocio modal",
+      async () => {
       const agregarNegocio = await pickVisibleLocator(page, "Agregar Negocio action", [
         (scope) => scope.getByRole("button", { name: /Agregar Negocio/i }),
         (scope) => scope.getByRole("link", { name: /Agregar Negocio/i }),
@@ -365,9 +384,13 @@ async function run() {
         (scope) => scope.getByText(/Cancelar/i, { exact: false })
       ]);
       await clickAndWait(cancelar, page);
-    });
+      },
+      { dependsOn: ["Mi Negocio menu"] }
+    );
 
-    await runStep("Administrar Negocios view", async () => {
+    await runStep(
+      "Administrar Negocios view",
+      async () => {
       await ensureMiNegocioExpanded(page);
 
       const administrar = await pickVisibleLocator(page, "Administrar Negocios action", [
@@ -383,9 +406,13 @@ async function run() {
       await assertTextVisible(page, "Seccion Legal section", /Secci.n Legal|Legal/i, 30_000);
 
       await capture(page, "04-administrar-negocios-view", { fullPage: true });
-    });
+      },
+      { dependsOn: ["Mi Negocio menu"] }
+    );
 
-    await runStep("Informacion General", async () => {
+    await runStep(
+      "Informacion General",
+      async () => {
       const infoSection = await getSectionByHeading(page, /Informaci.n General/i);
       const infoText = (await infoSection.innerText()).replace(/\s+/g, " ").trim();
 
@@ -402,16 +429,24 @@ async function run() {
 
       await assertTextVisible(infoSection, "BUSINESS PLAN text", /BUSINESS PLAN/i);
       await assertTextVisible(infoSection, "Cambiar Plan button", /Cambiar Plan/i);
-    });
+      },
+      { dependsOn: ["Administrar Negocios view"] }
+    );
 
-    await runStep("Detalles de la Cuenta", async () => {
+    await runStep(
+      "Detalles de la Cuenta",
+      async () => {
       const detailsSection = await getSectionByHeading(page, /Detalles de la Cuenta/i);
       await assertTextVisible(detailsSection, "Cuenta creada text", /Cuenta creada/i);
       await assertTextVisible(detailsSection, "Estado activo text", /Estado activo/i);
       await assertTextVisible(detailsSection, "Idioma seleccionado text", /Idioma seleccionado/i);
-    });
+      },
+      { dependsOn: ["Administrar Negocios view"] }
+    );
 
-    await runStep("Tus Negocios", async () => {
+    await runStep(
+      "Tus Negocios",
+      async () => {
       const businessesSection = await getSectionByHeading(page, /Tus Negocios/i);
       await assertTextVisible(businessesSection, "Agregar Negocio button", /Agregar Negocio/i);
       await assertTextVisible(businessesSection, "Business limit text", /Tienes 2 de 3 negocios/i);
@@ -422,9 +457,13 @@ async function run() {
       if (businessRowsCount < 1 && sectionText.length < 20) {
         throw new Error("Business list appears empty or not visible.");
       }
-    });
+      },
+      { dependsOn: ["Administrar Negocios view"] }
+    );
 
-    await runStep("Terminos y Condiciones", async () => {
+    await runStep(
+      "Terminos y Condiciones",
+      async () => {
       await validateLegalLink({
         page,
         context,
@@ -433,9 +472,13 @@ async function run() {
         screenshotName: "05-terminos-y-condiciones",
         urlKey: "terminosYCondicionesUrl"
       });
-    });
+      },
+      { dependsOn: ["Administrar Negocios view"] }
+    );
 
-    await runStep("Politica de Privacidad", async () => {
+    await runStep(
+      "Politica de Privacidad",
+      async () => {
       await validateLegalLink({
         page,
         context,
@@ -444,7 +487,9 @@ async function run() {
         screenshotName: "06-politica-de-privacidad",
         urlKey: "politicaDePrivacidadUrl"
       });
-    });
+      },
+      { dependsOn: ["Administrar Negocios view"] }
+    );
   } finally {
     await writeReports();
     await browser.close();
