@@ -38,11 +38,11 @@ public class SaleadsMiNegocioFullTest {
 	private static final String FIELD_MENU = "Mi Negocio menu";
 	private static final String FIELD_MODAL = "Agregar Negocio modal";
 	private static final String FIELD_ADMIN = "Administrar Negocios view";
-	private static final String FIELD_INFO = "Informacion General";
+	private static final String FIELD_INFO = "Informaci\u00F3n General";
 	private static final String FIELD_ACCOUNT = "Detalles de la Cuenta";
 	private static final String FIELD_BUSINESSES = "Tus Negocios";
-	private static final String FIELD_TERMS = "Terminos y Condiciones";
-	private static final String FIELD_PRIVACY = "Politica de Privacidad";
+	private static final String FIELD_TERMS = "T\u00E9rminos y Condiciones";
+	private static final String FIELD_PRIVACY = "Pol\u00EDtica de Privacidad";
 
 	private static final String ACCOUNT_EMAIL = "juanlucasbarbiergarzon@gmail.com";
 	private static final Pattern EMAIL_PATTERN = Pattern.compile("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}");
@@ -79,13 +79,6 @@ public class SaleadsMiNegocioFullTest {
 
 	private void executeWorkflow(final Page appPage, final BrowserContext context, final String loginUrl, final Path runDir,
 			final Map<String, StepResult> results) {
-		if (isBlank(loginUrl)) {
-			setFailure(results, FIELD_LOGIN,
-					"Missing login URL. Set SALEADS_LOGIN_URL or -Dsaleads.login.url to current environment login page.");
-			markUnexecutedAsPrerequisiteFailure(results, "Prerequisite failed: Login step did not complete.");
-			return;
-		}
-
 		runStepLogin(appPage, context, loginUrl, runDir, results);
 		if (!isPass(results, FIELD_LOGIN)) {
 			markUnexecutedAsPrerequisiteFailure(results, "Prerequisite failed: Login step did not complete.");
@@ -125,6 +118,13 @@ public class SaleadsMiNegocioFullTest {
 			final Map<String, StepResult> results) {
 		final StepResult step = results.get(FIELD_LOGIN);
 		try {
+			if (isBlank(loginUrl)) {
+				takeScreenshot(appPage, runDir.resolve("step1_missing_login_url.png"), step);
+				setFailure(results, FIELD_LOGIN,
+						"Missing login URL. Set SALEADS_LOGIN_URL or -Dsaleads.login.url to current environment login page.");
+				return;
+			}
+
 			appPage.navigate(loginUrl, new Page.NavigateOptions().setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
 			waitAfterUiAction(appPage);
 			takeScreenshot(appPage, runDir.resolve("step0_initial.png"), step);
