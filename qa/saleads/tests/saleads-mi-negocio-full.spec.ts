@@ -205,11 +205,9 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
       markFail(report, "Tus Negocios", dependencyError);
       markFail(report, "Términos y Condiciones", dependencyError);
       markFail(report, "Política de Privacidad", dependencyError);
-      return;
-    }
-
-    // Step 2: Open Mi Negocio menu
-    try {
+    } else {
+      // Step 2: Open Mi Negocio menu
+      try {
       const negocioSection = await firstVisible([
         page.getByText(/^Negocio$/i),
         page.getByRole("link", { name: /^Negocio$/i }),
@@ -240,11 +238,11 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
         "Mi Negocio expanded and submenu shows Agregar Negocio + Administrar Negocios.",
       );
     } catch (error) {
-      markFail(report, "Mi Negocio menu", `Mi Negocio menu validation failed: ${String(error)}`);
-    }
+        markFail(report, "Mi Negocio menu", `Mi Negocio menu validation failed: ${String(error)}`);
+      }
 
-    // Step 3: Validate Agregar Negocio modal
-    try {
+      // Step 3: Validate Agregar Negocio modal
+      try {
       const addBusinessMenu = await firstVisible([
         page.getByText(/^Agregar Negocio$/i),
         page.getByRole("button", { name: /^Agregar Negocio$/i }),
@@ -274,15 +272,15 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
       await clickAndWaitForUi(page.getByRole("button", { name: /^Cancelar$/i }).first(), page);
       markPass(report, "Agregar Negocio modal", "Agregar Negocio modal content validated.");
     } catch (error) {
-      markFail(
-        report,
-        "Agregar Negocio modal",
-        `Agregar Negocio modal validation failed: ${String(error)}`,
-      );
-    }
+        markFail(
+          report,
+          "Agregar Negocio modal",
+          `Agregar Negocio modal validation failed: ${String(error)}`,
+        );
+      }
 
-    // Step 4: Open Administrar Negocios
-    try {
+      // Step 4: Open Administrar Negocios
+      try {
       const administrarNegocios = await firstVisible([
         page.getByText(/^Administrar Negocios$/i),
         page.getByRole("link", { name: /^Administrar Negocios$/i }),
@@ -320,15 +318,15 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
         "Account page loaded with Información General, Detalles de la Cuenta, Tus Negocios and Sección Legal.",
       );
     } catch (error) {
-      markFail(
-        report,
-        "Administrar Negocios view",
-        `Administrar Negocios view validation failed: ${String(error)}`,
-      );
-    }
+        markFail(
+          report,
+          "Administrar Negocios view",
+          `Administrar Negocios view validation failed: ${String(error)}`,
+        );
+      }
 
-    // Step 5: Validate Información General
-    try {
+      // Step 5: Validate Información General
+      try {
       await expect(page.getByText(/información general/i).first()).toBeVisible({ timeout: 12000 });
 
       const emailLocator = page.getByText(
@@ -354,15 +352,15 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
         "User name/email, BUSINESS PLAN and Cambiar Plan are visible.",
       );
     } catch (error) {
-      markFail(
-        report,
-        "Información General",
-        `Información General validation failed: ${String(error)}`,
-      );
-    }
+        markFail(
+          report,
+          "Información General",
+          `Información General validation failed: ${String(error)}`,
+        );
+      }
 
-    // Step 6: Validate Detalles de la Cuenta
-    try {
+      // Step 6: Validate Detalles de la Cuenta
+      try {
       await expect(page.getByText(/detalles de la cuenta/i).first()).toBeVisible({ timeout: 10000 });
       await expect(page.getByText(/cuenta creada/i).first()).toBeVisible({ timeout: 10000 });
       await expect(page.getByText(/estado activo/i).first()).toBeVisible({ timeout: 10000 });
@@ -373,15 +371,15 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
         "Cuenta creada, Estado activo and Idioma seleccionado are visible.",
       );
     } catch (error) {
-      markFail(
-        report,
-        "Detalles de la Cuenta",
-        `Detalles de la Cuenta validation failed: ${String(error)}`,
-      );
-    }
+        markFail(
+          report,
+          "Detalles de la Cuenta",
+          `Detalles de la Cuenta validation failed: ${String(error)}`,
+        );
+      }
 
-    // Step 7: Validate Tus Negocios
-    try {
+      // Step 7: Validate Tus Negocios
+      try {
       await expect(page.getByText(/tus negocios/i).first()).toBeVisible({ timeout: 10000 });
 
       const addBusinessButton = await firstVisible([
@@ -399,11 +397,11 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
         "Business list, Agregar Negocio and Tienes 2 de 3 negocios were validated.",
       );
     } catch (error) {
-      markFail(report, "Tus Negocios", `Tus Negocios validation failed: ${String(error)}`);
-    }
+        markFail(report, "Tus Negocios", `Tus Negocios validation failed: ${String(error)}`);
+      }
 
-    // Step 8: Validate Términos y Condiciones
-    try {
+      // Step 8: Validate Términos y Condiciones
+      try {
       const legalResult = await openLegalPage(
         page,
         context,
@@ -417,15 +415,15 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
         `Legal page validated. Final URL: ${legalResult.finalUrl}. Opened in new tab: ${legalResult.openedInNewTab}.`,
       );
     } catch (error) {
-      markFail(
-        report,
-        "Términos y Condiciones",
-        `Términos y Condiciones validation failed: ${String(error)}`,
-      );
-    }
+        markFail(
+          report,
+          "Términos y Condiciones",
+          `Términos y Condiciones validation failed: ${String(error)}`,
+        );
+      }
 
-    // Step 9: Validate Política de Privacidad
-    try {
+      // Step 9: Validate Política de Privacidad
+      try {
       const legalResult = await openLegalPage(
         page,
         context,
@@ -439,11 +437,12 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
         `Legal page validated. Final URL: ${legalResult.finalUrl}. Opened in new tab: ${legalResult.openedInNewTab}.`,
       );
     } catch (error) {
-      markFail(
-        report,
-        "Política de Privacidad",
-        `Política de Privacidad validation failed: ${String(error)}`,
-      );
+        markFail(
+          report,
+          "Política de Privacidad",
+          `Política de Privacidad validation failed: ${String(error)}`,
+        );
+      }
     }
   } finally {
     const reportPath = testInfo.outputPath("saleads-mi-negocio-final-report.json");
