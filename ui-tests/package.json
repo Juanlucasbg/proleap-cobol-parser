@@ -1,0 +1,21 @@
+{
+  "name": "ui-tests",
+  "version": "1.0.0",
+  "description": "Cross-environment Playwright checks for SaleADS.ai",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:saleads-mi-negocio": "playwright test tests/saleads-mi-negocio-full.spec.ts",
+    "install:browsers": "playwright install"
+  },
+  "keywords": [
+    "playwright",
+    "e2e",
+    "saleads"
+  ],
+  "author": "automation",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.61.0"
+  }
+}
