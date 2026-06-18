@@ -202,6 +202,10 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
     if (loginUrl) {
       await page.goto(loginUrl, { waitUntil: "domcontentloaded" });
       await waitForUi(page);
+    } else if (page.url().startsWith("about:")) {
+      throw new Error(
+        "SALEADS_LOGIN_URL is required unless the browser context is already preloaded on the SaleADS login page.",
+      );
     }
 
     const appAlreadyLoaded = (await hasVisibleSidebar(page)) && (await safeIsVisible(page.getByText(/Negocio/i).first()));
@@ -241,6 +245,10 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
   });
 
   await runStep("Mi Negocio menu", async () => {
+    if (report["Login"] !== "PASS") {
+      throw new Error("Skipped because Login failed.");
+    }
+
     await expectVisibleByLabel(page, ["Negocio"], 15_000);
 
     const addBusinessVisible = await safeIsVisible(page.getByText(/Agregar Negocio/i).first());
@@ -255,6 +263,10 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
   });
 
   await runStep("Agregar Negocio modal", async () => {
+    if (report["Mi Negocio menu"] !== "PASS") {
+      throw new Error("Skipped because Mi Negocio menu validation failed.");
+    }
+
     const sidebar = page.locator("aside, nav").first();
     await clickByVisibleLabel(sidebar, page, ["Agregar Negocio"], 15_000);
 
@@ -283,6 +295,10 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
   });
 
   await runStep("Administrar Negocios view", async () => {
+    if (report["Agregar Negocio modal"] !== "PASS" && report["Mi Negocio menu"] !== "PASS") {
+      throw new Error("Skipped because menu/modal navigation prerequisites failed.");
+    }
+
     const manageBusinessVisible = await safeIsVisible(page.getByText(/Administrar Negocios/i).first());
     if (!manageBusinessVisible) {
       await clickByVisibleLabel(page, page, ["Mi Negocio"], 15_000);
@@ -297,6 +313,10 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
   });
 
   await runStep("Informacion General", async () => {
+    if (report["Administrar Negocios view"] !== "PASS") {
+      throw new Error("Skipped because Administrar Negocios view failed.");
+    }
+
     const infoSection = await sectionByHeading(page, /Informacion General|Información General/i);
     const infoText = (await infoSection.innerText()).trim();
 
@@ -323,6 +343,10 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
   });
 
   await runStep("Detalles de la Cuenta", async () => {
+    if (report["Administrar Negocios view"] !== "PASS") {
+      throw new Error("Skipped because Administrar Negocios view failed.");
+    }
+
     const detailsSection = await sectionByHeading(page, /Detalles de la Cuenta/i);
     await expect(detailsSection.getByText(/Cuenta creada/i)).toBeVisible();
     await expect(detailsSection.getByText(/Estado activo/i)).toBeVisible();
@@ -330,6 +354,10 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
   });
 
   await runStep("Tus Negocios", async () => {
+    if (report["Administrar Negocios view"] !== "PASS") {
+      throw new Error("Skipped because Administrar Negocios view failed.");
+    }
+
     const businessSection = await sectionByHeading(page, /Tus Negocios/i);
     await expectVisibleByLabel(businessSection, ["Agregar Negocio"], 10_000);
     await expect(businessSection.getByText(/Tienes 2 de 3 negocios/i)).toBeVisible();
@@ -345,6 +373,10 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
   });
 
   await runStep("Terminos y Condiciones", async () => {
+    if (report["Administrar Negocios view"] !== "PASS") {
+      throw new Error("Skipped because Administrar Negocios view failed.");
+    }
+
     await validateLegalPage(
       page,
       evidenceDir,
@@ -357,6 +389,10 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
   });
 
   await runStep("Politica de Privacidad", async () => {
+    if (report["Administrar Negocios view"] !== "PASS") {
+      throw new Error("Skipped because Administrar Negocios view failed.");
+    }
+
     await validateLegalPage(
       page,
       evidenceDir,

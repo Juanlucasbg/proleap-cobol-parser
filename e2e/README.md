@@ -23,7 +23,7 @@ The test captures screenshots at important checkpoints and prints legal URLs in 
 
 ## Environment variables
 
-- `SALEADS_LOGIN_URL` (optional): login page URL for the current environment (dev/staging/prod).  
+- `SALEADS_LOGIN_URL` (required unless your runner preloads the login page): login page URL for the current environment (dev/staging/prod).  
   No domain is hardcoded in the test.
 - `SALEADS_EVIDENCE_DIR` (optional): custom screenshot output directory.
 - `HEADLESS` (optional): set to `false` to run headed.
