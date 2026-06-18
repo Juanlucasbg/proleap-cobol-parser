@@ -63,9 +63,18 @@ test("saleads_mi_negocio_full_test", async ({ page, context }, testInfo) => {
   };
 
   await runValidation("Login", async () => {
-    expect(loginUrl, "Set SALEADS_LOGIN_URL (or SALEADS_URL/BASE_URL) before running this test.").toBeTruthy();
-    await page.goto(loginUrl, { waitUntil: "domcontentloaded" });
-    await waitForUiLoad(page);
+    if (loginUrl) {
+      await page.goto(loginUrl, { waitUntil: "domcontentloaded" });
+      await waitForUiLoad(page);
+    } else {
+      // Supports orchestrators that pre-open the browser on the login page.
+      const currentUrl = page.url();
+      if (!currentUrl || currentUrl === "about:blank") {
+        throw new Error(
+          "No login URL provided and current page is blank. Set SALEADS_LOGIN_URL or pre-open the SaleADS login page."
+        );
+      }
+    }
 
     const loginCandidates = [
       page.getByRole("button", { name: /sign in with google|continuar con google|iniciar sesi[oó]n con google/i }).first(),

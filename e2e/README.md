@@ -30,6 +30,8 @@ Provide the target login page URL using one of these environment variables:
 - `SALEADS_URL`
 - `BASE_URL`
 
+If your automation runner already opens the browser on the SaleADS login page, you can run without URL variables.
+
 ## Run
 
 ```bash
