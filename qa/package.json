@@ -1,0 +1,16 @@
+{
+  "name": "qa",
+  "version": "1.0.0",
+  "description": "SaleADS UI workflow automations",
+  "main": "saleads/mi-negocio-full-test.js",
+  "scripts": {
+    "test": "node saleads/mi-negocio-full-test.js",
+    "saleads:mi-negocio:test": "node saleads/mi-negocio-full-test.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "playwright": "^1.61.0"
+  }
+}
