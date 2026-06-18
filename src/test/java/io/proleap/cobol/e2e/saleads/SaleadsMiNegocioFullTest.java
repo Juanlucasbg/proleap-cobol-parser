@@ -603,7 +603,8 @@ public class SaleadsMiNegocioFullTest {
 	private Path createRunDir() throws IOException {
 		final String timestamp = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'").withZone(ZoneOffset.UTC)
 				.format(Instant.now());
-		final Path runDir = Paths.get("target", "saleads-mi-negocio", timestamp);
+		final Path projectRoot = Paths.get("").toAbsolutePath().normalize();
+		final Path runDir = projectRoot.resolve(Paths.get("target", "saleads-mi-negocio", timestamp));
 		Files.createDirectories(runDir);
 		return runDir;
 	}
