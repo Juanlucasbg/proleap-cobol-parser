@@ -10,11 +10,11 @@ type ReportField =
   | "Mi Negocio menu"
   | "Agregar Negocio modal"
   | "Administrar Negocios view"
-  | "Informacion General"
+  | "Informaci\u00f3n General"
   | "Detalles de la Cuenta"
   | "Tus Negocios"
-  | "Terminos y Condiciones"
-  | "Politica de Privacidad";
+  | "T\u00e9rminos y Condiciones"
+  | "Pol\u00edtica de Privacidad";
 
 type Status = "PASS" | "FAIL";
 
@@ -23,11 +23,11 @@ const REPORT_FIELDS: ReportField[] = [
   "Mi Negocio menu",
   "Agregar Negocio modal",
   "Administrar Negocios view",
-  "Informacion General",
+  "Informaci\u00f3n General",
   "Detalles de la Cuenta",
   "Tus Negocios",
-  "Terminos y Condiciones",
-  "Politica de Privacidad",
+  "T\u00e9rminos y Condiciones",
+  "Pol\u00edtica de Privacidad",
 ];
 
 function createInitialReport(): Record<ReportField, Status> {
@@ -42,6 +42,17 @@ function createInitialReport(): Record<ReportField, Status> {
 
 function escapeRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function accentInsensitiveRegex(value: string): RegExp {
+  const escaped = escapeRegex(value)
+    .replace(/a/gi, "[aAáÁàÀäÄâÂ]")
+    .replace(/e/gi, "[eEéÉèÈëËêÊ]")
+    .replace(/i/gi, "[iIíÍìÌïÏîÎ]")
+    .replace(/o/gi, "[oOóÓòÒöÖôÔ]")
+    .replace(/u/gi, "[uUúÚùÙüÜûÛ]")
+    .replace(/n/gi, "[nNñÑ]");
+  return new RegExp(escaped, "i");
 }
 
 async function waitForUiAfterClick(page: Page, clickAction: () => Promise<void>): Promise<void> {
@@ -63,7 +74,7 @@ async function firstVisible(candidates: Locator[]): Promise<Locator | null> {
 }
 
 async function requireVisibleText(page: Page, text: string): Promise<Locator> {
-  const regex = new RegExp(escapeRegex(text), "i");
+  const regex = accentInsensitiveRegex(text);
   const locator = await firstVisible([
     page.getByRole("button", { name: regex }),
     page.getByRole("link", { name: regex }),
@@ -236,7 +247,7 @@ test("saleads_mi_negocio_full_test", async ({ context, page }) => {
     await captureCheckpoint("04-administrar-negocios-view", page, true);
   });
 
-  await runValidation("Informacion General", async () => {
+  await runValidation("Informaci\u00f3n General", async () => {
     const infoSection = page.locator("section, div").filter({ hasText: /Informaci[oó]n General/i }).first();
     await expect(infoSection).toBeVisible();
 
@@ -292,7 +303,7 @@ test("saleads_mi_negocio_full_test", async ({ context, page }) => {
   ): Promise<void> => {
     await runValidation(field, async () => {
       const appPage = page;
-      const linkRegex = new RegExp(escapeRegex(linkText), "i");
+      const linkRegex = accentInsensitiveRegex(linkText);
       const link = await firstVisible([
         appPage.getByRole("link", { name: linkRegex }),
         appPage.getByRole("button", { name: linkRegex }),
@@ -341,7 +352,7 @@ test("saleads_mi_negocio_full_test", async ({ context, page }) => {
   };
 
   await validateLegalLink(
-    "Terminos y Condiciones",
+    "T\u00e9rminos y Condiciones",
     "Terminos y Condiciones",
     /T[eé]rminos y Condiciones/i,
     "08-terminos-y-condiciones",
@@ -349,7 +360,7 @@ test("saleads_mi_negocio_full_test", async ({ context, page }) => {
   );
 
   await validateLegalLink(
-    "Politica de Privacidad",
+    "Pol\u00edtica de Privacidad",
     "Politica de Privacidad",
     /Pol[ií]tica de Privacidad/i,
     "09-politica-de-privacidad",
