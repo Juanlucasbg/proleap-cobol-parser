@@ -1,0 +1,20 @@
+{
+  "name": "e2e",
+  "version": "1.0.0",
+  "description": "SaleADS.ai Mi Negocio E2E workflows",
+  "scripts": {
+    "test": "playwright test",
+    "test:saleads-mi-negocio": "playwright test saleads_mi_negocio_full_test.spec.ts"
+  },
+  "keywords": [
+    "playwright",
+    "saleads",
+    "e2e"
+  ],
+  "author": "cursor-automation",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.61.0",
+    "playwright": "^1.61.0"
+  }
+}
