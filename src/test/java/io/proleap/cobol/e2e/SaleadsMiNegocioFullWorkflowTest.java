@@ -130,12 +130,11 @@ public class SaleadsMiNegocioFullWorkflowTest {
                 return "Business listing and quota validated";
               });
 
-      boolean terminosCondiciones =
-          runStep(
-              report,
-              "T\u00e9rminos y Condiciones",
-              administrarView,
-              () -> stepValidateLegalLink(page, "T\u00e9rminos y Condiciones", evidenceDir, "terminos_condiciones"));
+      runStep(
+          report,
+          "T\u00e9rminos y Condiciones",
+          administrarView,
+          () -> stepValidateLegalLink(page, "T\u00e9rminos y Condiciones", evidenceDir, "terminos_condiciones"));
 
       runStep(
           report,
@@ -369,8 +368,8 @@ public class SaleadsMiNegocioFullWorkflowTest {
     try {
       Page popup =
           context.waitForPage(
-              () -> locator.click(new Locator.ClickOptions().setTimeout(DEFAULT_TIMEOUT_MS)),
-              new BrowserContext.WaitForPageOptions().setTimeout(7000));
+              new BrowserContext.WaitForPageOptions().setTimeout(7000),
+              () -> locator.click(new Locator.ClickOptions().setTimeout(DEFAULT_TIMEOUT_MS)));
       waitForUi(popup);
       return popup;
     } catch (PlaywrightException ignored) {
