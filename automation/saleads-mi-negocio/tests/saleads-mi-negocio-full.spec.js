@@ -83,12 +83,14 @@ async function runAndRecord(stepName, report, failures, action) {
       status: "PASS",
       details: details || "Validated successfully.",
     };
+    return true;
   } catch (error) {
     report[stepName] = {
       status: "FAIL",
       details: error instanceof Error ? error.message : String(error),
     };
     failures.push(stepName);
+    return false;
   }
 }
 
@@ -152,7 +154,7 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
   const failures = [];
   const loginUrl = process.env.SALEADS_LOGIN_URL;
 
-  await runAndRecord("Login", report, failures, async () => {
+  const loginPassed = await runAndRecord("Login", report, failures, async () => {
     if (!loginUrl) {
       throw new Error("Set SALEADS_LOGIN_URL to the current environment login page before running this test.");
     }
@@ -205,6 +207,19 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     await takeCheckpoint(page, testInfo, "01-dashboard-loaded.png", { fullPage: true });
     return "Aplicación principal y barra lateral visibles.";
   });
+
+  if (!loginPassed) {
+    for (const blockedStep of REQUIRED_STEPS.filter((step) => step !== "Login")) {
+      if (report[blockedStep].status === "FAIL" && !report[blockedStep].details) {
+        report[blockedStep].details = "Blocked: Login validation did not pass.";
+      }
+    }
+
+    const earlyReportPath = await writeReport(testInfo, report);
+    console.log(`Final report saved at: ${earlyReportPath}`);
+    console.log(JSON.stringify(report, null, 2));
+    throw new Error(`Validation failures detected: ${failures.join(", ")}`);
+  }
 
   await runAndRecord("Mi Negocio menu", report, failures, async () => {
     const negocioSection = await getFirstVisibleLocator(
