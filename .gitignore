@@ -41,3 +41,8 @@ target/
 
 ## Additional for IntelliJ
 out/
+
+# Node artifacts for QA Playwright suite
+qa/saleads/node_modules/
+qa/saleads/playwright-report/
+qa/saleads/test-results/
