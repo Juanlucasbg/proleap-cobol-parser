@@ -1,0 +1,20 @@
+{
+  "name": "saleads-mi-negocio",
+  "version": "1.0.0",
+  "description": "Environment-agnostic Playwright workflow validation for SaleADS Mi Negocio.",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "test:mi-negocio": "playwright test tests/saleads-mi-negocio-full.spec.js",
+    "test:mi-negocio:headed": "HEADLESS=false playwright test tests/saleads-mi-negocio-full.spec.js --project=chromium"
+  },
+  "keywords": [
+    "playwright",
+    "e2e",
+    "saleads"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.61.0"
+  }
+}
