@@ -36,6 +36,8 @@ Notes:
 
 - Do not hardcode a specific environment URL in code.
 - The script uses `SALEADS_LOGIN_URL` only as runtime input.
+- Alternative mode for an already-open browser/tab:
+  `BROWSER_WS_ENDPOINT="ws://..." npm run saleads:mi-negocio:test`
 - If the login flow shows a Google account selector, it will try to pick:
   `juanlucasbarbiergarzon@gmail.com`.
 - Set `HEADLESS=false` to run with UI.

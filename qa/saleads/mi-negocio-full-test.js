@@ -54,6 +54,24 @@ async function expectVisible(locator, description, timeout = 15000) {
   console.log(`Validated: ${description}`);
 }
 
+async function getBrowserContextAndPage() {
+  const headless = process.env.HEADLESS !== "false";
+  const wsEndpoint = process.env.BROWSER_WS_ENDPOINT;
+
+  if (wsEndpoint) {
+    console.log(`Connecting to existing browser via CDP: ${wsEndpoint}`);
+    const browser = await chromium.connectOverCDP(wsEndpoint);
+    const context = browser.contexts()[0] || (await browser.newContext());
+    const page = context.pages()[0] || (await context.newPage());
+    return { browser, context, page, usingExternalBrowser: true };
+  }
+
+  const browser = await chromium.launch({ headless });
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  return { browser, context, page, usingExternalBrowser: false };
+}
+
 async function openFromCurrentOrEnv(page) {
   const loginUrl = process.env.SALEADS_LOGIN_URL;
   if (loginUrl) {
@@ -66,6 +84,14 @@ async function openFromCurrentOrEnv(page) {
   console.log(
     "SALEADS_LOGIN_URL not provided. Expecting the page to already be at SaleADS login."
   );
+
+  if (page.url() === "about:blank") {
+    throw new Error(
+      "No login page available. Set SALEADS_LOGIN_URL or provide BROWSER_WS_ENDPOINT with an already-open SaleADS login tab."
+    );
+  }
+
+  console.log(`Using current page URL: ${page.url()}`);
 }
 
 async function loginWithGoogle(page) {
@@ -83,11 +109,13 @@ async function loginWithGoogle(page) {
     console.log("Google account selector did not appear; continuing.");
   }
 
-  await expectVisible(
-    page.getByRole("navigation").or(page.locator("aside")),
-    "Main app interface with left sidebar visible",
-    30000
-  );
+  const nav = page.getByRole("navigation");
+  const aside = page.locator("aside");
+  try {
+    await expectVisible(nav, "Main app interface with navigation visible", 30000);
+  } catch (_) {
+    await expectVisible(aside, "Main app interface with left sidebar visible", 30000);
+  }
   await checkpoint(page, "01-dashboard-loaded.png", true);
   report.Login = "PASS";
 }
@@ -231,10 +259,8 @@ async function writeReport() {
 async function main() {
   await ensureEvidenceDir();
 
-  const headless = process.env.HEADLESS !== "false";
-  const browser = await chromium.launch({ headless });
-  const context = await browser.newContext();
-  const page = await context.newPage();
+  const { browser, context, page, usingExternalBrowser } =
+    await getBrowserContextAndPage();
 
   try {
     await openFromCurrentOrEnv(page);
@@ -267,8 +293,10 @@ async function main() {
     process.exitCode = 1;
   } finally {
     await writeReport();
-    await context.close();
-    await browser.close();
+    if (!usingExternalBrowser) {
+      await context.close();
+      await browser.close();
+    }
   }
 }
 
