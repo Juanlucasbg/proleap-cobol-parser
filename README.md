@@ -194,6 +194,21 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+* To run the SaleADS Mi Negocio end-to-end workflow test only:
+
+```
+$ export SALEADS_START_URL="https://<your-saleads-environment>/login"
+$ export SALEADS_GOOGLE_ACCOUNT="juanlucasbarbiergarzon@gmail.com"
+$ mvn -Dtest=io.proleap.cobol.e2e.saleads.SaleadsMiNegocioWorkflowTest test
+```
+
+The test intentionally avoids hard-coded domains and uses visible-text selectors. It captures
+screenshots and a final pass/fail report at:
+
+```
+target/surefire-reports/saleads-mi-negocio/
+```
+
 
 Release process
 ---------------
