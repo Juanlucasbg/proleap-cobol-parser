@@ -146,6 +146,14 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
 
   const report = createReport();
   const failures = [];
+  const persistReport = async () => {
+    const reportPath = path.join(artifactsDir, "final-report.json");
+    await fs.writeFile(reportPath, JSON.stringify(report, null, 2), "utf8");
+    await testInfo.attach("saleads-mi-negocio-final-report", {
+      path: reportPath,
+      contentType: "application/json",
+    });
+  };
 
   const runStep = async (field, execution) => {
     try {
@@ -162,9 +170,13 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
 
   const loginUrl = process.env.SALEADS_LOGIN_URL || process.env.SALEADS_BASE_URL;
   if (!loginUrl) {
-    throw new Error(
-      "Missing SALEADS_LOGIN_URL (or SALEADS_BASE_URL). Provide the login page URL for the target environment.",
-    );
+    const message =
+      "Missing SALEADS_LOGIN_URL (or SALEADS_BASE_URL). Provide the login page URL for the target environment.";
+    report.Login.status = "FAIL";
+    report.Login.details.push(message);
+    failures.push(`Login: ${message}`);
+    await persistReport();
+    throw new Error(message);
   }
 
   await page.goto(loginUrl, { waitUntil: "domcontentloaded" });
@@ -322,12 +334,7 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     report["Política de Privacidad"].details.push(`Final URL: ${finalUrl}`);
   });
 
-  const reportPath = path.join(artifactsDir, "final-report.json");
-  await fs.writeFile(reportPath, JSON.stringify(report, null, 2), "utf8");
-  await testInfo.attach("saleads-mi-negocio-final-report", {
-    path: reportPath,
-    contentType: "application/json",
-  });
+  await persistReport();
 
   if (failures.length > 0) {
     throw new Error(`Workflow validation failed:\n${failures.join("\n")}`);
