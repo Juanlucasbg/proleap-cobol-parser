@@ -41,3 +41,8 @@ target/
 
 ## Additional for IntelliJ
 out/
+node_modules/
+playwright-report/
+test-results/
+saleads-e2e/test-results/
+saleads-e2e/playwright-report/
