@@ -1,0 +1,17 @@
+{
+  "name": "saleads-mi-negocio",
+  "version": "1.0.0",
+  "description": "Playwright E2E workflow for SaleADS Mi Negocio",
+  "scripts": {
+    "test": "playwright test",
+    "test:saleads": "playwright test tests/saleads-mi-negocio-full.spec.ts",
+    "test:saleads:headed": "playwright test tests/saleads-mi-negocio-full.spec.ts --headed",
+    "test:list": "playwright test --list"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.61.0"
+  }
+}
