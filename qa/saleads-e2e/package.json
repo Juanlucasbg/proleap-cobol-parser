@@ -1,0 +1,21 @@
+{
+  "name": "saleads-e2e",
+  "version": "1.0.0",
+  "description": "Playwright E2E suite for SaleADS Mi Negocio workflow",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug"
+  },
+  "keywords": [
+    "playwright",
+    "e2e",
+    "saleads"
+  ],
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@playwright/test": "^1.61.0",
+    "typescript": "^6.0.3"
+  }
+}
