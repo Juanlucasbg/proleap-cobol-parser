@@ -194,6 +194,17 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+### Optional: SaleADS Mi Negocio end-to-end workflow
+
+An optional Playwright-based E2E test is available at:
+
+`src/test/java/io/proleap/e2e/saleads/SaleadsMiNegocioWorkflowTest.java`
+
+It is environment-agnostic (no hardcoded SaleADS URL) and expects `SALEADS_START_URL`.
+See full setup and execution details in:
+
+`docs/saleads-mi-negocio-e2e.md`
+
 
 Release process
 ---------------
