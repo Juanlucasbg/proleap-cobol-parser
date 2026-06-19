@@ -59,11 +59,35 @@ function markFail(report, step, error) {
   report[step].details.push(error?.message || String(error));
 }
 
+function addBlockedDetailsToEmptyFailures(report, reason) {
+  for (const field of REPORT_FIELDS) {
+    if (report[field].status === "FAIL" && report[field].details.length === 0) {
+      report[field].details.push(reason);
+    }
+  }
+}
+
 async function clickAndWaitForUi(page, locator) {
   await locator.waitFor({ state: "visible" });
   await locator.click();
   await page.waitForLoadState("domcontentloaded");
   await page.waitForTimeout(500);
+}
+
+async function firstVisibleLocator(candidates) {
+  for (const locator of candidates) {
+    if (await locator.isVisible().catch(() => false)) {
+      return locator;
+    }
+  }
+  return null;
+}
+
+async function assertNoInfraError(page) {
+  const bodyText = await page.locator("body").innerText();
+  if (/error code 52\d|ssl handshake failed|cloudflare/i.test(bodyText)) {
+    throw new Error(`Infrastructure/network issue detected while loading login page: ${bodyText.slice(0, 250)}`);
+  }
 }
 
 function withinSection(page, sectionTitlePattern) {
@@ -140,22 +164,38 @@ test("Login with Google and validate Mi Negocio workflow", async ({ page }) => {
     }
 
     await page.goto(loginUrl, { waitUntil: "domcontentloaded" });
+    await assertNoInfraError(page);
 
     // Step 1: Login with Google
     try {
-      const googleLoginButton = page
-        .getByRole("button", { name: /google|sign in|iniciar sesi[oó]n/i })
-        .first();
-      await clickAndWaitForUi(page, googleLoginButton);
+      const sidebarNegocio = page.getByText("Negocio", { exact: false }).first();
+      const alreadyLoggedIn = await sidebarNegocio.isVisible().catch(() => false);
 
-      const accountSelector = page
-        .getByText("juanlucasbarbiergarzon@gmail.com", { exact: false })
-        .first();
-      if (await accountSelector.isVisible().catch(() => false)) {
+      if (!alreadyLoggedIn) {
+        const googleLoginButton = await firstVisibleLocator([
+          page.getByRole("button", { name: /google|sign in|iniciar sesi[oó]n|continuar con google/i }).first(),
+          page.getByRole("link", { name: /google|sign in|iniciar sesi[oó]n|continuar con google/i }).first(),
+          page.getByText(/google/i).first(),
+        ]);
+
+        if (!googleLoginButton) {
+          throw new Error("Could not find a Google login button or link by visible text.");
+        }
+
+        await clickAndWaitForUi(page, googleLoginButton);
+      }
+
+      const accountSelector = await firstVisibleLocator([
+        page.getByText("juanlucasbarbiergarzon@gmail.com", { exact: false }).first(),
+        page.getByRole("button", { name: /juanlucasbarbiergarzon@gmail.com/i }).first(),
+        page.getByRole("link", { name: /juanlucasbarbiergarzon@gmail.com/i }).first(),
+      ]);
+
+      if (accountSelector) {
         await clickAndWaitForUi(page, accountSelector);
       }
 
-      await expect(page.getByText(/Negocio/i).first()).toBeVisible();
+      await expect(sidebarNegocio).toBeVisible({ timeout: 60000 });
       await page.screenshot({
         path: path.join(SCREENSHOT_DIR, "01-dashboard-loaded.png"),
         fullPage: true,
@@ -169,10 +209,10 @@ test("Login with Google and validate Mi Negocio workflow", async ({ page }) => {
 
     // Step 2: Open Mi Negocio menu
     try {
-      const negocioSection = page.getByText(/^Negocio$/i).first();
+      const negocioSection = page.getByText("Negocio", { exact: false }).first();
       await clickAndWaitForUi(page, negocioSection);
 
-      const miNegocioOption = page.getByText(/^Mi Negocio$/i).first();
+      const miNegocioOption = page.getByText("Mi Negocio", { exact: false }).first();
       await clickAndWaitForUi(page, miNegocioOption);
 
       await expect(page.getByText("Agregar Negocio", { exact: false }).first()).toBeVisible();
@@ -217,7 +257,7 @@ test("Login with Google and validate Mi Negocio workflow", async ({ page }) => {
 
     // Step 4: Open Administrar Negocios
     try {
-      const miNegocioMenu = page.getByText(/^Mi Negocio$/i).first();
+      const miNegocioMenu = page.getByText("Mi Negocio", { exact: false }).first();
       if (await miNegocioMenu.isVisible().catch(() => false)) {
         await clickAndWaitForUi(page, miNegocioMenu);
       }
@@ -303,6 +343,12 @@ test("Login with Google and validate Mi Negocio workflow", async ({ page }) => {
     } catch (error) {
       markFail(report, "Política de Privacidad", error);
     }
+  } catch (fatalError) {
+    addBlockedDetailsToEmptyFailures(
+      report,
+      `Not executed because an earlier required step failed: ${fatalError?.message || String(fatalError)}`,
+    );
+    throw fatalError;
   } finally {
     await saveReport(report, metadata);
     // Step 10: Final report in stdout for CI and automation logs.
