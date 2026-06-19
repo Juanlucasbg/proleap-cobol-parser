@@ -41,3 +41,7 @@ target/
 
 ## Additional for IntelliJ
 out/
+
+# QA automation assets
+qa/saleads-mi-negocio/node_modules/
+qa/saleads-mi-negocio/artifacts/
