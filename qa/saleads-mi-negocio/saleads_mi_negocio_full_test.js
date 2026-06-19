@@ -7,11 +7,11 @@ const REPORT_FIELDS = [
   "Mi Negocio menu",
   "Agregar Negocio modal",
   "Administrar Negocios view",
-  "Informacion General",
+  "Información General",
   "Detalles de la Cuenta",
   "Tus Negocios",
-  "Terminos y Condiciones",
-  "Politica de Privacidad",
+  "Términos y Condiciones",
+  "Política de Privacidad",
 ];
 
 function newReport() {
@@ -234,10 +234,20 @@ async function run() {
       }
 
       await clickVisibleText(page, ["Administrar Negocios"]);
-      await ensureVisible(page.getByText("Informacion General", { exact: false }).first(), 30000);
+      const infoGeneralVisible =
+        (await page.getByText("Información General", { exact: false }).first().isVisible().catch(() => false)) ||
+        (await page.getByText("Informacion General", { exact: false }).first().isVisible().catch(() => false));
+      if (!infoGeneralVisible) {
+        throw new Error("No se encontro la seccion Informacion General.");
+      }
       await ensureVisible(page.getByText("Detalles de la Cuenta", { exact: false }).first(), 30000);
       await ensureVisible(page.getByText("Tus Negocios", { exact: false }).first(), 30000);
-      await ensureVisible(page.getByText("Seccion Legal", { exact: false }).first(), 30000);
+      const seccionLegalVisible =
+        (await page.getByText("Sección Legal", { exact: false }).first().isVisible().catch(() => false)) ||
+        (await page.getByText("Seccion Legal", { exact: false }).first().isVisible().catch(() => false));
+      if (!seccionLegalVisible) {
+        throw new Error("No se encontro la seccion legal.");
+      }
 
       const shot = await takeScreenshot(page, outputDir, "04-administrar-negocios-account-page.png", true);
       report["Administrar Negocios view"] = {
@@ -250,7 +260,9 @@ async function run() {
 
     // Step 5: Validate Informacion General.
     try {
-      const section = await sectionByHeading(page, "Informacion General");
+      const section = (await page.getByText("Información General", { exact: false }).first().isVisible().catch(() => false))
+        ? await sectionByHeading(page, "Información General")
+        : await sectionByHeading(page, "Informacion General");
       const sectionText = normalizeText(await section.innerText());
 
       if (!/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/.test(sectionText)) {
@@ -278,12 +290,12 @@ async function run() {
         throw new Error("A user name-like value was not detected in Informacion General.");
       }
 
-      report["Informacion General"] = {
+      report["Información General"] = {
         status: "PASS",
         details: "User name, email, BUSINESS PLAN and Cambiar Plan are visible.",
       };
     } catch (error) {
-      report["Informacion General"] = { status: "FAIL", details: String(error.message || error) };
+      report["Información General"] = { status: "FAIL", details: String(error.message || error) };
     }
 
     // Step 6: Validate Detalles de la Cuenta.
@@ -334,12 +346,12 @@ async function run() {
       const appPage = page;
       const previousUrl = appPage.url();
       const popupPromise = context.waitForEvent("page", { timeout: 8000 }).catch(() => null);
-      await clickVisibleText(appPage, ["Terminos y Condiciones", "Términos y Condiciones"]);
+      await clickVisibleText(appPage, ["Términos y Condiciones", "Terminos y Condiciones"]);
       const popup = await popupPromise;
       const legalPage = popup || appPage;
 
       await legalPage.waitForLoadState("domcontentloaded");
-      await validateLegalPage(legalPage, "Terminos y Condiciones");
+      await validateLegalPage(legalPage, "Términos y Condiciones");
 
       const shot = await takeScreenshot(legalPage, outputDir, "08-terminos-y-condiciones.png", true);
       metadata.legalUrls.terminosYCondiciones = legalPage.url();
@@ -352,12 +364,12 @@ async function run() {
       }
       await waitForUi(appPage);
 
-      report["Terminos y Condiciones"] = {
+      report["Términos y Condiciones"] = {
         status: "PASS",
         details: `Legal page validated. URL: ${metadata.legalUrls.terminosYCondiciones}. Screenshot: ${shot}`,
       };
     } catch (error) {
-      report["Terminos y Condiciones"] = { status: "FAIL", details: String(error.message || error) };
+      report["Términos y Condiciones"] = { status: "FAIL", details: String(error.message || error) };
     }
 
     // Step 9: Validate Politica de Privacidad.
@@ -365,12 +377,12 @@ async function run() {
       const appPage = page;
       const previousUrl = appPage.url();
       const popupPromise = context.waitForEvent("page", { timeout: 8000 }).catch(() => null);
-      await clickVisibleText(appPage, ["Politica de Privacidad", "Política de Privacidad"]);
+      await clickVisibleText(appPage, ["Política de Privacidad", "Politica de Privacidad"]);
       const popup = await popupPromise;
       const legalPage = popup || appPage;
 
       await legalPage.waitForLoadState("domcontentloaded");
-      await validateLegalPage(legalPage, "Politica de Privacidad");
+      await validateLegalPage(legalPage, "Política de Privacidad");
 
       const shot = await takeScreenshot(legalPage, outputDir, "09-politica-de-privacidad.png", true);
       metadata.legalUrls.politicaDePrivacidad = legalPage.url();
@@ -383,15 +395,21 @@ async function run() {
       }
       await waitForUi(appPage);
 
-      report["Politica de Privacidad"] = {
+      report["Política de Privacidad"] = {
         status: "PASS",
         details: `Legal page validated. URL: ${metadata.legalUrls.politicaDePrivacidad}. Screenshot: ${shot}`,
       };
     } catch (error) {
-      report["Politica de Privacidad"] = { status: "FAIL", details: String(error.message || error) };
+      report["Política de Privacidad"] = { status: "FAIL", details: String(error.message || error) };
     }
   } catch (fatalError) {
-    metadata.errors.push(`Fatal execution error: ${String(fatalError.message || fatalError)}`);
+    const fatalMessage = `Fatal execution error: ${String(fatalError.message || fatalError)}`;
+    metadata.errors.push(fatalMessage);
+    for (const field of REPORT_FIELDS) {
+      if (report[field].details === "Not executed.") {
+        report[field] = { status: "FAIL", details: fatalMessage };
+      }
+    }
   } finally {
     if (browser) {
       await browser.close();
