@@ -1,0 +1,19 @@
+{
+  "name": "saleads",
+  "version": "1.0.0",
+  "description": "Environment-agnostic Playwright E2E for SaleADS Mi Negocio workflow",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "HEADLESS=false playwright test",
+    "install:browsers": "playwright install --with-deps"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.61.0"
+  }
+}
