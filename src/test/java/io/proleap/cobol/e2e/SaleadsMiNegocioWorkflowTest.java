@@ -37,11 +37,11 @@ public class SaleadsMiNegocioWorkflowTest {
 	private static final String REPORT_MI_NEGOCIO_MENU = "Mi Negocio menu";
 	private static final String REPORT_AGREGAR_NEGOCIO_MODAL = "Agregar Negocio modal";
 	private static final String REPORT_ADMINISTRAR_NEGOCIOS_VIEW = "Administrar Negocios view";
-	private static final String REPORT_INFORMACION_GENERAL = "Informacion General";
+	private static final String REPORT_INFORMACION_GENERAL = "Información General";
 	private static final String REPORT_DETALLES_CUENTA = "Detalles de la Cuenta";
 	private static final String REPORT_TUS_NEGOCIOS = "Tus Negocios";
-	private static final String REPORT_TERMINOS = "Terminos y Condiciones";
-	private static final String REPORT_PRIVACIDAD = "Politica de Privacidad";
+	private static final String REPORT_TERMINOS = "Términos y Condiciones";
+	private static final String REPORT_PRIVACIDAD = "Política de Privacidad";
 
 	@Test
 	public void saleadsMiNegocioFullWorkflow() throws Exception {
@@ -103,15 +103,15 @@ public class SaleadsMiNegocioWorkflowTest {
 				runStep(REPORT_ADMINISTRAR_NEGOCIOS_VIEW, report, errors, () -> {
 					openMiNegocioMenu(page);
 					clickByVisibleText(page, "Administrar Negocios");
-					assertVisibleText(page, "Informacion General");
+					assertVisibleText(page, "Información General");
 					assertVisibleText(page, "Detalles de la Cuenta");
 					assertVisibleText(page, "Tus Negocios");
-					assertVisibleText(page, "Seccion Legal");
+					assertVisibleText(page, "Sección Legal");
 					screenshot(page, evidenceDir, "04-administrar-negocios-full.png", true);
 				});
 
 				runStep(REPORT_INFORMACION_GENERAL, report, errors, () -> {
-					assertVisibleText(page, "Informacion General");
+					assertVisibleText(page, "Información General");
 					assertVisibleText(page, "BUSINESS PLAN");
 					assertVisibleText(page, "Cambiar Plan");
 					assertPageContainsEmail(page, expectedUserEmail);
@@ -132,14 +132,14 @@ public class SaleadsMiNegocioWorkflowTest {
 				});
 
 				runStep(REPORT_TERMINOS, report, errors, () -> {
-					LegalValidationResult result = validateLegalLink(page, context, "Terminos y Condiciones",
-							"Terminos y Condiciones", evidenceDir, "05-terminos-y-condiciones.png");
+					LegalValidationResult result = validateLegalLink(page, context, "Términos y Condiciones",
+							"Términos y Condiciones", evidenceDir, "05-terminos-y-condiciones.png");
 					legalUrls.put(REPORT_TERMINOS, result.finalUrl);
 				});
 
 				runStep(REPORT_PRIVACIDAD, report, errors, () -> {
-					LegalValidationResult result = validateLegalLink(page, context, "Politica de Privacidad",
-							"Politica de Privacidad", evidenceDir, "06-politica-de-privacidad.png");
+					LegalValidationResult result = validateLegalLink(page, context, "Política de Privacidad",
+							"Política de Privacidad", evidenceDir, "06-politica-de-privacidad.png");
 					legalUrls.put(REPORT_PRIVACIDAD, result.finalUrl);
 				});
 			}
@@ -154,10 +154,10 @@ public class SaleadsMiNegocioWorkflowTest {
 		int pagesBefore = context.pages().size();
 		Locator loginButton = firstVisible(page,
 				page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions()
-						.setName(Pattern.compile("(?iu).*(sign in with google|iniciar sesion con google|google).*"))),
+						.setName(Pattern.compile("(?iu).*(sign in with google|iniciar sesi[oó]n con google|google).*"))),
 				page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions()
-						.setName(Pattern.compile("(?iu).*(sign in with google|iniciar sesion con google|google).*"))),
-				page.getByText(Pattern.compile("(?iu).*(sign in with google|iniciar sesion con google|google).*")));
+						.setName(Pattern.compile("(?iu).*(sign in with google|iniciar sesi[oó]n con google|google).*"))),
+				page.getByText(Pattern.compile("(?iu).*(sign in with google|iniciar sesi[oó]n con google|google).*")));
 		clickAndWait(page, loginButton);
 
 		Page popup = waitForNewPage(context, pagesBefore, 6000);
@@ -234,7 +234,7 @@ public class SaleadsMiNegocioWorkflowTest {
 	}
 
 	private void assertVisibleText(final Page page, final String text) {
-		Locator locator = page.getByText(Pattern.compile("(?iu).*" + Pattern.quote(text) + ".*")).first();
+		Locator locator = page.getByText(accentTolerantPattern(text)).first();
 		locator.waitFor(
 				new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(DEFAULT_TIMEOUT_MS));
 	}
@@ -255,7 +255,7 @@ public class SaleadsMiNegocioWorkflowTest {
 		Pattern emailPattern = Pattern.compile(Pattern.quote(expectedUserEmail), Pattern.CASE_INSENSITIVE);
 		Pattern namePattern = Pattern.compile("(?m)^[\\p{L}][\\p{L}\\s'-]{2,}$");
 
-		Assert.assertTrue("Expected user email was not found in Informacion General section.",
+		Assert.assertTrue("Expected user email was not found in Información General section.",
 				emailPattern.matcher(bodyText).find());
 		Assert.assertTrue("Could not identify a likely user name. Set SALEADS_EXPECTED_USER_NAME for strict validation.",
 				namePattern.matcher(bodyText).find());
@@ -274,7 +274,6 @@ public class SaleadsMiNegocioWorkflowTest {
 		Assert.assertTrue("Legal page content appears too short.", text != null && text.trim().length() > 120);
 	}
 
-	@SafeVarargs
 	private final Locator firstVisible(final Page page, final Locator... options) {
 		for (Locator option : options) {
 			try {
@@ -289,18 +288,52 @@ public class SaleadsMiNegocioWorkflowTest {
 	}
 
 	private Locator findInputByLabelOrPlaceholder(final Page page, final String labelText) {
-		Pattern labelPattern = Pattern.compile("(?iu).*" + Pattern.quote(labelText) + ".*");
-		return firstVisible(page, page.getByLabel(labelPattern), page.locator("input[placeholder*='" + labelText + "']"),
+		return firstVisible(page, page.getByLabel(labelText), page.locator("input[placeholder*='" + labelText + "']"),
 				page.locator("input[name*='negocio']"));
 	}
 
 	private void clickByVisibleText(final Page page, final String text) {
-		Pattern textPattern = Pattern.compile("(?iu).*" + Pattern.quote(text) + ".*");
+		Pattern textPattern = accentTolerantPattern(text);
 		Locator locator = firstVisible(page,
 				page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(textPattern)),
 				page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName(textPattern)),
 				page.getByText(textPattern));
 		clickAndWait(page, locator);
+	}
+
+	private Pattern accentTolerantPattern(final String text) {
+		StringBuilder builder = new StringBuilder("(?iu).*");
+		for (char c : text.toCharArray()) {
+			switch (Character.toLowerCase(c)) {
+			case 'a':
+				builder.append("[aáàâä]");
+				break;
+			case 'e':
+				builder.append("[eéèêë]");
+				break;
+			case 'i':
+				builder.append("[iíìîï]");
+				break;
+			case 'o':
+				builder.append("[oóòôö]");
+				break;
+			case 'u':
+				builder.append("[uúùûü]");
+				break;
+			case 'n':
+				builder.append("[nñ]");
+				break;
+			default:
+				if (Character.isWhitespace(c)) {
+					builder.append("\\s+");
+				} else {
+					builder.append(Pattern.quote(String.valueOf(c)));
+				}
+				break;
+			}
+		}
+		builder.append(".*");
+		return Pattern.compile(builder.toString());
 	}
 
 	private void clickAndWait(final Page page, final Locator locator) {
@@ -354,10 +387,10 @@ public class SaleadsMiNegocioWorkflowTest {
 				return newPage;
 			}
 			try {
-				context.waitForCondition(() -> context.pages().size() > pagesBeforeClick,
-						new BrowserContext.WaitForConditionOptions().setTimeout(500));
-			} catch (PlaywrightException ignored) {
-				// Poll until timeout to avoid failing on transient timing.
+				Thread.sleep(200);
+			} catch (InterruptedException interruptedException) {
+				Thread.currentThread().interrupt();
+				return null;
 			}
 		}
 		return null;
