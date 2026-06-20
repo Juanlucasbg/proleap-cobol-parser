@@ -94,6 +94,12 @@ async function validateGoogleAccountSelection(googlePage: Page): Promise<void> {
 test("saleads_mi_negocio_full_test", async ({ page, context }) => {
   const report = createInitialReport();
 
+  function requirePassed(step: (typeof REPORT_FIELDS)[number], blockedStep: (typeof REPORT_FIELDS)[number]): void {
+    if (report[step].status !== "PASS") {
+      throw new Error(`Blocked: '${blockedStep}' cannot run because '${step}' failed.`);
+    }
+  }
+
   async function runStep(name: (typeof REPORT_FIELDS)[number], work: () => Promise<void>): Promise<void> {
     try {
       await work();
@@ -158,6 +164,8 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
   });
 
   await runStep("Mi Negocio menu", async () => {
+    requirePassed("Login", "Mi Negocio menu");
+
     const miNegocioEntry = await firstVisible([
       page.getByRole("button", { name: /mi negocio/i }),
       page.getByRole("link", { name: /mi negocio/i }),
@@ -179,6 +187,8 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
   });
 
   await runStep("Agregar Negocio modal", async () => {
+    requirePassed("Mi Negocio menu", "Agregar Negocio modal");
+
     const agregarNegocioAction = await firstVisible([
       page.getByRole("button", { name: /^agregar negocio$/i }),
       page.getByRole("link", { name: /^agregar negocio$/i }),
@@ -213,6 +223,8 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
   });
 
   await runStep("Administrar Negocios view", async () => {
+    requirePassed("Mi Negocio menu", "Administrar Negocios view");
+
     const administrarNegocios = page.getByText(/^administrar negocios$/i).first();
     const menuVisible = await administrarNegocios.isVisible().catch(() => false);
 
@@ -239,6 +251,8 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
   });
 
   await runStep("Información General", async () => {
+    requirePassed("Administrar Negocios view", "Información General");
+
     const bodyText = await page.locator("body").innerText();
     if (!/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i.test(bodyText)) {
       throw new Error("User email is not visible in account information.");
@@ -254,12 +268,16 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
   });
 
   await runStep("Detalles de la Cuenta", async () => {
+    requirePassed("Administrar Negocios view", "Detalles de la Cuenta");
+
     await expect(page.getByText(/cuenta creada/i).first()).toBeVisible();
     await expect(page.getByText(/estado activo/i).first()).toBeVisible();
     await expect(page.getByText(/idioma seleccionado/i).first()).toBeVisible();
   });
 
   await runStep("Tus Negocios", async () => {
+    requirePassed("Administrar Negocios view", "Tus Negocios");
+
     await expect(page.getByText(/^tus negocios$/i).first()).toBeVisible();
     await expect(page.getByRole("button", { name: /^agregar negocio$/i }).first()).toBeVisible();
     await expect(page.getByText(/tienes 2 de 3 negocios/i).first()).toBeVisible();
@@ -315,6 +333,8 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
   }
 
   await runStep("Términos y Condiciones", async () => {
+    requirePassed("Administrar Negocios view", "Términos y Condiciones");
+
     await validateLegalLink(
       "Términos y Condiciones",
       /t[eé]rminos y condiciones/i,
@@ -324,6 +344,8 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
   });
 
   await runStep("Política de Privacidad", async () => {
+    requirePassed("Administrar Negocios view", "Política de Privacidad");
+
     await validateLegalLink(
       "Política de Privacidad",
       /pol[ií]tica de privacidad/i,
