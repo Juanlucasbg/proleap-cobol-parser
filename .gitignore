@@ -41,3 +41,11 @@ target/
 
 ## Additional for IntelliJ
 out/
+
+# Node/Playwright (qa utilities)
+node_modules/
+qa/**/node_modules/
+playwright-report/
+qa/**/playwright-report/
+test-results/
+qa/**/test-results/
