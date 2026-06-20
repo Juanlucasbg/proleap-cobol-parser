@@ -22,11 +22,11 @@ const REPORT_KEYS = [
   "Mi Negocio menu",
   "Agregar Negocio modal",
   "Administrar Negocios view",
-  "Informacion General",
+  "Información General",
   "Detalles de la Cuenta",
   "Tus Negocios",
-  "Terminos y Condiciones",
-  "Politica de Privacidad",
+  "Términos y Condiciones",
+  "Política de Privacidad",
 ];
 
 const CHECKPOINT_DIR = path.join(
@@ -313,7 +313,7 @@ async function run() {
       { type: "text", values: ["Cambiar Plan"], exact: false },
       { type: "text", values: ["@"], exact: false },
     ]);
-    report["Informacion General"] = "PASS";
+    report["Información General"] = "PASS";
 
     // Step 6: Validate Detalles de la Cuenta
     await validateVisible(page, [
@@ -332,24 +332,24 @@ async function run() {
     report["Tus Negocios"] = "PASS";
 
     // Step 8: Validate Terminos y Condiciones
-    evidence.finalUrls["Terminos y Condiciones"] = await openLegalLinkAndReturn({
+    evidence.finalUrls["Términos y Condiciones"] = await openLegalLinkAndReturn({
       page,
       context,
       linkTexts: ["Terminos y Condiciones", "Términos y Condiciones"],
       headingTexts: ["Terminos y Condiciones", "Términos y Condiciones"],
       screenshotName: "05_terminos_y_condiciones.png",
     });
-    report["Terminos y Condiciones"] = "PASS";
+    report["Términos y Condiciones"] = "PASS";
 
     // Step 9: Validate Politica de Privacidad
-    evidence.finalUrls["Politica de Privacidad"] = await openLegalLinkAndReturn({
+    evidence.finalUrls["Política de Privacidad"] = await openLegalLinkAndReturn({
       page,
       context,
       linkTexts: ["Politica de Privacidad", "Política de Privacidad"],
       headingTexts: ["Politica de Privacidad", "Política de Privacidad"],
       screenshotName: "06_politica_de_privacidad.png",
     });
-    report["Politica de Privacidad"] = "PASS";
+    report["Política de Privacidad"] = "PASS";
   } catch (error) {
     const errorMessage =
       error instanceof TimeoutError ? `Timeout: ${error.message}` : error.message;

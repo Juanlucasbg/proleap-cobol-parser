@@ -55,11 +55,11 @@ node automation/saleads_mi_negocio_full_test.js
   - `Mi Negocio menu`
   - `Agregar Negocio modal`
   - `Administrar Negocios view`
-  - `Informacion General`
+  - `Información General`
   - `Detalles de la Cuenta`
   - `Tus Negocios`
-  - `Terminos y Condiciones`
-  - `Politica de Privacidad`
+  - `Términos y Condiciones`
+  - `Política de Privacidad`
 - Evidence JSON with:
   - Screenshot file paths
   - Final URLs for legal pages
