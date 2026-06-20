@@ -200,6 +200,49 @@ Release process
 
 * Milestones of the grammar are published in the [ANTLR grammars repo](https://github.com/antlr/grammars-v4).
 
+SaleADS end-to-end workflow test
+--------------------------------
+
+This repository also includes a standalone Playwright workflow test named
+`saleads_mi_negocio_full_test` under:
+
+* `e2e/saleads-mi-negocio-full.spec.js`
+
+The test validates the full "Mi Negocio" flow after Google login, including:
+
+* sidebar/menu validations,
+* "Agregar Negocio" modal checks,
+* account sections checks,
+* legal links ("Términos y Condiciones" and "Política de Privacidad"),
+* screenshot evidence for key checkpoints,
+* a final PASS/FAIL JSON report attached to the test output.
+
+The test is environment-agnostic and does not hardcode a specific SaleADS domain.
+Provide the login URL for the target environment through environment variables:
+
+* `SALEADS_LOGIN_URL` (preferred)
+* fallback: `SALEADS_URL`, `BASE_URL`, or `PLAYWRIGHT_TEST_BASE_URL`
+
+Run:
+
+```
+npm install
+npx playwright install --with-deps chromium
+SALEADS_LOGIN_URL="https://<saleads-environment>/login" npm run test:e2e:saleads
+```
+
+For headed mode:
+
+```
+SALEADS_LOGIN_URL="https://<saleads-environment>/login" npm run test:e2e:saleads:headed
+```
+
+Notes:
+
+* If Google account chooser appears, the test selects `juanlucasbarbiergarzon@gmail.com`.
+* If legal links open a new tab, the test validates the content and returns to the app tab.
+* Screenshot artifacts are generated in Playwright test outputs and attached to the test report.
+
 
 License
 -------
