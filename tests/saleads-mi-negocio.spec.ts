@@ -123,6 +123,8 @@ async function openLegalLinkAndValidate(
 }
 
 test("SaleADS - full Mi Negocio workflow", async ({ page }, testInfo) => {
+  testInfo.setTimeout(240_000);
+
   const report: Record<ReportField, ReportStatus> = {
     Login: "FAIL",
     "Mi Negocio menu": "FAIL",
@@ -173,6 +175,10 @@ test("SaleADS - full Mi Negocio workflow", async ({ page }, testInfo) => {
   });
 
   await runStep("Mi Negocio menu", async () => {
+    if (report.Login !== "PASS") {
+      throw new Error("Prerequisite failed: Login step did not complete.");
+    }
+
     await ensureMiNegocioExpanded(page);
     await expect(page.getByText("Agregar Negocio", { exact: true })).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText("Administrar Negocios", { exact: true })).toBeVisible({
@@ -185,6 +191,10 @@ test("SaleADS - full Mi Negocio workflow", async ({ page }, testInfo) => {
   });
 
   await runStep("Agregar Negocio modal", async () => {
+    if (report["Mi Negocio menu"] !== "PASS") {
+      throw new Error("Prerequisite failed: Mi Negocio menu step did not complete.");
+    }
+
     await clickAndWait(page, page.getByText("Agregar Negocio", { exact: true }));
     await expect(page.getByRole("heading", { name: "Crear Nuevo Negocio" })).toBeVisible({
       timeout: 15_000,
@@ -204,6 +214,10 @@ test("SaleADS - full Mi Negocio workflow", async ({ page }, testInfo) => {
   });
 
   await runStep("Administrar Negocios view", async () => {
+    if (report["Mi Negocio menu"] !== "PASS") {
+      throw new Error("Prerequisite failed: Mi Negocio menu step did not complete.");
+    }
+
     await ensureMiNegocioExpanded(page);
     await clickAndWait(page, page.getByText("Administrar Negocios", { exact: true }));
     await expect(page.getByRole("heading", { name: "Información General" })).toBeVisible({
@@ -219,6 +233,10 @@ test("SaleADS - full Mi Negocio workflow", async ({ page }, testInfo) => {
   });
 
   await runStep("Información General", async () => {
+    if (report["Administrar Negocios view"] !== "PASS") {
+      throw new Error("Prerequisite failed: Administrar Negocios view step did not complete.");
+    }
+
     const section = page.locator("section, div").filter({ hasText: "Información General" }).first();
     await expect(section).toContainText(/@/);
     await expect(section).toContainText(/BUSINESS PLAN/i);
@@ -226,6 +244,10 @@ test("SaleADS - full Mi Negocio workflow", async ({ page }, testInfo) => {
   });
 
   await runStep("Detalles de la Cuenta", async () => {
+    if (report["Administrar Negocios view"] !== "PASS") {
+      throw new Error("Prerequisite failed: Administrar Negocios view step did not complete.");
+    }
+
     const section = page.locator("section, div").filter({ hasText: "Detalles de la Cuenta" }).first();
     await expect(section).toContainText("Cuenta creada");
     await expect(section).toContainText("Estado activo");
@@ -233,6 +255,10 @@ test("SaleADS - full Mi Negocio workflow", async ({ page }, testInfo) => {
   });
 
   await runStep("Tus Negocios", async () => {
+    if (report["Administrar Negocios view"] !== "PASS") {
+      throw new Error("Prerequisite failed: Administrar Negocios view step did not complete.");
+    }
+
     const section = page.locator("section, div").filter({ hasText: "Tus Negocios" }).first();
     await expect(section).toContainText("Agregar Negocio");
     await expect(section).toContainText("Tienes 2 de 3 negocios");
@@ -241,6 +267,10 @@ test("SaleADS - full Mi Negocio workflow", async ({ page }, testInfo) => {
 
   let mainAppUrl: string | null = null;
   await runStep("Términos y Condiciones", async () => {
+    if (report["Administrar Negocios view"] !== "PASS") {
+      throw new Error("Prerequisite failed: Administrar Negocios view step did not complete.");
+    }
+
     mainAppUrl = page.url();
     const termsScreenshot = testInfo.outputPath("05-terminos-y-condiciones.png");
     const finalUrl = await openLegalLinkAndValidate(
@@ -255,6 +285,10 @@ test("SaleADS - full Mi Negocio workflow", async ({ page }, testInfo) => {
   });
 
   await runStep("Política de Privacidad", async () => {
+    if (report["Administrar Negocios view"] !== "PASS") {
+      throw new Error("Prerequisite failed: Administrar Negocios view step did not complete.");
+    }
+
     if (mainAppUrl && page.url() !== mainAppUrl) {
       await page.goto(mainAppUrl, { waitUntil: "domcontentloaded" });
       await waitForUi(page);
