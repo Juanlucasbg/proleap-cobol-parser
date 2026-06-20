@@ -1,0 +1,19 @@
+{
+  "name": "saleads-tests",
+  "version": "1.0.0",
+  "description": "Cross-environment SaleADS Mi Negocio E2E validation",
+  "type": "module",
+  "scripts": {
+    "test:mi-negocio": "node ./saleads_mi_negocio_full_test.mjs"
+  },
+  "keywords": [
+    "saleads",
+    "playwright",
+    "e2e"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "playwright": "^1.61.0"
+  }
+}

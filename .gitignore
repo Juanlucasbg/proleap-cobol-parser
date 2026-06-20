@@ -41,3 +41,7 @@ target/
 
 ## Additional for IntelliJ
 out/
+
+# SaleADS browser tests
+saleads-tests/node_modules/
+saleads-tests/artifacts/
