@@ -1,0 +1,17 @@
+{
+  "name": "saleads-mi-negocio",
+  "version": "1.0.0",
+  "description": "Environment-agnostic SaleADS.ai Mi Negocio full workflow automation",
+  "type": "module",
+  "main": "saleads_mi_negocio_full_test.mjs",
+  "scripts": {
+    "saleads:mi-negocio": "node saleads_mi_negocio_full_test.mjs",
+    "test": "node saleads_mi_negocio_full_test.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "playwright": "^1.61.0"
+  }
+}
