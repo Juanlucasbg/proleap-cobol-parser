@@ -1,0 +1,16 @@
+{
+  "name": "saleads",
+  "version": "1.0.0",
+  "description": "Environment-agnostic Playwright flow for SaleADS Mi Negocio",
+  "main": "tests/saleads-mi-negocio.spec.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:mi-negocio": "playwright test tests/saleads-mi-negocio.spec.js --headed"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.61.0"
+  }
+}
