@@ -2,6 +2,7 @@ package io.proleap.e2e.saleads;
 
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
+import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
@@ -39,7 +40,7 @@ public class SaleadsMiNegocioFullTest {
 		final Map<String, StepResult> report = new LinkedHashMap<>();
 
 		try (Playwright playwright = Playwright.create()) {
-			final Browser browser = playwright.chromium().launch(new Browser.LaunchOptions().setHeadless(headless));
+			final Browser browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(headless));
 			final BrowserContext context = browser.newContext(new Browser.NewContextOptions().setViewportSize(1600, 1000));
 			final Page appPage = context.newPage();
 			appPage.setDefaultTimeout(DEFAULT_TIMEOUT_MS);
