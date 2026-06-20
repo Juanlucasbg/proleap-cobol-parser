@@ -1,0 +1,20 @@
+{
+  "name": "saleads-e2e",
+  "version": "1.0.0",
+  "description": "SaleADS Mi Negocio end-to-end Playwright checks",
+  "scripts": {
+    "test": "playwright test",
+    "test:saleads-mi-negocio": "playwright test tests/saleads-mi-negocio-full.spec.js",
+    "test:saleads-mi-negocio:headed": "playwright test tests/saleads-mi-negocio-full.spec.js --headed",
+    "test:list": "playwright test --list"
+  },
+  "keywords": [
+    "playwright",
+    "e2e",
+    "saleads"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.61.0"
+  }
+}
