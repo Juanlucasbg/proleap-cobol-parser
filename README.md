@@ -194,6 +194,17 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+* To run the SaleADS "Mi Negocio" end-to-end workflow test (disabled by default):
+
+```
+$ mvn -Dtest=SaleadsMiNegocioFullWorkflowE2ETest \
+      -Dsaleads.e2e.enabled=true \
+      -Dsaleads.startUrl=https://<current-saleads-environment>/login \
+      test
+```
+
+The E2E test intentionally does not hardcode a domain; provide the target environment URL at runtime. It writes screenshots and the final PASS/FAIL report to `target/saleads-e2e-artifacts/<timestamp>/`.
+
 
 Release process
 ---------------
