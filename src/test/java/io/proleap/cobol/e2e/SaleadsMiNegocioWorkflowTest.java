@@ -94,7 +94,14 @@ public class SaleadsMiNegocioWorkflowTest {
 		if (!baseUrl.isBlank()) {
 			driver.get(baseUrl);
 			waitForUiLoad();
+			return;
 		}
+
+		String currentUrl = driver.getCurrentUrl();
+		Assume.assumeTrue(
+				"When saleads.base.url is not provided, the browser session must already be on the SaleADS login page.",
+				currentUrl != null && !currentUrl.isBlank() && !currentUrl.startsWith("about:blank")
+						&& !currentUrl.startsWith("data:,"));
 	}
 
 	@After
