@@ -201,6 +201,44 @@ Release process
 * Milestones of the grammar are published in the [ANTLR grammars repo](https://github.com/antlr/grammars-v4).
 
 
+SaleADS Mi Negocio E2E test
+---------------------------
+
+This repository now includes a UI end-to-end test at:
+
+`src/test/java/io/proleap/cobol/e2e/SaleadsMiNegocioWorkflowTest.java`
+
+The test executes the full requested flow:
+
+1. Login with Google
+2. Open "Mi Negocio" menu
+3. Validate "Agregar Negocio" modal
+4. Open and validate "Administrar Negocios"
+5. Validate "Información General"
+6. Validate "Detalles de la Cuenta"
+7. Validate "Tus Negocios"
+8. Validate "Términos y Condiciones" (including new-tab handling)
+9. Validate "Política de Privacidad" (including new-tab handling)
+10. Print final PASS/FAIL report by module
+
+Environment variables:
+
+- `SALEADS_E2E_ENABLED=true` (required to run this test)
+- `SALEADS_LOGIN_URL=<current-environment-login-page>` (required)
+- `SALEADS_E2E_HEADLESS=true|false` (optional, default `true`)
+- `SALEADS_E2E_REMOTE_URL=<selenium-grid-url>` (optional)
+
+Screenshots are stored in:
+
+`target/saleads-e2e-screenshots/<timestamp>/`
+
+Run only this workflow test:
+
+```
+mvn -Dtest=SaleadsMiNegocioWorkflowTest test
+```
+
+
 License
 -------
 
