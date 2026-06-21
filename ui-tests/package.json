@@ -1,0 +1,20 @@
+{
+  "name": "ui-tests",
+  "version": "1.0.0",
+  "description": "SaleADS Mi Negocio end-to-end workflow tests",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "install:browsers": "playwright install --with-deps chromium"
+  },
+  "keywords": [
+    "playwright",
+    "saleads",
+    "e2e"
+  ],
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.61.0"
+  }
+}
