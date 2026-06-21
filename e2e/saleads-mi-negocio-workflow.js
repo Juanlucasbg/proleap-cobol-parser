@@ -605,6 +605,10 @@ run().catch(async (error) => {
   fallbackReport.executionFinishedAt = nowIso();
   fallbackReport.error = error.message;
   fallbackReport.overallStatus = "FAIL";
+  for (const field of REPORT_FIELDS) {
+    fallbackReport.results[field].status = "FAIL";
+    fallbackReport.results[field].details.push(`Execution aborted: ${error.message}`);
+  }
 
   await ensureArtifactsDir();
   const reportPath = path.join(ARTIFACTS_DIR, `report-error-${normalizeName(fallbackReport.executionFinishedAt)}.json`);
