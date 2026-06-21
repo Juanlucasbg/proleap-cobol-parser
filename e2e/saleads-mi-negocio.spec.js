@@ -144,6 +144,8 @@ async function openLegalLink({
       popup.getByRole("heading", { name: toRegex(headingText) }).first(),
     ).toBeVisible({ timeout: 30000 });
     await expect(popup.locator("body")).toContainText(toRegex(headingText));
+    const popupBodyText = await popup.locator("body").innerText();
+    expect(popupBodyText.trim().length).toBeGreaterThan(200);
 
     urls[linkText] = popup.url();
     await screenshot(testInfo, popup, screenshotName, true);
@@ -158,6 +160,8 @@ async function openLegalLink({
     timeout: 30000,
   });
   await expect(page.locator("body")).toContainText(toRegex(headingText));
+  const bodyText = await page.locator("body").innerText();
+  expect(bodyText.trim().length).toBeGreaterThan(200);
 
   urls[linkText] = page.url();
   await screenshot(testInfo, page, screenshotName, true);
@@ -172,8 +176,6 @@ test("SaleADS Mi Negocio complete workflow", async ({ page, context }, testInfo)
   const failures = [];
   const legalUrls = {};
 
-  await ensureLoginPage(page);
-
   await runStep({
     name: "Login",
     report,
@@ -181,6 +183,8 @@ test("SaleADS Mi Negocio complete workflow", async ({ page, context }, testInfo)
     page,
     testInfo,
     action: async () => {
+      await ensureLoginPage(page);
+
       const loginButton = await pickVisible(
         [
           page.getByRole("button", { name: /google|sign in|iniciar sesi[oó]n|login/i }),
