@@ -194,6 +194,18 @@ $ mvn clean install
 $ mvn clean test
 ```
 
+* To run the SaleADS "Mi Negocio" end-to-end workflow test only (environment-agnostic URL via env var):
+
+```
+$ SALEADS_START_URL="https://<current-environment>/login" mvn -Dtest=SaleadsMiNegocioFullWorkflowTest test
+```
+
+  Optional environment variables:
+  * `SALEADS_BROWSER` (`chrome` or `firefox`, default `chrome`)
+  * `SALEADS_HEADLESS` (`true`/`false`, default `true`)
+  * `SALEADS_WAIT_SECONDS` (explicit UI wait timeout, default `25`)
+  * `SALEADS_EVIDENCE_DIR` (where checkpoint screenshots are stored)
+
 
 Release process
 ---------------
