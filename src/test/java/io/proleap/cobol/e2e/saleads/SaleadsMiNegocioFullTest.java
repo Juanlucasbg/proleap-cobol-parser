@@ -97,14 +97,22 @@ public class SaleadsMiNegocioFullTest {
   }
 
   private void executeLoginStep(final Page page, final String loginUrl, final String googleAccountEmail) {
-    if (loginUrl.isEmpty()) {
-      markFail(STEP_LOGIN, "Missing SALEADS_LOGIN_URL / saleads.login.url configuration.", null);
-      return;
-    }
-
     try {
-      page.navigate(loginUrl, new Page.NavigateOptions().setTimeout(45_000));
-      waitForUi(page);
+      if (!loginUrl.isEmpty()) {
+        page.navigate(loginUrl, new Page.NavigateOptions().setTimeout(45_000));
+        waitForUi(page);
+      } else {
+        waitForUi(page);
+        final String currentUrl = page.url();
+        if (currentUrl == null || currentUrl.isEmpty() || "about:blank".equals(currentUrl)) {
+          markFail(
+              STEP_LOGIN,
+              "No login URL configured and browser is not already positioned on a SaleADS login page.",
+              page);
+          return;
+        }
+      }
+
       captureAndAttachScreenshot(STEP_LOGIN, page, "step0_initial_login_page", false);
 
       final boolean clickedLoginButton = clickAny(page, Arrays.asList(
