@@ -312,6 +312,9 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     }
   } catch (error) {
     fatalError = error;
+    if (report.Login === "NOT_RUN") {
+      markFail("Login", error);
+    }
   } finally {
     for (const field of REPORT_FIELDS) {
       if (report[field] === "NOT_RUN") {
