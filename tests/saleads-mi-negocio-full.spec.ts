@@ -230,6 +230,7 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     await expect(await findByVisibleText(page, ["Tienes 2 de 3 negocios"], false)).toBeVisible();
     await expect(await findByVisibleText(page, ["Cancelar"])).toBeVisible();
     await expect(await findByVisibleText(page, ["Crear Negocio"])).toBeVisible();
+    await saveCheckpoint(page, testInfo, "03-agregar-negocio-modal");
 
     const nameFieldCandidates = [
       page.getByLabel(/Nombre del Negocio/i),
@@ -247,8 +248,6 @@ test("saleads_mi_negocio_full_test", async ({ page }, testInfo) => {
     const cancelar = await findByVisibleText(page, ["Cancelar"]);
     await cancelar.click();
     await waitForUi(page);
-
-    await saveCheckpoint(page, testInfo, "03-agregar-negocio-modal");
   });
 
   await runStep("Administrar Negocios view", async () => {
