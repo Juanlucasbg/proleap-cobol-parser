@@ -41,3 +41,9 @@ target/
 
 ## Additional for IntelliJ
 out/
+
+# Node-based E2E automation workspace
+e2e/node_modules/
+e2e/test-results/
+e2e/playwright-report/
+e2e/artifacts/
