@@ -41,3 +41,8 @@ target/
 
 ## Additional for IntelliJ
 out/
+
+# SaleADS automation reports and screenshots
+saleads_mi_negocio_validation_report_*.md
+automation/screenshots/
+automation/reports/
