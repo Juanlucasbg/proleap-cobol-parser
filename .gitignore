@@ -41,3 +41,7 @@ target/
 
 ## Additional for IntelliJ
 out/
+
+## SaleADS Mi Negocio UI Test Artifacts
+saleads_mi_negocio_*_test_execution_*.md
+saleads_execution_*_screenshots/
