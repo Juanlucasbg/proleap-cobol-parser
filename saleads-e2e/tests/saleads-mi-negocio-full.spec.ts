@@ -89,12 +89,7 @@ async function saveCheckpoint(
 test("saleads_mi_negocio_full_test", async ({ context, page }, testInfo) => {
   test.setTimeout(300000);
 
-  const baseUrl = process.env.SALEADS_BASE_URL ?? process.env.SALEADS_LOGIN_URL;
-  if (!baseUrl) {
-    throw new Error(
-      "Debes proporcionar SALEADS_BASE_URL o SALEADS_LOGIN_URL para apuntar al entorno actual (dev/staging/production) sin hardcodear dominio.",
-    );
-  }
+  const baseUrl = process.env.SALEADS_BASE_URL ?? process.env.SALEADS_LOGIN_URL ?? "";
 
   const accountEmail = process.env.SALEADS_GOOGLE_ACCOUNT ?? DEFAULT_ACCOUNT_EMAIL;
   const results = Object.fromEntries(REPORT_FIELDS.map((field) => [field, "FAIL"])) as Record<string, StepStatus>;
@@ -113,10 +108,15 @@ test("saleads_mi_negocio_full_test", async ({ context, page }, testInfo) => {
     }
   };
 
-  await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
-  await waitForUiToLoad(page);
+  if (!baseUrl) {
+    errors.push(
+      "Precondición no cumplida: define SALEADS_BASE_URL o SALEADS_LOGIN_URL para ejecutar el flujo en el entorno activo (dev/staging/production).",
+    );
+  } else {
+    await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
+    await waitForUiToLoad(page);
 
-  await runStep("Login", async () => {
+    await runStep("Login", async () => {
     const signInButton = await firstVisible(page, [
       "Sign in with Google",
       "Iniciar sesión con Google",
@@ -150,7 +150,7 @@ test("saleads_mi_negocio_full_test", async ({ context, page }, testInfo) => {
     await saveCheckpoint(page, testInfo, screenshots, "01_dashboard_loaded");
   });
 
-  await runStep("Mi Negocio menu", async () => {
+    await runStep("Mi Negocio menu", async () => {
     const negocioSection = await firstVisible(page, ["Negocio"]);
     await clickAndWait(page, negocioSection);
 
@@ -162,7 +162,7 @@ test("saleads_mi_negocio_full_test", async ({ context, page }, testInfo) => {
     await saveCheckpoint(page, testInfo, screenshots, "02_mi_negocio_menu_expanded");
   });
 
-  await runStep("Agregar Negocio modal", async () => {
+    await runStep("Agregar Negocio modal", async () => {
     const agregarNegocio = await firstVisible(page, ["Agregar Negocio"]);
     await clickAndWait(page, agregarNegocio);
 
@@ -180,7 +180,7 @@ test("saleads_mi_negocio_full_test", async ({ context, page }, testInfo) => {
     await clickAndWait(page, page.getByRole("button", { name: toPattern("Cancelar") }).first());
   });
 
-  await runStep("Administrar Negocios view", async () => {
+    await runStep("Administrar Negocios view", async () => {
     const miNegocio = await firstVisible(page, ["Mi Negocio"]);
     await clickAndWait(page, miNegocio);
 
@@ -194,7 +194,7 @@ test("saleads_mi_negocio_full_test", async ({ context, page }, testInfo) => {
     await saveCheckpoint(page, testInfo, screenshots, "04_administrar_negocios_page", true);
   });
 
-  await runStep("Información General", async () => {
+    await runStep("Información General", async () => {
     const infoSection = page.locator("section, div").filter({ hasText: toPattern("Información General") }).first();
     await expect(infoSection).toBeVisible({ timeout: 20000 });
     await expect(infoSection.getByText(/@/).first()).toBeVisible({ timeout: 15000 });
@@ -204,7 +204,7 @@ test("saleads_mi_negocio_full_test", async ({ context, page }, testInfo) => {
     });
   });
 
-  await runStep("Detalles de la Cuenta", async () => {
+    await runStep("Detalles de la Cuenta", async () => {
     const detailsSection = page.locator("section, div").filter({ hasText: toPattern("Detalles de la Cuenta") }).first();
     await expect(detailsSection).toBeVisible({ timeout: 20000 });
     await expect(detailsSection.getByText(toPattern("Cuenta creada")).first()).toBeVisible({ timeout: 15000 });
@@ -212,7 +212,7 @@ test("saleads_mi_negocio_full_test", async ({ context, page }, testInfo) => {
     await expect(detailsSection.getByText(toPattern("Idioma seleccionado")).first()).toBeVisible({ timeout: 15000 });
   });
 
-  await runStep("Tus Negocios", async () => {
+    await runStep("Tus Negocios", async () => {
     const negociosSection = page.locator("section, div").filter({ hasText: toPattern("Tus Negocios") }).first();
     await expect(negociosSection).toBeVisible({ timeout: 20000 });
     await expect(negociosSection.getByText(toPattern("Tienes 2 de 3 negocios")).first()).toBeVisible({ timeout: 15000 });
@@ -221,7 +221,7 @@ test("saleads_mi_negocio_full_test", async ({ context, page }, testInfo) => {
     });
   });
 
-  await runStep("Términos y Condiciones", async () => {
+    await runStep("Términos y Condiciones", async () => {
     const termsLink = await firstVisible(page, ["Términos y Condiciones"]);
     const popupPromise = context.waitForEvent("page", { timeout: 10000 }).catch(() => null);
     await clickAndWait(page, termsLink);
@@ -255,7 +255,7 @@ test("saleads_mi_negocio_full_test", async ({ context, page }, testInfo) => {
     }
   });
 
-  await runStep("Política de Privacidad", async () => {
+    await runStep("Política de Privacidad", async () => {
     const privacyLink = await firstVisible(page, ["Política de Privacidad"]);
     const popupPromise = context.waitForEvent("page", { timeout: 10000 }).catch(() => null);
     await clickAndWait(page, privacyLink);
@@ -285,7 +285,8 @@ test("saleads_mi_negocio_full_test", async ({ context, page }, testInfo) => {
       await page.goBack({ waitUntil: "domcontentloaded" }).catch(() => undefined);
       await waitForUiToLoad(page);
     }
-  });
+    });
+  }
 
   const report: FinalReport = {
     name: "saleads_mi_negocio_full_test",
