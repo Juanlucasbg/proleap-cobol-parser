@@ -1,0 +1,17 @@
+{
+  "name": "saleads-e2e",
+  "version": "1.0.0",
+  "description": "Playwright end-to-end test for the SaleADS Mi Negocio workflow",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:saleads-mi-negocio": "playwright test tests/saleads-mi-negocio-full.spec.ts",
+    "report": "playwright show-report"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.61.1"
+  }
+}
