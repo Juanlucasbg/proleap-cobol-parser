@@ -1,0 +1,13 @@
+{
+  "name": "saleads-e2e-workflows",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Environment-agnostic Playwright E2E checks for SaleADS workflows.",
+  "scripts": {
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0"
+  }
+}
