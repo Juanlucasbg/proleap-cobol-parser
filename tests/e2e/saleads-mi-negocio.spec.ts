@@ -49,11 +49,13 @@ function buildReport(): Record<ReportField, StepResult> {
 }
 
 function failMessage(error: unknown): string {
+  const stripAnsi = (value: string): string => value.replace(/\u001b\[[0-9;]*m/g, "");
+
   if (error instanceof Error) {
-    return error.message;
+    return stripAnsi(error.message);
   }
 
-  return String(error);
+  return stripAnsi(String(error));
 }
 
 async function waitForUiToLoad(page: Page): Promise<void> {
@@ -69,6 +71,39 @@ async function clickAndWait(locator: Locator, page: Page): Promise<void> {
 
 function clickableByText(page: Page, label: RegExp): Locator {
   return page.locator("button, a, [role='button'], [role='link']").filter({ hasText: label }).first();
+}
+
+async function isCloudflareBlocked(page: Page): Promise<boolean> {
+  const blockedHeading = page.getByRole("heading", { name: /sorry, you have been blocked/i });
+  if (await blockedHeading.isVisible({ timeout: 3000 }).catch(() => false)) {
+    return true;
+  }
+
+  return page.getByText(/unable to access/i).isVisible({ timeout: 3000 }).catch(() => false);
+}
+
+async function ensureNotBlocked(page: Page): Promise<void> {
+  if (await isCloudflareBlocked(page)) {
+    throw new Error("Access blocked by Cloudflare before login workflow could start.");
+  }
+}
+
+async function getGoogleLoginButton(page: Page): Promise<Locator> {
+  const googleButtonPattern = /sign in with google|continue with google|iniciar sesi[oó]n con google|continuar con google/i;
+  let googleButton = clickableByText(page, googleButtonPattern);
+
+  if (await googleButton.isVisible({ timeout: 4000 }).catch(() => false)) {
+    return googleButton;
+  }
+
+  const firstStepLogin = clickableByText(page, /sign in|log in|login|iniciar sesi[oó]n|ingresar|entrar/i);
+  if (await firstStepLogin.isVisible({ timeout: 4000 }).catch(() => false)) {
+    await clickAndWait(firstStepLogin, page);
+  }
+
+  googleButton = clickableByText(page, googleButtonPattern);
+  await expect(googleButton).toBeVisible();
+  return googleButton;
 }
 
 async function capture(
@@ -94,6 +129,12 @@ async function runStep(
   } catch (error) {
     report[field].status = "FAIL";
     report[field].details = failMessage(error);
+  }
+}
+
+function requireSuccessfulLogin(report: Record<ReportField, StepResult>): void {
+  if (report.Login.status !== "PASS") {
+    throw new Error(`Blocked by login failure: ${report.Login.details ?? "login did not complete successfully."}`);
   }
 }
 
@@ -146,18 +187,16 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
   }
 
   await runStep(report, "Login", async () => {
-    const loginButton = clickableByText(
-      page,
-      /sign in with google|iniciar sesi[oó]n con google|continuar con google|google/i
-    );
+    await ensureNotBlocked(page);
+    const loginButton = await getGoogleLoginButton(page);
 
-    await expect(loginButton).toBeVisible();
     const popupPromise = page.context().waitForEvent("page", { timeout: 10000 }).catch(() => null);
 
     await loginButton.click();
     const popup = await popupPromise;
     const authPage = popup ?? page;
 
+    await ensureNotBlocked(authPage);
     await authPage.waitForLoadState("domcontentloaded");
 
     const accountSelection = authPage.getByText(ACCOUNT_EMAIL).first();
@@ -180,6 +219,8 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
   });
 
   await runStep(report, "Mi Negocio menu", async () => {
+    requireSuccessfulLogin(report);
+
     const negocio = page.locator("aside, nav").getByText(/negocio/i).first();
     await clickAndWait(negocio, page);
 
@@ -193,6 +234,8 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
   });
 
   await runStep(report, "Agregar Negocio modal", async () => {
+    requireSuccessfulLogin(report);
+
     const agregarNegocio = page.locator("aside, nav").getByText(/agregar negocio/i).first();
     await clickAndWait(agregarNegocio, page);
 
@@ -217,6 +260,8 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
   });
 
   await runStep(report, "Administrar Negocios view", async () => {
+    requireSuccessfulLogin(report);
+
     const miNegocio = page.locator("aside, nav").getByText(/mi negocio/i).first();
     if (!(await page.locator("aside, nav").getByText(/administrar negocios/i).first().isVisible().catch(() => false))) {
       await clickAndWait(miNegocio, page);
@@ -226,60 +271,70 @@ test("saleads_mi_negocio_full_test", async ({ page }) => {
     await clickAndWait(administrar, page);
     await page.waitForLoadState("networkidle").catch(() => undefined);
 
-    await expect(page.getByText("Información General", { exact: true })).toBeVisible();
-    await expect(page.getByText("Detalles de la Cuenta", { exact: true })).toBeVisible();
-    await expect(page.getByText("Tus Negocios", { exact: true })).toBeVisible();
-    await expect(page.getByText(/sección legal/i)).toBeVisible();
+    await expect(page.getByText(/informaci[oó]n general|general information/i)).toBeVisible();
+    await expect(page.getByText(/detalles de la cuenta|account details/i)).toBeVisible();
+    await expect(page.getByText(/tus negocios|your businesses/i)).toBeVisible();
+    await expect(page.getByText(/secci[oó]n legal|legal section/i)).toBeVisible();
 
     await capture(page, report, "Administrar Negocios view", "04-administrar-negocios-view.png", true);
   });
 
   await runStep(report, "Información General", async () => {
-    const infoSection = page.locator("section, div").filter({ hasText: /información general/i }).first();
+    requireSuccessfulLogin(report);
+
+    const infoSection = page.locator("section, div").filter({ hasText: /informaci[oó]n general|general information/i }).first();
 
     await expect(infoSection).toBeVisible();
     await expect(infoSection.getByText(/@/)).toBeVisible();
     await expect(infoSection.locator("strong, h1, h2, h3, p, span").filter({ hasText: /\S+/ }).first()).toBeVisible();
     await expect(infoSection.getByText(/business plan/i)).toBeVisible();
-    await expect(infoSection.getByRole("button", { name: /cambiar plan/i })).toBeVisible();
+    await expect(infoSection.getByRole("button", { name: /cambiar plan|change plan/i })).toBeVisible();
   });
 
   await runStep(report, "Detalles de la Cuenta", async () => {
-    const detailsSection = page.locator("section, div").filter({ hasText: /detalles de la cuenta/i }).first();
+    requireSuccessfulLogin(report);
+
+    const detailsSection = page.locator("section, div").filter({ hasText: /detalles de la cuenta|account details/i }).first();
 
     await expect(detailsSection).toBeVisible();
-    await expect(detailsSection.getByText(/cuenta creada/i)).toBeVisible();
-    await expect(detailsSection.getByText(/estado activo/i)).toBeVisible();
-    await expect(detailsSection.getByText(/idioma seleccionado/i)).toBeVisible();
+    await expect(detailsSection.getByText(/cuenta creada|account created/i)).toBeVisible();
+    await expect(detailsSection.getByText(/estado activo|active status/i)).toBeVisible();
+    await expect(detailsSection.getByText(/idioma seleccionado|selected language/i)).toBeVisible();
   });
 
   await runStep(report, "Tus Negocios", async () => {
-    const businessSection = page.locator("section, div").filter({ hasText: /tus negocios/i }).first();
+    requireSuccessfulLogin(report);
+
+    const businessSection = page.locator("section, div").filter({ hasText: /tus negocios|your businesses/i }).first();
 
     await expect(businessSection).toBeVisible();
     await expect(businessSection.getByRole("button", { name: /agregar negocio/i })).toBeVisible();
-    await expect(businessSection.getByText(/tienes 2 de 3 negocios/i)).toBeVisible();
+    await expect(businessSection.getByText(/tienes 2 de 3 negocios|you have 2 of 3 businesses/i)).toBeVisible();
     await expect(businessSection.locator("li, tr, div").filter({ hasText: /\S+/ }).first()).toBeVisible();
   });
 
   await runStep(report, "Términos y Condiciones", async () => {
+    requireSuccessfulLogin(report);
+
     await openLegalLinkAndValidate(
       page,
       report,
       "Términos y Condiciones",
-      /t[ée]rminos y condiciones/i,
-      /t[ée]rminos y condiciones/i,
+      /t[ée]rminos y condiciones|terms and conditions/i,
+      /t[ée]rminos y condiciones|terms and conditions/i,
       "05-terminos-y-condiciones.png"
     );
   });
 
   await runStep(report, "Política de Privacidad", async () => {
+    requireSuccessfulLogin(report);
+
     await openLegalLinkAndValidate(
       page,
       report,
       "Política de Privacidad",
-      /pol[íi]tica de privacidad/i,
-      /pol[íi]tica de privacidad/i,
+      /pol[íi]tica de privacidad|privacy policy/i,
+      /pol[íi]tica de privacidad|privacy policy/i,
       "06-politica-de-privacidad.png"
     );
   });
