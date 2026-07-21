@@ -61,6 +61,25 @@ async function capture(
   return path;
 }
 
+async function detectAccessBlocker(page: Page): Promise<string | null> {
+  const blockedTitle = page.getByRole("heading", {
+    name: /sorry, you have been blocked|you are unable to access/i,
+  });
+  if (await blockedTitle.first().isVisible().catch(() => false)) {
+    const bodyText = await page.locator("body").innerText().catch(() => "");
+    const rayIdMatch = bodyText.match(/cloudflare ray id:\s*([a-z0-9]+)/i);
+    const raySuffix = rayIdMatch ? ` (Ray ID: ${rayIdMatch[1]})` : "";
+    return `Access blocked by Cloudflare${raySuffix}.`;
+  }
+
+  const challenge = page.getByText(/checking your browser|just a moment/i).first();
+  if (await challenge.isVisible().catch(() => false)) {
+    return "Access temporarily blocked by anti-bot challenge.";
+  }
+
+  return null;
+}
+
 test("saleads_mi_negocio_full_test", async ({ page, context }) => {
   const report: Record<StepKey, StepResult> = {
     Login: { status: "FAIL", details: ["Step not executed."] },
@@ -98,6 +117,7 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
   };
 
   let appUrlAfterLogin = "";
+  let globalBlocker: string | null = null;
 
   // Step 1 - Login with Google
   try {
@@ -115,6 +135,11 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
       throw new Error(
         "Browser is on about:blank. Provide SALEADS_LOGIN_URL/SALEADS_URL or pre-open the SaleADS login page.",
       );
+    }
+
+    globalBlocker = await detectAccessBlocker(page);
+    if (globalBlocker) {
+      throw new Error(globalBlocker);
     }
 
     const loginButton = await waitForAnyVisible(
@@ -180,6 +205,9 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
   // Step 2 - Open Mi Negocio menu
   try {
     const details: string[] = [];
+    if (globalBlocker) {
+      throw new Error(globalBlocker);
+    }
     const miNegocioToggle = await waitForAnyVisible(
       [
         () => page.getByRole("button", { name: /mi negocio/i }),
@@ -220,6 +248,9 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
   // Step 3 - Validate Agregar Negocio modal
   try {
     const details: string[] = [];
+    if (globalBlocker) {
+      throw new Error(globalBlocker);
+    }
     const agregarNegocio = await waitForAnyVisible(
       [
         () => page.getByRole("button", { name: /agregar negocio/i }),
@@ -257,6 +288,9 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
   // Step 4 - Open Administrar Negocios
   try {
     const details: string[] = [];
+    if (globalBlocker) {
+      throw new Error(globalBlocker);
+    }
     const administrarNegocios = await waitForAnyVisible(
       [
         () => page.getByRole("button", { name: /administrar negocios/i }),
@@ -288,6 +322,9 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
   // Step 5 - Validate Información General
   try {
     const details: string[] = [];
+    if (globalBlocker) {
+      throw new Error(globalBlocker);
+    }
     await expect(page.getByText(/informaci[oó]n general/i)).toBeVisible();
     await expect(page.getByText(/@/)).toBeVisible();
     await expect(page.getByText(/business plan/i)).toBeVisible();
@@ -301,6 +338,9 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
   // Step 6 - Validate Detalles de la Cuenta
   try {
     const details: string[] = [];
+    if (globalBlocker) {
+      throw new Error(globalBlocker);
+    }
     await expect(page.getByText(/cuenta creada/i)).toBeVisible();
     await expect(page.getByText(/estado activo|activo/i)).toBeVisible();
     await expect(page.getByText(/idioma seleccionado/i)).toBeVisible();
@@ -313,6 +353,9 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
   // Step 7 - Validate Tus Negocios
   try {
     const details: string[] = [];
+    if (globalBlocker) {
+      throw new Error(globalBlocker);
+    }
     await expect(page.getByText(/tus negocios/i)).toBeVisible();
     await expect(page.getByRole("button", { name: /agregar negocio/i })).toBeVisible();
     await expect(page.getByText(/tienes 2 de 3 negocios/i)).toBeVisible();
@@ -325,6 +368,9 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
   // Step 8 - Validate Términos y Condiciones
   try {
     const details: string[] = [];
+    if (globalBlocker) {
+      throw new Error(globalBlocker);
+    }
     const termsLink = await waitForAnyVisible(
       [
         () => page.getByRole("link", { name: /t[eé]rminos y condiciones/i }),
@@ -375,6 +421,9 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
   // Step 9 - Validate Política de Privacidad
   try {
     const details: string[] = [];
+    if (globalBlocker) {
+      throw new Error(globalBlocker);
+    }
     const privacyLink = await waitForAnyVisible(
       [
         () => page.getByRole("link", { name: /pol[ií]tica de privacidad/i }),
