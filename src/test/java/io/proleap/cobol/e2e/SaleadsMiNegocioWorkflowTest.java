@@ -59,12 +59,13 @@ public class SaleadsMiNegocioWorkflowTest {
 
 			appPage.navigate(loginUrl, new Page.NavigateOptions().setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
 			waitForUi(appPage);
+			capture(appPage, screenshotDir, "00-login-page", true);
 
 			final boolean loginPassed = runStep(report, "Login", () -> {
 				executeGoogleLogin(appPage, googleAccount, timeoutMs);
 				validateSidebarLoaded(appPage);
 				capture(appPage, screenshotDir, "01-dashboard-loaded", true);
-			});
+			}, appPage, screenshotDir, "01-login-failure");
 
 			final boolean miNegocioMenuPassed = loginPassed && runStep(report, "Mi Negocio menu", () -> {
 				clickVisibleText(appPage, "Mi Negocio");
@@ -72,7 +73,7 @@ public class SaleadsMiNegocioWorkflowTest {
 				assertTextVisible(appPage, "Agregar Negocio");
 				assertTextVisible(appPage, "Administrar Negocios");
 				capture(appPage, screenshotDir, "02-mi-negocio-menu-expanded", true);
-			});
+			}, appPage, screenshotDir, "02-mi-negocio-menu-failure");
 			if (!miNegocioMenuPassed) {
 				report.put("Agregar Negocio modal", false);
 				report.put("Administrar Negocios view", false);
@@ -103,7 +104,7 @@ public class SaleadsMiNegocioWorkflowTest {
 				nombreNegocioInput.fill("Negocio Prueba Automatización");
 				clickButton(appPage, "Cancelar");
 				waitForUi(appPage);
-			});
+			}, appPage, screenshotDir, "03-agregar-negocio-modal-failure");
 
 			final boolean administrarNegociosViewPassed = agregarNegocioModalPassed
 					&& runStep(report, "Administrar Negocios view", () -> {
@@ -119,7 +120,7 @@ public class SaleadsMiNegocioWorkflowTest {
 						assertTextVisible(appPage, "Tus Negocios");
 						assertTextVisible(appPage, "Sección Legal");
 						capture(appPage, screenshotDir, "04-administrar-negocios", true);
-					});
+					}, appPage, screenshotDir, "04-administrar-negocios-failure");
 
 			if (!administrarNegociosViewPassed) {
 				report.put("Información General", false);
@@ -137,31 +138,31 @@ public class SaleadsMiNegocioWorkflowTest {
 				assertEmailVisible(appPage, googleAccount);
 				assertTextVisible(appPage, "BUSINESS PLAN");
 				assertButtonVisible(appPage, "Cambiar Plan");
-			});
+			}, appPage, screenshotDir, "05-informacion-general-failure");
 
 			runStep(report, "Detalles de la Cuenta", () -> {
 				assertTextVisible(appPage, "Cuenta creada");
 				assertTextVisible(appPage, "Estado activo");
 				assertTextVisible(appPage, "Idioma seleccionado");
-			});
+			}, appPage, screenshotDir, "06-detalles-cuenta-failure");
 
 			runStep(report, "Tus Negocios", () -> {
 				assertTextVisible(appPage, "Tus Negocios");
 				assertButtonVisible(appPage, "Agregar Negocio");
 				assertTextVisible(appPage, "Tienes 2 de 3 negocios");
-			});
+			}, appPage, screenshotDir, "07-tus-negocios-failure");
 
 			runStep(report, "Términos y Condiciones", () -> {
 				final String finalUrl = validateLegalLink(appPage, "Términos y Condiciones", "08-terminos-condiciones",
 						screenshotDir, timeoutMs);
 				legalUrls.put("Términos y Condiciones", finalUrl);
-			});
+			}, appPage, screenshotDir, "08-terminos-condiciones-failure");
 
 			runStep(report, "Política de Privacidad", () -> {
 				final String finalUrl = validateLegalLink(appPage, "Política de Privacidad", "09-politica-privacidad",
 						screenshotDir, timeoutMs);
 				legalUrls.put("Política de Privacidad", finalUrl);
-			});
+			}, appPage, screenshotDir, "09-politica-privacidad-failure");
 
 			printReport(report, legalUrls, screenshotDir);
 			assertNoFailures(report);
@@ -388,11 +389,24 @@ public class SaleadsMiNegocioWorkflowTest {
 	}
 
 	private static boolean runStep(final Map<String, Boolean> report, final String reportKey, final Runnable action) {
+		return runStep(report, reportKey, action, null, null, null);
+	}
+
+	private static boolean runStep(final Map<String, Boolean> report, final String reportKey, final Runnable action,
+			final Page page, final Path screenshotDir, final String failureScreenshotName) {
 		try {
 			action.run();
 			report.put(reportKey, true);
 			return true;
 		} catch (final RuntimeException | AssertionError e) {
+			if (page != null && screenshotDir != null && failureScreenshotName != null && !failureScreenshotName.isBlank()) {
+				try {
+					capture(page, screenshotDir, failureScreenshotName, true);
+				} catch (final RuntimeException captureError) {
+					System.err.println("[WARN] No se pudo capturar screenshot de falla para " + reportKey + ": "
+							+ captureError.getMessage());
+				}
+			}
 			System.err.println("[FAIL] " + reportKey + " -> " + e.getMessage());
 			report.put(reportKey, false);
 			return false;
