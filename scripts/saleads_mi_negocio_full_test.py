@@ -128,14 +128,17 @@ class SaleadsMiNegocioWorkflow:
         self.setup_driver()
         try:
             self.execute_step("Login", self.step_login)
-            self.execute_step("Mi Negocio menu", self.step_mi_negocio_menu)
-            self.execute_step("Agregar Negocio modal", self.step_agregar_negocio_modal)
-            self.execute_step("Administrar Negocios view", self.step_administrar_negocios)
-            self.execute_step("Informacion General", self.step_informacion_general)
-            self.execute_step("Detalles de la Cuenta", self.step_detalles_cuenta)
-            self.execute_step("Tus Negocios", self.step_tus_negocios)
-            self.execute_step("Terminos y Condiciones", self.step_terminos_condiciones)
-            self.execute_step("Politica de Privacidad", self.step_politica_privacidad)
+            if self.report["Login"].status != "PASS":
+                self.fail_remaining_steps_because_login_failed()
+            else:
+                self.execute_step("Mi Negocio menu", self.step_mi_negocio_menu)
+                self.execute_step("Agregar Negocio modal", self.step_agregar_negocio_modal)
+                self.execute_step("Administrar Negocios view", self.step_administrar_negocios)
+                self.execute_step("Informacion General", self.step_informacion_general)
+                self.execute_step("Detalles de la Cuenta", self.step_detalles_cuenta)
+                self.execute_step("Tus Negocios", self.step_tus_negocios)
+                self.execute_step("Terminos y Condiciones", self.step_terminos_condiciones)
+                self.execute_step("Politica de Privacidad", self.step_politica_privacidad)
         finally:
             self.write_report_files()
             if self.driver is not None:
@@ -165,7 +168,52 @@ class SaleadsMiNegocioWorkflow:
             self.report[report_key].details.extend(details)
         except Exception as exc:  # noqa: BLE001 - collect result and continue
             self.report[report_key].status = "FAIL"
-            self.report[report_key].details.append(str(exc))
+            message = str(exc) or exc.__class__.__name__
+            self.report[report_key].details.append(message)
+            try:
+                self.report[report_key].url = self.web.current_url
+                if not self.report[report_key].screenshot:
+                    failure_shot = self.screenshot(f"failure-{report_key}")
+                    self.report[report_key].screenshot = failure_shot
+                    self.report[report_key].details.append(f"Failure screenshot: {failure_shot}")
+            except Exception:  # noqa: BLE001 - never mask original error
+                pass
+
+    def fail_remaining_steps_because_login_failed(self) -> None:
+        reason = "Login step failed."
+        if self.report["Login"].details:
+            reason = self.report["Login"].details[-1]
+
+        for field_name in REPORT_FIELDS[1:]:
+            if self.report[field_name].status != "NOT_RUN":
+                continue
+            self.report[field_name].status = "FAIL"
+            self.report[field_name].details.append(
+                f"Skipped because Login failed: {reason}"
+            )
+            try:
+                self.report[field_name].url = self.web.current_url
+            except Exception:  # noqa: BLE001
+                pass
+
+    def detect_access_blocker(self) -> Optional[str]:
+        blocker_markers = [
+            "sorry, you have been blocked",
+            "attention required",
+            "just a moment",
+            "verify you are human",
+            "cloudflare",
+            "access denied",
+        ]
+        try:
+            page_text = self.web.find_element(By.TAG_NAME, "body").text.lower()
+        except Exception:  # noqa: BLE001
+            page_text = ""
+        title = self.web.title.lower() if self.web.title else ""
+        for marker in blocker_markers:
+            if marker in page_text or marker in title:
+                return marker
+        return None
 
     def wait_for_ui(self, extra_sleep_seconds: float = 1.0) -> None:
         self.waiter.until(lambda d: d.execute_script("return document.readyState") in {"interactive", "complete"})
@@ -304,17 +352,26 @@ class SaleadsMiNegocioWorkflow:
         self.wait_for_ui()
         self.app_handle = self.web.current_window_handle
 
-        clicked_text = self.click_text(
-            [
-                "Sign in with Google",
-                "Iniciar sesion con Google",
-                "Iniciar sesión con Google",
-                "Continuar con Google",
-                "Login with Google",
-            ],
-            exact_match=False,
-            timeout_seconds=20,
-        )
+        blocker = self.detect_access_blocker()
+        if blocker:
+            raise RuntimeError(f"Access blocked before login interaction ({blocker}).")
+
+        try:
+            clicked_text = self.click_text(
+                [
+                    "Sign in with Google",
+                    "Iniciar sesion con Google",
+                    "Iniciar sesión con Google",
+                    "Continuar con Google",
+                    "Login with Google",
+                ],
+                exact_match=False,
+                timeout_seconds=20,
+            )
+        except TimeoutException:
+            generic_google = self.find_visible_by_text("Google", timeout_seconds=8, exact_match=False)
+            self.click_element_and_wait(generic_google)
+            clicked_text = "Google (generic text match)"
         details.append(f'Clicked login entry point: "{clicked_text}"')
 
         self.try_select_google_account()
