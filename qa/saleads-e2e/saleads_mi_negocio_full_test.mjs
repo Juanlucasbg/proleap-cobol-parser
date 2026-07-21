@@ -119,6 +119,13 @@ async function openLoginViewIfNeeded(page) {
   }
 }
 
+async function assertNotBlocked(page) {
+  const bodyText = await page.locator("body").innerText().catch(() => "");
+  if (bodyText.match(/sorry,\s*you have been blocked|unable to access|cloudflare|access denied/i)) {
+    throw new Error("Access was blocked by Cloudflare/security protections before login.");
+  }
+}
+
 async function screenshot(page, fileName, fullPage = false) {
   const outputPath = path.join(ARTIFACTS_DIR, fileName);
   await page.screenshot({ path: outputPath, fullPage });
@@ -213,7 +220,9 @@ async function run() {
 
     await page.goto(LOGIN_URL, { waitUntil: "domcontentloaded" });
     await waitForUi(page);
+    await assertNotBlocked(page);
     await openLoginViewIfNeeded(page);
+    await assertNotBlocked(page);
 
     const loginButton = await expectVisible(
       [
