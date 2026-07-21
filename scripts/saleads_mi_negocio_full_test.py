@@ -42,11 +42,11 @@ REPORT_FIELDS: List[str] = [
     "Mi Negocio menu",
     "Agregar Negocio modal",
     "Administrar Negocios view",
-    "Informacion General",
+    "Información General",
     "Detalles de la Cuenta",
     "Tus Negocios",
-    "Terminos y Condiciones",
-    "Politica de Privacidad",
+    "Términos y Condiciones",
+    "Política de Privacidad",
 ]
 
 
@@ -279,12 +279,12 @@ class SaleadsWorkflowRunner:
             self._run_step("Agregar Negocio modal", self._step_validate_agregar_negocio_modal, dependency="Mi Negocio menu")
             admin_ok = self._run_step("Administrar Negocios view", self._step_open_administrar_negocios, dependency="Mi Negocio menu")
 
-            self._run_step("Informacion General", self._step_validate_informacion_general, dependency="Administrar Negocios view")
+            self._run_step("Información General", self._step_validate_informacion_general, dependency="Administrar Negocios view")
             self._run_step("Detalles de la Cuenta", self._step_validate_detalles_cuenta, dependency="Administrar Negocios view")
             self._run_step("Tus Negocios", self._step_validate_tus_negocios, dependency="Administrar Negocios view")
 
-            self._run_step("Terminos y Condiciones", self._step_validate_terminos, dependency="Administrar Negocios view")
-            self._run_step("Politica de Privacidad", self._step_validate_politica, dependency="Administrar Negocios view")
+            self._run_step("Términos y Condiciones", self._step_validate_terminos, dependency="Administrar Negocios view")
+            self._run_step("Política de Privacidad", self._step_validate_politica, dependency="Administrar Negocios view")
 
             if not login_ok:
                 self._skip_remaining("Login step failed.")
@@ -458,15 +458,16 @@ class SaleadsWorkflowRunner:
 
     def _validate_legal_page(
         self,
-        link_text: str,
+        link_labels: Iterable[str],
         expected_heading_options: Iterable[str],
         screenshot_name: str,
+        report_label: str,
     ) -> Tuple[str, Optional[str], Optional[str]]:
         previous_url = self.active_driver.current_url
         origin_handle = self.active_driver.current_window_handle
         previous_handles = set(self.active_driver.window_handles)
 
-        self._click_by_visible_text([link_text], scope_xpath="//*[contains(., 'Legal')]")
+        self._click_by_visible_text(link_labels, scope_xpath="//*[contains(., 'Legal')]")
         new_handle = self._wait_for_new_window(previous_handles, timeout=10)
         opened_new_tab = new_handle is not None
 
@@ -476,10 +477,10 @@ class SaleadsWorkflowRunner:
         elif self.active_driver.current_url == previous_url:
             self._wait_after_click()
 
-        self._assert_text_visible(expected_heading_options, f"{link_text} heading")
+        self._assert_text_visible(expected_heading_options, f"{report_label} heading")
         page_text = self.active_driver.find_element(By.TAG_NAME, "body").text
         if len(page_text.strip()) < 120:
-            raise WorkflowError(f"Legal page for '{link_text}' does not contain enough visible text.")
+            raise WorkflowError(f"Legal page for '{report_label}' does not contain enough visible text.")
 
         final_url = self.active_driver.current_url
         screenshot = self._capture_screenshot(screenshot_name)
@@ -492,20 +493,22 @@ class SaleadsWorkflowRunner:
             self.active_driver.back()
             self._wait_for_document_ready()
 
-        return (f"{link_text} validated at URL: {final_url}", screenshot, final_url)
+        return (f"{report_label} validated at URL: {final_url}", screenshot, final_url)
 
     def _step_validate_terminos(self) -> Tuple[str, Optional[str], Optional[str]]:
         return self._validate_legal_page(
-            link_text="Terminos y Condiciones",
+            link_labels=["Términos y Condiciones", "Terminos y Condiciones"],
             expected_heading_options=["Terminos y Condiciones", "Términos y Condiciones"],
             screenshot_name="08-terminos-y-condiciones",
+            report_label="Términos y Condiciones",
         )
 
     def _step_validate_politica(self) -> Tuple[str, Optional[str], Optional[str]]:
         return self._validate_legal_page(
-            link_text="Politica de Privacidad",
+            link_labels=["Política de Privacidad", "Politica de Privacidad"],
             expected_heading_options=["Politica de Privacidad", "Política de Privacidad"],
             screenshot_name="09-politica-de-privacidad",
+            report_label="Política de Privacidad",
         )
 
     def _finalize(self) -> int:
