@@ -199,7 +199,15 @@ test("saleads_mi_negocio_full_test", async ({ page, context }) => {
     details.push("Main application interface and left sidebar are visible.");
     setPass("Login", details, { screenshot, finalUrl: appUrlAfterLogin });
   } catch (error) {
-    setFail("Login", [`${error}`]);
+    const details = [`${error}`];
+    let screenshot: string | undefined;
+    try {
+      screenshot = await capture(page, "00-login-blocked-or-failed.png", true);
+      details.push("Captured screenshot for login failure checkpoint.");
+    } catch {
+      // Ignore screenshot capture errors.
+    }
+    report.Login = { status: "FAIL", details, ...(screenshot ? { screenshot } : {}) };
   }
 
   // Step 2 - Open Mi Negocio menu
