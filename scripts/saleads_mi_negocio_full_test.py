@@ -18,7 +18,6 @@ from selenium.common.exceptions import TimeoutException
 from selenium.webdriver import ChromeOptions
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
-from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait
 
 
@@ -64,14 +63,17 @@ class SaleadsMiNegocioWorkflow:
         try:
             self._navigate_to_login()
             self._run_step("Login", self._step_login_with_google)
-            self._run_step("Mi Negocio menu", self._step_open_mi_negocio_menu)
-            self._run_step("Agregar Negocio modal", self._step_validate_agregar_negocio_modal)
-            self._run_step("Administrar Negocios view", self._step_open_administrar_negocios)
-            self._run_step("Información General", self._step_validate_informacion_general)
-            self._run_step("Detalles de la Cuenta", self._step_validate_detalles_cuenta)
-            self._run_step("Tus Negocios", self._step_validate_tus_negocios)
-            self._run_step("Términos y Condiciones", self._step_validate_terminos_y_condiciones)
-            self._run_step("Política de Privacidad", self._step_validate_politica_privacidad)
+            if self.results["Login"].status == "PASS":
+                self._run_step("Mi Negocio menu", self._step_open_mi_negocio_menu)
+                self._run_step("Agregar Negocio modal", self._step_validate_agregar_negocio_modal)
+                self._run_step("Administrar Negocios view", self._step_open_administrar_negocios)
+                self._run_step("Información General", self._step_validate_informacion_general)
+                self._run_step("Detalles de la Cuenta", self._step_validate_detalles_cuenta)
+                self._run_step("Tus Negocios", self._step_validate_tus_negocios)
+                self._run_step("Términos y Condiciones", self._step_validate_terminos_y_condiciones)
+                self._run_step("Política de Privacidad", self._step_validate_politica_privacidad)
+            else:
+                self._mark_login_blocked_dependents()
         finally:
             report_paths = self._write_reports()
             self.driver.quit()
@@ -102,6 +104,27 @@ class SaleadsMiNegocioWorkflow:
             self.results[name] = StepResult(
                 status="FAIL",
                 details=str(exc),
+                screenshot=screenshot,
+                final_url=self.driver.current_url,
+            )
+
+    def _mark_login_blocked_dependents(self) -> None:
+        login_reason = self.results["Login"].details
+        dependent_steps = [
+            "Mi Negocio menu",
+            "Agregar Negocio modal",
+            "Administrar Negocios view",
+            "Información General",
+            "Detalles de la Cuenta",
+            "Tus Negocios",
+            "Términos y Condiciones",
+            "Política de Privacidad",
+        ]
+        for step_name in dependent_steps:
+            screenshot = self._take_screenshot(f"{step_name}_failure")
+            self.results[step_name] = StepResult(
+                status="FAIL",
+                details=f"Skipped because Login failed: {login_reason}",
                 screenshot=screenshot,
                 final_url=self.driver.current_url,
             )
@@ -440,7 +463,7 @@ class SaleadsMiNegocioWorkflow:
         for step_name, result in self.results.items():
             screenshot = result.screenshot or ""
             final_url = result.final_url or ""
-            details = result.details.replace("|", "\\|")
+            details = result.details.replace("\n", " ").replace("|", "\\|")
             lines.append(f"| {step_name} | {result.status} | {details} | {screenshot} | {final_url} |")
         md_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
         return {"json": str(json_path), "markdown": str(md_path)}
