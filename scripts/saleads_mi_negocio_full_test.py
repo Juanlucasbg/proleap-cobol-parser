@@ -182,7 +182,14 @@ class SaleadsMiNegocioWorkflow:
     def fail_remaining_steps_because_login_failed(self) -> None:
         reason = "Login step failed."
         if self.report["Login"].details:
-            reason = self.report["Login"].details[-1]
+            reason = next(
+                (
+                    detail
+                    for detail in self.report["Login"].details
+                    if not detail.startswith("Failure screenshot:")
+                ),
+                self.report["Login"].details[0],
+            )
 
         for field_name in REPORT_FIELDS[1:]:
             if self.report[field_name].status != "NOT_RUN":
