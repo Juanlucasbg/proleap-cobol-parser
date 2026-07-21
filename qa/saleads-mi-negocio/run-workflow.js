@@ -172,6 +172,8 @@ async function runStep(field, stepFn) {
   } finally {
     step.finishedAt = new Date().toISOString();
   }
+
+  return step.status === "PASS";
 }
 
 async function openLegalLinkAndValidate({ field, linkText, headingText, screenshotName }) {
@@ -281,7 +283,7 @@ async function executeWorkflow() {
   await ensureDirectories();
   await bootstrapBrowser();
 
-  await runStep("Login", async (check) => {
+  const loginPassed = await runStep("Login", async (check) => {
     const blocked = await isCloudflareBlocked(appPage);
     if (blocked) {
       throw new Error("Cloudflare or WAF blocked access before login.");
@@ -350,6 +352,33 @@ async function executeWorkflow() {
     await captureScreenshot(appPage, "dashboard-loaded");
     return ok;
   });
+
+  if (!loginPassed) {
+    const loginError = report.steps.find((step) => step.field === "Login")?.error || "Login failed.";
+    const blockedReason = `Skipped because login did not succeed: ${loginError}`;
+    const now = new Date().toISOString();
+
+    for (const field of REPORT_FIELDS) {
+      if (field === "Login") {
+        continue;
+      }
+      if (report.steps.some((step) => step.field === field)) {
+        continue;
+      }
+      report.steps.push({
+        field,
+        status: "FAIL",
+        startedAt: now,
+        finishedAt: now,
+        validations: [],
+        error: blockedReason
+      });
+      report.results[field] = "FAIL";
+    }
+
+    report.notes.push("Workflow stopped early because login failed.");
+    return;
+  }
 
   await runStep("Mi Negocio menu", async (check) => {
     let ok = true;
