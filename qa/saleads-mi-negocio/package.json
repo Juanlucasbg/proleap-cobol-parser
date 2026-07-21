@@ -1,0 +1,12 @@
+{
+  "name": "saleads-mi-negocio-workflow",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Environment-agnostic Playwright workflow validation for SaleADS Mi Negocio",
+  "scripts": {
+    "test:workflow": "node run-workflow.js"
+  },
+  "dependencies": {
+    "playwright": "^1.61.1"
+  }
+}
