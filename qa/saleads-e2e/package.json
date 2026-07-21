@@ -1,0 +1,17 @@
+{
+  "name": "saleads-e2e",
+  "version": "1.0.0",
+  "description": "Environment-agnostic SaleADS Mi Negocio E2E workflow test",
+  "type": "module",
+  "main": "saleads_mi_negocio_full_test.mjs",
+  "scripts": {
+    "test": "npm run test:saleads-mi-negocio",
+    "test:saleads-mi-negocio": "node ./saleads_mi_negocio_full_test.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "playwright": "^1.61.1"
+  }
+}
