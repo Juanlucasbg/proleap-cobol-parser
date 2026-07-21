@@ -89,6 +89,36 @@ async function clickAndWait(page, locator) {
   await waitForUi(page);
 }
 
+async function openLoginViewIfNeeded(page) {
+  const googleLoginAlreadyVisible = await resolveFirstVisible(
+    [
+      page.getByRole("button", { name: /sign in with google|continue with google|continuar con google|ingresar con google/i }),
+      page.getByRole("link", { name: /sign in with google|continue with google|continuar con google|ingresar con google/i }),
+      page.getByText(/sign in with google|continue with google|continuar con google|ingresar con google/i)
+    ],
+    5000,
+    "Google login visibility probe"
+  ).catch(() => null);
+
+  if (googleLoginAlreadyVisible) {
+    return;
+  }
+
+  const genericSignInEntry = await resolveFirstVisible(
+    [
+      page.getByRole("button", { name: /sign in|log in|iniciar sesi[oó]n|ingresar|acceder/i }),
+      page.getByRole("link", { name: /sign in|log in|iniciar sesi[oó]n|ingresar|acceder/i }),
+      page.getByText(/sign in|log in|iniciar sesi[oó]n|ingresar|acceder/i)
+    ],
+    15000,
+    "generic sign-in entry"
+  ).catch(() => null);
+
+  if (genericSignInEntry) {
+    await clickAndWait(page, genericSignInEntry);
+  }
+}
+
 async function screenshot(page, fileName, fullPage = false) {
   const outputPath = path.join(ARTIFACTS_DIR, fileName);
   await page.screenshot({ path: outputPath, fullPage });
@@ -183,12 +213,13 @@ async function run() {
 
     await page.goto(LOGIN_URL, { waitUntil: "domcontentloaded" });
     await waitForUi(page);
+    await openLoginViewIfNeeded(page);
 
     const loginButton = await expectVisible(
       [
-        page.getByRole("button", { name: /sign in with google|continue with google|continuar con google/i }),
-        page.getByRole("link", { name: /sign in with google|continue with google|continuar con google/i }),
-        page.getByText(/sign in with google|continue with google|continuar con google/i)
+        page.getByRole("button", { name: /sign in with google|continue with google|continuar con google|ingresar con google/i }),
+        page.getByRole("link", { name: /sign in with google|continue with google|continuar con google|ingresar con google/i }),
+        page.getByText(/sign in with google|continue with google|continuar con google|ingresar con google/i)
       ],
       30000,
       "Sign in with Google button"

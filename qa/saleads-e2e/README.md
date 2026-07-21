@@ -22,7 +22,7 @@ npx playwright install chromium
 ## Run
 
 ```bash
-SALEADS_LOGIN_URL="https://<current-environment-login>" npm run test:saleads-mi-negocio
+SALEADS_LOGIN_URL="https://<current-environment-entry-or-login>" npm run test:saleads-mi-negocio
 ```
 
 Optional environment variables:
@@ -30,6 +30,8 @@ Optional environment variables:
 - `HEADLESS=false` to watch browser execution
 - `PW_SLOW_MO=200` to slow interactions
 - `SALEADS_GOOGLE_ACCOUNT=<email>` to override default Google account selection
+
+If `SALEADS_LOGIN_URL` points to a public landing page, the script will first try to click a visible sign-in entry point and then continue with Google login.
 
 ## Output
 
