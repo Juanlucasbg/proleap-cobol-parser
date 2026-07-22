@@ -1,0 +1,123 @@
+{
+  "overall_status": "BLOCKED",
+  "step_results": [
+    {
+      "step": "Login",
+      "status": "BLOCKED",
+      "validations": [
+        {
+          "check": "SaleADS.ai application accessible",
+          "status": "FAIL",
+          "observed": "app.saleads.ai returned SSL handshake failed error 525"
+        },
+        {
+          "check": "Local dev environment running",
+          "status": "FAIL",
+          "observed": "localhost:3000 connection refused - no dev server running"
+        },
+        {
+          "check": "Workspace contains SaleADS.ai application",
+          "status": "FAIL",
+          "observed": "Workspace contains proleap-cobol-parser Java project, not SaleADS.ai web application"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "/workspace/saleads-evidence/run-2026-07-22-2100/01-desktop-initial.webp",
+          "/workspace/saleads-evidence/run-2026-07-22-2100/02-browser-opened.webp",
+          "/workspace/saleads-evidence/run-2026-07-22-2100/03-ssl-error-app-saleads-ai.webp",
+          "/workspace/saleads-evidence/run-2026-07-22-2100/04-connection-refused-localhost.webp"
+        ],
+        "url": null
+      },
+      "notes": "Unable to access SaleADS.ai application. The production domain app.saleads.ai has SSL configuration issues. Local development server is not running. Workspace inspection revealed this environment contains proleap-cobol-parser (Java COBOL parser), not the SaleADS.ai web application codebase."
+    },
+    {
+      "step": "Mi Negocio menu",
+      "status": "BLOCKED",
+      "validations": [],
+      "evidence": {
+        "screenshots": [],
+        "url": null
+      },
+      "notes": "Cannot execute - blocked by Login step failure"
+    },
+    {
+      "step": "Agregar Negocio modal",
+      "status": "BLOCKED",
+      "validations": [],
+      "evidence": {
+        "screenshots": [],
+        "url": null
+      },
+      "notes": "Cannot execute - blocked by Login step failure"
+    },
+    {
+      "step": "Administrar Negocios view",
+      "status": "BLOCKED",
+      "validations": [],
+      "evidence": {
+        "screenshots": [],
+        "url": null
+      },
+      "notes": "Cannot execute - blocked by Login step failure"
+    },
+    {
+      "step": "Información General",
+      "status": "BLOCKED",
+      "validations": [],
+      "evidence": {
+        "screenshots": [],
+        "url": null
+      },
+      "notes": "Cannot execute - blocked by Login step failure"
+    },
+    {
+      "step": "Detalles de la Cuenta",
+      "status": "BLOCKED",
+      "validations": [],
+      "evidence": {
+        "screenshots": [],
+        "url": null
+      },
+      "notes": "Cannot execute - blocked by Login step failure"
+    },
+    {
+      "step": "Tus Negocios",
+      "status": "BLOCKED",
+      "validations": [],
+      "evidence": {
+        "screenshots": [],
+        "url": null
+      },
+      "notes": "Cannot execute - blocked by Login step failure"
+    },
+    {
+      "step": "Términos y Condiciones",
+      "status": "BLOCKED",
+      "validations": [],
+      "evidence": {
+        "screenshots": [],
+        "url": null
+      },
+      "notes": "Cannot execute - blocked by Login step failure"
+    },
+    {
+      "step": "Política de Privacidad",
+      "status": "BLOCKED",
+      "validations": [],
+      "evidence": {
+        "screenshots": [],
+        "url": null
+      },
+      "notes": "Cannot execute - blocked by Login step failure"
+    }
+  ],
+  "blockers": [
+    "Production domain app.saleads.ai has SSL handshake error (error 525) - Cloudflare unable to establish SSL connection to origin server",
+    "Local development server not running on localhost:3000 - connection refused",
+    "Wrong codebase: Workspace contains proleap-cobol-parser Java project, not SaleADS.ai web application",
+    "SaleADS.ai application source code and infrastructure not available in current environment"
+  ],
+  "summary": "Test execution completely blocked. SaleADS.ai application is not accessible in any environment. Production domain has SSL configuration failure. No local dev server running. Workspace contains unrelated COBOL parser project instead of SaleADS.ai codebase. All 9 workflow steps blocked due to inability to access the target application."
+}
