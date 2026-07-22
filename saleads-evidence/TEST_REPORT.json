@@ -1,0 +1,153 @@
+{
+  "test_execution_summary": {
+    "test_name": "SaleADS.ai Mi Negocio Workflow - Full Manual GUI Test",
+    "execution_date": "2026-07-22",
+    "test_environment": "Cloud Browser Environment - Chrome",
+    "target_account": "juanlucasbarbiergarzon@gmail.com",
+    "overall_status": "BLOCKED",
+    "steps_attempted": "1 of 9",
+    "steps_passed": 0,
+    "steps_failed": 0,
+    "steps_blocked": 9,
+    "blocker_category": "Authentication - Missing Credentials"
+  },
+
+  "test_steps_detailed": {
+    "step_1_login_with_google": {
+      "status": "BLOCKED",
+      "description": "Login with Google and validate main app interface appears",
+      "attempted_actions": [
+        "Navigated to saleads.ai landing page successfully",
+        "Clicked 'Sign in' button - loaded login page",
+        "Clicked 'Continue with Google' button - redirected to Google OAuth",
+        "Entered email: juanlucasbarbiergarzon@gmail.com",
+        "Clicked 'Next' - prompted for password",
+        "Attempted 'Try another way' - explored alternative auth methods",
+        "Attempted 'Use your passkey' - received 'No passkeys available' error",
+        "Attempted 'Try again' - received 'Something went wrong' error",
+        "Checked workspace for credential files - none found",
+        "Checked environment variables for credentials - none found",
+        "Clicked SaleADS shortcut to check for existing session - not logged in"
+      ],
+      "blocker_reason": "Google OAuth requires password authentication. No password credentials available in test environment. Passkey authentication unavailable (no passkeys registered for google.com on this device). Cannot proceed without valid authentication credentials.",
+      "validation_attempted": "Could not validate main app interface or sidebar visibility - blocked at authentication",
+      "evidence_screenshots": [
+        "/workspace/saleads-evidence/01-saleads-login-page.webp",
+        "/workspace/saleads-evidence/02-google-email-entered.webp",
+        "/workspace/saleads-evidence/03-google-password-prompt.webp",
+        "/workspace/saleads-evidence/04-google-auth-options-blocker.webp",
+        "/workspace/saleads-evidence/05-passkey-no-credentials.webp",
+        "/workspace/saleads-evidence/06-google-error-something-went-wrong.webp"
+      ],
+      "technical_details": {
+        "reached_url": "accounts.google.com/v3/signin/challenge/selection",
+        "auth_flow_stage": "Password/passkey prompt after email entry",
+        "available_auth_methods_displayed": [
+          "Enter your password",
+          "Use your passkey",
+          "Try another way"
+        ],
+        "all_auth_methods_require_credentials": true
+      }
+    },
+
+    "step_2_open_mi_negocio_menu": {
+      "status": "BLOCKED",
+      "description": "In left sidebar, find section 'Negocio' and click 'Mi Negocio'",
+      "attempted_actions": [],
+      "blocker_reason": "Depends on Step 1 completion. Cannot access application interface without successful authentication.",
+      "validation_attempted": "Could not validate submenu expansion, 'Agregar Negocio' visibility, or 'Administrar Negocios' visibility",
+      "evidence_screenshots": []
+    },
+
+    "step_3_validate_agregar_negocio_modal": {
+      "status": "BLOCKED",
+      "description": "Click 'Agregar Negocio' and validate modal",
+      "attempted_actions": [],
+      "blocker_reason": "Depends on Step 1 completion. Cannot access application interface without successful authentication.",
+      "validation_attempted": "Could not validate modal title 'Crear Nuevo Negocio', input field 'Nombre del Negocio', text 'Tienes 2 de 3 negocios', or buttons 'Cancelar' and 'Crear Negocio'",
+      "evidence_screenshots": []
+    },
+
+    "step_4_open_administrar_negocios": {
+      "status": "BLOCKED",
+      "description": "Expand Mi Negocio if needed, click 'Administrar Negocios', wait for load",
+      "attempted_actions": [],
+      "blocker_reason": "Depends on Step 1 completion. Cannot access application interface without successful authentication.",
+      "validation_attempted": "Could not validate sections: 'Información General', 'Detalles de la Cuenta', 'Tus Negocios', 'Sección Legal'",
+      "evidence_screenshots": []
+    },
+
+    "step_5_validate_informacion_general": {
+      "status": "BLOCKED",
+      "description": "Validate user name visible, user email visible, text 'BUSINESS PLAN' visible, button 'Cambiar Plan' visible",
+      "attempted_actions": [],
+      "blocker_reason": "Depends on Step 1 completion. Cannot access application interface without successful authentication.",
+      "validation_attempted": "Could not validate any elements in Información General section",
+      "evidence_screenshots": []
+    },
+
+    "step_6_validate_detalles_cuenta": {
+      "status": "BLOCKED",
+      "description": "Validate 'Cuenta creada', 'Estado activo', 'Idioma seleccionado' visible",
+      "attempted_actions": [],
+      "blocker_reason": "Depends on Step 1 completion. Cannot access application interface without successful authentication.",
+      "validation_attempted": "Could not validate any elements in Detalles de la Cuenta section",
+      "evidence_screenshots": []
+    },
+
+    "step_7_validate_tus_negocios": {
+      "status": "BLOCKED",
+      "description": "Validate business list visible, button 'Agregar Negocio' exists, text 'Tienes 2 de 3 negocios' visible",
+      "attempted_actions": [],
+      "blocker_reason": "Depends on Step 1 completion. Cannot access application interface without successful authentication.",
+      "validation_attempted": "Could not validate any elements in Tus Negocios section",
+      "evidence_screenshots": []
+    },
+
+    "step_8_validate_terminos_condiciones": {
+      "status": "BLOCKED",
+      "description": "Click link, wait navigation/new tab, validate heading 'Términos y Condiciones' and legal content text visible",
+      "attempted_actions": [],
+      "blocker_reason": "Depends on Step 1 completion. Cannot access application interface without successful authentication.",
+      "validation_attempted": "Could not validate heading or legal content, could not capture URL",
+      "evidence_screenshots": [],
+      "captured_url": null
+    },
+
+    "step_9_validate_politica_privacidad": {
+      "status": "BLOCKED",
+      "description": "Click link, wait navigation/new tab, validate heading 'Política de Privacidad' and legal content text visible",
+      "attempted_actions": [],
+      "blocker_reason": "Depends on Step 1 completion. Cannot access application interface without successful authentication.",
+      "validation_attempted": "Could not validate heading or legal content, could not capture URL",
+      "evidence_screenshots": [],
+      "captured_url": null
+    }
+  },
+
+  "evidence_files": {
+    "all_screenshots": [
+      "/workspace/saleads-evidence/01-saleads-login-page.webp",
+      "/workspace/saleads-evidence/02-google-email-entered.webp",
+      "/workspace/saleads-evidence/03-google-password-prompt.webp",
+      "/workspace/saleads-evidence/04-google-auth-options-blocker.webp",
+      "/workspace/saleads-evidence/05-passkey-no-credentials.webp",
+      "/workspace/saleads-evidence/06-google-error-something-went-wrong.webp"
+    ],
+    "total_evidence_files": 6
+  },
+
+  "recommendations": {
+    "to_unblock_testing": [
+      "Provide Google account password for juanlucasbarbiergarzon@gmail.com in environment variable or secure credential store",
+      "Configure passkey authentication for the test account on this device",
+      "Use a pre-authenticated browser session/profile with valid cookies",
+      "Implement a test account with known credentials specifically for automated testing",
+      "Consider alternative: bypass OAuth in test environment with mock authentication"
+    ],
+    "test_coverage_impact": "0% of Mi Negocio workflow validated. All downstream functionality untested due to authentication blocker."
+  },
+
+  "conclusion": "Test execution blocked at Step 1 (Login with Google). Successfully navigated to SaleADS.ai and initiated Google OAuth flow, but cannot proceed past password/passkey authentication without credentials. All subsequent steps (2-9) are inaccessible as they require authenticated access to the application interface. Test environment requires credential provisioning to enable full workflow validation."
+}
