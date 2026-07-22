@@ -1,0 +1,74 @@
+{
+  "test_name": "saleads_mi_negocio_full_test",
+  "timestamp_utc": "2026-07-22T20:01:03.571Z",
+  "overall_status": "FAIL",
+  "summary": {
+    "pass": 0,
+    "fail": 9
+  },
+  "blocking_issue": {
+    "step": "Login with Google",
+    "reason": "Google password challenge appeared for juanlucasbarbiergarzon@gmail.com, but no usable credentials/session were available in the environment."
+  },
+  "results": [
+    {
+      "field": "Login",
+      "status": "FAIL",
+      "details": "Reached SaleADS login and Google OAuth email step, then blocked at password challenge."
+    },
+    {
+      "field": "Mi Negocio menu",
+      "status": "FAIL",
+      "details": "Could not validate because authenticated dashboard was not reachable."
+    },
+    {
+      "field": "Agregar Negocio modal",
+      "status": "FAIL",
+      "details": "Could not validate because authenticated dashboard was not reachable."
+    },
+    {
+      "field": "Administrar Negocios view",
+      "status": "FAIL",
+      "details": "Could not validate because authenticated dashboard was not reachable."
+    },
+    {
+      "field": "Información General",
+      "status": "FAIL",
+      "details": "Could not validate because authenticated dashboard was not reachable."
+    },
+    {
+      "field": "Detalles de la Cuenta",
+      "status": "FAIL",
+      "details": "Could not validate because authenticated dashboard was not reachable."
+    },
+    {
+      "field": "Tus Negocios",
+      "status": "FAIL",
+      "details": "Could not validate because authenticated dashboard was not reachable."
+    },
+    {
+      "field": "Términos y Condiciones",
+      "status": "FAIL",
+      "details": "Could not validate legal page link because authenticated account page was not reachable."
+    },
+    {
+      "field": "Política de Privacidad",
+      "status": "FAIL",
+      "details": "Could not validate legal page link because authenticated account page was not reachable."
+    }
+  ],
+  "evidence": {
+    "screenshots": [
+      "saleads-evidence/run-2026-07-22-2001/01-saleads-home.webp",
+      "saleads-evidence/run-2026-07-22-2001/02-saleads-login-google-option.webp",
+      "saleads-evidence/run-2026-07-22-2001/03-google-email-entered.webp",
+      "saleads-evidence/run-2026-07-22-2001/04-google-password-challenge.webp",
+      "saleads-evidence/run-2026-07-22-2001/05-app-domain-ssl-error-525.webp",
+      "saleads-evidence/run-2026-07-22-2001/06-password-manager-empty.webp"
+    ],
+    "legal_urls": {
+      "terminos_y_condiciones": null,
+      "politica_de_privacidad": null
+    }
+  }
+}
